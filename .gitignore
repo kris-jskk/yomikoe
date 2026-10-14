@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+web/dist/
+
+# Runtime data (PDFs, SQLite, audio cache, downloaded models)
+data/
+*.db
+*.sqlite
+.hf_home/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+.env

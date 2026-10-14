@@ -1,0 +1,17 @@
+services:
+  api:
+    build: ./api
+    ports: ["8000:8000"]
+    volumes:
+      - ./data:/data
+      - hf_home:/hf_home
+    environment:
+      HEARNARRO_DATA_DIR: /data
+      HF_HOME: /hf_home
+  web:
+    build: ./web
+    ports: ["5173:5173"]
+    depends_on: [api]
+
+volumes:
+  hf_home:

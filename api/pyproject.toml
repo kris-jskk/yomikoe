@@ -1,0 +1,54 @@
+[project]
+name = "hearnarro"
+version = "0.1.0"
+description = "Speechify-style PDF reader backed by open TTS models"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "sqlalchemy>=2.0",
+    "aiosqlite>=0.20",
+    "pymupdf>=1.24",
+    "pysbd>=0.3",
+    "num2words>=0.5",
+    "numpy>=1.26",
+    "huggingface_hub>=0.24",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "ruff>=0.5",
+]
+tts = [
+    "kokoro>=0.9",
+    "onnxruntime>=1.18",
+    "soundfile>=0.12",
+]
+ocr = [
+    "pytesseract>=0.3",
+    "pillow>=10",
+]
+
+[project.scripts]
+hearnarro = "hearnarro.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["hearnarro*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
