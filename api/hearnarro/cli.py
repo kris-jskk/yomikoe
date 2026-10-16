@@ -7,8 +7,6 @@ import json
 import sys
 from collections.abc import Sequence
 
-import pymupdf
-
 from hearnarro.ingestion.pipeline import ingest
 
 
@@ -33,8 +31,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     dump.add_argument("--jsonl", action="store_true", help="one JSON object per segment")
     dump.add_argument("--no-ocr", action="store_true", help="skip OCR for pages without text")
     args = parser.parse_args(argv)
-    # Keep stdout clean for --jsonl: PyMuPDF writes its messages to stdout by default.
-    pymupdf.set_messages(stream=sys.stderr)
     if args.command == "dump":
         return _dump(args.pdf, jsonl=args.jsonl, ocr=not args.no_ocr)
     parser.error(f"unknown command {args.command}")

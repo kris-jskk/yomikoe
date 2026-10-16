@@ -11,7 +11,7 @@ from typing import Literal
 
 @dataclass(frozen=True)
 class BBox:
-    """Axis-aligned box in PDF points, origin top-left (PyMuPDF convention)."""
+    """Axis-aligned box in PDF points, origin top-left, y grows downward."""
 
     x0: float
     y0: float
@@ -56,7 +56,7 @@ class Span:
 class Line:
     spans: list[Span]
     bbox: BBox
-    dir: tuple[float, float] = (1.0, 0.0)  # PyMuPDF line "dir"; anything else is rotated text
+    dir: tuple[float, float] = (1.0, 0.0)  # reading direction; anything else is rotated text
 
     @property
     def text(self) -> str:
@@ -82,7 +82,7 @@ BlockType = Literal[
 @dataclass
 class Block:
     page: int  # 0-based page number
-    index: int  # position in PyMuPDF's block list for that page
+    index: int  # position in stage 1's block list for that page
     bbox: BBox
     lines: list[Line]
     type: BlockType = "body"

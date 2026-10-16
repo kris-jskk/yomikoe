@@ -128,7 +128,7 @@ API server (FastAPI)
   keeps a 5-segment lookahead queue per active document
    |  parse job            |  synthesize(segment, voice, speed)     |  read / write
 Ingestion worker          Synthesis service  --cache-->           Storage
-  PyMuPDF text, OCR         TTSBackend interface                    SQLite: docs, segments, state
+  pdfplumber text, OCR      TTSBackend interface                    SQLite: docs, segments, state
   blocks, order, sentences  Kokoro now, GPU backend later           files: PDFs, Opus audio cache
   async job per upload      audio + word timestamps out             cache key: segment, voice, speed
   \-- writes parsed segments -----------------------------------------^
@@ -142,8 +142,8 @@ The browser never touches a model or the PDF; it asks the API for parsed segment
 | --- | --- | --- |
 | Language | Python 3.11+ | Every TTS and PDF library of note is Python-first |
 | API | FastAPI + uvicorn | Async, typed schemas for free |
-| PDF text | PyMuPDF (fitz) | Fast, gives block coordinates and fonts for layout analysis |
-| Layout / academic PDFs | Marker (optional, P1) | Handles two-column papers and equations better than raw PyMuPDF |
+| PDF text | pdfplumber (MIT; pdfminer.six) + pypdfium2 (Apache-2.0/BSD-3) for OCR rendering | Glyph coordinates, fonts, drawings and tables for layout analysis under a permissive license; replaced PyMuPDF (AGPL-3.0) in M1 (D13) |
+| Layout / academic PDFs | Marker (optional, P1) | Handles two-column papers and equations better than a raw geometric parser |
 | OCR | Tesseract via pytesseract, PaddleOCR as upgrade | Tesseract is zero-setup; Paddle is more accurate on photos |
 | Sentence split | pysbd | Rule-based, handles abbreviations and citations better than regex |
 | Text normalization | Custom rules + `num2words` | No off-the-shelf library covers citations and tech vocabulary |
@@ -280,5 +280,5 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 - [ ] Should speed be global or per document by default? Current plan: per document, with a global default -- this can be a global setting and the user should be able to change it
 - [ ] Cache format decided 2026-10-15: Opus/WebM at 48 kbps via ffmpeg - lets go with opus
 - [ ] Is a 2 s time-to-first-audio target realistic on an M1 laptop with Kokoro ONNX? Benchmark in M2 week 1
-- [ ] Do we need Marker in v1, or does PyMuPDF plus a column-detection heuristic clear the 95% gate?
+- [ ] Do we need Marker in v1, or does pdfplumber plus a column-detection heuristic clear the 95% gate?
 - [ ] Phone browser: does iOS Safari allow background playback through Media Session with MSE? Verify early in M3

@@ -10,7 +10,7 @@ Eleven decisions shape v1; three are yours to confirm (D5, D7, D10) and the rest
 
 | # | Decision | Recommendation | Status |
 | --- | --- | --- | --- |
-| D1 | PDF text extraction | PyMuPDF `get_text("dict")` for spans with bbox + font; Marker only as an opt-in second parser | Proposed |
+| D1 | PDF text extraction | Spans with bbox + font from a geometric extractor (was PyMuPDF `get_text("dict")`; replaced by D13); Marker only as an opt-in second parser | Proposed (extractor superseded by D13) |
 | D2 | Reading order | Geometric: x-gap column detection per page, then top-to-bottom within column; no ML in v1 | Proposed |
 | D3 | Header/footer removal | Repetition across pages (same normalized text in same band on 3+ pages) plus page-number regex | Proposed |
 | D4 | Sentence splitting | pysbd on merged block text; keep char offsets back to the block | Proposed |
@@ -22,12 +22,13 @@ Eleven decisions shape v1; three are yours to confirm (D5, D7, D10) and the rest
 | D10 | Frontend state | XState-style explicit player state machine vs. plain React reducer | **Decided 2026-10-15** |
 | D11 | Fixture ground truth | `*.expected.jsonl` hand-corrected once, then golden; test asserts Levenshtein on segment order ≥ 0.95 | Proposed |
 | D12 | Golden comparison scope | Prose-only; figure text dropped; inline math joined; table/equation internals excluded until ING-7 | **Decided 2026-10-16** |
+| D13 | Extractor: pdfplumber + pypdfium2, replacing PyMuPDF (AGPL) | pdfplumber (MIT; pdfminer.six underneath) supplies glyphs, fonts, images, vector drawings and ruled tables; stage 1 groups glyphs into lines and blocks itself in content-stream order; pypdfium2 (Apache-2.0/BSD-3) renders pages for OCR. Supersedes the PyMuPDF part of D1 | **Decided 2026-10-16** |
 
 ## Ingestion pipeline
 
 ```
 1 Extract          2 Classify            3 Order (the risky stage)   4 Merge              5 Segment
-PyMuPDF spans  ->  heading, body,    ->  detect columns          ->  join lines       ->  pysbd sentences
+PDF glyphs     ->  heading, body,    ->  detect columns          ->  join lines       ->  pysbd sentences
 bbox, font, size   caption, footnote,    drop header/footer          de-hyphenate         char offsets kept
 OCR if no text     header/footer, table  linearize                   cross-page flow      normalize for TTS
 in: one PDF page at a time                                       out: segments rows, in reading order
@@ -35,13 +36,13 @@ in: one PDF page at a time                                       out: segments r
 
 Ingestion is a pure function from a PDF to a list of segments, run once per upload in a worker process; every stage is a separate module with its own unit tests so a bad reading order can be blamed on one stage.
 
-**Stage 1, extract (D1).** `page.get_text("dict")` returns blocks → lines → spans with bbox, font name, size and flags (bold, italic). Keep spans, not just text: font size drives heading detection and bbox drives everything else. Pages whose text layer yields fewer than 20 characters are rasterized at 300 dpi and sent to Tesseract (`image_to_data` for word boxes), producing the same span structure. Marker is wired behind a `HEARNARRO_PARSER=marker` flag for the academic fixtures; it is not the default because it pulls in PyTorch and GPL code.
+**Stage 1, extract (D1, D13).** pdfplumber (pdfminer.six) yields every glyph in content-stream order with its bbox, font name, size and `upright` flag; coordinates are converted to a top-left origin. Stage 1 groups glyphs itself rather than using pdfminer's layout analysis (which splits justified lines at wide word gaps and inline maths into many boxes): a glyph continues the current line when it overlaps it vertically by ≥ 30% and starts between 0.5 font sizes left and 10 font sizes right of the previous glyph; a gap wider than 0.15 font sizes becomes a space. A line joins the current block when it overlaps the block, or starts at most 0.5 font sizes below it, overlaps it horizontally and its font size is within 1.25×. Lines then become spans by (font, size, superscript): bold from font names containing Bold/Black/Heavy/Semibold/Demi/Medi/CMBX or ending ",B"/"-B", italic from Italic/Ital/Oblique/CMTI; superscript = a glyph ≤ 0.75× the line's dominant size whose bottom sits > 0.2 dominant sizes above the line's baseline. `Line.dir` is (1, 0) when every glyph is upright, else (0, 1). Unmapped TeX glyphs (`(cid:N)`) become the ASCII code point. Images come from `page.images`; figure regions (D12) from `page.rects`/`curves`/`lines`; tables from `page.find_tables()` keeping only tables with ≥ 2 rows and ≥ 2 columns. Keep spans, not just text: font size drives heading detection and bbox drives everything else. Pages whose text layer yields fewer than 20 characters are rendered at 300 dpi with pypdfium2 and sent to Tesseract (`image_to_data` for word boxes), producing the same span structure. Stage 2–4 thresholds were tuned against PyMuPDF output; on this extractor the golden mean fell from 0.9285 to 0.6963 (_agent/results/104_golden_pdfplumber.txt) and needs a retuning pass. Marker is wired behind a `HEARNARRO_PARSER=marker` flag for the academic fixtures; it is not the default because it pulls in PyTorch and GPL code.
 
 **Stage 2, classify.** Rules, in order, first match wins:
 
 | Type | Rule |
 | --- | --- |
-| noise (margin stamp) | Any line with text has PyMuPDF `dir` other than (1, 0) and the block lies in the outer 10% of the page width (arXiv and NIST DOI stamps); rotated figure labels inside the page fall through |
+| noise (margin stamp) | Any line with text has `Line.dir` other than (1, 0) and the block lies in the outer 10% of the page width (arXiv and NIST DOI stamps); rotated figure labels inside the page fall through |
 | header / footer | Block lies in the top or bottom 8% band (by bbox, or by vertical midpoint) and its normalized text recurs in that band on 3+ pages, or matches `^\d+$`, a lower-case roman numeral, `^Page (\d+\|roman)`, `^\d+ of \d+$`, or (no repetition needed) it has ≤ 3 non-empty lines and either ≥ 60% of its letters upper-case or max span size ≤ 0.95 × body median |
 | noise (boilerplate) | Every non-empty line is email/URL-only, `Preprint.`, `Under review.`, `This publication is available free of charge from…`, or a rule of `_`/`-`/`=`; or the block is a letter-spaced banner (≥ 6 single-letter tokens); or, on the first 2 pages and in the bottom 30%, it mentions `Department of Commerce`, `Secretary` or `Director` (cover signature block) |
 | heading | Font size ≥ 1.15 × body median, or bold and ≤ 12 words and no terminal period |
@@ -232,7 +233,7 @@ One uvicorn process serves everything; CPU-heavy work goes to two executors chos
 | Work | Where | Why |
 | --- | --- | --- |
 | HTTP + routing | asyncio event loop | FastAPI native; every handler is `async def` and never blocks |
-| Ingestion (stages 1–5) | `ProcessPoolExecutor(max_workers=2)` | PyMuPDF holds the GIL for long stretches and Tesseract is a subprocess anyway; a 300-page parse must not stall the API. Two workers so one slow OCR job does not block a second upload |
+| Ingestion (stages 1–5) | `ProcessPoolExecutor(max_workers=2)` | pdfminer's pure-Python parsing holds the GIL for long stretches and Tesseract is a subprocess anyway; a 300-page parse must not stall the API. Two workers so one slow OCR job does not block a second upload |
 | Synthesis | `ThreadPoolExecutor(max_workers=1)` | ONNX Runtime releases the GIL during `run()`; one thread serializes jobs and owns the single session. A thread, not a process, so the loaded model (300 MB) is not duplicated |
 | Opus encoding | `asyncio.create_subprocess_exec("ffmpeg", ...)` | Non-blocking subprocess from the event loop, piped stdin/stdout, no temp files |
 | SQLite | `aiosqlite`, one connection per request | WAL mode so the ingestion process can write while the API reads |
