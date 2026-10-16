@@ -28,6 +28,21 @@ docs/           PRD and design notes
 | M3 | Reader UI | highlight drift < 1 word over 10 min |
 | M4 | Library + polish | 300-page soak passes; `docker compose up` works |
 
+## Quickstart (M1)
+
+M1 ingests PDFs into ordered sentence segments; there is no audio or UI yet.
+
+```bash
+cd api
+.venv/bin/python -m hearnarro serve --data-dir ~/hearnarro-m1 --port 8765   # terminal 1
+.venv/bin/python scripts/m1_smoke.py --base-url http://127.0.0.1:8765        # terminal 2
+.venv/bin/python scripts/m1_smoke.py --one path/to/your.pdf                   # any PDF
+```
+
+The smoke script uploads the 15 text fixtures, scores them with the gate's word-level
+measure, and exits 0 when all pass (mean 0.9914 today). The full hand-testing procedure,
+with the curl sequence and expected numbers, is in [docs/M1_TESTING.md](docs/M1_TESTING.md).
+
 ## Getting started
 
 ```bash

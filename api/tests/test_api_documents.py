@@ -126,6 +126,10 @@ async def test_ing1_segments_paging_segments_table(tmp_path: Path) -> None:
         keys = {"id", "order", "block_id", "text", "normalized_text", "char_start", "char_end"}
         assert keys <= set(rows[0])
         assert [r["text"] for r in rows] == [s.text for s in expected[:20]]
+        # each row carries its block's type so a client can apply the D12 prose-only filter
+        result = ingest(REPORT_PDF)
+        block_type = {b.id: b.type for b in result.blocks}
+        assert [r["type"] for r in rows] == [block_type[s.block_id] for s in result.segments[:20]]
 
         page2 = (await client.get(f"/documents/{doc_id}/segments?from=20&limit=20")).json()
         assert [r["order"] for r in page2["segments"]] == list(range(20, 40))

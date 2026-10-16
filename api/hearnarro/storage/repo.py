@@ -86,10 +86,12 @@ async def count_segments(conn: aiosqlite.Connection, document_id: int) -> int:
 async def list_segments(
     conn: aiosqlite.Connection, document_id: int, from_order: int, limit: int
 ) -> list[dict[str, Any]]:
-    """Range scan on the unique index segments(document_id, "order")."""
+    """Range scan on the unique index segments(document_id, "order"); ``type`` is the block type."""
     return await _all(
         conn,
-        'SELECT id, "order", block_id, section_id, text, normalized_text, char_start, char_end '
-        'FROM segments WHERE document_id = ? AND "order" >= ? ORDER BY "order" LIMIT ?',
+        'SELECT s.id, s."order", s.block_id, b.type, s.section_id, s.text, s.normalized_text, '
+        "s.char_start, s.char_end "
+        "FROM segments s JOIN blocks b ON b.id = s.block_id "
+        'WHERE s.document_id = ? AND s."order" >= ? ORDER BY s."order" LIMIT ?',
         (document_id, from_order, limit),
     )
