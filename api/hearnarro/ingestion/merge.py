@@ -20,14 +20,25 @@ ABSTRACT_RE = re.compile(r"^\s*abstract\b", re.IGNORECASE)
 EMAIL_ONLY_RE = re.compile(rf"^{EMAIL}(?:[\s,;]+{EMAIL})*[\s,;.]*$")
 
 
+# Visible hyphens a line may end with: ASCII hyphen-minus, U+2010 HYPHEN, U+2011 NON-BREAKING
+# HYPHEN. All follow one rule: dropped before a lowercase continuation, kept otherwise.
+LINE_END_HYPHENS = ("-", "\u2010", "\u2011")
+SOFT_HYPHEN = "\u00ad"  # invisible break point: always dropped at a line end, no space added
+
+
 def merge_lines(lines: list[str]) -> str:
-    """Join lines with spaces, de-hyphenating before a lowercase continuation."""
+    """Join lines with spaces, de-hyphenating before a lowercase continuation.
+
+    A soft hyphen ending a line is removed and the next line joined without a space. A soft
+    hyphen ending the last line is left in place so a later cross-block ``merge_lines`` call
+    can still join on it; ``merge_blocks`` strips any that remain.
+    """
     parts = [" ".join(line.split()) for line in lines]
     out = ""
     for part in parts:
         if not part:
             continue
-        if out.endswith("-") and part[0].islower():
+        if out.endswith(SOFT_HYPHEN) or (out.endswith(LINE_END_HYPHENS) and part[0].islower()):
             out = out[:-1] + part
         elif out:
             out = out + " " + part
@@ -134,6 +145,8 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
         if block.type in JOIN_BLOCKERS:
             candidate = None
         out.append(_logical(len(out), block, text))
+    for lb in out:
+        lb.text = lb.text.rstrip(SOFT_HYPHEN)  # a soft hyphen no later block joined onto
     return out
 
 

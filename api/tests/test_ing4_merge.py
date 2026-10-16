@@ -24,6 +24,47 @@ def test_ing5_merge_lines(lines: list[str], expected: str) -> None:
     assert merge_lines(lines) == expected
 
 
+@pytest.mark.parametrize("hyphen", ["\u2010", "\u2011"], ids=["U+2010", "U+2011"])
+def test_ing5_merge_lines_unicode_hyphen_lowercase_dehyphenates(hyphen: str) -> None:
+    assert merge_lines([f"a wide-ranging dis{hyphen}", "cussion"]) == "a wide-ranging discussion"
+
+
+@pytest.mark.parametrize("hyphen", ["\u2010", "\u2011"], ids=["U+2010", "U+2011"])
+def test_ing5_merge_lines_unicode_hyphen_uppercase_keeps_hyphen(hyphen: str) -> None:
+    assert merge_lines([f"a well{hyphen}", "Known result"]) == f"a well{hyphen} Known result"
+
+
+@pytest.mark.parametrize(
+    ("lines", "expected"),
+    [
+        (["tak\u00ad", "ing familiar"], "taking familiar"),
+        (["Inter\u00ad", "Net"], "InterNet"),
+    ],
+)
+def test_ing5_merge_lines_soft_hyphen_always_removed(lines: list[str], expected: str) -> None:
+    assert merge_lines(lines) == expected
+
+
+def test_ing5_merge_blocks_dehyphenates_unicode_hyphen_across_page_break() -> None:
+    blocks = [
+        make_block(0, 0, ["a well-known dis\u2010"], y0=600),
+        make_block(1, 0, ["cussion of this."], y0=50),
+    ]
+    assert [lb.text for lb in merge_blocks(blocks)] == ["a well-known discussion of this."]
+
+
+def test_ing5_merge_blocks_soft_hyphen_at_line_end_always_removed() -> None:
+    blocks = [
+        make_block(0, 0, ["Inter\u00ad", "Net of tak\u00ad"], y0=600),
+        make_block(1, 0, ["ing things\u00ad"], y0=50),
+        make_block(1, 1, ["A new soft\u00ad", ""], y0=300, type="heading"),
+    ]
+    assert [lb.text for lb in merge_blocks(blocks)] == [
+        "InterNet of taking things",
+        "A new soft",
+    ]
+
+
 def test_ing5_merge_blocks_one_per_block_with_merged_lines() -> None:
     blocks = [
         make_block(0, 0, ["Introduction"], type="heading"),
