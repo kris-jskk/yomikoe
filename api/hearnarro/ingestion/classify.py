@@ -1,7 +1,8 @@
 """Stage 2: classify blocks by type (ING-3).
 
 Rules from docs/TECHNICAL_DESIGN.md stage 2, first match wins:
-noise (rotated text), header/footer, noise (boilerplate text), heading, caption, footnote,
+noise (off-page: less than OFF_PAGE_INSIDE_FRAC of the bbox inside the page box), noise
+(rotated text), header/footer, noise (boilerplate text), heading, caption, footnote,
 table, equation, list, body. Then (D12) any block but a caption whose bbox lies at least
 FIGURE_INSIDE_FRAC inside a figure region (Page.figure_bboxes) is typed figure. Two document
 passes follow: cover-page pull quotes typed heading by size become body, and a table of
@@ -90,6 +91,9 @@ VSTACK_WORD_GAP = 1.5
 VSTACK_TYPES = {"heading", "body", "noise", "footnote", "caption", "list"}
 
 
+OFF_PAGE_INSIDE_FRAC = 0.5  # a block with less of its bbox area inside the page box is noise
+
+
 def normalize_key(text: str) -> str:
     """Lowercase, collapse whitespace, strip. Digits are kept."""
     return " ".join(text.lower().split())
@@ -115,6 +119,17 @@ def body_median_size(pages: list[Page]) -> float:
         if acc >= half:
             return size
     return weighted[-1][0]
+
+
+def _off_page(block: Block, page: Page) -> bool:
+    """Less than OFF_PAGE_INSIDE_FRAC of the block's bbox area lies inside the page box
+    [0, width] x [0, height] (user decision 2026-10-16: text outside the page is never read)."""
+    b = block.bbox
+    box = BBox(0.0, 0.0, page.width, page.height)
+    area = max(0.0, b.width) * max(0.0, b.height)
+    if area <= 0:
+        return not (0 <= b.x_mid <= page.width and 0 <= b.y_mid <= page.height)
+    return _inter_area(b, box) < OFF_PAGE_INSIDE_FRAC * area
 
 
 def _band(block: Block, page: Page, band_frac: float) -> str | None:
@@ -301,6 +316,8 @@ def _classify(
     block: Block, page: Page, median: float, repeated: set[str], tables: list[BBox]
 ) -> BlockType:
     text = block.text.strip()
+    if _off_page(block, page):
+        return "noise"
     if _is_margin_stamp(block, page):
         return "noise"
     band = _band(block, page, BAND_FRAC) or _band_mid(block, page)
@@ -538,4 +555,8 @@ def classify_pages(pages: list[Page]) -> list[Page]:
             _retype_pull_quotes(page, median)
         _fold_vertical_titles(page)
     _mark_toc(pages, median)
+    for page in pages:  # off-page text stays noise whatever the document passes did
+        for block in page.blocks:
+            if _off_page(block, page):
+                block.type = "noise"
     return pages

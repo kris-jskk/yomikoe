@@ -185,7 +185,7 @@ def test_ing3_equation_by_low_prose_share() -> None:
 
 
 def test_ing3_bare_equation_number_is_equation() -> None:
-    pages = classify_pages(_doc(make_block(0, 0, ["(12)"], x0=500, y0=400)))
+    pages = classify_pages(_doc(make_block(0, 0, ["(12)"], x0=500, y0=400, width=40)))
     assert _type_of(pages, 0) == "equation"
 
 
@@ -541,3 +541,32 @@ def test_ing3_four_stacked_letters_are_not_a_vertical_title() -> None:
     page = make_page(3, [*_letters(3, 0, ["ABCD"], y0=160), *_filler(3, 10)])
     classify_pages([page])
     assert [b.text for b in page.blocks[:4]] == ["A", "B", "C", "D"]
+
+
+# Off-page text (user decision 2026-10-16): a block with less than half its bbox area inside
+# the page box [0, 612] x [0, 792] is noise before every other rule. Blocks are 200 pt wide.
+OFF_PAGE_TEXT = "These aspirations may seem out of reach, but they are skills we can learn."
+
+
+@pytest.mark.parametrize(
+    ("x0", "expected"),
+    [
+        (-300.0, "noise"),  # fully left of x = 0
+        (-120.0, "noise"),  # 60% outside
+        (-60.0, "body"),  # 30% outside: trimmed at the edge, kept
+        (72.0, "body"),  # fully inside: unchanged
+    ],
+)
+def test_ing3_off_page_block_is_noise(x0: float, expected: str) -> None:
+    block = make_block(0, 0, [OFF_PAGE_TEXT, OFF_PAGE_TEXT], x0=x0, y0=200, width=200)
+    assert _type_of(classify_pages(_doc(block)), 0) == expected
+
+
+def test_ing3_off_page_rule_wins_over_heading_size() -> None:
+    title = make_block(0, 0, ["GETTING RICH"], x0=-250, y0=200, width=200, size=24)
+    assert _type_of(classify_pages(_doc(title)), 0) == "noise"
+
+
+def test_ing3_block_below_the_page_is_noise() -> None:
+    block = make_block(0, 0, [OFF_PAGE_TEXT, OFF_PAGE_TEXT], y0=800, width=200)
+    assert _type_of(classify_pages(_doc(block)), 0) == "noise"
