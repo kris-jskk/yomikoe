@@ -29,9 +29,12 @@ FIGURE_MAX_FRAC = 0.80  # ... and one covering this much or more is a page backg
 # the current line when it overlaps it vertically and does not jump backwards; a line joins
 # the current block when it overlaps the block, or sits within BLOCK_GAP sizes below it at a
 # compatible font size.
+BASELINE_JUMP: float | None = 0.8
+SPACE_NEXT_SIZE = True  # measure the gap in the next glyph's size, as MuPDF does
 SPACE_GAP = 0.15  # a gap wider than this many font sizes between glyphs is a word space
 LINE_OVERLAP = 0.3  # min vertical overlap (fraction of the smaller height) to stay on a line
 LINE_BACKSTEP = 0.5  # a glyph starting this many sizes left of the previous one ends the line
+OVERSTRIKE = True  # see _continues_line
 LINE_MAX_GAP = 10.0  # ... as does a forward jump wider than this many sizes
 BLOCK_GAP = 0.5  # max vertical gap between a block and its next line, in font sizes
 BLOCK_SIZE_RATIO = 1.25  # max ratio between line font sizes inside one block
@@ -69,7 +72,7 @@ SUPERSCRIPT_RAISE = 0.2  # ... whose bottom sits this many dominant sizes higher
 # ground truth, measured in results 131): CMSY/CMR relations, arrows, minus and ∆, and spacing
 # accents in any font ("B¨ uhlmann"). "|", "×", "·", "′", "†", "Π", "Θ" keep their space.
 _TIGHT_FONT = re.compile(r"^CM(?:SY|R)\d")
-_TIGHT_SYMBOLS = frozenset("∈∉≤≥∼≈≃≡∝−→←↔⇒∥⊤⊥⊂⊆⊃⊇∆∗≫≪7")
+_TIGHT_SYMBOLS = frozenset("∈∉≤≥∼≈≃≡∝−→←↔⇒∥⊤⊥⊂⊆⊃⊇∆∗≫≪≲≳⊗⊕∞7")
 _SPACING_ACCENTS = frozenset("¨ˆ˜´`¯˙˘ˇ˚")
 _SUBSET_PREFIX = re.compile(r"^[A-Z]{6}\+")
 _CID = re.compile(r"\(cid:(\d+)\)")
@@ -316,7 +319,21 @@ def _continues_line(prev: LayoutChar, line_v: tuple[float, float], c: LayoutChar
         return False  # an accent sits above its letter; only the horizontal test applies
     size = max(c.size, prev.size, 1.0)
     gap = _hspan(c)[0] - _hspan(prev)[1]
+    if gap < -LINE_BACKSTEP * size and OVERSTRIKE:
+        # an overstrike (an accent then its letter, "/" over "∈") steps back onto the
+        # previous glyph: it continues the line when it starts no earlier than that glyph
+        return _hspan(c)[0] >= _hspan(prev)[0] - LINE_BACKSTEP * size
     return -LINE_BACKSTEP * size <= gap <= LINE_MAX_GAP * size
+
+
+def _baseline_jump(prev: LayoutChar, c: LayoutChar) -> bool:
+    """MuPDF starts a new line (read with a space) when the baseline moves more than
+    BASELINE_JUMP of the next glyph's size: stacked sub/superscripts, limits, radicals."""
+    if BASELINE_JUMP is None or not (c.upright and prev.upright) or _is_accent(prev):
+        return False
+    assert c.bbox is not None and prev.bbox is not None
+    jump = (c.bbox.y1 - NORMAL_DESCENT * c.size) - (prev.bbox.y1 - NORMAL_DESCENT * prev.size)
+    return abs(jump) > BASELINE_JUMP * max(c.size, 1.0)
 
 
 def _tight_after(c: LayoutChar) -> bool:
@@ -342,7 +359,10 @@ def group_lines(chars: Sequence[LayoutChar]) -> list[list[LayoutChar]]:
         if prev is not None and _continues_line(prev, line_v, c):
             gap = _hspan(c)[0] - _hspan(prev)[1]
             if (
-                gap > SPACE_GAP * max(c.size, prev.size)
+                (
+                    gap > SPACE_GAP * (c.size if SPACE_NEXT_SIZE else max(c.size, prev.size))
+                    or _baseline_jump(prev, c)
+                )
                 and lines[-1][-1].bbox is not None
                 and not _tight_after(prev)
             ):
@@ -477,8 +497,9 @@ def _tagged(prev: list[LayoutChar], line: list[LayoutChar]) -> bool:
 
 def _cid_text(text: str) -> str:
     """pdfminer writes "(cid:N)" for a glyph without a Unicode mapping (TeX math fonts);
-    use the printable ASCII code point as PyMuPDF did, else drop it."""
-    return _CID.sub(lambda m: chr(n) if 32 <= (n := int(m.group(1))) < 127 else "", text)
+    use the code point below 127 as PyMuPDF did (CMEX delimiters come out as control
+    characters, which the D11/D12 ground truth keeps as equation segments), else drop it."""
+    return _CID.sub(lambda m: chr(n) if (n := int(m.group(1))) < 127 else "", text)
 
 
 def _font_drops(chars: Sequence[dict[str, Any]]) -> dict[str, float]:
