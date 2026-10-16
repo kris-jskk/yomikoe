@@ -16,6 +16,7 @@ dependencies = [
     "numpy>=1.26",
     "huggingface_hub>=0.24",
     "python-multipart>=0.0.9",
+    "alembic>=1.13",
 ]
 
 [project.optional-dependencies]

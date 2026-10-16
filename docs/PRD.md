@@ -1,6 +1,6 @@
 # PRD: HearNarro
 
-As of 2026-10-14 · Sowmya
+As of 2026-10-15 · Sowmya
 
 ## Overview
 
@@ -120,28 +120,28 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 
 ```
 Reader (browser)
-  text view + word highlighting, audio player, keyboard + lock-screen controls
-  reads segments over REST; receives audio over a WebSocket stream
-        |  REST + WebSocket
+  text view + word highlighting, Web Audio scheduled playback, keyboard + lock-screen controls
+  reads segments over REST; fetches audio one segment at a time over HTTP
+        |  REST
 API server (FastAPI)
-  REST: upload, documents, segments, voices, reading position
-  WebSocket: streams audio + timestamps, keeps a 5-segment lookahead queue
+  REST: upload, documents, segments, voices, reading position, /audio/{segment_id}
+  keeps a 5-segment lookahead queue per active document
    |  parse job            |  synthesize(segment, voice, speed)     |  read / write
 Ingestion worker          Synthesis service  --cache-->           Storage
   PyMuPDF text, OCR         TTSBackend interface                    SQLite: docs, segments, state
-  blocks, order, sentences  Kokoro now, GPU backend later           files: PDFs, audio cache
+  blocks, order, sentences  Kokoro now, GPU backend later           files: PDFs, Opus audio cache
   async job per upload      audio + word timestamps out             cache key: segment, voice, speed
   \-- writes parsed segments -----------------------------------------^
 ```
 
-The browser never touches a model or the PDF; it asks the API for parsed segments and receives audio over a WebSocket. Ingestion runs once per upload and writes segments to storage; synthesis runs on demand per segment, caches its output, and is the only place a TTS model is named.
+The browser never touches a model or the PDF; it asks the API for parsed segments and fetches audio one segment at a time over HTTP, scheduling each decoded buffer back to back with the Web Audio API. Ingestion runs once per upload and writes segments to storage; synthesis runs on demand per segment, caches its output, and is the only place a TTS model is named.
 
 **Stack decisions**
 
 | Layer | Choice | Why |
 | --- | --- | --- |
 | Language | Python 3.11+ | Every TTS and PDF library of note is Python-first |
-| API | FastAPI + uvicorn | Async, WebSocket support, typed schemas for free |
+| API | FastAPI + uvicorn | Async, typed schemas for free |
 | PDF text | PyMuPDF (fitz) | Fast, gives block coordinates and fonts for layout analysis |
 | Layout / academic PDFs | Marker (optional, P1) | Handles two-column papers and equations better than raw PyMuPDF |
 | OCR | Tesseract via pytesseract, PaddleOCR as upgrade | Tesseract is zero-setup; Paddle is more accurate on photos |
@@ -150,10 +150,10 @@ The browser never touches a model or the PDF; it asks the API for parsed segment
 | TTS v1 | Kokoro-82M via `kokoro` package, ONNX runtime on CPU | Apache-2.0, \~50 voices, native speed parameter, returns token timestamps |
 | TTS v2 | Fish Speech or Qwen3-TTS behind the same interface | Higher quality, needs a GPU |
 | Time-stretch fallback | `pyrubberband` or ffmpeg atempo | Only above the model's native speed range |
-| Audio format | PCM 24 kHz internally, Opus/WebM to the browser | Opus is small and gapless in MSE |
+| Audio format | PCM 24 kHz internally, Opus/WebM per segment to the browser (decided 2026-10-15) | \~60 KB per sentence, browser-native decode via decodeAudioData |
 | Storage | SQLite + local filesystem | Single-user v1; swap to Postgres + S3 when multi-user |
 | Job queue | In-process asyncio task queue | No Redis until there is more than one worker |
-| Frontend | React + TypeScript, Vite | Media Source Extensions for gapless streaming, Media Session API |
+| Frontend | React + TypeScript, Vite | Web Audio API scheduled buffers for gapless playback (decided 2026-10-15, see Technical Design D5), Media Session API |
 | Packaging | Docker Compose | One command to run API, worker and web |
 | Tests | pytest, a fixture set of 20 PDFs | Reading-order and timestamp regressions are the main risk |
 
@@ -217,9 +217,9 @@ Speeds above the backend's native range are handled by the service, not the back
 | GET | /voices | All voices across backends |
 | GET | /audio/{segment\_id}?voice=&speed= | One synthesized segment (cache hit or synthesize), with timestamps in a header or sidecar JSON |
 
-**WebSocket /play/{document\_id}**
+**Audio delivery (decided 2026-10-15, replaces the earlier WebSocket plan)**
 
-Client sends `{ "cmd": "start", "segment_id": …, "voice": …, "speed": … }`, `seek`, `set_voice`, `set_speed`, `stop`. Server streams `{ "segment_id", "audio": <binary frame>, "timestamps": [...] }` messages, keeping the lookahead queue full and flushing it on any voice or speed change. The client decodes into a Media Source buffer and drives highlighting from the timestamps.
+The browser fetches `GET /audio/{segment_id}?voice=&speed=` one segment at a time and keeps two decoded ahead; the server's lookahead queue keeps five synthesized ahead. On a cache miss the API blocks until the synthesis thread finishes that segment. Playback schedules each decoded buffer at the previous one's end on the `AudioContext` clock, which is gapless by construction and gives highlighting a sample-accurate clock. Seek, voice and speed changes stop the scheduled sources, refetch from the new position with the new parameters, and the server clears and refills its queue. Rationale and the rejected WebSocket + MSE alternative are in the Technical Design, D5.
 
 ## Non-functional requirements
 
@@ -252,8 +252,8 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
 **What each milestone covers**
 
 1. M1 Ingest + skeleton: ING-1 to ING-5, the `documents`/`blocks`/`segments` tables, `POST /documents` and `GET /documents/{id}/segments`, a CLI that dumps a PDF's segments to stdout for eyeballing. Start by collecting the 20 fixture PDFs: five academic two-column papers, five single-column reports, five scanned pages, five with heavy tables and equations.
-2. M2 Synthesis + stream: SYN-1 to SYN-5, the Kokoro backend, the audio cache table, `GET /audio/{segment_id}` and the WebSocket. Benchmark script that reports real-time factor and time-to-first-audio.
-3. M3 Reader UI: PLAY-1 to PLAY-5, the React app with Media Source Extensions playback and word highlighting from timestamps. Voice and speed pickers.
+2. M2 Synthesis + stream: SYN-1 to SYN-5, the Kokoro backend, the audio cache table, `GET /audio/{segment_id}` with its lookahead queue. Benchmark script that reports real-time factor and time-to-first-audio.
+3. M3 Reader UI: PLAY-1 to PLAY-5, the React app with Web Audio scheduled playback and word highlighting from timestamps. Voice and speed pickers.
 4. M4 Library + polish: LIB-1 to LIB-4, PLAY-6 to PLAY-8, ING-6 and ING-7, OCR fallback (ING-2), Docker Compose, the 300-page soak test.
 
 After v1: SYN-7 second backend, SYN-8 content-aware delivery, PLAY-9 export, ING-9 more formats.
@@ -266,7 +266,7 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 | --- | --- | --- |
 | Reading order wrong on two-column or mixed-layout PDFs | High | Fixture set with ground truth from day one; Marker as the fallback parser for academic layouts; let the user tap a block to skip it |
 | Kokoro timestamps drift from audio after time-stretching | Medium | Stay inside native speed range where possible; scale timestamps by the exact stretch ratio; drift test in CI |
-| Audible seams between segments | Medium | Decode to one continuous PCM stream server-side, add 80 ms of silence at sentence ends, use Media Source Extensions not `<audio src>` per segment |
+| Audible seams between segments | Medium | Schedule each decoded segment at the previous one's end time on the AudioContext clock; never use `<audio src>` per segment |
 | Kokoro quality judged too robotic for long listening | Medium | Backend interface makes a GPU model a drop-in; try Fish Speech on a cloud GPU before committing |
 | OCR on photographed pages too slow or inaccurate | Medium | Tesseract first; PaddleOCR behind a flag; cap OCR to pages without a text layer |
 | Scope creep toward summaries and chat | High | Non-goals list; v1 ships the reader only |
@@ -275,7 +275,7 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 
 - [ ] Product name decided: HearNarro; register hearnarro.com before the first push - still working
 - [ ] Should speed be global or per document by default? Current plan: per document, with a global default -- this can be a global setting and the user should be able to change it
-- [ ] Store cached audio as Opus files or raw PCM? Opus saves 10x disk; PCM is simpler to stitch - lets go with opus
+- [ ] Cache format decided 2026-10-15: Opus/WebM at 48 kbps via ffmpeg - lets go with opus
 - [ ] Is a 2 s time-to-first-audio target realistic on an M1 laptop with Kokoro ONNX? Benchmark in M2 week 1
 - [ ] Do we need Marker in v1, or does PyMuPDF plus a column-detection heuristic clear the 95% gate?
 - [ ] Phone browser: does iOS Safari allow background playback through Media Session with MSE? Verify early in M3
