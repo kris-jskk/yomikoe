@@ -72,6 +72,11 @@ TOC_INNER_NUMBER_RE = re.compile(r"(?<=\s)\d{1,4}(?=\s)")  # "3 Title 6 Title 9 
 TOC_LINE_SHARE = 0.5
 TOC_MAX_PAGES = 6
 TOC_LEAD_MAX_LINES = 2  # a short non-TOC-like block before the first TOC line (entry title)
+TOC_LOOKAHEAD = 3  # inside a TOC, a short block followed within this many blocks by a TOC line
+TOC_NUMBER_ONLY_RE = re.compile(r"^(?:\d{1,4}|[ivxlc]+)$")  # a page-number-only entry block
+TOC_SENTENCE_MIN_WORDS = 4  # a block ending in . ! ? with this many words is prose, not an entry
+DROP_CAP_SIZE_RATIO = 1.5  # a single capital at least this x the body median opening a paragraph
+DROP_CAP_RE = re.compile(r"^[A-Z]$")
 # Cover pages: a digit-free table region with at most this many lines is a title, not a table.
 COVER_TABLE_MAX_LINES = 4
 EQUATION_PUNCT = set(".,;:!?")
@@ -441,7 +446,7 @@ def _toc_like(block: Block) -> bool:
     lines = [" ".join(ln.text.split()) for ln in block.lines if ln.text.strip()]
     if not lines:
         return False
-    if len(lines) == 1 and _is_leader_line(lines[0]):
+    if len(lines) == 1 and (_is_leader_line(lines[0]) or TOC_NUMBER_ONLY_RE.match(lines[0])):
         return True
     hits = sum(
         1
@@ -453,12 +458,28 @@ def _toc_like(block: Block) -> bool:
     return hits >= TOC_LINE_SHARE * len(lines)
 
 
+def _is_sentence(block: Block) -> bool:
+    text = " ".join(block.text.split())
+    return len(text.split()) >= TOC_SENTENCE_MIN_WORDS and text.rstrip('"”’)').endswith(
+        (".", "!", "?")
+    )
+
+
 def _mark_toc(pages: list[Page], median: float) -> None:
-    """A heading reading "Contents" or "Table of contents" opens a TOC region; it runs over the
-    TOC-like blocks after it, across pages, and ends at the first other block once one TOC-like
-    block was seen, at a body-size-or-larger heading, or after TOC_MAX_PAGES pages. Short blocks
-    before the first TOC-like one join it. A region with no TOC-like block types nothing (ING-3).
+    """A block of any type reading "Contents" or "Table of contents" opens a TOC region; it
+    runs over the TOC-like blocks after it (a page-number-only block counts), across pages, and
+    ends at the first other block once one TOC-like block was seen, at a body-size-or-larger
+    heading, at a sentence, or after TOC_MAX_PAGES pages. Short blocks before the first TOC-like
+    one join it, and so do short ones after it that a TOC-like block follows within
+    TOC_LOOKAHEAD blocks (an entry title above its page number). A region with no TOC-like block
+    types nothing (ING-3).
     """
+    flow = [
+        (page.number, block)
+        for page in pages
+        for block in page.blocks
+        if block.type not in ("header", "footer", "figure", "image") and block.text.strip()
+    ]
     region: list[Block] = []
     seen = False
     start = 0
@@ -470,26 +491,59 @@ def _mark_toc(pages: list[Page], median: float) -> None:
                 b.type = "toc"
         region, seen = [], False
 
-    for page in pages:
-        if region and page.number - start >= TOC_MAX_PAGES:
+    def entry_title(i: int) -> bool:
+        for _, later in flow[i + 1 : i + 1 + TOC_LOOKAHEAD]:
+            if _is_sentence(later) or len(later.lines) > TOC_LEAD_MAX_LINES:
+                return False
+            if _toc_like(later):
+                return True
+        return False
+
+    for i, (number, block) in enumerate(flow):
+        if region and number - start >= TOC_MAX_PAGES:
             close()
-        for block in page.blocks:
-            if block.type in ("header", "footer", "figure", "image") or not block.text.strip():
+        if region:
+            lines = [ln for ln in block.lines if ln.text.strip()]
+            if _toc_like(block):
+                region.append(block)
+                seen = True
                 continue
-            if region:
-                lines = [ln for ln in block.lines if ln.text.strip()]
-                if _toc_like(block):
-                    region.append(block)
-                    seen = True
-                    continue
-                big_heading = block.type == "heading" and _max_size(block) >= median
-                if not seen and not big_heading and len(lines) <= TOC_LEAD_MAX_LINES:
-                    region.append(block)
-                    continue
-                close()
-            if block.type == "heading" and TOC_HEADING_RE.match(normalize_key(block.text)):
-                region, seen, start = [block], False, page.number
+            big_heading = block.type == "heading" and _max_size(block) >= median
+            short = len(lines) <= TOC_LEAD_MAX_LINES and not big_heading
+            if short and (not seen or (not _is_sentence(block) and entry_title(i))):
+                region.append(block)
+                continue
+            close()
+        if TOC_HEADING_RE.match(normalize_key(block.text)):
+            region, seen, start = [block], False, number
     close()
+
+
+def _join_drop_caps(page: Page, median: float) -> None:
+    """A single capital letter at least DROP_CAP_SIZE_RATIO x the body median (a drop cap)
+    joins the body block whose first line starts inside its vertical extent, to its right,
+    with a lowercase letter: the letter is prepended and the cap typed noise (ING-3)."""
+    for cap in page.blocks:
+        if cap.type not in ("heading", "body") or not DROP_CAP_RE.match(cap.text.strip()):
+            continue
+        if _max_size(cap) < DROP_CAP_SIZE_RATIO * median:
+            continue
+        paras = [
+            b
+            for b in page.blocks
+            if b is not cap
+            and b.type == "body"
+            and b.lines
+            and cap.bbox.y0 <= b.lines[0].bbox.y0 < cap.bbox.y1
+            and b.lines[0].bbox.x0 >= cap.bbox.x0 - 1.0
+            and b.text[:1].islower()
+        ]
+        if not paras:
+            continue
+        para = min(paras, key=lambda b: (b.lines[0].bbox.y0, b.lines[0].bbox.x0))
+        first = para.lines[0]
+        first.spans[0] = replace(first.spans[0], text=cap.text.strip() + first.spans[0].text)
+        cap.type = "noise"
 
 
 def _fold_stack(run: list[Block]) -> None:
@@ -549,8 +603,8 @@ def classify_pages(pages: list[Page]) -> list[Page]:
     """Set block.type in place (first matching rule wins) and return pages.
 
     Figure-internal text (D12) overrides every type but caption. Then cover pull quotes are
-    retyped body, vertical letter stacks fold into one heading, and a table of contents is
-    typed toc.
+    retyped body, vertical letter stacks fold into one heading, drop caps join their
+    paragraph, and a table of contents is typed toc.
     """
     median = body_median_size(pages)
     repeated = repeated_band_texts(pages)
@@ -563,6 +617,7 @@ def classify_pages(pages: list[Page]) -> list[Page]:
         if page.number < COVER_PAGES:
             _retype_pull_quotes(page, median)
         _fold_vertical_titles(page)
+        _join_drop_caps(page, median)
     _mark_toc(pages, median)
     for page in pages:  # off-page small print stays noise whatever the document passes did
         for block in page.blocks:

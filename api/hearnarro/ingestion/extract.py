@@ -10,6 +10,7 @@ import importlib.util
 import itertools
 import re
 import shutil
+import struct
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -612,8 +613,154 @@ def _font_drops(chars: Sequence[dict[str, Any]]) -> dict[str, float]:
     return drops
 
 
-def _layout_chars(page: Any, coords: _Coords) -> list[LayoutChar]:
+# --- Ligature repair (ING-2, found on a user PDF 2026-10-16) ---------------------------------
+# Some subset TrueType fonts carry a ToUnicode map that sends their ligature glyphs to ASCII
+# punctuation ("Ful!lled", "e#ort", "$avor"); which character stands for which ligature changes
+# from font to font. The embedded font program still names each glyph in its post table
+# (f_i, f_f_i, uniFB01, ...): the repair looks the glyph up through the font's own cmap and, when
+# the mapped text is one punctuation character and the glyph is a ligature, uses the letters.
+_LIGATURES = {"ff": "ff", "fi": "fi", "fl": "fl", "ffi": "ffi", "ffl": "ffl", "ft": "ft"}
+_LIGATURE_UNI = {"FB00": "ff", "FB01": "fi", "FB02": "fl", "FB03": "ffi", "FB04": "ffl"}
+
+
+def ligature_text(glyph: str) -> str | None:
+    """The letters a ligature glyph name stands for ("f_i", "fi", "uniFB01" -> "fi"; any AGL
+    underscore name of single letters, "f_f_b" -> "ffb"), else None."""
+    name = glyph.split(".")[0]
+    if name.startswith("uni") and name[3:].upper() in _LIGATURE_UNI:
+        return _LIGATURE_UNI[name[3:].upper()]
+    parts = name.split("_")
+    if 2 <= len(parts) <= 4 and all(len(p) == 1 and p.isascii() and p.isalpha() for p in parts):
+        return "".join(parts)
+    return _LIGATURES.get(name)
+
+
+def _cmap_lookup(sub: bytes, code: int) -> int:
+    fmt = struct.unpack(">H", sub[:2])[0]
+    if fmt == 0:
+        return sub[6 + code] if code < 256 else 0
+    if fmt == 6:
+        first, count = struct.unpack(">HH", sub[6:10])
+        if first <= code < first + count:
+            return int(
+                struct.unpack(">H", sub[10 + 2 * (code - first) : 12 + 2 * (code - first)])[0]
+            )
+        return 0
+    if fmt == 4:
+        n = struct.unpack(">H", sub[6:8])[0] // 2
+        arr = [struct.unpack(f">{n}H", sub[o : o + 2 * n]) for o in (14, 16 + 2 * n)]
+        ends, starts = arr
+        deltas = struct.unpack(f">{n}h", sub[16 + 4 * n : 16 + 6 * n])
+        ro_at = 16 + 6 * n
+        offsets = struct.unpack(f">{n}H", sub[ro_at : ro_at + 2 * n])
+        for i in range(n):
+            if starts[i] <= code <= ends[i]:
+                if offsets[i] == 0:
+                    return (code + deltas[i]) & 0xFFFF
+                at = ro_at + 2 * i + offsets[i] + 2 * (code - starts[i])
+                gid = struct.unpack(">H", sub[at : at + 2])[0]
+                return (gid + deltas[i]) & 0xFFFF if gid else 0
+        return 0
+    return 0
+
+
+def truetype_glyph_names(data: bytes) -> dict[int, str]:
+    """Character code (0-255) -> glyph name, from a TrueType font's cmap and format-2 post
+    tables. Names from the Macintosh standard set (index < 258) are not resolved. Pure."""
+    tables: dict[bytes, bytes] = {}
+    for i in range(struct.unpack(">H", data[4:6])[0]):
+        tag, _, off, length = struct.unpack(">4sIII", data[12 + 16 * i : 28 + 16 * i])
+        tables[tag] = data[off : off + length]
+    post, cmap = tables.get(b"post", b""), tables.get(b"cmap", b"")
+    if len(post) < 34 or struct.unpack(">I", post[:4])[0] != 0x00020000 or len(cmap) < 4:
+        return {}
+    count = struct.unpack(">H", post[32:34])[0]
+    index = struct.unpack(f">{count}H", post[34 : 34 + 2 * count])
+    custom, at = [], 34 + 2 * count
+    while at < len(post):
+        custom.append(post[at + 1 : at + 1 + post[at]].decode("latin-1"))
+        at += 1 + post[at]
+    subs = {}
+    for i in range(struct.unpack(">H", cmap[2:4])[0]):
+        plat, enc, off = struct.unpack(">HHI", cmap[4 + 8 * i : 12 + 8 * i])
+        subs[(plat, enc)] = cmap[off:]
+    sub = subs.get((3, 0)) or subs.get((1, 0)) or subs.get((3, 1))
+    if sub is None:
+        return {}
+    out: dict[int, str] = {}
+    for code in range(256):
+        gid = _cmap_lookup(sub, code) or _cmap_lookup(sub, 0xF000 | code)
+        if 0 < gid < count and index[gid] >= 258 and index[gid] - 258 < len(custom):
+            out[code] = custom[index[gid] - 258]
+    return out
+
+
+def repair_ligature(text: str, font: str, fixes: dict[tuple[str, str], str]) -> str:
+    """The ligature letters for a glyph ``fixes`` names (font name with prefix, mapped text)."""
+    return fixes.get((font, text), text)
+
+
+def _font_fixes(spec: dict[str, Any]) -> dict[str, str]:
+    """For one simple TrueType font: mapped text -> ligature letters, for punctuation-mapped
+    ligature glyphs. Empty when anything is missing."""
+    from pdfminer.pdffont import PDFTrueTypeFont
+    from pdfminer.pdftypes import resolve1
+
+    desc = resolve1(spec.get("FontDescriptor")) or {}
+    program = resolve1(desc.get("FontFile2")) if isinstance(desc, dict) else None
+    if program is None or "ToUnicode" not in spec:
+        return {}
+    font = PDFTrueTypeFont(None, spec)  # type: ignore[arg-type]
+    umap = getattr(font, "unicode_map", None)
+    names = truetype_glyph_names(program.get_data())
+    fixes: dict[str, str] = {}
+    for code, glyph in names.items():
+        letters = ligature_text(glyph)
+        mapped = umap.cid2unichr.get(code) if umap is not None else None
+        if letters and mapped and len(mapped) == 1 and not mapped.isalnum() and mapped.isascii():
+            fixes[mapped] = letters
+    return fixes
+
+
+def _ligature_fixes(page: Any, cache: dict[Any, dict[str, str]]) -> dict[tuple[str, str], str]:
+    """(font name, mapped text) -> ligature letters for the page's fonts; a name two fonts
+    disagree on is dropped. ``cache`` holds per-font results across pages."""
+    from pdfminer.pdftypes import resolve1
+
+    out: dict[tuple[str, str], str] = {}
+    bad: set[tuple[str, str]] = set()
+    try:
+        fonts = resolve1(resolve1(page.page_obj.resources).get("Font")) or {}
+        for ref in fonts.values():
+            key = getattr(ref, "objid", None) or id(ref)
+            spec = resolve1(ref)
+            if not isinstance(spec, dict) or str(getattr(spec.get("Subtype"), "name", "")) != (
+                "TrueType"
+            ):
+                continue
+            if key not in cache:
+                try:
+                    cache[key] = _font_fixes(spec)
+                except Exception:  # noqa: BLE001 - a damaged font program means no repair
+                    cache[key] = {}
+            name = str(getattr(spec.get("BaseFont"), "name", spec.get("BaseFont")))
+            for mapped, letters in cache[key].items():
+                k = (name, mapped)
+                if out.get(k, letters) != letters:
+                    bad.add(k)
+                out[k] = letters
+    except Exception:  # noqa: BLE001 - resource walking is best effort
+        return {}
+    for k in bad:
+        out.pop(k, None)
+    return out
+
+
+def _layout_chars(
+    page: Any, coords: _Coords, fixes: dict[tuple[str, str], str] | None = None
+) -> list[LayoutChar]:
     chars = list(page.chars)
+    fixes = fixes or {}
     drops = _font_drops(chars)
     out: list[LayoutChar] = []
     for ch in chars:
@@ -624,7 +771,9 @@ def _layout_chars(page: Any, coords: _Coords) -> list[LayoutChar]:
             box = BBox(box.x0, box.y0 - up, box.x1, box.y1 - up)
         out.append(
             LayoutChar(
-                text=_cid_text(str(ch["text"])),
+                text=repair_ligature(
+                    _cid_text(str(ch["text"])), str(ch.get("fontname", "")), fixes
+                ),
                 bbox=box,
                 font=_SUBSET_PREFIX.sub("", str(ch.get("fontname", ""))),
                 size=float(ch.get("size", 0.0)),
@@ -777,10 +926,12 @@ def extract_pages(
 ) -> list[Page]:
     """Extract every page of ``pdf_path``; OCR pages with fewer than ``min_text_chars``."""
     pages: list[Page] = []
+    font_cache: dict[Any, dict[str, str]] = {}
     with pdfplumber.open(str(pdf_path)) as pdf:
         for number, pdf_page in enumerate(pdf.pages):
             coords = _Coords(pdf_page)
-            lines = group_lines(_layout_chars(pdf_page, coords))
+            fixes = _ligature_fixes(pdf_page, font_cache)
+            lines = group_lines(_layout_chars(pdf_page, coords, fixes))
             ruled = [
                 t
                 for t in rule_tables(_hrules(pdf_page, coords), float(pdf_page.height))

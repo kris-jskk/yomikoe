@@ -329,3 +329,60 @@ def test_ing2_short_spaced_line_is_not_resplit() -> None:
     """Fewer than 6 tokens: left alone (a variable list such as "x y z" stays spaced)."""
     chars = _tracked("ABCD", 100, {})
     assert ["".join(c.text for c in ln) for ln in group_lines(chars)] == ["A B C D"]
+
+
+# --- Ligature glyphs without a Unicode mapping (ING-2; found on a user PDF 2026-10-16): a
+# subset TrueType font whose ToUnicode maps its fi/ffi/ff/fl glyphs to "!", "#", "$", "%".
+# The embedded font's cmap and post tables name the glyph (f_i, f_f_i, ...). ---
+
+
+def _ttf(code_to_name: dict[int, str]) -> bytes:
+    """A minimal TrueType file: a (1,0) format-0 cmap and a format-2 post table."""
+    import struct
+
+    names = list(code_to_name.values())
+    gids = {code: i + 1 for i, code in enumerate(code_to_name)}
+    glyph_ids = bytes(gids.get(c, 0) for c in range(256))
+    cmap = struct.pack(">HHHHI", 0, 1, 1, 0, 12) + struct.pack(">HHH", 0, 262, 0) + glyph_ids
+    post = struct.pack(">I", 0x00020000) + bytes(28)
+    post += struct.pack(">H", len(names) + 1) + struct.pack(">H", 0)
+    post += b"".join(struct.pack(">H", 258 + i) for i in range(len(names)))
+    post += b"".join(bytes([len(n)]) + n.encode() for n in names)
+    tables = {b"cmap": cmap, b"post": post}
+    offset = 12 + 16 * len(tables)
+    head, body = struct.pack(">IHHHH", 0x00010000, len(tables), 0, 0, 0), b""
+    for tag, data in tables.items():
+        head += struct.pack(">4sIII", tag, 0, offset + len(body), len(data))
+        body += data
+    return head + body
+
+
+def test_ing2_ligature_glyph_names_map_to_letters() -> None:
+    from hearnarro.ingestion.extract import ligature_text
+
+    assert ligature_text("f_i") == "fi"
+    assert ligature_text("f_f_i") == "ffi"
+    assert ligature_text("uniFB02") == "fl"
+    assert ligature_text("ffl") == "ffl"
+    assert ligature_text("f_f_b") == "ffb"  # "offbeat" in the user PDF
+    assert ligature_text("exclam") is None
+    assert ligature_text("uni2010") is None
+
+
+def test_ing2_truetype_code_to_glyph_name_from_cmap_and_post() -> None:
+    from hearnarro.ingestion.extract import truetype_glyph_names
+
+    names = truetype_glyph_names(_ttf({33: "f_l", 35: "f_i", 37: "f_f_i"}))
+    assert names[33] == "f_l"
+    assert names[35] == "f_i"
+    assert names[37] == "f_f_i"
+
+
+def test_ing2_ligature_repair_replaces_only_mapped_punctuation() -> None:
+    from hearnarro.ingestion.extract import repair_ligature
+
+    fixes = {("ABCDEF+Fanwood", "!"): "fi", ("ABCDEF+Fanwood", "%"): "ffi"}
+    assert repair_ligature("!", "ABCDEF+Fanwood", fixes) == "fi"
+    assert repair_ligature("%", "ABCDEF+Fanwood", fixes) == "ffi"
+    assert repair_ligature("!", "GHIJKL+Fanwood", fixes) == "!"  # a real exclamation mark
+    assert repair_ligature("a", "ABCDEF+Fanwood", fixes) == "a"

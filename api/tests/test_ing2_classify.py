@@ -592,3 +592,56 @@ def test_ing3_off_page_small_print_beats_heading_rules() -> None:
 def test_ing3_block_below_the_page_is_noise() -> None:
     block = make_block(0, 0, [OFF_PAGE_TEXT, OFF_PAGE_TEXT], y0=800, width=200, size=SMALL_PRINT)
     assert _type_of(classify_pages(_doc(block)), 0) == "noise"
+
+
+# --- Drop caps and a body-typed "CONTENTS" (ING-3; found on a user book 2026-10-16) ---
+
+
+def _drop_cap_page(letter: str, first_line: str) -> Page:
+    cap = make_block(1, 0, [letter], x0=36, y0=238.5, width=24, size=42.5)
+    para = make_block(1, 1, [first_line, FILLER, FILLER], x0=36, y0=245.2, width=300)
+    return make_page(1, [cap, para])
+
+
+def test_ing3_drop_cap_joins_the_paragraph_it_opens() -> None:
+    pages = classify_pages(
+        [make_page(0, _filler(0, 0)), _drop_cap_page("P", "roductivity isn't just about")]
+    )
+    cap, para = pages[1].blocks
+    assert cap.type not in READ_TYPES
+    assert para.type == "body"
+    assert para.text.startswith("Productivity isn't just about")
+
+
+def test_ing3_big_letter_before_a_capitalised_block_is_not_a_drop_cap() -> None:
+    pages = classify_pages(
+        [make_page(0, _filler(0, 0)), _drop_cap_page("A", "Roads lead home again")]
+    )
+    cap, para = pages[1].blocks
+    assert cap.text == "A" and cap.type in READ_TYPES
+    assert para.text.startswith("Roads")
+
+
+def test_ing3_body_typed_contents_with_page_number_blocks_is_toc() -> None:
+    entries = [
+        ("Preface", 60), ("ix", 310), ("Part 1", 60), ("1. Dying at 35,000 feet", 52),
+        ("3", 312), ("2. Peak Performance Traps", 52), ("14", 308),
+    ]  # fmt: skip
+    toc = [make_block(1, 0, ["CONTENTS"], x0=170, y0=72, width=60, size=10.0)]
+    for i, (text, x0) in enumerate(entries):
+        toc.append(make_block(1, 1 + i, [text], x0=x0, y0=128 + 14 * (i // 2 * 2), width=40))
+    back = [
+        make_block(2, 0, ["Acknowledgments"], x0=60, y0=100, width=200),
+        make_block(2, 1, ["127"], x0=303, y0=100, width=10),
+    ]
+    dedication = [
+        make_block(3, 0, ["To my amazing wife and my incredible boys, Alex and Leo."], y0=180),
+        make_block(3, 1, ["I love you forever."], x0=149, y0=203, width=120),
+    ]
+    pages = classify_pages(
+        [make_page(0, _filler(0, 0)), make_page(1, toc), make_page(2, back),
+         make_page(3, dedication)]
+    )  # fmt: skip
+    assert _types(pages[1]) == ["toc"] * 8
+    assert _types(pages[2]) == ["toc", "toc"]
+    assert _types(pages[3]) == ["body", "body"]
