@@ -13,211 +13,132 @@
 {"order": 12, "page": 0, "type": "body", "text": "Weight pruning offers a natural approach to reduce cost by zeroing out selected parameters (Frantar and Alistarh, 2023; Sun et al., 2024)."}
 {"order": 13, "page": 0, "type": "body", "text": "However, as consistently observed across pruning methods, pruning LRMs can substantially degrade accuracy on reasoning tasks (Ji et al., 2025; Lucas et al., 2026; Zhang et al., 2026b)."}
 {"order": 14, "page": 0, "type": "body", "text": "Existing efforts have primarily focused on mitigating this degradation through improved pruning calibration (Ji et al., 2025; Lucas et al., 2026; Zhang et al., 2026b), alongside post-pruning recovery via retraining or fine-tuning (Liu et al., 2025b; Muralidharan et al., 2024; Kim et al., 2024; Xia et al., 2024a)."}
-{"order": 15, "page": 0, "type": "body", "text": "DS-Qwen-1.5B DS-Qwen-14B"}
-{"order": 16, "page": 0, "type": "body", "text": "DS-Qwen-7B OpenThinker3-7B"}
-{"order": 17, "page": 0, "type": "body", "text": "DS-Llama-8B"}
-{"order": 18, "page": 0, "type": "body", "text": "100"}
-{"order": 19, "page": 0, "type": "body", "text": "AIME25 Non-Termination (%)"}
-{"order": 20, "page": 0, "type": "body", "text": "AIME25 Accuracy (%)"}
-{"order": 21, "page": 0, "type": "body", "text": "75"}
-{"order": 22, "page": 0, "type": "body", "text": "40"}
-{"order": 23, "page": 0, "type": "body", "text": "50"}
-{"order": 24, "page": 0, "type": "body", "text": "20"}
-{"order": 25, "page": 0, "type": "body", "text": "25"}
-{"order": 26, "page": 0, "type": "body", "text": "0"}
-{"order": 27, "page": 0, "type": "body", "text": "0"}
-{"order": 28, "page": 0, "type": "body", "text": "Dense 10 50 60 70 Sparsity (%)"}
-{"order": 29, "page": 0, "type": "body", "text": "Dense 10 50 60 70 Sparsity (%)"}
-{"order": 30, "page": 0, "type": "body", "text": "Figure 1: Accuracy (left) and non-termination rate (right) on AIME-25 across pruning settings (SparseGPT with OBC calibration, 16,384-token budget, averaged over 4 runs)."}
-{"order": 31, "page": 0, "type": "body", "text": "Accuracy decreases as non-termination becomes more frequent."}
-{"order": 32, "page": 0, "type": "body", "text": "Yet, it remains unclear whether this degradation reflects a loss of reasoning capability or a different kind of failure."}
-{"order": 33, "page": 0, "type": "body", "text": "We find that much of this degradation stems from a failure to stop rather than a failure to reason."}
-{"order": 34, "page": 0, "type": "body", "text": "As sparsity increases, pruned LRMs increasingly fail to terminate and commit to a final answer within the token budget, and accuracy falls accordingly (Figure 1)."}
-{"order": 35, "page": 0, "type": "body", "text": "Strikingly, many of these non-terminating traces already contain the correct answer, yet the model keeps reasoning until the budget is exhausted."}
-{"order": 36, "page": 0, "type": "body", "text": "We refer to this behavior as reasoning divergence."}
-{"order": 37, "page": 0, "type": "body", "text": "On problems solved by the dense model, pruned models remain largely accurate whenever they terminate, and non-termination becomes the dominant source of errors as sparsity grows (Section 3.1)."}
-{"order": 38, "page": 0, "type": "body", "text": "Why do pruned models fail to stop?"}
-{"order": 39, "page": 0, "type": "body", "text": "Pruning does not erase the stopping signal: when replaying dense traces, pruned models still assign high probability to the end-of-thinking token where the dense model stops."}
-{"order": 40, "page": 0, "type": "body", "text": "Instead, during free-running generation they increasingly revisit earlier reasoning rather than moving forward, and fall into repetitive loops."}
-{"order": 41, "page": 0, "type": "body", "text": "Moreover, the hidden-state difference between continuations that terminate and those that loop points in a similar direction across pruned checkpoints, suggesting that the shift between looping and committing to an answer is captured by a shared direction in representation space."}
-{"order": 42, "page": 1, "type": "body", "text": "Based on this diagnosis, we propose Termination- Guided Activation Steering (TGAS), which adds this direction to the residual stream at inference time to steer pruned models toward termination without retraining or weight updates."}
-{"order": 43, "page": 1, "type": "body", "text": "TGAS consistently improves termination and accuracy across six LRMs, three pruning pipelines, and math and code benchmarks by reducing repetitive reasoning."}
-{"order": 44, "page": 1, "type": "body", "text": "Our contributions are threefold:"}
-{"order": 45, "page": 1, "type": "body", "text": "(i) We show that a substantial part of pruninginduced degradation in LRMs arises from reasoning divergence, a failure to commit rather than a loss of reasoning ability;"}
-{"order": 46, "page": 1, "type": "body", "text": "(ii) We identify a hidden-state direction that separates terminating from looping continuations, and build on it TGAS, a training-free steering method;"}
-{"order": 47, "page": 1, "type": "body", "text": "(iii) We show that TGAS consistently improves termination and overall accuracy across models, pruning methods, and benchmarks by reducing looping."}
-{"order": 48, "page": 1, "type": "heading", "text": "2 Background and Related Work"}
-{"order": 49, "page": 1, "type": "body", "text": "Pruning for LRMs."}
-{"order": 50, "page": 1, "type": "body", "text": "One-shot unstructured pruning formulates compression as layer-wise reconstruction (Frantar et al., 2022): given a weight matrix Wℓand calibration inputs Xℓ, it solves min∥ˆ Wℓ∥0≤S ∥(Wℓ−ˆ Wℓ)Xℓ∥2"}
-{"order": 51, "page": 1, "type": "body", "text": "F , where S is the number of retained weights."}
-{"order": 52, "page": 1, "type": "body", "text": "We focus on two retraining-free methods: SparseGPT (Frantar and Alistarh, 2023), which uses second-order information to compensate for pruning errors, and Wanda (Sun et al., 2024), which scores weights by magnitude and input-activation norm."}
-{"order": 53, "page": 1, "type": "body", "text": "To better capture long reasoning traces, recent LRM pruning methods improve calibration via onpolicy chain-of-thought RAC (Lucas et al., 2026), reasoning-step importance OBC (Nguyen et al., 2026), or self-generated traces (Ji et al., 2025; Wang et al., 2025; Xiang et al., 2025), detailed preliminaries in Appendix B."}
-{"order": 54, "page": 1, "type": "body", "text": "Related Works."}
-{"order": 55, "page": 1, "type": "body", "text": "LRMs can overthink and enter repetitive loops (Chen et al., 2026; Pipis et al., 2026), which quantization can further prolong (Lotfi et al., 2026)."}
-{"order": 56, "page": 1, "type": "body", "text": "We show that pruning amplifies looping while largely preserving the stopping signal, distinguishing failures to stop from failures to reason."}
-{"order": 57, "page": 1, "type": "body", "text": "Activation steering offers a way to modify behavior by adding directions to the residual stream, with difference-in-means directions shown to control behaviors of LLMs (Arditi et al., 2024)."}
-{"order": 58, "page": 1, "type": "body", "text": "For reasoning, SEAL (Chen et al., 2025) suppresses reflection, while Plan- CoT (Sheng et al., 2025) modulates reasoning length."}
-{"order": 59, "page": 1, "type": "body", "text": "In contrast, TGAS targets pruning-induced non-termination using contrasting continuations of the same prefix, yielding a direction weakly aligned with SEAL’s (Appendix F.8)."}
-{"order": 60, "page": 1, "type": "heading", "text": "3 Understanding Pruning-Induced Reasoning Degradation"}
-{"order": 61, "page": 1, "type": "body", "text": "We investigate three questions:"}
-{"order": 62, "page": 1, "type": "body", "text": "(i) Do pruned models lose reasoning ability or only the ability to stop?"}
-{"order": 63, "page": 1, "type": "body", "text": "(ii) Is non-termination caused by limited generation budgets?"}
-{"order": 64, "page": 1, "type": "body", "text": "(iii) Why do models fail to stop despite reaching the correct answer?"}
-{"order": 65, "page": 1, "type": "body", "text": "We address the first two questions in Section 3.1 and the third in Section 3.2."}
-{"order": 66, "page": 1, "type": "body", "text": "Recall that we refer to this phenomenon as reasoning divergence, characterized by non-termination, driven by repetitive looping and an failure to commit to final answers."}
-{"order": 67, "page": 1, "type": "body", "text": "Setting."}
-{"order": 68, "page": 1, "type": "body", "text": "We evaluate DeepSeek-R1-Distill- Qwen (DS-Qwen), DeepSeek-R1-Distill-Llama (DS-Llama) (Guo et al., 2025), and OpenThinker3 (OT3) (Guha et al., 2026) under one-shot unstructured pruning of decoder linear layers at varying sparsity levels, using SparseGPT or Wanda with OBC, RAC, or C4 calibration."}
-{"order": 69, "page": 1, "type": "body", "text": "Benchmarks include MATH-500 Levels 4-5 (hereafter MATH- 500) (Lightman et al., 2024), AIME-25 (Zhang and Math-AI, 2025), and LiveCodeBench-v6 (LCB) (Jain et al., 2025); OpenR1-Math-220K (OpenR1-Math) (Hugging Face, 2025) is used only for calibration and steering-direction construction."}
-{"order": 70, "page": 1, "type": "body", "text": "We use a 16,384-token budget, T = 0.6, and top-p = 0.95, averaging k = 4 responses on three benchmarks."}
-{"order": 71, "page": 1, "type": "body", "text": "Our default uses SparseGPT with OBC calibration on model-generated reasoning traces, counting a response as correct only if it commits to a final answer, detailed in Appendix C."}
-{"order": 72, "page": 1, "type": "heading", "text": "3.1 Do Pruned Models Lose the Ability to Reason?"}
-{"order": 73, "page": 1, "type": "body", "text": "Accuracy on Dense-Correct Problems."}
-{"order": 74, "page": 1, "type": "body", "text": "To determine whether reasoning divergence reflects a loss of reasoning capability, we evaluate pruned models on problems correctly solved by their dense counterparts."}
-{"order": 75, "page": 2, "type": "heading", "text": "Pruned LRMs: Reasoning Divergence"}
-{"order": 76, "page": 2, "type": "table", "text": "DS-Qwen-1.5B"}
-{"order": 77, "page": 2, "type": "table", "text": "Q MATH-500, level 5 f(x) = 3x4 + 5x2 −9x −2 and g(x) = f(x −1)."}
-{"order": 78, "page": 2, "type": "table", "text": "What is the sum of the coefficients of g?"}
-{"order": 79, "page": 2, "type": "table", "text": "33.8 n=71"}
-{"order": 80, "page": 2, "type": "table", "text": "50"}
-{"order": 81, "page": 2, "type": "table", "text": "~2.0k"}
-{"order": 82, "page": 2, "type": "table", "text": "A DS-Qwen-7B, OBC 60% sparse"}
-{"order": 83, "page": 2, "type": "table", "text": "Sparsity (%)"}
-{"order": 84, "page": 2, "type": "table", "text": "< think > The sum of the coefficients is g(1) = f(0) = −2 correct"}
-{"order": 85, "page": 2, "type": "table", "text": "37.3 n=201"}
-{"order": 86, "page": 2, "type": "table", "text": "60"}
-{"order": 87, "page": 2, "type": "table", "text": "~0.8k"}
-{"order": 88, "page": 2, "type": "table", "text": "Wait, let me expand f(x −1) ... −12x −10x −9x = (−21)x overthinking ..."}
-{"order": 89, "page": 2, "type": "table", "text": "So, the sum is 8."}
-{"order": 90, "page": 2, "type": "table", "text": "n=260"}
-{"order": 91, "page": 2, "type": "table", "text": "70"}
-{"order": 92, "page": 2, "type": "table", "text": "~0.4k"}
-{"order": 93, "page": 2, "type": "table", "text": "Wait, perhaps I made a mistake in the expansion."}
-{"order": 94, "page": 2, "type": "table", "text": "0 20 40"}
-{"order": 95, "page": 2, "type": "table", "text": "↺ repeated 583 times hits 16k cap"}
-{"order": 96, "page": 2, "type": "table", "text": "Answer present (conclusive) First answer position: median, IQR (~tokens) Faded: n < 30"}
-{"order": 97, "page": 2, "type": "table", "text": "DS-Qwen-7B"}
-{"order": 98, "page": 2, "type": "table", "text": "DS-Qwen-14B"}
-{"order": 99, "page": 2, "type": "table", "text": "34.8 n=23"}
-{"order": 100, "page": 2, "type": "table", "text": "38.5 n=13"}
-{"order": 101, "page": 2, "type": "table", "text": "~3.5k"}
-{"order": 102, "page": 2, "type": "table", "text": "~5.4k 39.2 n=51"}
-{"order": 103, "page": 2, "type": "table", "text": "41.4 n=58"}
-{"order": 104, "page": 2, "type": "table", "text": "~2.1k"}
-{"order": 105, "page": 2, "type": "table", "text": "~1.9k"}
-{"order": 106, "page": 2, "type": "table", "text": "48.0 n=198"}
-{"order": 107, "page": 2, "type": "table", "text": "31.3 n=201"}
-{"order": 108, "page": 2, "type": "table", "text": "~1.1k"}
-{"order": 109, "page": 2, "type": "table", "text": "~0.7k"}
-{"order": 110, "page": 2, "type": "table", "text": "0 20 40 % of non-termination traces (bars) / % of trace length (position)"}
-{"order": 111, "page": 2, "type": "table", "text": "0 20 40"}
-{"order": 112, "page": 2, "type": "caption", "text": "Figure 2: Gold answers in non-terminating reasoning traces of DeepSeek models on MATH-500."}
-{"order": 113, "page": 2, "type": "caption", "text": "Left: an example of reasoning divergence, where the pruned model continues reasoning after reaching the correct answer."}
-{"order": 114, "page": 2, "type": "caption", "text": "Right: the fraction of traces containing the gold answer and the median position of its first occurrence."}
-{"order": 115, "page": 2, "type": "caption", "text": "n denotes the number of non-terminating samples."}
-{"order": 116, "page": 2, "type": "heading", "text": "Model Ckpt Kept No-Term."}
-{"order": 117, "page": 2, "type": "heading", "text": "Wrong Kept|term"}
-{"order": 118, "page": 2, "type": "body", "text": "obc_50 91.7±0.8 3.8±0.3 4.5±0.6 95.3±0.6 obc_60 77.8±0.7 16.8±0.1 5.4±0.6 93.5±0.7"}
-{"order": 119, "page": 2, "type": "body", "text": "DS-Qwen"}
-{"order": 120, "page": 2, "type": "body", "text": "-7B"}
-{"order": 121, "page": 2, "type": "body", "text": "obc_50 89.2±0.6 2.4±1.5 8.4±0.9 91.4±0.8 obc_60 74.3±2.8 16.4±1.9 9.3±0.9 88.9±1.4"}
-{"order": 122, "page": 2, "type": "body", "text": "DS-Qwen"}
-{"order": 123, "page": 2, "type": "body", "text": "-14B"}
-{"order": 124, "page": 2, "type": "body", "text": "OT3-7B obc_50 79.3±2.9 13.1±2.4 7.6±1.9 91.3±2.2 obc_60 63.6±3.4 29.8±3.3 6.6±1.8 90.6±2.5"}
-{"order": 125, "page": 2, "type": "body", "text": "Table 1: Accuracy on MATH-500 problems correctly solved by the dense model."}
-{"order": 126, "page": 2, "type": "body", "text": "Kept: correct; No-Term."}
-{"order": 127, "page": 2, "type": "body", "text": ": reasoning fails to terminate; Wrong: terminated but incorrect; Kept|term: accuracy among terminated generations."}
-{"order": 128, "page": 2, "type": "body", "text": "From 50% to 60% sparsity, non-termination grows sharply while the terminated-but-wrong rate stays nearly flat, so accuracy among terminated generations remains high."}
-{"order": 129, "page": 2, "type": "body", "text": "DS-Qwen-7B DS-Qwen-14B 16K tokens 65K tokens"}
-{"order": 130, "page": 2, "type": "body", "text": "100"}
-{"order": 131, "page": 2, "type": "body", "text": "60"}
-{"order": 132, "page": 2, "type": "body", "text": "Non-termination rate (%)"}
-{"order": 133, "page": 2, "type": "body", "text": "75"}
-{"order": 134, "page": 2, "type": "body", "text": "40"}
-{"order": 135, "page": 2, "type": "body", "text": "Accuracy (%)"}
-{"order": 136, "page": 2, "type": "body", "text": "50"}
-{"order": 137, "page": 2, "type": "body", "text": "20"}
-{"order": 138, "page": 2, "type": "body", "text": "25"}
-{"order": 139, "page": 2, "type": "body", "text": "0"}
-{"order": 140, "page": 2, "type": "body", "text": "0"}
-{"order": 141, "page": 2, "type": "body", "text": "Dense 10 50 60 70 Sparsity (%)"}
-{"order": 142, "page": 2, "type": "body", "text": "Dense 10 50 60 70 Sparsity (%)"}
-{"order": 143, "page": 2, "type": "body", "text": "Figure 3: Non-termination rate and accuracy of DeepSeek models on AIME-25 under 16K- and 65K-token budgets."}
-{"order": 144, "page": 2, "type": "body", "text": "Table 1 shows that as sparsity grows, the additional errors come mainly from non-termination rather than from incorrect answers."}
-{"order": 145, "page": 2, "type": "body", "text": "On MATH-500, going from 50% to 60% sparsity raises the non-termination rate from 3.8% to 16.8% for DS-Qwen-7B, and from 2.4% to 16.4% for the 14B counterpart, while the terminated-but-wrong rate stays nearly unchanged."}
-{"order": 146, "page": 2, "type": "body", "text": "Terminated generations largely preserve their accuracy at high sparsity, despite fewer dense-correct samples remaining correct."}
-{"order": 147, "page": 2, "type": "body", "text": "These results suggest that substantial reasoning capability remains intact under moderate pruning, while termination becomes the primary bottleneck as sparsity grows (full results in Appendix D.1)."}
-{"order": 148, "page": 2, "type": "body", "text": "Larger Generation Budget."}
-{"order": 149, "page": 2, "type": "body", "text": "We ask whether reasoning divergence is simply caused by an insufficient generation budget."}
-{"order": 150, "page": 2, "type": "body", "text": "As shown in Figure 3, increasing the budget from 16,384 to 65,536 tokens substantially reduces non-termination at low and moderate sparsity, e.g., from 42.5% to 12.5% for 7B at 50% sparsity, but leaves accuracy nearly unchanged for DS-Qwen 7B and 14B, while at 60– 70% sparsity non-termination barely decreases."}
-{"order": 151, "page": 2, "type": "body", "text": "Appendix D.2 shows that the larger budget recovers only 0–3 additional correct traces across settings, suggesting that pruning-induced failures are not primarily due to insufficient generation length."}
-{"order": 152, "page": 2, "type": "body", "text": "Correct Answer Presence in Reasoning Traces."}
-{"order": 153, "page": 2, "type": "body", "text": "Since a larger budget rarely helps, we next ask what the non-terminating traces contain: does the reasoning already reach the correct answer even when the model fails to terminate and finalize it?"}
-{"order": 154, "page": 2, "type": "body", "text": "To answer this question, we use text-based rules, termed Conclusive, that detect answer-like statements following cues such as \"thus the answer\" or \"so we get\"(Appendix C.2).1"}
-{"order": 155, "page": 2, "type": "body", "text": "Figure 2 shows that a substantial fraction of non-terminating traces already contain the correct answer: at 60% sparsity, this holds for 41.4% and 39.2% of nonterminating traces for DS-Qwen 7B and 14B, respectively, with the answer appearing early at a median of 13.0% and 11.9% of the trace length, roughly 2.1k and 1.9k tokens."}
-{"order": 156, "page": 2, "type": "body", "text": "Despite reaching the correct answer, models continue generating to the token limit, often entering repetitive or corrective reasoning."}
-{"order": 157, "page": 2, "type": "body", "text": "This suggests that non-termination often reflects reasoning divergence rather than an inability to reach the correct answer."}
-{"order": 158, "page": 2, "type": "body", "text": "We provide a headroom analysis in Appendix E.3, quantifying the recoverable accuracy loss by counting nonterminating traces that already contain the correct answer as correct."}
-{"order": 159, "page": 2, "type": "footnote", "text": "1We validate Conclusive against an independent LLM judge: on 250 sampled traces, the two agree on 96.0% of cases (κ = 0.898; Appendix C.3)."}
-{"order": 160, "page": 3, "type": "heading", "text": "DS-Qwen-7B DS-Qwen-14B"}
-{"order": 161, "page": 3, "type": "body", "text": "obc_50 obc_60 obc_70 obc_50 obc_60 obc_70"}
-{"order": 162, "page": 3, "type": "body", "text": "AIME-25 p(</think>) 0.998 0.957 0.036 0.995 0.854 0.073 Med. rank 0 0 5.5 0 0 2"}
-{"order": 163, "page": 3, "type": "body", "text": "MATH-500 p(</think>) 0.996 0.924 0.040 0.998 0.907 0.130 Med. rank 0 0 7 0 0 3"}
-{"order": 164, "page": 3, "type": "body", "text": "Table 2: Teacher-forced stopping signal at the dense model’s STOP position: probability of </think> and its median rank (0 means </think> is the top prediction)."}
-{"order": 165, "page": 3, "type": "heading", "text": "3.2 Why Do Pruned Models Fail to Terminate?"}
-{"order": 166, "page": 3, "type": "body", "text": "Section 3.1 shows that pruned LRMs largely retain the ability to reach correct answers but increasingly fail to terminate."}
-{"order": 167, "page": 3, "type": "body", "text": "We show that the stopping signal remains intact, yet during free-running generation, models struggle to commit to final answers and fall into repetitive reasoning loops."}
-{"order": 168, "page": 3, "type": "body", "text": "Does pruning damage the stopping mechanism?"}
-{"order": 169, "page": 3, "type": "body", "text": "We test whether pruning impairs stopping recognition via teacher forcing."}
-{"order": 170, "page": 3, "type": "body", "text": "Let Dcov denote dense traces that terminate correctly."}
-{"order": 171, "page": 3, "type": "body", "text": "We replay these traces through each pruned checkpoint and measure p(</think>) and its rank at the dense model’s termination position (STOP)."}
-{"order": 172, "page": 3, "type": "body", "text": "As shown in Table 2, at 50–60% sparsity, the signal remains strong: for 7B, p(</think>) > 0.92 with median rank 0 on both AIME-25 and MATH-500, while 14B exceeds 0.85 with the same rank."}
-{"order": 173, "page": 3, "type": "body", "text": "At 70%, it drops to 0.036–0.040 for 7B and 0.073–0.130 for 14B."}
-{"order": 174, "page": 3, "type": "body", "text": "Comparing STOP with positions more than 50 tokens earlier, we find that </think> remains substantially more likely at STOP at all sparsities, but at 70% its logprobability falls below that of the ordinarily generated tokens, detailed in Appendix D.3."}
-{"order": 175, "page": 3, "type": "body", "text": "Thus, the stopping signal remains largely intact under moderate pruning, suggesting that the main failure is reaching, rather than recognizing, the stopping point."}
-{"order": 176, "page": 3, "type": "body", "text": "At 70% sparsity, the signal remains localized but weakens, consistent with severe pruning also impairing stopping recognition."}
-{"order": 177, "page": 3, "type": "body", "text": "Definition."}
-{"order": 178, "page": 3, "type": "body", "text": "We investigate whether pruning alters reasoning trajectories at moments of reconsideration, where a model may either move forward or revisit previous reasoning."}
-{"order": 179, "page": 3, "type": "body", "text": "We define a decision point as the start of a paragraph beginning with a predefined reconsideration cue (e.g., \"wait\", \"hmm\", full list in Appendix D.4), following Lotfi et al. (2026)."}
-{"order": 180, "page": 3, "type": "heading", "text": "DS-Qwen-7B OT3-7B"}
-{"order": 181, "page": 3, "type": "body", "text": "dense obc_50 obc_60 obc_70 dense obc_50 obc_60 obc_70"}
-{"order": 182, "page": 3, "type": "body", "text": "n 794 788 796 782 800 800 796 790 ∆cyc −15.3 −11.9 −9.6 −5.0 −23.1 −15.8 −13.2 −5.6 Entropy 1.55 1.51 1.41 1.44 1.03 1.22 1.33 1.60"}
-{"order": 183, "page": 3, "type": "body", "text": "Table 3: Log-probability ratio between cyclic and progressive continuations at decision points on AIME-25."}
-{"order": 184, "page": 3, "type": "body", "text": "n: number of decision points; Entropy: predictive entropy at the decision points."}
-{"order": 185, "page": 3, "type": "body", "text": "Less negative (larger) ∆cyc values indicate a stronger preference for the repetitive continuation."}
-{"order": 186, "page": 3, "type": "body", "text": "User: Given 0≤x,y,z≤1, solve: x/(1+y+zx) + y/(1+z+xy) + z/(1+x+yz) = 3/(x+y+z)"}
-{"order": 187, "page": 3, "type": "heading", "text": "Model:"}
-{"order": 188, "page": 3, "type": "body", "text": "Alright, I'm trying to solve this equation: x/(1+y+zx) +"}
-{"order": 189, "page": 3, "type": "body", "text": "y/(1+z+xy) + z/(1+x+yz) = 3/(x+y+z)."}
-{"order": 190, "page": 3, "type": "body", "text": "..."}
-{"order": 191, "page": 3, "type": "body", "text": "Wait, then that solution is x = y = z =1."}
-{"order": 192, "page": 3, "type": "body", "text": "..."}
-{"order": 193, "page": 3, "type": "body", "text": "Alternatively, let me set x=1, y=0, z=0."}
-{"order": 194, "page": 3, "type": "body", "text": "Wait, maybe the only solution is x=y=z=1."}
-{"order": 195, "page": 3, "type": "body", "text": "Wait, perhaps there is another solution."}
-{"order": 196, "page": 3, "type": "body", "text": "Wait, let me try x= y= z= 1."}
-{"order": 197, "page": 3, "type": "body", "text": "..."}
-{"order": 198, "page": 3, "type": "body", "text": "PROGRESS CYCLIC"}
-{"order": 199, "page": 3, "type": "body", "text": "Figure 4: PROGRESS and CYCLIC behaviors illustration."}
-{"order": 200, "page": 3, "type": "body", "text": "We label each paragraph CYCLIC if its 8-word n-gram set has Jaccard similarity ≥0.5 with any earlier paragraph in the same trace, and PROGRESS otherwise, following Pipis et al. (2026), as illustrated in Figure 4."}
-{"order": 201, "page": 3, "type": "body", "text": "Teacher-Forced Preferences."}
-{"order": 202, "page": 3, "type": "body", "text": "To measure whether a model prefers to repeat or to move forward, we compare two candidate next paragraphs at each decision point of a dense trace: repeating the preceding paragraph (CYCLIC) or continuing with the next paragraph that adds new content (PROGRESS)."}
-{"order": 203, "page": 3, "type": "body", "text": "We score the first 32 tokens of each candidate under teacher forcing with the same prefix, and reuse the same decision points and candidates across all pruning checkpoints."}
-{"order": 204, "page": 3, "type": "body", "text": "We restrict evaluation to decision points that are followed by a PROGRESS paragraph, and define:"}
-{"order": 205, "page": 3, "type": "body", "text": "32 X"}
-{"order": 206, "page": 3, "type": "equation", "text": "h"}
-{"order": 207, "page": 3, "type": "body", "text": "t | prefix, xcyclic"}
-{"order": 208, "page": 3, "type": "body", "text": "xcyclic"}
-{"order": 209, "page": 3, "type": "equation", "text": "\u0000"}
-{"order": 210, "page": 3, "type": "equation", "text": "\u0001"}
-{"order": 211, "page": 3, "type": "body", "text": "∆cyc ="}
-{"order": 212, "page": 3, "type": "body", "text": "log pθ"}
-{"order": 213, "page": 3, "type": "equation", "text": "\u0001i"}
-{"order": 214, "page": 3, "type": "body", "text": "t | prefix, xprogress"}
-{"order": 215, "page": 3, "type": "body", "text": "xprogress"}
-{"order": 216, "page": 3, "type": "equation", "text": "\u0000"}
-{"order": 217, "page": 3, "type": "body", "text": "−log pθ"}
-{"order": 218, "page": 3, "type": "footnote", "text": "<t"}
-{"order": 219, "page": 3, "type": "footnote", "text": "t=1"}
-{"order": 220, "page": 3, "type": "footnote", "text": "<t"}
-{"order": 221, "page": 3, "type": "body", "text": "where a larger ∆cyc indicates a stronger relative preference for CYCLIC over PROGRESS."}
-{"order": 222, "page": 3, "type": "body", "text": "As shown in Table 3, pruning progressively shifts the model’s preference from progressive toward cyclic continuations at decision points; Appendix D.4 shows a similar shift at randomly sam-"}
+{"order": 15, "page": 0, "type": "body", "text": "Figure 1: Accuracy (left) and non-termination rate (right) on AIME-25 across pruning settings (SparseGPT with OBC calibration, 16,384-token budget, averaged over 4 runs)."}
+{"order": 16, "page": 0, "type": "body", "text": "Accuracy decreases as non-termination becomes more frequent."}
+{"order": 17, "page": 0, "type": "body", "text": "Yet, it remains unclear whether this degradation reflects a loss of reasoning capability or a different kind of failure."}
+{"order": 18, "page": 0, "type": "body", "text": "We find that much of this degradation stems from a failure to stop rather than a failure to reason."}
+{"order": 19, "page": 0, "type": "body", "text": "As sparsity increases, pruned LRMs increasingly fail to terminate and commit to a final answer within the token budget, and accuracy falls accordingly (Figure 1)."}
+{"order": 20, "page": 0, "type": "body", "text": "Strikingly, many of these non-terminating traces already contain the correct answer, yet the model keeps reasoning until the budget is exhausted."}
+{"order": 21, "page": 0, "type": "body", "text": "We refer to this behavior as reasoning divergence."}
+{"order": 22, "page": 0, "type": "body", "text": "On problems solved by the dense model, pruned models remain largely accurate whenever they terminate, and non-termination becomes the dominant source of errors as sparsity grows (Section 3.1)."}
+{"order": 23, "page": 0, "type": "body", "text": "Why do pruned models fail to stop?"}
+{"order": 24, "page": 0, "type": "body", "text": "Pruning does not erase the stopping signal: when replaying dense traces, pruned models still assign high probability to the end-of-thinking token where the dense model stops."}
+{"order": 25, "page": 0, "type": "body", "text": "Instead, during free-running generation they increasingly revisit earlier reasoning rather than moving forward, and fall into repetitive loops."}
+{"order": 26, "page": 0, "type": "body", "text": "Moreover, the hidden-state difference between continuations that terminate and those that loop points in a similar direction across pruned checkpoints, suggesting that the shift between looping and committing to an answer is captured by a shared direction in representation space."}
+{"order": 27, "page": 1, "type": "body", "text": "Based on this diagnosis, we propose Termination- Guided Activation Steering (TGAS), which adds this direction to the residual stream at inference time to steer pruned models toward termination without retraining or weight updates."}
+{"order": 28, "page": 1, "type": "body", "text": "TGAS consistently improves termination and accuracy across six LRMs, three pruning pipelines, and math and code benchmarks by reducing repetitive reasoning."}
+{"order": 29, "page": 1, "type": "body", "text": "Our contributions are threefold:"}
+{"order": 30, "page": 1, "type": "body", "text": "(i) We show that a substantial part of pruninginduced degradation in LRMs arises from reasoning divergence, a failure to commit rather than a loss of reasoning ability;"}
+{"order": 31, "page": 1, "type": "body", "text": "(ii) We identify a hidden-state direction that separates terminating from looping continuations, and build on it TGAS, a training-free steering method;"}
+{"order": 32, "page": 1, "type": "body", "text": "(iii) We show that TGAS consistently improves termination and overall accuracy across models, pruning methods, and benchmarks by reducing looping."}
+{"order": 33, "page": 1, "type": "heading", "text": "2 Background and Related Work"}
+{"order": 34, "page": 1, "type": "body", "text": "Pruning for LRMs."}
+{"order": 35, "page": 1, "type": "body", "text": "One-shot unstructured pruning formulates compression as layer-wise reconstruction (Frantar et al., 2022): given a weight matrix Wℓand calibration inputs Xℓ, it solves min∥ˆ Wℓ∥0≤S ∥(Wℓ−ˆ Wℓ)Xℓ∥2"}
+{"order": 36, "page": 1, "type": "body", "text": "F , where S is the number of retained weights."}
+{"order": 37, "page": 1, "type": "body", "text": "We focus on two retraining-free methods: SparseGPT (Frantar and Alistarh, 2023), which uses second-order information to compensate for pruning errors, and Wanda (Sun et al., 2024), which scores weights by magnitude and input-activation norm."}
+{"order": 38, "page": 1, "type": "body", "text": "To better capture long reasoning traces, recent LRM pruning methods improve calibration via onpolicy chain-of-thought RAC (Lucas et al., 2026), reasoning-step importance OBC (Nguyen et al., 2026), or self-generated traces (Ji et al., 2025; Wang et al., 2025; Xiang et al., 2025), detailed preliminaries in Appendix B."}
+{"order": 39, "page": 1, "type": "body", "text": "Related Works."}
+{"order": 40, "page": 1, "type": "body", "text": "LRMs can overthink and enter repetitive loops (Chen et al., 2026; Pipis et al., 2026), which quantization can further prolong (Lotfi et al., 2026)."}
+{"order": 41, "page": 1, "type": "body", "text": "We show that pruning amplifies looping while largely preserving the stopping signal, distinguishing failures to stop from failures to reason."}
+{"order": 42, "page": 1, "type": "body", "text": "Activation steering offers a way to modify behavior by adding directions to the residual stream, with difference-in-means directions shown to control behaviors of LLMs (Arditi et al., 2024)."}
+{"order": 43, "page": 1, "type": "body", "text": "For reasoning, SEAL (Chen et al., 2025) suppresses reflection, while Plan- CoT (Sheng et al., 2025) modulates reasoning length."}
+{"order": 44, "page": 1, "type": "body", "text": "In contrast, TGAS targets pruning-induced non-termination using contrasting continuations of the same prefix, yielding a direction weakly aligned with SEAL’s (Appendix F.8)."}
+{"order": 45, "page": 1, "type": "heading", "text": "3 Understanding Pruning-Induced Reasoning Degradation"}
+{"order": 46, "page": 1, "type": "body", "text": "We investigate three questions:"}
+{"order": 47, "page": 1, "type": "body", "text": "(i) Do pruned models lose reasoning ability or only the ability to stop?"}
+{"order": 48, "page": 1, "type": "body", "text": "(ii) Is non-termination caused by limited generation budgets?"}
+{"order": 49, "page": 1, "type": "body", "text": "(iii) Why do models fail to stop despite reaching the correct answer?"}
+{"order": 50, "page": 1, "type": "body", "text": "We address the first two questions in Section 3.1 and the third in Section 3.2."}
+{"order": 51, "page": 1, "type": "body", "text": "Recall that we refer to this phenomenon as reasoning divergence, characterized by non-termination, driven by repetitive looping and an failure to commit to final answers."}
+{"order": 52, "page": 1, "type": "body", "text": "Setting."}
+{"order": 53, "page": 1, "type": "body", "text": "We evaluate DeepSeek-R1-Distill- Qwen (DS-Qwen), DeepSeek-R1-Distill-Llama (DS-Llama) (Guo et al., 2025), and OpenThinker3 (OT3) (Guha et al., 2026) under one-shot unstructured pruning of decoder linear layers at varying sparsity levels, using SparseGPT or Wanda with OBC, RAC, or C4 calibration."}
+{"order": 54, "page": 1, "type": "body", "text": "Benchmarks include MATH-500 Levels 4-5 (hereafter MATH- 500) (Lightman et al., 2024), AIME-25 (Zhang and Math-AI, 2025), and LiveCodeBench-v6 (LCB) (Jain et al., 2025); OpenR1-Math-220K (OpenR1-Math) (Hugging Face, 2025) is used only for calibration and steering-direction construction."}
+{"order": 55, "page": 1, "type": "body", "text": "We use a 16,384-token budget, T = 0.6, and top-p = 0.95, averaging k = 4 responses on three benchmarks."}
+{"order": 56, "page": 1, "type": "body", "text": "Our default uses SparseGPT with OBC calibration on model-generated reasoning traces, counting a response as correct only if it commits to a final answer, detailed in Appendix C."}
+{"order": 57, "page": 1, "type": "heading", "text": "3.1 Do Pruned Models Lose the Ability to Reason?"}
+{"order": 58, "page": 1, "type": "body", "text": "Accuracy on Dense-Correct Problems."}
+{"order": 59, "page": 1, "type": "body", "text": "To determine whether reasoning divergence reflects a loss of reasoning capability, we evaluate pruned models on problems correctly solved by their dense counterparts."}
+{"order": 60, "page": 2, "type": "caption", "text": "Figure 2: Gold answers in non-terminating reasoning traces of DeepSeek models on MATH-500."}
+{"order": 61, "page": 2, "type": "caption", "text": "Left: an example of reasoning divergence, where the pruned model continues reasoning after reaching the correct answer."}
+{"order": 62, "page": 2, "type": "caption", "text": "Right: the fraction of traces containing the gold answer and the median position of its first occurrence."}
+{"order": 63, "page": 2, "type": "caption", "text": "n denotes the number of non-terminating samples."}
+{"order": 64, "page": 2, "type": "heading", "text": "Model Ckpt Kept No-Term."}
+{"order": 65, "page": 2, "type": "heading", "text": "Wrong Kept|term"}
+{"order": 66, "page": 2, "type": "body", "text": "obc_50 91.7±0.8 3.8±0.3 4.5±0.6 95.3±0.6 obc_60 77.8±0.7 16.8±0.1 5.4±0.6 93.5±0.7"}
+{"order": 67, "page": 2, "type": "body", "text": "DS-Qwen"}
+{"order": 68, "page": 2, "type": "body", "text": "-7B"}
+{"order": 69, "page": 2, "type": "body", "text": "obc_50 89.2±0.6 2.4±1.5 8.4±0.9 91.4±0.8 obc_60 74.3±2.8 16.4±1.9 9.3±0.9 88.9±1.4"}
+{"order": 70, "page": 2, "type": "body", "text": "DS-Qwen"}
+{"order": 71, "page": 2, "type": "body", "text": "-14B"}
+{"order": 72, "page": 2, "type": "body", "text": "OT3-7B obc_50 79.3±2.9 13.1±2.4 7.6±1.9 91.3±2.2 obc_60 63.6±3.4 29.8±3.3 6.6±1.8 90.6±2.5"}
+{"order": 73, "page": 2, "type": "body", "text": "Table 1: Accuracy on MATH-500 problems correctly solved by the dense model."}
+{"order": 74, "page": 2, "type": "body", "text": "Kept: correct; No-Term."}
+{"order": 75, "page": 2, "type": "body", "text": ": reasoning fails to terminate; Wrong: terminated but incorrect; Kept|term: accuracy among terminated generations."}
+{"order": 76, "page": 2, "type": "body", "text": "From 50% to 60% sparsity, non-termination grows sharply while the terminated-but-wrong rate stays nearly flat, so accuracy among terminated generations remains high."}
+{"order": 77, "page": 2, "type": "body", "text": "Figure 3: Non-termination rate and accuracy of DeepSeek models on AIME-25 under 16K- and 65K-token budgets."}
+{"order": 78, "page": 2, "type": "body", "text": "Table 1 shows that as sparsity grows, the additional errors come mainly from non-termination rather than from incorrect answers."}
+{"order": 79, "page": 2, "type": "body", "text": "On MATH-500, going from 50% to 60% sparsity raises the non-termination rate from 3.8% to 16.8% for DS-Qwen-7B, and from 2.4% to 16.4% for the 14B counterpart, while the terminated-but-wrong rate stays nearly unchanged."}
+{"order": 80, "page": 2, "type": "body", "text": "Terminated generations largely preserve their accuracy at high sparsity, despite fewer dense-correct samples remaining correct."}
+{"order": 81, "page": 2, "type": "body", "text": "These results suggest that substantial reasoning capability remains intact under moderate pruning, while termination becomes the primary bottleneck as sparsity grows (full results in Appendix D.1)."}
+{"order": 82, "page": 2, "type": "body", "text": "Larger Generation Budget."}
+{"order": 83, "page": 2, "type": "body", "text": "We ask whether reasoning divergence is simply caused by an insufficient generation budget."}
+{"order": 84, "page": 2, "type": "body", "text": "As shown in Figure 3, increasing the budget from 16,384 to 65,536 tokens substantially reduces non-termination at low and moderate sparsity, e.g., from 42.5% to 12.5% for 7B at 50% sparsity, but leaves accuracy nearly unchanged for DS-Qwen 7B and 14B, while at 60– 70% sparsity non-termination barely decreases."}
+{"order": 85, "page": 2, "type": "body", "text": "Appendix D.2 shows that the larger budget recovers only 0–3 additional correct traces across settings, suggesting that pruning-induced failures are not primarily due to insufficient generation length."}
+{"order": 86, "page": 2, "type": "body", "text": "Correct Answer Presence in Reasoning Traces."}
+{"order": 87, "page": 2, "type": "body", "text": "Since a larger budget rarely helps, we next ask what the non-terminating traces contain: does the reasoning already reach the correct answer even when the model fails to terminate and finalize it?"}
+{"order": 88, "page": 2, "type": "body", "text": "To answer this question, we use text-based rules, termed Conclusive, that detect answer-like statements following cues such as \"thus the answer\" or \"so we get\"(Appendix C.2).1"}
+{"order": 89, "page": 2, "type": "body", "text": "Figure 2 shows that a substantial fraction of non-terminating traces already contain the correct answer: at 60% sparsity, this holds for 41.4% and 39.2% of nonterminating traces for DS-Qwen 7B and 14B, respectively, with the answer appearing early at a median of 13.0% and 11.9% of the trace length, roughly 2.1k and 1.9k tokens."}
+{"order": 90, "page": 2, "type": "body", "text": "Despite reaching the correct answer, models continue generating to the token limit, often entering repetitive or corrective reasoning."}
+{"order": 91, "page": 2, "type": "body", "text": "This suggests that non-termination often reflects reasoning divergence rather than an inability to reach the correct answer."}
+{"order": 92, "page": 2, "type": "body", "text": "We provide a headroom analysis in Appendix E.3, quantifying the recoverable accuracy loss by counting nonterminating traces that already contain the correct answer as correct."}
+{"order": 93, "page": 2, "type": "footnote", "text": "1We validate Conclusive against an independent LLM judge: on 250 sampled traces, the two agree on 96.0% of cases (κ = 0.898; Appendix C.3)."}
+{"order": 94, "page": 3, "type": "heading", "text": "DS-Qwen-7B DS-Qwen-14B"}
+{"order": 95, "page": 3, "type": "body", "text": "obc_50 obc_60 obc_70 obc_50 obc_60 obc_70"}
+{"order": 96, "page": 3, "type": "body", "text": "AIME-25 p(</think>) 0.998 0.957 0.036 0.995 0.854 0.073 Med. rank 0 0 5.5 0 0 2"}
+{"order": 97, "page": 3, "type": "body", "text": "MATH-500 p(</think>) 0.996 0.924 0.040 0.998 0.907 0.130 Med. rank 0 0 7 0 0 3"}
+{"order": 98, "page": 3, "type": "body", "text": "Table 2: Teacher-forced stopping signal at the dense model’s STOP position: probability of </think> and its median rank (0 means </think> is the top prediction)."}
+{"order": 99, "page": 3, "type": "heading", "text": "3.2 Why Do Pruned Models Fail to Terminate?"}
+{"order": 100, "page": 3, "type": "body", "text": "Section 3.1 shows that pruned LRMs largely retain the ability to reach correct answers but increasingly fail to terminate."}
+{"order": 101, "page": 3, "type": "body", "text": "We show that the stopping signal remains intact, yet during free-running generation, models struggle to commit to final answers and fall into repetitive reasoning loops."}
+{"order": 102, "page": 3, "type": "body", "text": "Does pruning damage the stopping mechanism?"}
+{"order": 103, "page": 3, "type": "body", "text": "We test whether pruning impairs stopping recognition via teacher forcing."}
+{"order": 104, "page": 3, "type": "body", "text": "Let Dcov denote dense traces that terminate correctly."}
+{"order": 105, "page": 3, "type": "body", "text": "We replay these traces through each pruned checkpoint and measure p(</think>) and its rank at the dense model’s termination position (STOP)."}
+{"order": 106, "page": 3, "type": "body", "text": "As shown in Table 2, at 50–60% sparsity, the signal remains strong: for 7B, p(</think>) > 0.92 with median rank 0 on both AIME-25 and MATH-500, while 14B exceeds 0.85 with the same rank."}
+{"order": 107, "page": 3, "type": "body", "text": "At 70%, it drops to 0.036–0.040 for 7B and 0.073–0.130 for 14B."}
+{"order": 108, "page": 3, "type": "body", "text": "Comparing STOP with positions more than 50 tokens earlier, we find that </think> remains substantially more likely at STOP at all sparsities, but at 70% its logprobability falls below that of the ordinarily generated tokens, detailed in Appendix D.3."}
+{"order": 109, "page": 3, "type": "body", "text": "Thus, the stopping signal remains largely intact under moderate pruning, suggesting that the main failure is reaching, rather than recognizing, the stopping point."}
+{"order": 110, "page": 3, "type": "body", "text": "At 70% sparsity, the signal remains localized but weakens, consistent with severe pruning also impairing stopping recognition."}
+{"order": 111, "page": 3, "type": "body", "text": "Definition."}
+{"order": 112, "page": 3, "type": "body", "text": "We investigate whether pruning alters reasoning trajectories at moments of reconsideration, where a model may either move forward or revisit previous reasoning."}
+{"order": 113, "page": 3, "type": "body", "text": "We define a decision point as the start of a paragraph beginning with a predefined reconsideration cue (e.g., \"wait\", \"hmm\", full list in Appendix D.4), following Lotfi et al. (2026)."}
+{"order": 114, "page": 3, "type": "heading", "text": "DS-Qwen-7B OT3-7B"}
+{"order": 115, "page": 3, "type": "body", "text": "dense obc_50 obc_60 obc_70 dense obc_50 obc_60 obc_70"}
+{"order": 116, "page": 3, "type": "body", "text": "n 794 788 796 782 800 800 796 790 ∆cyc −15.3 −11.9 −9.6 −5.0 −23.1 −15.8 −13.2 −5.6 Entropy 1.55 1.51 1.41 1.44 1.03 1.22 1.33 1.60"}
+{"order": 117, "page": 3, "type": "body", "text": "Table 3: Log-probability ratio between cyclic and progressive continuations at decision points on AIME-25."}
+{"order": 118, "page": 3, "type": "body", "text": "n: number of decision points; Entropy: predictive entropy at the decision points."}
+{"order": 119, "page": 3, "type": "body", "text": "Less negative (larger) ∆cyc values indicate a stronger preference for the repetitive continuation."}
+{"order": 120, "page": 3, "type": "body", "text": "Figure 4: PROGRESS and CYCLIC behaviors illustration."}
+{"order": 121, "page": 3, "type": "body", "text": "We label each paragraph CYCLIC if its 8-word n-gram set has Jaccard similarity ≥0.5 with any earlier paragraph in the same trace, and PROGRESS otherwise, following Pipis et al. (2026), as illustrated in Figure 4."}
+{"order": 122, "page": 3, "type": "body", "text": "Teacher-Forced Preferences."}
+{"order": 123, "page": 3, "type": "body", "text": "To measure whether a model prefers to repeat or to move forward, we compare two candidate next paragraphs at each decision point of a dense trace: repeating the preceding paragraph (CYCLIC) or continuing with the next paragraph that adds new content (PROGRESS)."}
+{"order": 124, "page": 3, "type": "body", "text": "We score the first 32 tokens of each candidate under teacher forcing with the same prefix, and reuse the same decision points and candidates across all pruning checkpoints."}
+{"order": 125, "page": 3, "type": "body", "text": "We restrict evaluation to decision points that are followed by a PROGRESS paragraph, and define:"}
+{"order": 126, "page": 3, "type": "body", "text": "32 X"}
+{"order": 127, "page": 3, "type": "equation", "text": "h"}
+{"order": 128, "page": 3, "type": "body", "text": "t | prefix, xcyclic"}
+{"order": 129, "page": 3, "type": "body", "text": "xcyclic"}
+{"order": 130, "page": 3, "type": "equation", "text": "\u0000"}
+{"order": 131, "page": 3, "type": "equation", "text": "\u0001"}
+{"order": 132, "page": 3, "type": "body", "text": "∆cyc ="}
+{"order": 133, "page": 3, "type": "body", "text": "log pθ"}
+{"order": 134, "page": 3, "type": "equation", "text": "\u0001i"}
+{"order": 135, "page": 3, "type": "body", "text": "t | prefix, xprogress"}
+{"order": 136, "page": 3, "type": "body", "text": "xprogress"}
+{"order": 137, "page": 3, "type": "equation", "text": "\u0000"}
+{"order": 138, "page": 3, "type": "body", "text": "−log pθ"}
+{"order": 139, "page": 3, "type": "footnote", "text": "<t"}
+{"order": 140, "page": 3, "type": "footnote", "text": "t=1"}
+{"order": 141, "page": 3, "type": "footnote", "text": "<t"}
+{"order": 142, "page": 3, "type": "body", "text": "where a larger ∆cyc indicates a stronger relative preference for CYCLIC over PROGRESS."}
+{"order": 143, "page": 3, "type": "body", "text": "As shown in Table 3, pruning progressively shifts the model’s preference from progressive toward cyclic continuations at decision points; Appendix D.4 shows a similar shift at randomly sam-"}

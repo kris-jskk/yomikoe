@@ -13,63 +13,48 @@
 {"order": 12, "page": 0, "type": "body", "text": "Weight pruning offers a natural approach to reduce cost by zeroing out selected parameters (Frantar and Alistarh, 2023; Sun et al., 2024)."}
 {"order": 13, "page": 0, "type": "body", "text": "However, as consistently observed across pruning methods, pruning LRMs can substantially degrade accuracy on reasoning tasks (Ji et al., 2025; Lucas et al., 2026; Zhang et al., 2026b)."}
 {"order": 14, "page": 0, "type": "body", "text": "Existing efforts have primarily focused on mitigating this degradation through improved pruning calibration (Ji et al., 2025; Lucas et al., 2026; Zhang et al., 2026b), alongside post-pruning recovery via retraining or fine-tuning (Liu et al., 2025b; Muralidharan et al., 2024; Kim et al., 2024; Xia et al., 2024a)."}
-{"order": 15, "page": 0, "type": "body", "text": "DS-Qwen-1.5B DS-Qwen-14B"}
-{"order": 16, "page": 0, "type": "body", "text": "DS-Qwen-7B OpenThinker3-7B"}
-{"order": 17, "page": 0, "type": "body", "text": "DS-Llama-8B"}
-{"order": 18, "page": 0, "type": "body", "text": "100"}
-{"order": 19, "page": 0, "type": "body", "text": "AIME25 Non-Termination (%)"}
-{"order": 20, "page": 0, "type": "body", "text": "AIME25 Accuracy (%)"}
-{"order": 21, "page": 0, "type": "body", "text": "75"}
-{"order": 22, "page": 0, "type": "body", "text": "40"}
-{"order": 23, "page": 0, "type": "body", "text": "50"}
-{"order": 24, "page": 0, "type": "body", "text": "20"}
-{"order": 25, "page": 0, "type": "body", "text": "25"}
-{"order": 26, "page": 0, "type": "body", "text": "0"}
-{"order": 27, "page": 0, "type": "body", "text": "0"}
-{"order": 28, "page": 0, "type": "body", "text": "Dense 10 50 60 70 Sparsity (%)"}
-{"order": 29, "page": 0, "type": "body", "text": "Dense 10 50 60 70 Sparsity (%)"}
-{"order": 30, "page": 0, "type": "body", "text": "Figure 1: Accuracy (left) and non-termination rate (right) on AIME-25 across pruning settings (SparseGPT with OBC calibration, 16,384-token budget, averaged over 4 runs)."}
-{"order": 31, "page": 0, "type": "body", "text": "Accuracy decreases as non-termination becomes more frequent."}
-{"order": 32, "page": 0, "type": "body", "text": "Yet, it remains unclear whether this degradation reflects a loss of reasoning capability or a different kind of failure."}
-{"order": 33, "page": 0, "type": "body", "text": "We find that much of this degradation stems from a failure to stop rather than a failure to reason."}
-{"order": 34, "page": 0, "type": "body", "text": "As sparsity increases, pruned LRMs increasingly fail to terminate and commit to a final answer within the token budget, and accuracy falls accordingly (Figure 1)."}
-{"order": 35, "page": 0, "type": "body", "text": "Strikingly, many of these non-terminating traces already contain the correct answer, yet the model keeps reasoning until the budget is exhausted."}
-{"order": 36, "page": 0, "type": "body", "text": "We refer to this behavior as reasoning divergence."}
-{"order": 37, "page": 0, "type": "body", "text": "On problems solved by the dense model, pruned models remain largely accurate whenever they terminate, and non-termination becomes the dominant source of errors as sparsity grows (Section 3.1)."}
-{"order": 38, "page": 0, "type": "body", "text": "Why do pruned models fail to stop?"}
-{"order": 39, "page": 0, "type": "body", "text": "Pruning does not erase the stopping signal: when replaying dense traces, pruned models still assign high probability to the end-of-thinking token where the dense model stops."}
-{"order": 40, "page": 0, "type": "body", "text": "Instead, during free-running generation they increasingly revisit earlier reasoning rather than moving forward, and fall into repetitive loops."}
-{"order": 41, "page": 0, "type": "body", "text": "Moreover, the hidden-state difference between continuations that terminate and those that loop points in a similar direction across pruned checkpoints, suggesting that the shift between looping and committing to an answer is captured by a shared direction in representation space."}
-{"order": 42, "page": 1, "type": "body", "text": "Based on this diagnosis, we propose Termination- Guided Activation Steering (TGAS), which adds this direction to the residual stream at inference time to steer pruned models toward termination without retraining or weight updates."}
-{"order": 43, "page": 1, "type": "body", "text": "TGAS consistently improves termination and accuracy across six LRMs, three pruning pipelines, and math and code benchmarks by reducing repetitive reasoning."}
-{"order": 44, "page": 1, "type": "body", "text": "Our contributions are threefold:"}
-{"order": 45, "page": 1, "type": "body", "text": "(i) We show that a substantial part of pruninginduced degradation in LRMs arises from reasoning divergence, a failure to commit rather than a loss of reasoning ability;"}
-{"order": 46, "page": 1, "type": "body", "text": "(ii) We identify a hidden-state direction that separates terminating from looping continuations, and build on it TGAS, a training-free steering method;"}
-{"order": 47, "page": 1, "type": "body", "text": "(iii) We show that TGAS consistently improves termination and overall accuracy across models, pruning methods, and benchmarks by reducing looping."}
-{"order": 48, "page": 1, "type": "heading", "text": "2 Background and Related Work"}
-{"order": 49, "page": 1, "type": "body", "text": "Pruning for LRMs."}
-{"order": 50, "page": 1, "type": "body", "text": "One-shot unstructured pruning formulates compression as layer-wise reconstruction (Frantar et al., 2022): given a weight matrix Wℓand calibration inputs Xℓ, it solves min∥ˆ Wℓ∥0≤S ∥(Wℓ−ˆ Wℓ)Xℓ∥2"}
-{"order": 51, "page": 1, "type": "body", "text": "F , where S is the number of retained weights."}
-{"order": 52, "page": 1, "type": "body", "text": "We focus on two retraining-free methods: SparseGPT (Frantar and Alistarh, 2023), which uses second-order information to compensate for pruning errors, and Wanda (Sun et al., 2024), which scores weights by magnitude and input-activation norm."}
-{"order": 53, "page": 1, "type": "body", "text": "To better capture long reasoning traces, recent LRM pruning methods improve calibration via onpolicy chain-of-thought RAC (Lucas et al., 2026), reasoning-step importance OBC (Nguyen et al., 2026), or self-generated traces (Ji et al., 2025; Wang et al., 2025; Xiang et al., 2025), detailed preliminaries in Appendix B."}
-{"order": 54, "page": 1, "type": "body", "text": "Related Works."}
-{"order": 55, "page": 1, "type": "body", "text": "LRMs can overthink and enter repetitive loops (Chen et al., 2026; Pipis et al., 2026), which quantization can further prolong (Lotfi et al., 2026)."}
-{"order": 56, "page": 1, "type": "body", "text": "We show that pruning amplifies looping while largely preserving the stopping signal, distinguishing failures to stop from failures to reason."}
-{"order": 57, "page": 1, "type": "body", "text": "Activation steering offers a way to modify behavior by adding directions to the residual stream, with difference-in-means directions shown to control behaviors of LLMs (Arditi et al., 2024)."}
-{"order": 58, "page": 1, "type": "body", "text": "For reasoning, SEAL (Chen et al., 2025) suppresses reflection, while Plan- CoT (Sheng et al., 2025) modulates reasoning length."}
-{"order": 59, "page": 1, "type": "body", "text": "In contrast, TGAS targets pruning-induced non-termination using contrasting continuations of the same prefix, yielding a direction weakly aligned with SEAL’s (Appendix F.8)."}
-{"order": 60, "page": 1, "type": "heading", "text": "3 Understanding Pruning-Induced Reasoning Degradation"}
-{"order": 61, "page": 1, "type": "body", "text": "We investigate three questions:"}
-{"order": 62, "page": 1, "type": "body", "text": "(i) Do pruned models lose reasoning ability or only the ability to stop?"}
-{"order": 63, "page": 1, "type": "body", "text": "(ii) Is non-termination caused by limited generation budgets?"}
-{"order": 64, "page": 1, "type": "body", "text": "(iii) Why do models fail to stop despite reaching the correct answer?"}
-{"order": 65, "page": 1, "type": "body", "text": "We address the first two questions in Section 3.1 and the third in Section 3.2."}
-{"order": 66, "page": 1, "type": "body", "text": "Recall that we refer to this phenomenon as reasoning divergence, characterized by non-termination, driven by repetitive looping and an failure to commit to final answers."}
-{"order": 67, "page": 1, "type": "body", "text": "Setting."}
-{"order": 68, "page": 1, "type": "body", "text": "We evaluate DeepSeek-R1-Distill- Qwen (DS-Qwen), DeepSeek-R1-Distill-Llama (DS-Llama) (Guo et al., 2025), and OpenThinker3 (OT3) (Guha et al., 2026) under one-shot unstructured pruning of decoder linear layers at varying sparsity levels, using SparseGPT or Wanda with OBC, RAC, or C4 calibration."}
-{"order": 69, "page": 1, "type": "body", "text": "Benchmarks include MATH-500 Levels 4-5 (hereafter MATH- 500) (Lightman et al., 2024), AIME-25 (Zhang and Math-AI, 2025), and LiveCodeBench-v6 (LCB) (Jain et al., 2025); OpenR1-Math-220K (OpenR1-Math) (Hugging Face, 2025) is used only for calibration and steering-direction construction."}
-{"order": 70, "page": 1, "type": "body", "text": "We use a 16,384-token budget, T = 0.6, and top-p = 0.95, averaging k = 4 responses on three benchmarks."}
-{"order": 71, "page": 1, "type": "body", "text": "Our default uses SparseGPT with OBC calibration on model-generated reasoning traces, counting a response as correct only if it commits to a final answer, detailed in Appendix C."}
-{"order": 72, "page": 1, "type": "heading", "text": "3.1 Do Pruned Models Lose the Ability to Reason?"}
-{"order": 73, "page": 1, "type": "body", "text": "Accuracy on Dense-Correct Problems."}
-{"order": 74, "page": 1, "type": "body", "text": "To determine whether reasoning divergence reflects a loss of reasoning capability, we evaluate pruned models on problems correctly solved by their dense counterparts."}
+{"order": 15, "page": 0, "type": "body", "text": "Figure 1: Accuracy (left) and non-termination rate (right) on AIME-25 across pruning settings (SparseGPT with OBC calibration, 16,384-token budget, averaged over 4 runs)."}
+{"order": 16, "page": 0, "type": "body", "text": "Accuracy decreases as non-termination becomes more frequent."}
+{"order": 17, "page": 0, "type": "body", "text": "Yet, it remains unclear whether this degradation reflects a loss of reasoning capability or a different kind of failure."}
+{"order": 18, "page": 0, "type": "body", "text": "We find that much of this degradation stems from a failure to stop rather than a failure to reason."}
+{"order": 19, "page": 0, "type": "body", "text": "As sparsity increases, pruned LRMs increasingly fail to terminate and commit to a final answer within the token budget, and accuracy falls accordingly (Figure 1)."}
+{"order": 20, "page": 0, "type": "body", "text": "Strikingly, many of these non-terminating traces already contain the correct answer, yet the model keeps reasoning until the budget is exhausted."}
+{"order": 21, "page": 0, "type": "body", "text": "We refer to this behavior as reasoning divergence."}
+{"order": 22, "page": 0, "type": "body", "text": "On problems solved by the dense model, pruned models remain largely accurate whenever they terminate, and non-termination becomes the dominant source of errors as sparsity grows (Section 3.1)."}
+{"order": 23, "page": 0, "type": "body", "text": "Why do pruned models fail to stop?"}
+{"order": 24, "page": 0, "type": "body", "text": "Pruning does not erase the stopping signal: when replaying dense traces, pruned models still assign high probability to the end-of-thinking token where the dense model stops."}
+{"order": 25, "page": 0, "type": "body", "text": "Instead, during free-running generation they increasingly revisit earlier reasoning rather than moving forward, and fall into repetitive loops."}
+{"order": 26, "page": 0, "type": "body", "text": "Moreover, the hidden-state difference between continuations that terminate and those that loop points in a similar direction across pruned checkpoints, suggesting that the shift between looping and committing to an answer is captured by a shared direction in representation space."}
+{"order": 27, "page": 1, "type": "body", "text": "Based on this diagnosis, we propose Termination- Guided Activation Steering (TGAS), which adds this direction to the residual stream at inference time to steer pruned models toward termination without retraining or weight updates."}
+{"order": 28, "page": 1, "type": "body", "text": "TGAS consistently improves termination and accuracy across six LRMs, three pruning pipelines, and math and code benchmarks by reducing repetitive reasoning."}
+{"order": 29, "page": 1, "type": "body", "text": "Our contributions are threefold:"}
+{"order": 30, "page": 1, "type": "body", "text": "(i) We show that a substantial part of pruninginduced degradation in LRMs arises from reasoning divergence, a failure to commit rather than a loss of reasoning ability;"}
+{"order": 31, "page": 1, "type": "body", "text": "(ii) We identify a hidden-state direction that separates terminating from looping continuations, and build on it TGAS, a training-free steering method;"}
+{"order": 32, "page": 1, "type": "body", "text": "(iii) We show that TGAS consistently improves termination and overall accuracy across models, pruning methods, and benchmarks by reducing looping."}
+{"order": 33, "page": 1, "type": "heading", "text": "2 Background and Related Work"}
+{"order": 34, "page": 1, "type": "body", "text": "Pruning for LRMs."}
+{"order": 35, "page": 1, "type": "body", "text": "One-shot unstructured pruning formulates compression as layer-wise reconstruction (Frantar et al., 2022): given a weight matrix Wℓand calibration inputs Xℓ, it solves min∥ˆ Wℓ∥0≤S ∥(Wℓ−ˆ Wℓ)Xℓ∥2"}
+{"order": 36, "page": 1, "type": "body", "text": "F , where S is the number of retained weights."}
+{"order": 37, "page": 1, "type": "body", "text": "We focus on two retraining-free methods: SparseGPT (Frantar and Alistarh, 2023), which uses second-order information to compensate for pruning errors, and Wanda (Sun et al., 2024), which scores weights by magnitude and input-activation norm."}
+{"order": 38, "page": 1, "type": "body", "text": "To better capture long reasoning traces, recent LRM pruning methods improve calibration via onpolicy chain-of-thought RAC (Lucas et al., 2026), reasoning-step importance OBC (Nguyen et al., 2026), or self-generated traces (Ji et al., 2025; Wang et al., 2025; Xiang et al., 2025), detailed preliminaries in Appendix B."}
+{"order": 39, "page": 1, "type": "body", "text": "Related Works."}
+{"order": 40, "page": 1, "type": "body", "text": "LRMs can overthink and enter repetitive loops (Chen et al., 2026; Pipis et al., 2026), which quantization can further prolong (Lotfi et al., 2026)."}
+{"order": 41, "page": 1, "type": "body", "text": "We show that pruning amplifies looping while largely preserving the stopping signal, distinguishing failures to stop from failures to reason."}
+{"order": 42, "page": 1, "type": "body", "text": "Activation steering offers a way to modify behavior by adding directions to the residual stream, with difference-in-means directions shown to control behaviors of LLMs (Arditi et al., 2024)."}
+{"order": 43, "page": 1, "type": "body", "text": "For reasoning, SEAL (Chen et al., 2025) suppresses reflection, while Plan- CoT (Sheng et al., 2025) modulates reasoning length."}
+{"order": 44, "page": 1, "type": "body", "text": "In contrast, TGAS targets pruning-induced non-termination using contrasting continuations of the same prefix, yielding a direction weakly aligned with SEAL’s (Appendix F.8)."}
+{"order": 45, "page": 1, "type": "heading", "text": "3 Understanding Pruning-Induced Reasoning Degradation"}
+{"order": 46, "page": 1, "type": "body", "text": "We investigate three questions:"}
+{"order": 47, "page": 1, "type": "body", "text": "(i) Do pruned models lose reasoning ability or only the ability to stop?"}
+{"order": 48, "page": 1, "type": "body", "text": "(ii) Is non-termination caused by limited generation budgets?"}
+{"order": 49, "page": 1, "type": "body", "text": "(iii) Why do models fail to stop despite reaching the correct answer?"}
+{"order": 50, "page": 1, "type": "body", "text": "We address the first two questions in Section 3.1 and the third in Section 3.2."}
+{"order": 51, "page": 1, "type": "body", "text": "Recall that we refer to this phenomenon as reasoning divergence, characterized by non-termination, driven by repetitive looping and an failure to commit to final answers."}
+{"order": 52, "page": 1, "type": "body", "text": "Setting."}
+{"order": 53, "page": 1, "type": "body", "text": "We evaluate DeepSeek-R1-Distill- Qwen (DS-Qwen), DeepSeek-R1-Distill-Llama (DS-Llama) (Guo et al., 2025), and OpenThinker3 (OT3) (Guha et al., 2026) under one-shot unstructured pruning of decoder linear layers at varying sparsity levels, using SparseGPT or Wanda with OBC, RAC, or C4 calibration."}
+{"order": 54, "page": 1, "type": "body", "text": "Benchmarks include MATH-500 Levels 4-5 (hereafter MATH- 500) (Lightman et al., 2024), AIME-25 (Zhang and Math-AI, 2025), and LiveCodeBench-v6 (LCB) (Jain et al., 2025); OpenR1-Math-220K (OpenR1-Math) (Hugging Face, 2025) is used only for calibration and steering-direction construction."}
+{"order": 55, "page": 1, "type": "body", "text": "We use a 16,384-token budget, T = 0.6, and top-p = 0.95, averaging k = 4 responses on three benchmarks."}
+{"order": 56, "page": 1, "type": "body", "text": "Our default uses SparseGPT with OBC calibration on model-generated reasoning traces, counting a response as correct only if it commits to a final answer, detailed in Appendix C."}
+{"order": 57, "page": 1, "type": "heading", "text": "3.1 Do Pruned Models Lose the Ability to Reason?"}
+{"order": 58, "page": 1, "type": "body", "text": "Accuracy on Dense-Correct Problems."}
+{"order": 59, "page": 1, "type": "body", "text": "To determine whether reasoning divergence reflects a loss of reasoning capability, we evaluate pruned models on problems correctly solved by their dense counterparts."}

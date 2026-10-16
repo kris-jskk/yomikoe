@@ -38,28 +38,26 @@
 {"order": 37, "page": 2, "type": "body", "text": "The information in this publication, including concepts and methodologies, may be used by federal agencies even before the completion of such companion publications."}
 {"order": 38, "page": 2, "type": "body", "text": "Thus, until each publication is completed, current requirements, guidelines, and procedures, where they exist, remain operative."}
 {"order": 39, "page": 2, "type": "body", "text": "For planning and transition purposes, federal agencies may wish to closely follow the development of these new publications by NIST."}
-{"order": 40, "page": 2, "type": "body", "text": "Organizations are encouraged to review all draft publications during public comment periods and provide feedback to NIST."}
-{"order": 41, "page": 2, "type": "body", "text": "Many NIST cybersecurity publications, other than the ones noted above, are available at https://csrc.nist.gov/publications."}
-{"order": 42, "page": 2, "type": "heading", "text": "Submit comments on this publication to: cyberhygiene@nist.gov"}
-{"order": 43, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Attn: Applied Cybersecurity Division, Information Technology Laboratory"}
-{"order": 44, "page": 2, "type": "body", "text": "100 Bureau Drive (Mail Stop 2000) Gaithersburg, MD 20899-2000"}
-{"order": 45, "page": 2, "type": "body", "text": "All comments are subject to release under the Freedom of Information Act (FOIA)."}
-{"order": 46, "page": 3, "type": "heading", "text": "Reports on Computer Systems Technology"}
-{"order": 47, "page": 3, "type": "body", "text": "The Information Technology Laboratory (ITL) at the National Institute of Standards and Technology (NIST) promotes the U.S. economy and public welfare by providing technical leadership for the Nation’s measurement and standards infrastructure."}
-{"order": 48, "page": 3, "type": "body", "text": "ITL develops tests, test methods, reference data, proof of concept implementations, and technical analyses to advance the development and productive use of information technology."}
-{"order": 49, "page": 3, "type": "body", "text": "ITL’s responsibilities include the development of management, administrative, technical, and physical standards and guidelines for the cost-effective security and privacy of other than national security-related information in federal information systems."}
-{"order": 50, "page": 3, "type": "body", "text": "The Special Publication 800-series reports on ITL’s research, guidelines, and outreach efforts in information system security, and its collaborative activities with industry, government, and academic organizations."}
-{"order": 51, "page": 3, "type": "heading", "text": "Abstract"}
-{"order": 52, "page": 3, "type": "body", "text": "Enterprise patch management is the process of identifying, prioritizing, acquiring, installing, and verifying the installation of patches, updates, and upgrades throughout an organization."}
-{"order": 53, "page": 3, "type": "body", "text": "Patching is more important than ever because of the increasing reliance on technology, but there is often a divide between business/mission owners and security/technology management about the value of patching."}
-{"order": 54, "page": 3, "type": "body", "text": "This publication frames patching as a critical component of preventive maintenance for computing technologies – a cost of doing business, and a necessary part of what organizations need to do in order to achieve their missions."}
-{"order": 55, "page": 3, "type": "body", "text": "This publication also discusses common factors that affect enterprise patch management and recommends creating an enterprise strategy to simplify and operationalize patching while also improving reduction of risk."}
-{"order": 56, "page": 3, "type": "body", "text": "Preventive maintenance through enterprise patch management helps prevent compromises, data breaches, operational disruptions, and other adverse events."}
-{"order": 57, "page": 3, "type": "heading", "text": "Keywords"}
-{"order": 58, "page": 3, "type": "body", "text": "enterprise patch management; patch; risk management; update; upgrade; vulnerability management."}
-{"order": 59, "page": 3, "type": "heading", "text": "Acknowledgments"}
-{"order": 60, "page": 3, "type": "body", "text": "The authors wish to thank their colleagues who reviewed the document and contributed to its technical content, especially Mark Simos from Microsoft, and Jamie Brown, Vincent Gilcreest, and Glen Pendley from Tenable."}
-{"order": 61, "page": 3, "type": "body", "text": "The authors also appreciate the efforts of all the individuals and organizations that provided feedback on the public comment draft, especially BlackBerry, the Cybersecurity & Infrastructure Security Agency (CISA), the National Security Agency (NSA), The SECOND Advisories, Carla Brinker, and Ron Colvin."}
-{"order": 62, "page": 3, "type": "heading", "text": "Audience"}
-{"order": 63, "page": 3, "type": "body", "text": "The primary audience for this publication is chief information officers, chief information security officers, cybersecurity directors and managers, and others who are responsible for managing organizational risk related to the use of software."}
-{"order": 64, "page": 3, "type": "body", "text": "Others with an interest in the topic, including business and mission owners, security engineers and architects, system administrators, and security operations personnel, may find portions of the publication to be informative."}
+{"order": 40, "page": 2, "type": "heading", "text": "Submit comments on this publication to: cyberhygiene@nist.gov"}
+{"order": 41, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Attn: Applied Cybersecurity Division, Information Technology Laboratory"}
+{"order": 42, "page": 2, "type": "body", "text": "100 Bureau Drive (Mail Stop 2000) Gaithersburg, MD 20899-2000"}
+{"order": 43, "page": 2, "type": "body", "text": "All comments are subject to release under the Freedom of Information Act (FOIA)."}
+{"order": 44, "page": 3, "type": "heading", "text": "Reports on Computer Systems Technology"}
+{"order": 45, "page": 3, "type": "body", "text": "The Information Technology Laboratory (ITL) at the National Institute of Standards and Technology (NIST) promotes the U.S. economy and public welfare by providing technical leadership for the Nation’s measurement and standards infrastructure."}
+{"order": 46, "page": 3, "type": "body", "text": "ITL develops tests, test methods, reference data, proof of concept implementations, and technical analyses to advance the development and productive use of information technology."}
+{"order": 47, "page": 3, "type": "body", "text": "ITL’s responsibilities include the development of management, administrative, technical, and physical standards and guidelines for the cost-effective security and privacy of other than national security-related information in federal information systems."}
+{"order": 48, "page": 3, "type": "body", "text": "The Special Publication 800-series reports on ITL’s research, guidelines, and outreach efforts in information system security, and its collaborative activities with industry, government, and academic organizations."}
+{"order": 49, "page": 3, "type": "heading", "text": "Abstract"}
+{"order": 50, "page": 3, "type": "body", "text": "Enterprise patch management is the process of identifying, prioritizing, acquiring, installing, and verifying the installation of patches, updates, and upgrades throughout an organization."}
+{"order": 51, "page": 3, "type": "body", "text": "Patching is more important than ever because of the increasing reliance on technology, but there is often a divide between business/mission owners and security/technology management about the value of patching."}
+{"order": 52, "page": 3, "type": "body", "text": "This publication frames patching as a critical component of preventive maintenance for computing technologies – a cost of doing business, and a necessary part of what organizations need to do in order to achieve their missions."}
+{"order": 53, "page": 3, "type": "body", "text": "This publication also discusses common factors that affect enterprise patch management and recommends creating an enterprise strategy to simplify and operationalize patching while also improving reduction of risk."}
+{"order": 54, "page": 3, "type": "body", "text": "Preventive maintenance through enterprise patch management helps prevent compromises, data breaches, operational disruptions, and other adverse events."}
+{"order": 55, "page": 3, "type": "heading", "text": "Keywords"}
+{"order": 56, "page": 3, "type": "body", "text": "enterprise patch management; patch; risk management; update; upgrade; vulnerability management."}
+{"order": 57, "page": 3, "type": "heading", "text": "Acknowledgments"}
+{"order": 58, "page": 3, "type": "body", "text": "The authors wish to thank their colleagues who reviewed the document and contributed to its technical content, especially Mark Simos from Microsoft, and Jamie Brown, Vincent Gilcreest, and Glen Pendley from Tenable."}
+{"order": 59, "page": 3, "type": "body", "text": "The authors also appreciate the efforts of all the individuals and organizations that provided feedback on the public comment draft, especially BlackBerry, the Cybersecurity & Infrastructure Security Agency (CISA), the National Security Agency (NSA), The SECOND Advisories, Carla Brinker, and Ron Colvin."}
+{"order": 60, "page": 3, "type": "heading", "text": "Audience"}
+{"order": 61, "page": 3, "type": "body", "text": "The primary audience for this publication is chief information officers, chief information security officers, cybersecurity directors and managers, and others who are responsible for managing organizational risk related to the use of software."}
+{"order": 62, "page": 3, "type": "body", "text": "Others with an interest in the topic, including business and mission owners, security engineers and architects, system administrators, and security operations personnel, may find portions of the publication to be informative."}

@@ -55,36 +55,21 @@
 {"order": 54, "page": 1, "type": "body", "text": "The three numerical examples are reported in Section 6."}
 {"order": 55, "page": 1, "type": "list", "text": "2. The estimator and its exact error decomposition."}
 {"order": 56, "page": 1, "type": "list", "text": "The two stages of Cas estimate the density πn of the noise n ∈Rd from N residual samples (Part I [10], Algorithm 3.1)."}
-{"order": 57, "page": 1, "type": "list", "text": "For marginal densities πi with CDFs Fi, the componentwise map Z"}
-{"order": 58, "page": 1, "type": "list", "text": "(x)i := Φ−1(Fi"}
-{"order": 59, "page": 1, "type": "list", "text": "(xi)) produces standard Gaussian marginals (2.1), with Φ the standard normal CDF."}
-{"order": 60, "page": 1, "type": "list", "text": "The transformed noise Z := Z(n) has law πZ."}
-{"order": 61, "page": 1, "type": "list", "text": "Replacing Fi by the rank-based bFi of Part I defines b Z. The marginal densities are estimated separately by Gaussian-kernel estimates bπi [31]."}
-{"order": 62, "page": 1, "type": "body", "text": "Let γk denote the standard Gaussian density on Rk."}
-{"order": 63, "page": 1, "type": "body", "text": "The copula density is cZ := πZ/γd."}
-{"order": 64, "page": 1, "type": "body", "text": "Its score S := ∇log cZ has second-moment matrix C := EπZ[SS⊤] (2.2), referred to as the score covariance."}
-{"order": 65, "page": 1, "type": "body", "text": "With eigenvalues ordered as λ1(C) ≥· · · ≥λd(C), a top-r eigenbasis V C"}
-{"order": 66, "page": 1, "type": "body", "text": "r spans the copula active subspace."}
-{"order": 67, "page": 1, "type": "body", "text": "Stage 1 fits the copula score by Hermite score matching [22] in the span of the gradients of multivariate Hermite polynomials Hα."}
-{"order": 68, "page": 1, "type": "body", "text": "The polynomials are orthonormal in L2(γd) and indexed by Λ := ΛK1,q1."}
-{"order": 69, "page": 1, "type": "body", "text": "The set ΛK,q contains indices with 1 ≤ |α|1 ≤K and at most q nonzero entries, except for the linear indices ei (3.2)."}
-{"order": 70, "page": 1, "type": "body", "text": "This fit defines bS := ∇P"}
-{"order": 71, "page": 1, "type": "equation", "text": "α∈Λ bθd"}
-{"order": 72, "page": 1, "type": "body", "text": "αHα (3.3), with coefficient vector bθd := (bθd"}
-{"order": 73, "page": 1, "type": "body", "text": "α)α∈Λ."}
-{"order": 74, "page": 1, "type": "body", "text": "From the empirical second-moment matrix b C of bS (3.5), we choose a top-r eigenbasis bV C"}
-{"order": 75, "page": 1, "type": "body", "text": "r ."}
-{"order": 76, "page": 1, "type": "body", "text": "The superscript distinguishes this basis from a principal-component basis of Z."}
-{"order": 77, "page": 1, "type": "body", "text": "A basis Vr ∈St(r, Rd) and its orthonormal completion V⊥separate the retained coordinates U := V ⊤"}
-{"order": 78, "page": 1, "type": "body", "text": "r Z from the discarded coordinates W := V ⊤"}
-{"order": 79, "page": 1, "type": "body", "text": "⊥Z."}
-{"order": 80, "page": 1, "type": "body", "text": "The conditional law of W given U is denoted by πW |U."}
-{"order": 81, "page": 1, "type": "body", "text": "Define the reduced factor cU"}
-{"order": 82, "page": 1, "type": "body", "text": "r := πU/γr and its logarithm Lr := log cU"}
-{"order": 83, "page": 1, "type": "body", "text": "r ."}
-{"order": 84, "page": 1, "type": "body", "text": "Part I (Subsection 2.1) uses this factor to define the reduced model πn(x; Vr) := cU"}
-{"order": 85, "page": 1, "type": "equation", "text": "r (V ⊤"}
-{"order": 86, "page": 1, "type": "equation", "text": "r Z(x)) Q"}
-{"order": 87, "page": 1, "type": "body", "text": "i πi(xi) (2.4)."}
-{"order": 88, "page": 1, "type": "body", "text": "For the fitted estimator, we use Vr = bV C"}
-{"order": 89, "page": 1, "type": "body", "text": "r in these definitions."}
+{"order": 57, "page": 1, "type": "list", "text": "For marginal densities πi with CDFs Fi, the componentwise map Z (x)i := Φ−1(Fi (xi)) produces standard Gaussian marginals (2.1), with Φ the standard normal CDF."}
+{"order": 58, "page": 1, "type": "list", "text": "The transformed noise Z := Z(n) has law πZ."}
+{"order": 59, "page": 1, "type": "list", "text": "Replacing Fi by the rank-based bFi of Part I defines b Z. The marginal densities are estimated separately by Gaussian-kernel estimates bπi [31]."}
+{"order": 60, "page": 1, "type": "body", "text": "Let γk denote the standard Gaussian density on Rk."}
+{"order": 61, "page": 1, "type": "body", "text": "The copula density is cZ := πZ/γd."}
+{"order": 62, "page": 1, "type": "body", "text": "Its score S := ∇log cZ has second-moment matrix C := EπZ[SS⊤] (2.2), referred to as the score covariance."}
+{"order": 63, "page": 1, "type": "body", "text": "With eigenvalues ordered as λ1(C) ≥· · · ≥λd(C), a top-r eigenbasis V C r spans the copula active subspace."}
+{"order": 64, "page": 1, "type": "body", "text": "Stage 1 fits the copula score by Hermite score matching [22] in the span of the gradients of multivariate Hermite polynomials Hα."}
+{"order": 65, "page": 1, "type": "body", "text": "The polynomials are orthonormal in L2(γd) and indexed by Λ := ΛK1,q1."}
+{"order": 66, "page": 1, "type": "body", "text": "The set ΛK,q contains indices with 1 ≤ |α|1 ≤K and at most q nonzero entries, except for the linear indices ei (3.2)."}
+{"order": 67, "page": 1, "type": "body", "text": "This fit defines bS := ∇P α∈Λ bθd αHα (3.3), with coefficient vector bθd := (bθd α)α∈Λ."}
+{"order": 68, "page": 1, "type": "body", "text": "From the empirical second-moment matrix b C of bS (3.5), we choose a top-r eigenbasis bV C r ."}
+{"order": 69, "page": 1, "type": "body", "text": "The superscript distinguishes this basis from a principal-component basis of Z."}
+{"order": 70, "page": 1, "type": "body", "text": "A basis Vr ∈St(r, Rd) and its orthonormal completion V⊥separate the retained coordinates U := V ⊤ r Z from the discarded coordinates W := V ⊤ ⊥Z."}
+{"order": 71, "page": 1, "type": "body", "text": "The conditional law of W given U is denoted by πW |U."}
+{"order": 72, "page": 1, "type": "body", "text": "Define the reduced factor cU r := πU/γr and its logarithm Lr := log cU r ."}
+{"order": 73, "page": 1, "type": "body", "text": "Part I (Subsection 2.1) uses this factor to define the reduced model πn(x; Vr) := cU r (V ⊤ r Z(x)) Q i πi(xi) (2.4)."}
+{"order": 74, "page": 1, "type": "body", "text": "For the fitted estimator, we use Vr = bV C r in these definitions."}

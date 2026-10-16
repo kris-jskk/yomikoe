@@ -3,58 +3,45 @@
 {"order": 2, "page": 0, "type": "heading", "text": "Risk Management Framework for Information Systems and Organizations"}
 {"order": 3, "page": 0, "type": "heading", "text": "A System Life Cycle Approach for Security and Privacy"}
 {"order": 4, "page": 0, "type": "heading", "text": "JOINT TASK FORCE"}
-{"order": 5, "page": 0, "type": "body", "text": "This publication contains comprehensive updates to the Risk Management Framework."}
-{"order": 6, "page": 0, "type": "body", "text": "The updates include an alignment with the constructs in the NIST Cybersecurity Framework; the integration of privacy risk management processes; an alignment with system life cycle security engineering processes; and the incorporation of supply chain risk management processes."}
-{"order": 7, "page": 0, "type": "body", "text": "Organizations can use the frameworks and processes in a complementary manner within the RMF to effectively manage security and privacy risks to organizational operations and assets, individuals, other organizations, and the Nation."}
-{"order": 8, "page": 0, "type": "body", "text": "Revision 2 includes a set of organization-wide RMF tasks that are designed to prepare information system owners to conduct system-level risk management activities."}
-{"order": 9, "page": 0, "type": "body", "text": "The intent is to increase the effectiveness, efficiency, and cost-effectiveness of the RMF by establishing a closer connection to the organization’s missions and business functions and improving the communications among senior leaders, managers, and operational personnel."}
-{"order": 10, "page": 1, "type": "heading", "text": "NIST Special Publication 800-37"}
-{"order": 11, "page": 1, "type": "body", "text": "Revision 2"}
-{"order": 12, "page": 1, "type": "heading", "text": "Risk Management Framework for Information Systems and Organizations"}
-{"order": 13, "page": 1, "type": "heading", "text": "A System Life Cycle Approach for Security and Privacy"}
-{"order": 14, "page": 1, "type": "heading", "text": "JOINT TASK FORCE"}
-{"order": 15, "page": 1, "type": "heading", "text": "December 2018"}
-{"order": 16, "page": 2, "type": "heading", "text": "Authority"}
-{"order": 17, "page": 2, "type": "body", "text": "This publication has been developed by NIST to further its statutory responsibilities under the Federal Information Security Modernization Act (FISMA), 44 U.S.C. § 3551 et seq."}
-{"order": 18, "page": 2, "type": "body", "text": ", Public Law (P.L.) 113-283."}
-{"order": 19, "page": 2, "type": "body", "text": "NIST is responsible for developing information security standards and guidelines, including minimum requirements for federal information systems, but such standards and guidelines shall not apply to national security systems without the express approval of the appropriate federal officials exercising policy authority over such systems."}
-{"order": 20, "page": 2, "type": "body", "text": "This guideline is consistent with requirements of the Office of Management and Budget (OMB) Circular A-130."}
-{"order": 21, "page": 2, "type": "body", "text": "Nothing in this publication should be taken to contradict the standards and guidelines made mandatory and binding on federal agencies by the Secretary of Commerce under statutory authority."}
-{"order": 22, "page": 2, "type": "body", "text": "Nor should these guidelines be interpreted as altering or superseding the existing authorities of the Secretary of Commerce, OMB Director, or any other federal official."}
-{"order": 23, "page": 2, "type": "body", "text": "This publication may be used by nongovernmental organizations on a voluntary basis and is not subject to copyright in the United States."}
-{"order": 24, "page": 2, "type": "body", "text": "Attribution would, however, be appreciated by NIST."}
-{"order": 25, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Special Publication 800-37, Revision 2"}
-{"order": 26, "page": 2, "type": "body", "text": "Natl."}
-{"order": 27, "page": 2, "type": "body", "text": "Inst."}
-{"order": 28, "page": 2, "type": "body", "text": "Stand."}
-{"order": 29, "page": 2, "type": "body", "text": "Technol."}
-{"order": 30, "page": 2, "type": "body", "text": "Spec."}
-{"order": 31, "page": 2, "type": "body", "text": "Publ."}
-{"order": 32, "page": 2, "type": "body", "text": "800-37, Rev. 2, 183 pages (December 2018)"}
-{"order": 33, "page": 2, "type": "body", "text": "CODEN: NSPUE2"}
-{"order": 34, "page": 2, "type": "body", "text": "Certain commercial entities, equipment, or materials may be identified in this document to describe an experimental procedure or concept adequately."}
-{"order": 35, "page": 2, "type": "body", "text": "Such identification is not intended to imply recommendation or endorsement by NIST, nor is it intended to imply that the entities, materials, or equipment are necessarily the best available for the purpose."}
-{"order": 36, "page": 2, "type": "body", "text": "There may be references in this publication to other publications currently under development by NIST in accordance with its assigned statutory responsibilities."}
-{"order": 37, "page": 2, "type": "body", "text": "The information in this publication, including concepts, practices, and methodologies, may be used by federal agencies even before the completion of such companion publications."}
-{"order": 38, "page": 2, "type": "body", "text": "Thus, until each publication is completed, current requirements, guidelines, and procedures, where they exist, remain operative."}
-{"order": 39, "page": 2, "type": "body", "text": "For planning and transition purposes, federal agencies may wish to closely follow the development of these new publications by NIST."}
-{"order": 40, "page": 2, "type": "body", "text": "Organizations are encouraged to review draft publications during the designated public comment periods and provide feedback to NIST."}
-{"order": 41, "page": 2, "type": "body", "text": "Many NIST publications, other than the ones noted above, are available at https://csrc.nist.gov/publications."}
-{"order": 42, "page": 2, "type": "heading", "text": "Comments on this publication may be submitted to:"}
-{"order": 43, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Attn: Computer Security Division, Information Technology Laboratory"}
-{"order": 44, "page": 2, "type": "body", "text": "100 Bureau Drive (Mail Stop 8930) Gaithersburg, MD 20899-8930 Email: sec-cert@nist.gov"}
-{"order": 45, "page": 2, "type": "body", "text": "All comments are subject to release under the Freedom of Information Act (FOIA) [FOIA96]."}
-{"order": 46, "page": 3, "type": "heading", "text": "Reports on Computer Systems Technology"}
-{"order": 47, "page": 3, "type": "body", "text": "The National Institute of Standards and Technology (NIST) Information Technology Laboratory (ITL) promotes the U.S. economy and public welfare by providing technical leadership for the Nation’s measurement and standards infrastructure."}
-{"order": 48, "page": 3, "type": "body", "text": "ITL develops tests, test methods, reference data, proof of concept implementations, and technical analyses to advance the development and productive use of information technology (IT)."}
-{"order": 49, "page": 3, "type": "body", "text": "ITL’s responsibilities include the development of management, administrative, technical, and physical standards and guidelines for the costeffective security of other than national security-related information in federal information systems."}
-{"order": 50, "page": 3, "type": "body", "text": "The Special Publication 800-series reports on ITL’s research, guidelines, and outreach efforts in information systems security and privacy and its collaborative activities with industry, government, and academic organizations."}
-{"order": 51, "page": 3, "type": "heading", "text": "Abstract"}
-{"order": 52, "page": 3, "type": "body", "text": "This publication describes the Risk Management Framework (RMF) and provides guidelines for applying the RMF to information systems and organizations."}
-{"order": 53, "page": 3, "type": "body", "text": "The RMF provides a disciplined, structured, and flexible process for managing security and privacy risk that includes information security categorization; control selection, implementation, and assessment; system and common control authorizations; and continuous monitoring."}
-{"order": 54, "page": 3, "type": "body", "text": "The RMF includes activities to prepare organizations to execute the framework at appropriate risk management levels."}
-{"order": 55, "page": 3, "type": "body", "text": "The RMF also promotes near real-time risk management and ongoing information system and common control authorization through the implementation of continuous monitoring processes; provides senior leaders and executives with the necessary information to make efficient, cost-effective, risk management decisions about the systems supporting their missions and business functions; and incorporates security and privacy into the system development life cycle."}
-{"order": 56, "page": 3, "type": "body", "text": "Executing the RMF tasks links essential risk management processes at the system level to risk management processes at the organization level."}
-{"order": 57, "page": 3, "type": "body", "text": "In addition, it establishes responsibility and accountability for the controls implemented within an organization’s information systems and inherited by those systems."}
-{"order": 58, "page": 3, "type": "heading", "text": "Keywords"}
-{"order": 59, "page": 3, "type": "body", "text": "assess; authorization to operate; authorization to use; authorizing official; categorize; common control; common control authorization; common control provider; continuous monitoring; control assessor; control baseline; cybersecurity framework profile; hybrid control; information owner or steward; information security; monitor; ongoing authorization; plan of action and milestones; privacy; privacy assessment report; privacy control; privacy plan; privacy risk; risk assessment; risk executive function; risk management; risk management framework; security; security assessment report; security control; security engineering; security plan; security risk; senior agency information security officer; senior agency official for privacy; supply chain risk management; system development life cycle; system owner; system privacy officer; system security officer; system-specific control."}
+{"order": 5, "page": 1, "type": "heading", "text": "NIST Special Publication 800-37"}
+{"order": 6, "page": 1, "type": "body", "text": "Revision 2"}
+{"order": 7, "page": 1, "type": "heading", "text": "Risk Management Framework for Information Systems and Organizations"}
+{"order": 8, "page": 1, "type": "heading", "text": "A System Life Cycle Approach for Security and Privacy"}
+{"order": 9, "page": 1, "type": "heading", "text": "JOINT TASK FORCE"}
+{"order": 10, "page": 1, "type": "heading", "text": "December 2018"}
+{"order": 11, "page": 2, "type": "heading", "text": "Authority"}
+{"order": 12, "page": 2, "type": "body", "text": "This publication has been developed by NIST to further its statutory responsibilities under the Federal Information Security Modernization Act (FISMA), 44 U.S.C. § 3551 et seq."}
+{"order": 13, "page": 2, "type": "body", "text": ", Public Law (P.L.) 113-283."}
+{"order": 14, "page": 2, "type": "body", "text": "NIST is responsible for developing information security standards and guidelines, including minimum requirements for federal information systems, but such standards and guidelines shall not apply to national security systems without the express approval of the appropriate federal officials exercising policy authority over such systems."}
+{"order": 15, "page": 2, "type": "body", "text": "This guideline is consistent with requirements of the Office of Management and Budget (OMB) Circular A-130."}
+{"order": 16, "page": 2, "type": "body", "text": "Nothing in this publication should be taken to contradict the standards and guidelines made mandatory and binding on federal agencies by the Secretary of Commerce under statutory authority."}
+{"order": 17, "page": 2, "type": "body", "text": "Nor should these guidelines be interpreted as altering or superseding the existing authorities of the Secretary of Commerce, OMB Director, or any other federal official."}
+{"order": 18, "page": 2, "type": "body", "text": "This publication may be used by nongovernmental organizations on a voluntary basis and is not subject to copyright in the United States."}
+{"order": 19, "page": 2, "type": "body", "text": "Attribution would, however, be appreciated by NIST."}
+{"order": 20, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Special Publication 800-37, Revision 2"}
+{"order": 21, "page": 2, "type": "body", "text": "Natl."}
+{"order": 22, "page": 2, "type": "body", "text": "Inst."}
+{"order": 23, "page": 2, "type": "body", "text": "Stand."}
+{"order": 24, "page": 2, "type": "body", "text": "Technol."}
+{"order": 25, "page": 2, "type": "body", "text": "Spec."}
+{"order": 26, "page": 2, "type": "body", "text": "Publ."}
+{"order": 27, "page": 2, "type": "body", "text": "800-37, Rev. 2, 183 pages (December 2018)"}
+{"order": 28, "page": 2, "type": "body", "text": "CODEN: NSPUE2"}
+{"order": 29, "page": 2, "type": "heading", "text": "Comments on this publication may be submitted to:"}
+{"order": 30, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Attn: Computer Security Division, Information Technology Laboratory"}
+{"order": 31, "page": 2, "type": "body", "text": "100 Bureau Drive (Mail Stop 8930) Gaithersburg, MD 20899-8930 Email: sec-cert@nist.gov"}
+{"order": 32, "page": 2, "type": "body", "text": "All comments are subject to release under the Freedom of Information Act (FOIA) [FOIA96]."}
+{"order": 33, "page": 3, "type": "heading", "text": "Reports on Computer Systems Technology"}
+{"order": 34, "page": 3, "type": "body", "text": "The National Institute of Standards and Technology (NIST) Information Technology Laboratory (ITL) promotes the U.S. economy and public welfare by providing technical leadership for the Nation’s measurement and standards infrastructure."}
+{"order": 35, "page": 3, "type": "body", "text": "ITL develops tests, test methods, reference data, proof of concept implementations, and technical analyses to advance the development and productive use of information technology (IT)."}
+{"order": 36, "page": 3, "type": "body", "text": "ITL’s responsibilities include the development of management, administrative, technical, and physical standards and guidelines for the costeffective security of other than national security-related information in federal information systems."}
+{"order": 37, "page": 3, "type": "body", "text": "The Special Publication 800-series reports on ITL’s research, guidelines, and outreach efforts in information systems security and privacy and its collaborative activities with industry, government, and academic organizations."}
+{"order": 38, "page": 3, "type": "heading", "text": "Abstract"}
+{"order": 39, "page": 3, "type": "body", "text": "This publication describes the Risk Management Framework (RMF) and provides guidelines for applying the RMF to information systems and organizations."}
+{"order": 40, "page": 3, "type": "body", "text": "The RMF provides a disciplined, structured, and flexible process for managing security and privacy risk that includes information security categorization; control selection, implementation, and assessment; system and common control authorizations; and continuous monitoring."}
+{"order": 41, "page": 3, "type": "body", "text": "The RMF includes activities to prepare organizations to execute the framework at appropriate risk management levels."}
+{"order": 42, "page": 3, "type": "body", "text": "The RMF also promotes near real-time risk management and ongoing information system and common control authorization through the implementation of continuous monitoring processes; provides senior leaders and executives with the necessary information to make efficient, cost-effective, risk management decisions about the systems supporting their missions and business functions; and incorporates security and privacy into the system development life cycle."}
+{"order": 43, "page": 3, "type": "body", "text": "Executing the RMF tasks links essential risk management processes at the system level to risk management processes at the organization level."}
+{"order": 44, "page": 3, "type": "body", "text": "In addition, it establishes responsibility and accountability for the controls implemented within an organization’s information systems and inherited by those systems."}
+{"order": 45, "page": 3, "type": "heading", "text": "Keywords"}
+{"order": 46, "page": 3, "type": "body", "text": "assess; authorization to operate; authorization to use; authorizing official; categorize; common control; common control authorization; common control provider; continuous monitoring; control assessor; control baseline; cybersecurity framework profile; hybrid control; information owner or steward; information security; monitor; ongoing authorization; plan of action and milestones; privacy; privacy assessment report; privacy control; privacy plan; privacy risk; risk assessment; risk executive function; risk management; risk management framework; security; security assessment report; security control; security engineering; security plan; security risk; senior agency information security officer; senior agency official for privacy; supply chain risk management; system development life cycle; system owner; system privacy officer; system security officer; system-specific control."}
