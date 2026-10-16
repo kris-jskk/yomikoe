@@ -48,3 +48,22 @@ do), `brief-template.md`, `report-template.md`, and `supervisor-log.md`.
 7. **Corrections are logged.** When the session tells the user something that later turns
    out wrong, the correction goes in `_agent/supervisor-log.md` with what was assumed, what
    was true, and what would have caught it earlier.
+
+## Rule: every stage is visualized; the architectural guide tracks the phases
+
+The published architectural guide (artifact "HearNarro M1 Ingest Map",
+https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n; source `m1-ingest-map.html` in the session
+scratchpad, copy under `docs/guide/` when a milestone closes) is how the user follows the work.
+
+1. **Every pipeline stage gets its own diagram** in the guide: the mechanism (what goes in,
+   what rule is applied, what comes out), not a labelled box. A new stage, a replaced
+   algorithm, or a new data shape between stages gets its diagram in the same change that
+   introduces it. Diagrams are inline SVG, themed with `currentColor`, with a caption that
+   states the claim the picture makes.
+2. **The guide is updated at every major phase change**: when a phase starts, while it runs
+   (if its status changes), and when it finishes. Each update carries a timestamp, the phase
+   pills (done / running / next), the evidence produced (scores, counts, commit ids), and any
+   decision taken. The supervisor republishes it before writing the user-facing message for
+   that phase; a phase is not reported as closed until the guide says so.
+3. **Why and not only what.** Each step in the guide says why it is necessary, in one or two
+   sentences, and names the requirement ID or design decision it serves.
