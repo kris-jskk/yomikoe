@@ -247,7 +247,7 @@ Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate:
 parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up
 ```
 
-M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments.
+M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments. The score is word-level (D14): word-sequence edit distance over the ordered prose, ≥ 0.95 per PDF and ≥ 0.97 mean; the sentence-level score is printed as a diagnostic only.
 
 Each milestone is one or two coding-agent sessions and ends with its gate passing in a test, not by inspection. Nothing in a later milestone starts until the gate before it is green; the gates are the acceptance tests the coding session should write first.
 
@@ -272,7 +272,8 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 | Kokoro quality judged too robotic for long listening | Medium | Backend interface makes a GPU model a drop-in; try Fish Speech on a cloud GPU before committing |
 | OCR on photographed pages too slow or inaccurate | Medium | Tesseract first; PaddleOCR behind a flag; cap OCR to pages without a text layer |
 | Scope creep toward summaries and chat | High | Non-goals list; v1 ships the reader only |
-| M1 gate is prose-only (D12): table and equation internals are not order-checked until ING-7 | Medium | Golden test asserts excluded segment counts match the ground truth within 15%, so prose misread as table cannot hide; ING-7 (M4) adds the table/equation reading rules and their comparison |
+| M1 gate is prose-only (D12): table and equation internals are not order-checked until ING-7 | Medium | Golden test asserts the excluded character mass (table/equation chars ÷ all chars) matches the ground truth within 0.05 absolute (D14), so prose misread as table cannot hide; ING-7 (M4) adds the table/equation reading rules and their comparison |
+| M1 gate is word-level (D14): segment and sentence boundaries are not order-checked by the golden test | Low | Sentence-level score still printed per PDF as a diagnostic; sentence splitting is covered by the stage-5 unit tests |
 
 **Open questions**
 

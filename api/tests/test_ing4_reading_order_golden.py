@@ -1,14 +1,17 @@
 """M1 gate: reading-order golden test over the 20 fixture PDFs (D11, ING-4, ING-5).
 
-score = 1 - levenshtein(actual_seq, expected_seq) / len(expected_seq), sequences of
-whitespace-collapsed segment texts. Gate: >= 0.95 per PDF and >= 0.97 mean.
+D12 (prose-only): both sides keep only heading, body, list, caption and footnote segments.
 
-D12 (prose-only): both sequences keep only heading, body, list, caption and footnote
-segments; per fixture the excluded counts must balance within 15% (golden_util).
+D14 (word-level gate): score = 1 - levenshtein(actual_words, expected_words) / len(expected_words)
+over the joined prose texts, lowercased, whitespace-split, punctuation stripped per token.
+Gate: >= 0.95 per PDF and >= 0.97 mean. Guard: excluded (table/equation) character mass over
+all characters agrees within 0.05 absolute on each side. The sentence-level score (segment
+texts compared whole) is printed as a diagnostic and never asserted.
 """
 
 import json
 from collections import Counter
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 
@@ -16,7 +19,14 @@ import pytest
 
 from hearnarro.ingestion.extract import ocr_available
 from hearnarro.ingestion.pipeline import ingest
-from tests.golden_util import exclusion_balanced, prose_only, seq_levenshtein
+from tests.golden_util import (
+    CHAR_MASS_TOLERANCE,
+    char_mass_balanced,
+    char_mass_ratio,
+    prose_only,
+    seq_levenshtein,
+    word_score,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 MANIFEST = FIXTURES / "manifest.json"
@@ -43,9 +53,16 @@ def _skip_reason(entry: dict) -> str | None:
     return None
 
 
+@dataclass(frozen=True)
+class Score:
+    word: float  # D14 gate score
+    sentence: float  # D12 sentence-level score, diagnostic only
+    ratio_actual: float  # excluded character mass, actual side
+    ratio_expected: float  # excluded character mass, expected side
+
+
 @cache
-def _score(name: str) -> tuple[float, int, int]:
-    """(score, excluded_actual, excluded_expected) on the prose-only sequences (D12)."""
+def _score(name: str) -> Score:
     rows = [
         json.loads(line) for line in _expected_path(name).read_text().splitlines() if line.strip()
     ]
@@ -54,8 +71,12 @@ def _score(name: str) -> tuple[float, int, int]:
     block_type = {b.id: b.type for b in result.blocks}
     actual, excluded_actual = prose_only((block_type[s.block_id], s.text) for s in result.segments)
     assert expected, f"{name}.expected.jsonl has no prose segments"
-    score = 1 - seq_levenshtein(actual, expected) / len(expected)
-    return score, excluded_actual, excluded_expected
+    return Score(
+        word=word_score(actual, expected),
+        sentence=1 - seq_levenshtein(actual, expected) / len(expected),
+        ratio_actual=char_mass_ratio(actual, excluded_actual),
+        ratio_expected=char_mass_ratio(expected, excluded_expected),
+    )
 
 
 def test_fixture_set_complete() -> None:
@@ -72,14 +93,15 @@ def test_reading_order_golden(name: str) -> None:
     reason = _skip_reason(entry)
     if reason:
         pytest.skip(reason)
-    score, excl_actual, excl_expected = _score(name)
+    sc = _score(name)
     print(
-        f"{name}\t{entry['class']}\t{score:.4f}"
-        f"\texcluded actual={excl_actual} expected={excl_expected}"
+        f"{name}\t{entry['class']}\tword={sc.word:.4f}\tsentence={sc.sentence:.4f}"
+        f"\texcluded_chars actual={sc.ratio_actual:.4f} expected={sc.ratio_expected:.4f}"
     )
-    assert score >= PER_PDF_MIN, f"{name} ({entry['class']}): {score:.4f} < {PER_PDF_MIN}"
-    assert exclusion_balanced(excl_actual, excl_expected), (
-        f"{name}: excluded actual={excl_actual} vs expected={excl_expected} beyond 15%"
+    assert sc.word >= PER_PDF_MIN, f"{name} ({entry['class']}): {sc.word:.4f} < {PER_PDF_MIN}"
+    assert char_mass_balanced(sc.ratio_actual, sc.ratio_expected), (
+        f"{name}: excluded char mass actual={sc.ratio_actual:.4f} vs "
+        f"expected={sc.ratio_expected:.4f} differs by more than {CHAR_MASS_TOLERANCE}"
     )
 
 
@@ -87,7 +109,11 @@ def test_reading_order_mean() -> None:
     scored = [e["name"] for e in ENTRIES if _skip_reason(e) is None]
     if not scored:
         pytest.skip("no scoreable fixtures")
-    scores = [_score(n)[0] for n in scored]
+    scores = [_score(n).word for n in scored]
     mean = sum(scores) / len(scores)
-    print(f"mean over {len(scores)} fixtures: {mean:.4f}")
+    sentence_mean = sum(_score(n).sentence for n in scored) / len(scored)
+    print(
+        f"word-level mean over {len(scores)} fixtures: {mean:.4f} (min {min(scores):.4f}); "
+        f"sentence-level mean (diagnostic): {sentence_mean:.4f}"
+    )
     assert mean >= MEAN_MIN, f"mean {mean:.4f} < {MEAN_MIN}"

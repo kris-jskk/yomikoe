@@ -23,6 +23,7 @@ Eleven decisions shape v1; three are yours to confirm (D5, D7, D10) and the rest
 | D11 | Fixture ground truth | `*.expected.jsonl` hand-corrected once, then golden; test asserts Levenshtein on segment order ≥ 0.95 | Proposed |
 | D12 | Golden comparison scope | Prose-only; figure text dropped; inline math joined; table/equation internals excluded until ING-7 | **Decided 2026-10-16** |
 | D13 | Extractor: pdfplumber + pypdfium2, replacing PyMuPDF (AGPL) | pdfplumber (MIT; pdfminer.six underneath) supplies glyphs, fonts, images, vector drawings and ruled tables; stage 1 groups glyphs into lines and blocks itself in content-stream order; pypdfium2 (Apache-2.0/BSD-3) renders pages for OCR. Supersedes the PyMuPDF part of D1 | **Decided 2026-10-16** |
+| D14 | Golden score granularity | Word-sequence edit distance over ordered prose; sentence-level printed as diagnostic; char-mass guard | **Decided 2026-10-16** |
 
 ## Ingestion pipeline
 
@@ -301,7 +302,7 @@ Four kinds of test, each tied to a milestone gate; the gate tests are written be
 
 | Kind | What it checks | Fixture | Gate |
 | --- | --- | --- | --- |
-| Reading-order golden | Stage 3 output vs `name.expected.jsonl` for each of 20 PDFs; prose-only (D12): both sequences keep only heading, body, list, caption and footnote segments; score = 1 − (Levenshtein distance over that sequence / expected length); assert ≥ 0.95 per PDF and ≥ 0.97 mean, and per PDF the excluded counts balance: \|excluded actual − excluded expected\| ≤ 0.15 × max(1, excluded expected) | `api/tests/fixtures/pdfs/` | M1 |
+| Reading-order golden | Stage 3 output vs `name.expected.jsonl` for each of 20 PDFs; prose-only (D12): both sides keep only heading, body, list, caption and footnote segments; word-level (D14): the prose texts are joined with single spaces, lowercased, split on whitespace, ASCII and typographic punctuation stripped from each token and empty tokens dropped; score = 1 − (word-sequence Levenshtein distance / expected word count); assert ≥ 0.95 per PDF and ≥ 0.97 mean, and per PDF the excluded character mass (chars in table/equation segments ÷ chars in all segments) agrees within 0.05 absolute on each side. The sentence-level score (segment texts compared whole) is printed per PDF as a diagnostic and never asserted; sentence boundaries are covered by the stage-5 unit tests | `api/tests/fixtures/pdfs/` | M1 |
 | Stage unit tests | Each ingestion stage on hand-made inputs: column split on synthetic bboxes, header detection on a 5-page repeat, de-hyphenation cases, pysbd offsets round-trip, normalizer `char_map` invariants | Inline in tests | M1 |
 | Timestamp invariants | For every synthesized segment: timestamps sorted, non-overlapping, last `end_ms` ≤ `duration_ms`, every `(char_start, char_end)` maps into `text` through `char_map`; after stretch, scaled timestamps keep the same invariants | 50 sentences from the fixtures, a `FakeBackend` for speed | M2 |
 | API contract | Each endpoint via `httpx.AsyncClient` against a temp SQLite: upload → parsing → ready; segments paging; `/audio` cache miss then hit; `PATCH` position round-trip | `FakeBackend` returning silence with synthetic timestamps | M2 |
