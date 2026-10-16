@@ -254,7 +254,7 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
 **What each milestone covers**
 
 1. M1 Ingest + skeleton: ING-1 to ING-5, the `documents`/`blocks`/`segments` tables, `POST /documents` and `GET /documents/{id}/segments`, a CLI that dumps a PDF's segments to stdout for eyeballing. Start by collecting the 20 fixture PDFs: five academic two-column papers, five single-column reports, five scanned pages, five with heavy tables and equations.
-2. M2 Synthesis + stream: SYN-1 to SYN-5, the Kokoro backend, the audio cache table, `GET /audio/{segment_id}` with its lookahead queue. Benchmark script that reports real-time factor and time-to-first-audio.
+2. M2 Synthesis + stream: SYN-1 to SYN-5, the Kokoro backend, the audio cache table, `GET /audio/{segment_id}` with its lookahead queue. Benchmark script that reports real-time factor and time-to-first-audio. Also (added 2026-10-16, after D14): a sentence-boundary truth independent of the extractor (ordered prose text with reviewed sentence breaks) and a boundary precision/recall metric over the word stream, gated in M2 because synthesis is where boundaries become audible; the M1 golden measures order only.
 3. M3 Reader UI: PLAY-1 to PLAY-5, the React app with Web Audio scheduled playback and word highlighting from timestamps. Voice and speed pickers.
 4. M4 Library + polish: LIB-1 to LIB-4, PLAY-6 to PLAY-8, ING-6 and ING-7, OCR fallback (ING-2), Docker Compose, the 300-page soak test.
 
