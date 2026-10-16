@@ -107,13 +107,14 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
       <b>The gate that ends M1</b>
       <span>20 fixture PDFs, each with a hand-checked expected reading order. The parser must score at least 0.95 on every PDF and 0.97 on average. Score = 1 − (edit distance between the parser's sentence sequence and the expected sequence) ÷ (expected length).</span>
     </div>
-    <div class="stamp"><span class="dot"></span><span>status as of 2026-10-16 13:18 PDT · M1 GATE GREEN: 167 passed, 5 skipped (scanned, no OCR) · phases 0–5 done for ingestion stages 1–5 · updated at every phase change</span></div>
+    <div class="stamp"><span class="dot"></span><span>status as of 2026-10-16 13:40 PDT · M1 COMPLETE: gate green, skeleton done, end-to-end kit verified over HTTP (15 of 15, mean 0.991) · ready for your hands-on test: docs/M1_TESTING.md · updated at every phase change</span></div>
     <nav class="toc">
       <a href="#why">1 Why M1 is the risky milestone</a>
       <a href="#fixtures">2 Why fixture PDFs</a>
       <a href="#flow">3 The ingestion flow</a>
       <a href="#order">4 Reading order up close</a>
       <a href="#segment">5 The segment model</a>
+      <a href="#skeleton">5b Where segments land</a>
       <a href="#sequence">6 The work sequence</a>
       <a href="#status">7 Status and scores</a>
     </nav>
@@ -579,6 +580,46 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
     <p>This is why stage 5 is in M1 even though full speech normalization (ING-6) is an M4 item: the map's invariants (same length as the spoken text, every index inside the displayed text, non-decreasing) are unit-tested now, so M2's timestamp tests can rely on them.</p>
   </section>
 
+  <section id="skeleton">
+    <h2><span class="k">5b</span>The skeleton: where segments land</h2>
+    <p>The pipeline is a pure function; the skeleton is what makes its output reachable. An upload is hashed, stored once, recorded as a document, and parsed off the request thread in a process pool, because pdfminer holds the GIL for long stretches and a 300-page parse must not stall the API (D9). Blocks and segments are written in one transaction and the status flips to ready only then, so a reader never sees a half-written document. The schema is the Technical Design's DDL, applied by an Alembic migration from day one (D7).</p>
+    <figure>
+      <svg viewBox="0 0 900 300" role="img" aria-label="Upload flow: POST /documents receives a PDF, hashes it, stores pdfs/sha256.pdf and a documents row with status parsing, returns 202 at once; a process-pool worker runs ingest and writes blocks and segments in one transaction then sets status ready, or failed with a reason; GET /documents/id polls the status; GET /documents/id/segments pages ordered rows with next_from.">
+        <defs><marker id="arrS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="10" y="40" width="130" height="56" rx="3"/>
+          <rect x="200" y="40" width="170" height="56" rx="3"/>
+          <rect x="430" y="20" width="200" height="96" rx="3" stroke-dasharray="4 3"/>
+          <rect x="690" y="40" width="200" height="56" rx="3" stroke-width="1.8"/>
+          <rect x="200" y="170" width="170" height="56" rx="3"/>
+          <rect x="430" y="170" width="200" height="56" rx="3"/>
+          <rect x="690" y="170" width="200" height="56" rx="3"/>
+          <line x1="140" y1="68" x2="198" y2="68" marker-end="url(#arrS)"/>
+          <line x1="370" y1="68" x2="428" y2="68" marker-end="url(#arrS)"/>
+          <line x1="630" y1="68" x2="688" y2="68" marker-end="url(#arrS)"/>
+          <path d="M285,96 L285,168" marker-end="url(#arrS)"/>
+          <path d="M530,116 L530,168" marker-end="url(#arrS)" stroke-dasharray="3 3"/>
+          <path d="M790,96 L790,168" marker-end="url(#arrS)"/>
+        </g>
+        <g fill="currentColor" font-size="12" text-anchor="middle">
+          <text x="75" y="62">POST /documents</text><text x="75" y="80" font-size="11" opacity="0.7">multipart PDF, ≤ 100 MB</text>
+          <text x="285" y="62">sha256 · store once</text><text x="285" y="80" font-size="11" opacity="0.7">pdfs/{sha256}.pdf · same bytes → 200, same id</text>
+          <text x="530" y="44">documents row</text><text x="530" y="62" class="mono" font-size="11">status: uploaded → parsing</text><text x="530" y="82" font-size="11" opacity="0.7">202 {id, status} returned here,</text><text x="530" y="98" font-size="11" opacity="0.7">before any parsing</text>
+          <text x="790" y="62">process pool (2 workers)</text><text x="790" y="80" font-size="11" opacity="0.7">ingest(pdf) in a child process</text>
+          <text x="285" y="192">GET /documents/{id}</text><text x="285" y="210" font-size="11" opacity="0.7">poll: parsing → ready | failed + reason</text>
+          <text x="530" y="192">GET …/segments?from=&amp;limit=</text><text x="530" y="210" font-size="11" opacity="0.7">ordered rows, limit ≤ 500, next_from</text>
+          <text x="790" y="192">one transaction</text><text x="790" y="210" font-size="11" opacity="0.7">blocks + segments (char_map packed) → ready</text>
+        </g>
+        <g fill="currentColor" font-size="11" opacity="0.8" text-anchor="middle">
+          <text x="169" y="60">bytes</text><text x="399" y="60">row</text><text x="659" y="60">job</text>
+          <text x="300" y="138">reads status</text><text x="560" y="146">reads rows</text><text x="810" y="138">writes</text>
+          <text x="450" y="270">SQLite in WAL mode so the worker process writes while the API reads · schema by Alembic revision 0001 · measured: upload → ready in about 0.3 s for a 4-page report</text>
+        </g>
+      </svg>
+      <figcaption>The upload path (ING-1, D7, D9). The handler's only slow step is hashing; parsing happens in another process, and the status row is the contract between them. Readers page segments by order, which is the same order the golden test scores.</figcaption>
+    </figure>
+  </section>
+
   <section id="sequence">
     <h2><span class="k">6</span>The work sequence and why each step is there</h2>
     <p>The PRD says a milestone ends when its gate passes in a test, not by inspection, and that the gate test is written before the feature. The sequence below is that rule applied. Phases 1a and 1b ran in parallel because they share no files; everything after runs in order because each phase consumes the previous one's output.</p>
@@ -643,9 +684,26 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
               <li>Branch <code>m1-ingest</code>, 30-odd local commits, nothing pushed.</li></ul></div>
       </div>
       <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Opus), commit 5ba1d86</span></div>
+        <div class="what"><b>6. M1 skeleton: schema and endpoints</b>
+          <span class="why-line">Why: the pipeline's output has to land somewhere the reader can page through; the M1 milestone names the tables and the two endpoints (ING-1 for upload).</span>
+          <ul><li>Contract tests first (upload → parsing → ready; sha256 dedupe; segments paging; 415/413/404; failed ingestion), then the Alembic migration with the D7 schema, a storage layer with packed char maps, and a FastAPI app whose upload handler returns at once while ingestion runs in a two-worker process pool (D9).</li>
+              <li>Decided 2026-10-16 13:25: the sentence-boundary truth and metric go to M2 (recorded in the PRD), where synthesis makes boundaries audible; the M1 golden measures order only.</li>
+              <li><b>Result:</b> Alembic revision 0001 is the D7 DDL verbatim; 10 contract tests red then green; full suite 177 passed, 5 skipped; <code>hearnarro serve</code> answers and a real upload goes parsing → ready in 0.33 s. Section 5b draws the path. One licence note: SQLAlchemy's async layer needs greenlet (MIT and PSF-2.0), so the storage layer uses aiosqlite directly and Alembic runs sync; nothing outside the allowlist was added.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Opus), commit d518e0f</span></div>
+        <div class="what"><b>7. End-to-end test kit</b>
+          <span class="why-line">Why: the user will test M1 by hand; pytest proves the parts, this proves the whole over HTTP.</span>
+          <ul><li><code>docs/M1_TESTING.md</code>: a 15-minute procedure with every command actually run (start the server, upload, poll, page, dedupe, error cases, CLI dump, reset).</li>
+              <li><code>api/scripts/m1_smoke.py</code>: drives a running server for all 15 text fixtures, scores the stored segments with the gate's word-level measure, prints a table, exits non-zero on any failure; plus a mode to upload any PDF and print its first segments.</li>
+              <li>README quickstart pointing at both.</li>
+              <li><b>Result:</b> the smoke script, driving a real server over HTTP on a fresh data directory, reproduces the gate exactly: 15 of 15 pass, mean 0.9914, exit code 0. The written procedure was executed end to end on a fresh server (upload 202, poll to ready, dedupe 200, .txt 415, unknown id 404, segments paging, CLI dump identical to the stored segments, reset). Segment rows now carry the block type so the API output can be scored the same way as the pipeline output.</li></ul></div>
+      </div>
+      <div class="phase">
         <div class="who"><span class="pill next">next</span><span>Not started</span></div>
-        <div class="what"><b>Remaining M1 items and the queued spike</b>
-          <ul><li>M1 skeleton per the PRD: the documents, blocks and segments tables (Alembic), <code>POST /documents</code> and <code>GET /documents/{id}/segments</code>. They only store what this pipeline produces.</li>
+        <div class="what"><b>After the skeleton</b>
+          <ul>
               <li>PP-DocLayoutV3 spike against the fixture set behind a flag (decided 2026-10-16), to compare an ML reading-order model with the geometric parser on the same word-level score.</li>
               <li>Install Tesseract before M4 so the five scanned fixtures score; their provisional expected files then need a hand-correction against OCR output.</li>
               <li>Sentence-splitter fixes ("Eq.", "Natl.", "et seq.") are now safe to make: the gate no longer depends on sentence boundaries.</li></ul></div>
@@ -703,6 +761,7 @@ unit tests 127 passed · ruff clean · scanned x5 skipped (no Tesseract) · comm
       <li><b>The ground truth keeps the sentence splitter's current boundaries</b>, including a few wrong ones ("Eq." and "Natl." treated as sentence ends). That is deliberate so the gate measures order. When the splitter is fixed, the expected files need their boundaries regenerated and re-checked.</li>
       <li><b>PyMuPDF is gone.</b> It was AGPL-3.0, in conflict with the licensing rule in CLAUDE.md; found by the prior-art survey and replaced the same day by pdfplumber and pypdfium2 (D13). The fixture set absorbed the cost: scores dropped on the swap and round 3 is recovering them against a frozen truth.</li>
       <li><b>The arXiv PDFs logged a font-subsetting warning</b> when trimmed. Text extraction was unaffected and the page renders looked normal to the reviewers.</li>
+      <li><b>Three rough edges seen while driving the API by hand</b>, left for M2: a scanned PDF without OCR ends "ready" with zero segments and no warning; report_02's cover-page headings appear twice in its segments (the golden still scores it 1.0 because the truth was drawn the same way, so it is a truth-and-parser artifact to review); the upload response has no poll URL, you poll <code>GET /documents/{id}</code> yourself.</li>
       <li><b>Nothing has been pushed.</b> All commits are local on the <code>m1-ingest</code> branch.</li>
     </ul></div>
   </section>
