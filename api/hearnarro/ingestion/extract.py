@@ -35,6 +35,12 @@ LINE_BACKSTEP = 0.5  # a glyph starting this many sizes left of the previous one
 LINE_MAX_GAP = 10.0  # ... as does a forward jump wider than this many sizes
 BLOCK_GAP = 0.5  # max vertical gap between a block and its next line, in font sizes
 BLOCK_SIZE_RATIO = 1.25  # max ratio between line font sizes inside one block
+# MuPDF's text-indent paragraph rule (D13), applied to tagged PDFs only (glyphs carry
+# marked-content ids; Word/Acrobat output): a line starting INDENT_NEW_BLOCK points right of
+# the previous line's start opens a new block (a first-line-indented paragraph, or the next
+# ragged-left cover line). In untagged TeX output the same move is a hanging indent (list
+# item, wrapped heading) and keeps the block; measured in results 130.
+INDENT_NEW_BLOCK: float | None = 0.5
 SUPERSCRIPT_SIZE_RATIO = 0.75  # a char this much smaller than the line's dominant size ...
 SUPERSCRIPT_RAISE = 0.2  # ... whose bottom sits this many dominant sizes higher is raised
 
@@ -70,6 +76,7 @@ class LayoutChar:
     font: str = ""
     size: float = 0.0
     upright: bool = True
+    mcid: int | None = None  # marked-content id (tagged PDFs)
 
 
 LayoutLine = Sequence[LayoutChar]
@@ -327,12 +334,23 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
     cur_box: BBox | None = None
     cur_size = 0.0
     cur_upright = True
+    prev_box: BBox | None = None
+    prev_line: list[LayoutChar] = []
     for line in lines:
         box, size, upright = _line_metrics(line)
         join = False
         if cur_box is not None and upright == cur_upright:
             if box.overlaps(cur_box):
                 join = True
+            elif (
+                upright
+                and INDENT_NEW_BLOCK is not None
+                and prev_box is not None
+                and box.y0 >= prev_box.y1 - 0.5 * size
+                and box.x0 > prev_box.x0 + INDENT_NEW_BLOCK
+                and _tagged(prev_line, line)
+            ):
+                join = False
             else:
                 ratio = max(size, cur_size) / max(min(size, cur_size), 0.1)
                 if upright:
@@ -353,7 +371,13 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
         else:
             blocks.append([line])
             cur_box, cur_size, cur_upright = box, size, upright
+        prev_box, prev_line = box, line
     return blocks
+
+
+def _tagged(prev: list[LayoutChar], line: list[LayoutChar]) -> bool:
+    """Either line carries a marked-content id, i.e. the PDF is tagged."""
+    return any(c.mcid is not None for c in (*prev, *line) if c.bbox is not None)
 
 
 def _cid_text(text: str) -> str:
@@ -370,6 +394,7 @@ def _layout_chars(page: Any, coords: _Coords) -> list[LayoutChar]:
             font=_SUBSET_PREFIX.sub("", str(ch.get("fontname", ""))),
             size=float(ch.get("size", 0.0)),
             upright=bool(ch.get("upright", True)),
+            mcid=ch.get("mcid"),
         )
         for ch in page.chars
     ]
