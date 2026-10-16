@@ -153,3 +153,19 @@ def test_ing5_merge_blocks_strips_emails_in_page0_author_block_only() -> None:
     texts = [lb.text for lb in merge_blocks(blocks)]
     assert texts[0] == "AI Singapore, Singapore"
     assert texts[2] == "Write to us at help@example.org for details."
+
+
+def test_ing5_merge_blocks_joins_inline_fragment_into_previous_block() -> None:
+    host = make_block(0, 0, ["and E[P"], x0=72, width=100, y0=100)
+    frag = make_block(0, 1, ["i D(p, q)] = O(1)."], x0=172, width=80, y0=100, type="equation")
+    frag.inline = True
+    nxt = make_block(0, 2, ["Next sentence."], x0=72, width=200, y0=113)
+    out = merge_blocks([host, frag, nxt])
+    assert [b.text for b in out] == ["and E[P i D(p, q)] = O(1).", "Next sentence."]
+    assert out[0].source == [(0, 0), (0, 1)] and out[0].type == "body"
+
+
+def test_ing5_merge_blocks_keeps_fragment_not_marked_inline() -> None:
+    host = make_block(0, 0, ["and E[P"], x0=72, width=100, y0=100)
+    frag = make_block(0, 1, ["i D(p, q)] = O(1)."], x0=172, width=80, y0=100, type="equation")
+    assert [b.text for b in merge_blocks([host, frag])] == ["and E[P", "i D(p, q)] = O(1)."]

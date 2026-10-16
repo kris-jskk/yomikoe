@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from hearnarro.ingestion.models import Block, Page
+from hearnarro.ingestion.models import Block, Line, Page
 
 READ_TYPES = {"body", "heading", "list", "caption", "equation", "table"}
 GUTTER_FRAC = 0.015  # minimum gutter width, fraction of page width
@@ -11,6 +11,14 @@ NARROW_SHARE = 0.5  # narrow blocks must hold at least this share of the page's 
 SIDE_FRAC = 0.10  # each column holds at least this share of the text
 CROSS_SIDE_FRAC = 0.05  # a block reaching this far past a gutter on both sides costs nothing
 BREAK_SIDE_FRAC = 9.0  # a block reaching this far past split_x on both sides is full-width
+INLINE_HOSTS = {"body", "list"}  # prose lines; display equations keep extraction order
+INLINE_TYPES = {"body", "equation", "list"}
+INLINE_OVERLAP = 0.8  # vertical overlap, fraction of the shorter line, to share a text line
+INLINE_BACK = 0.75  # a fragment may start this many font sizes left of the line's end
+INLINE_GAP = 1.0  # ... and at most this many font sizes right of it
+INLINE_LOOKAHEAD = 10  # fragments are searched among this many following blocks
+INLINE_DROP = 0.4  # a fragment centred this many font sizes below the line hangs below it
+INLINE_HOST_CHARS = 30  # a host is prose: at least this many non-space characters
 
 
 def _weight(block: Block) -> int:
@@ -104,6 +112,102 @@ def _linearize(
     return out
 
 
+def _text_lines(block: Block) -> list[Line]:
+    return [ln for ln in block.lines if ln.text.strip()]
+
+
+def _line_size(line: Line) -> float:
+    return max((s.size for s in line.spans), default=0.0)
+
+
+def _continues_line(y0: float, y1: float, x1: float, size: float, line: Line) -> bool:
+    """``line`` sits on the text line spanning y0..y1 and starts right where it ends at x1."""
+    overlap = min(y1, line.bbox.y1) - max(y0, line.bbox.y0)
+    shorter = min(y1 - y0, line.bbox.height)
+    if shorter <= 0 or overlap < INLINE_OVERLAP * shorter:
+        return False
+    if line.bbox.y_mid - (y0 + y1) / 2 > INLINE_DROP * size:
+        return False  # hangs below the line: sum limits, fraction denominators stay put
+    return x1 - INLINE_BACK * size <= line.bbox.x0 <= x1 + INLINE_GAP * size
+
+
+def _is_prose(block: Block) -> bool:
+    return block.type in INLINE_HOSTS and len("".join(block.text.split())) >= INLINE_HOST_CHARS
+
+
+def _is_fragment_of(frag: Block, host: Block, y0: float, y1: float, x1: float, size: float) -> bool:
+    flines = _text_lines(frag)
+    return (
+        frag.page == host.page
+        and frag.type in INLINE_TYPES
+        and not frag.inline
+        and not _is_prose(frag)
+        and len(flines) == 1
+        and _continues_line(y0, y1, x1, size, flines[0])
+    )
+
+
+def attach_inline(blocks: list[Block]) -> list[Block]:
+    """Pull inline maths fragments next to the prose line they continue (ING-4).
+
+    PyMuPDF splits a line with inline maths into several blocks whose bboxes include sub-
+    and superscripts, so sorting by top y can put a fragment before its host or after the
+    next line. A host is a body/list block of at least INLINE_HOST_CHARS non-space chars
+    (display-equation pieces are never hosts). A fragment is a body/equation/list block on
+    the same page whose first text line overlaps the host's last text line vertically by
+    >= INLINE_OVERLAP of the shorter line, is not centred more than INLINE_DROP font sizes
+    below it (sum limits, fraction denominators), and starts within [-INLINE_BACK,
+    +INLINE_GAP] font sizes of where that line ends. The leftmost fragment among the next
+    INLINE_LOOKAHEAD blocks (or a one-line fragment sorted just before the host) is placed
+    after the host, and the search repeats from the end of the fragment (a multi-line
+    fragment's last line becomes the new line). When the chain differs from the extraction
+    order, every fragment in it is marked ``inline`` and stage 4 joins it to the host's
+    text; a chain already in order keeps its blocks separate.
+    """
+    pool = list(blocks)
+    out: list[Block] = []
+    while pool:
+        host = pool.pop(0)
+        out.append(host)
+        lines = _text_lines(host)
+        if not _is_prose(host) or not lines:
+            continue
+        y0, y1 = lines[-1].bbox.y0, lines[-1].bbox.y1
+        x1, size = lines[-1].bbox.x1, _line_size(lines[-1])
+        chain: list[Block] = []
+        moved = False
+        if len(out) >= 2 and _is_fragment_of(out[-2], host, y0, y1, x1, size):
+            chain.append(out.pop(-2))  # a fragment sorted just before its host (ties on top y)
+            out.append(chain[-1])
+            moved = True
+            x1 = max(x1, _text_lines(chain[-1])[-1].bbox.x1)
+        while True:
+            cands = [
+                b
+                for b in pool[:INLINE_LOOKAHEAD]
+                if b.page == host.page
+                and b.type in INLINE_TYPES
+                and _text_lines(b)
+                and _continues_line(y0, y1, x1, size, _text_lines(b)[0])
+            ]
+            if not cands:
+                break
+            frag = min(cands, key=lambda b: _text_lines(b)[0].bbox.x0)
+            moved = moved or pool.index(frag) > 0
+            pool.remove(frag)
+            out.append(frag)
+            chain.append(frag)
+            flines = _text_lines(frag)
+            if len(flines) > 1:
+                y0, y1, x1 = flines[-1].bbox.y0, flines[-1].bbox.y1, flines[-1].bbox.x1
+                size = _line_size(flines[-1])
+            else:
+                x1 = max(x1, flines[0].bbox.x1)
+        for frag in chain:
+            frag.inline = moved  # joined only when extraction order had split the line
+    return out
+
+
 def order_page(
     page: Page, *, gap_frac: float = GUTTER_FRAC, full_width_frac: float = 0.60
 ) -> list[Block]:
@@ -113,7 +217,7 @@ def order_page(
     _, split_x = detect_columns(
         readable, page.width, gap_frac=gap_frac, full_width_frac=full_width_frac
     )
-    return _linearize(readable, split_x, page.width, full_width_frac) + _linearize(
+    return attach_inline(_linearize(readable, split_x, page.width, full_width_frac)) + _linearize(
         footnotes, split_x, page.width, full_width_frac
     )
 

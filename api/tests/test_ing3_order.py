@@ -123,3 +123,53 @@ def test_ing4_order_page_skips_empty_blocks() -> None:
 def test_ing4_order_page_drops_noise() -> None:
     blocks = [col1(0, 100), make_block(0, 1, ["arXiv stamp"], x0=10, width=20, type="noise")]
     assert _indices(order_page(make_page(0, blocks))) == [0]
+
+
+def _host(index: int, y0: float, text: str = "The bound holds whenever the sum E[P") -> Block:
+    # one prose line from x=72 to x=200 at y0..y0+12
+    return make_block(0, index, [text], x0=72, width=128, y0=y0)
+
+
+def test_ing4_attach_inline_moves_out_of_order_fragment_after_host() -> None:
+    from hearnarro.ingestion.order import attach_inline
+
+    host = _host(0, 100)
+    nxt = make_block(0, 1, ["next line of prose text here"], x0=72, width=300, y0=113)
+    frag = make_block(0, 2, ["i x"], x0=202, width=20, y0=101, type="equation")
+    out = attach_inline([host, nxt, frag])
+    assert _indices(out) == [0, 2, 1]
+    assert frag.inline and not host.inline and not nxt.inline
+
+
+def test_ing4_attach_inline_fragment_sorted_before_host_follows_it() -> None:
+    from hearnarro.ingestion.order import attach_inline
+
+    frag = make_block(0, 1, ["r ( V"], x0=198, width=30, y0=100, type="equation")
+    host = _host(0, 100, "with the copula factor written c(z) := c U")
+    out = attach_inline([frag, host])
+    assert _indices(out) == [0, 1] and frag.inline
+
+
+def test_ing4_attach_inline_in_order_chain_stays_separate() -> None:
+    from hearnarro.ingestion.order import attach_inline
+
+    host = _host(0, 100)
+    frag = make_block(0, 1, ["i x"], x0=202, width=20, y0=100, type="equation")
+    out = attach_inline([host, frag])
+    assert _indices(out) == [0, 1] and not frag.inline
+
+
+def test_ing4_attach_inline_ignores_hanging_and_distant_and_equation_hosts() -> None:
+    from hearnarro.ingestion.order import attach_inline
+
+    host = _host(0, 100)
+    nxt = make_block(0, 1, ["next line of prose text here"], x0=72, width=300, y0=113)
+    # a tall stacked piece (limits below the line): overlaps the line, centred 6pt below it
+    hanging = make_block(0, 2, ["k=1"], x0=202, width=20, y0=99, size=26 / 1.2, type="equation")
+    far = make_block(0, 3, ["far"], x0=260, width=20, y0=100, type="equation")
+    assert _indices(attach_inline([host, nxt, hanging, far])) == [0, 1, 2, 3]
+    eq_host = make_block(
+        0, 0, ["dF(mu, nu) := sup over all f in F"], x0=72, width=128, y0=100, type="equation"
+    )
+    frag = make_block(0, 2, ["f"], x0=202, width=10, y0=100, type="equation")
+    assert _indices(attach_inline([eq_host, nxt, frag])) == [0, 1, 2]

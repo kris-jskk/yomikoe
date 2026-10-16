@@ -86,6 +86,7 @@ class Block:
     lines: list[Line]
     type: BlockType = "body"
     ocr: bool = False  # True when produced by OCR (ING-2)
+    inline: bool = False  # set by stage 3: continues the previous block's text line (ING-4)
 
     @property
     def text(self) -> str:

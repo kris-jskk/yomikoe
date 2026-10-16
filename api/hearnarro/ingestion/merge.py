@@ -97,6 +97,11 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
         if in_author_block and block.type in ("heading", "body"):
             lines = [strip_emails(ln) for ln in lines]
         text = merge_lines(lines)
+        if block.inline and out and text:
+            # Stage 3 found this block continuing the previous block's text line (inline maths).
+            out[-1].text = merge_lines([out[-1].text, text])
+            out[-1].source.append((block.page, block.index))
+            continue
         if (
             block.type in ("body", "heading")
             and last_body is not None
