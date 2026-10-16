@@ -1,0 +1,162 @@
+[
+  {
+    "name": "academic_01_seahelm_audio",
+    "class": "academic",
+    "two_column": true,
+    "source": "https://arxiv.org/abs/2610.19869",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "academic_02_memduet",
+    "class": "academic",
+    "two_column": true,
+    "source": "https://arxiv.org/abs/2610.19928",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "academic_03_pruned_reasoning",
+    "class": "academic",
+    "two_column": true,
+    "source": "https://arxiv.org/abs/2610.19934",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "academic_04_legislative_xml",
+    "class": "academic",
+    "two_column": true,
+    "source": "https://arxiv.org/abs/2610.19999",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "academic_05_sparse_autoencoders",
+    "class": "academic",
+    "two_column": true,
+    "source": "https://arxiv.org/abs/2610.20139",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "tables_01_pfn_bayes",
+    "class": "tables",
+    "two_column": true,
+    "source": "https://arxiv.org/abs/2610.13764",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "tables_02_non_gaussian_sem",
+    "class": "tables",
+    "two_column": true,
+    "source": "https://arxiv.org/abs/2610.14246",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "tables_03_copula_subspaces",
+    "class": "tables",
+    "two_column": false,
+    "source": "https://arxiv.org/abs/2610.14498",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "tables_04_markov_kernel",
+    "class": "tables",
+    "two_column": false,
+    "source": "https://arxiv.org/abs/2610.13916",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "tables_05_decomposing_learner",
+    "class": "tables",
+    "two_column": false,
+    "source": "https://arxiv.org/abs/2610.14388",
+    "license": "CC-BY-4.0",
+    "pages": 4
+  },
+  {
+    "name": "report_01_zero_trust",
+    "class": "report",
+    "two_column": false,
+    "source": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-207.pdf",
+    "license": "public domain",
+    "pages": 4
+  },
+  {
+    "name": "report_02_patch_mgmt",
+    "class": "report",
+    "two_column": false,
+    "source": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-40r4.pdf",
+    "license": "public domain",
+    "pages": 4
+  },
+  {
+    "name": "report_03_ssdf",
+    "class": "report",
+    "two_column": false,
+    "source": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf",
+    "license": "public domain",
+    "pages": 4
+  },
+  {
+    "name": "report_04_rmf",
+    "class": "report",
+    "two_column": false,
+    "source": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-37r2.pdf",
+    "license": "public domain",
+    "pages": 4
+  },
+  {
+    "name": "report_05_controls",
+    "class": "report",
+    "two_column": false,
+    "source": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf",
+    "license": "public domain",
+    "pages": 4
+  },
+  {
+    "name": "scanned_01_seahelm_audio",
+    "class": "scanned",
+    "two_column": true,
+    "source": "https://arxiv.org/abs/2610.19869",
+    "license": "CC-BY-4.0",
+    "pages": 2
+  },
+  {
+    "name": "scanned_02_pruned_reasoning",
+    "class": "scanned",
+    "two_column": true,
+    "source": "https://arxiv.org/abs/2610.19934",
+    "license": "CC-BY-4.0",
+    "pages": 2
+  },
+  {
+    "name": "scanned_03_zero_trust",
+    "class": "scanned",
+    "two_column": false,
+    "source": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-207.pdf",
+    "license": "public domain",
+    "pages": 2
+  },
+  {
+    "name": "scanned_04_copula_subspaces",
+    "class": "scanned",
+    "two_column": false,
+    "source": "https://arxiv.org/abs/2610.14498",
+    "license": "CC-BY-4.0",
+    "pages": 2
+  },
+  {
+    "name": "scanned_05_markov_kernel",
+    "class": "scanned",
+    "two_column": false,
+    "source": "https://arxiv.org/abs/2610.13916",
+    "license": "CC-BY-4.0",
+    "pages": 2
+  }
+]
