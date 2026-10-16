@@ -1,0 +1,273 @@
+{"order": 0, "page": 0, "type": "heading", "text": "MemDuet: Learning Dual-Process Memory for Long-Context Reasoning"}
+{"order": 1, "page": 0, "type": "heading", "text": "Jiangcheng Song1, Haodong Jing1, Yulin Mu2, Lesong Tao1, Jixin Wang1"}
+{"order": 2, "page": 0, "type": "heading", "text": "Jin Cui1, Tianjing Ren3, Runxuan Xie2, Yongqiang Ma1, Nanning Zheng1*"}
+{"order": 3, "page": 0, "type": "body", "text": "1State Key Laboratory of Human-Machine Hybrid Augmented Intelligence, Institute of Artificial Intelligence and Robotics,"}
+{"order": 4, "page": 0, "type": "body", "text": "Xi’an Jiaotong University 2Faculty of Electronic and Information Engineering, Xi’an Jiaotong University 3Imperial College London"}
+{"order": 5, "page": 0, "type": "heading", "text": "Abstract"}
+{"order": 6, "page": 0, "type": "body", "text": "Reasoning over infinitely long documents is becoming a reality with recurrent memory agents."}
+{"order": 7, "page": 0, "type": "body", "text": "However, increasing context length exacerbates the trade-off between reasoning performance and inference efficiency."}
+{"order": 8, "page": 0, "type": "body", "text": "Inspired by Kahneman’s account of fast and slow thinking, we propose MemDuet1, a dual-process memory framework that learns to coordinate a small language model for fast, parallel evidence selection from raw context chunks (System 1) with a large language model for memory-update verification and memory updates in document order (System 2)."}
+{"order": 9, "page": 0, "type": "body", "text": "We train MemDuet in three stages: supervised fine-tuning of System 1 for evidence selection, Group Relative Policy Optimization (GRPO) of System 2 for verification and memory rewriting, and joint optimization of both policies to coordinate selection and updating for long-context reasoning."}
+{"order": 10, "page": 0, "type": "body", "text": "Experiments on diverse long-context reasoning benchmarks (RULER-HQA, LongBench v2, and 2WikiMultiHopQA) demonstrate a favorable accuracy–efficiency trade-off as context length grows."}
+{"order": 11, "page": 0, "type": "body", "text": "Averaged across evaluation settings on the three datasets, MemDuet achieves an end-to-end inference speedup of 9.74× and an output-token reduction of 73.91% relative to RL-MemAgent."}
+{"order": 12, "page": 0, "type": "heading", "text": "1 Introduction"}
+{"order": 13, "page": 0, "type": "body", "text": "Long-context reasoning is essential for large language models (LLMs) to synthesize evidence across documents, understand lengthy reports, and resolve repository-level dependencies in code (Bai et al., 2024; Zhang et al., 2023)."}
+{"order": 14, "page": 0, "type": "body", "text": "Existing work primarily extends long-context capability through larger context windows, sparse or linear attention, and retrieval-augmented generation (RAG) (Chen et al., 2023b; Beltagy et al., 2020; Katharopoulos et al., 2020; Yuan et al., 2025; Lewis et al., 2020)."}
+{"order": 15, "page": 0, "type": "heading", "text": "Fast Accurate"}
+{"order": 16, "page": 0, "type": "table", "text": "ReMemR1 79.60%"}
+{"order": 17, "page": 0, "type": "table", "text": "LycheeMemory (−G) 79.34%"}
+{"order": 18, "page": 0, "type": "body", "text": "90"}
+{"order": 19, "page": 0, "type": "heading", "text": "MemDuet (Ours) 84.20%"}
+{"order": 20, "page": 0, "type": "table", "text": "1×"}
+{"order": 21, "page": 0, "type": "table", "text": "50.0×"}
+{"order": 22, "page": 0, "type": "body", "text": "80"}
+{"order": 23, "page": 0, "type": "table", "text": "29.7× 25.2× 4.0×"}
+{"order": 24, "page": 0, "type": "body", "text": "Average accuracy (%)"}
+{"order": 25, "page": 0, "type": "table", "text": "InfMem 76.82%"}
+{"order": 26, "page": 0, "type": "body", "text": "70"}
+{"order": 27, "page": 0, "type": "table", "text": "MemAgent 78.73%"}
+{"order": 28, "page": 0, "type": "body", "text": "60"}
+{"order": 29, "page": 0, "type": "body", "text": "50"}
+{"order": 30, "page": 0, "type": "table", "text": "Qwen2.5-1M-7B 40.63%"}
+{"order": 31, "page": 0, "type": "table", "text": "0.04×"}
+{"order": 32, "page": 0, "type": "body", "text": "40"}
+{"order": 33, "page": 0, "type": "table", "text": "DS-Distill-14B 32.42%"}
+{"order": 34, "page": 0, "type": "table", "text": "0.33×"}
+{"order": 35, "page": 0, "type": "body", "text": "30"}
+{"order": 36, "page": 0, "type": "body", "text": "20"}
+{"order": 37, "page": 0, "type": "body", "text": "0 500 1000 1500 Average time (s / question)"}
+{"order": 38, "page": 0, "type": "caption", "text": "Figure 1: Accuracy–efficiency trade-off on RULER- HQA."}
+{"order": 39, "page": 0, "type": "caption", "text": "Accuracy, inference time, and output tokens are equally averaged over the nine shared length settings (7K–1.75M)."}
+{"order": 40, "page": 0, "type": "caption", "text": "Qwen and DS-Distill use the available settings."}
+{"order": 41, "page": 0, "type": "caption", "text": "Circle areas use a square-root-compressed scale for mean output tokens per question; circle labels give actual output-token ratios to MemDuet (1×)."}
+{"order": 42, "page": 0, "type": "body", "text": "However, these approaches remain bounded by the amount of context that can be directly represented or retrieved, leaving reasoning over unbounded documents unresolved."}
+{"order": 43, "page": 0, "type": "body", "text": "MemAgent instead streams documents through a bounded recurrent memory, enabling reasoning over infinitely long documents with a fixed active context (Yu et al., 2026)."}
+{"order": 44, "page": 0, "type": "body", "text": "Building on this paradigm, InfMem and GRU-Mem learn when to retrieve, update, or stop, while LycheeMemory compresses each chunk and invokes the reasoner only for selected memory blocks (Wang et al., 2026; Sheng et al., 2026; Chen et al., 2026)."}
+{"order": 45, "page": 0, "type": "body", "text": "These advances make recurrent memory increasingly selective, but expose a common bottleneck: control decisions either remain inside the sequential recurrent loop or operate on representations in which the original evidence has already been compressed."}
+{"order": 46, "page": 0, "type": "body", "text": "Consequently, as context grows, reasoning performance and inference efficiency remain tightly coupled."}
+{"order": 47, "page": 0, "type": "footnote", "text": "*Corresponding author:"}
+{"order": 48, "page": 0, "type": "footnote", "text": "1Project page: jiangchengsong.github.io/MemDuet/."}
+{"order": 49, "page": 1, "type": "body", "text": "Human reading and memory suggest a different principle: memory formation begins with selective attention."}
+{"order": 50, "page": 1, "type": "body", "text": "Readers first focus on goal-relevant information and then integrate the attended evidence with prior knowledge into a coherent memory representation (Craik et al., 1996; Kintsch, 1988; Aly and Turk-Browne, 2016)."}
+{"order": 51, "page": 1, "type": "body", "text": "This process naturally maps onto the dual-process account of cognition: System 1 rapidly identifies potentially useful evidence, whereas System 2 deliberately assesses and consolidates it (Kahneman, 2011; Evans and Stanovich, 2013)."}
+{"order": 52, "page": 1, "type": "body", "text": "Based on this insight, we propose MemDuet, a dual-process recurrent memory framework."}
+{"order": 53, "page": 1, "type": "body", "text": "A small language model (System"}
+{"order": 54, "page": 1, "type": "body", "text": "1) scans raw context in parallel to select candidate chunks for memory updating."}
+{"order": 55, "page": 1, "type": "body", "text": "A large language model (System"}
+{"order": 56, "page": 1, "type": "body", "text": "2) verifies whether each selected chunk warrants a memory update under the current memory, then rewrites memory."}
+{"order": 57, "page": 1, "type": "body", "text": "By combining small-model selective attention over raw chunks with large-model verification and memory updating, MemDuet balances reasoning performance and inference efficiency as context grows."}
+{"order": 58, "page": 1, "type": "body", "text": "A key challenge is how to train the two systems to cooperate."}
+{"order": 59, "page": 1, "type": "body", "text": "We develop a progressive three-stage training strategy."}
+{"order": 60, "page": 1, "type": "body", "text": "First, we supervise System 1 to identify context chunks that are likely to trigger useful memory updates."}
+{"order": 61, "page": 1, "type": "body", "text": "Next, with System 1 fixed, we optimize System 2 using Group Relative Policy Optimization (GRPO; Shao et al., 2024), training it to verify memory-update decisions and rewrite memory toward successful downstream reasoning."}
+{"order": 62, "page": 1, "type": "body", "text": "Finally, we jointly optimize both systems with task-level rewards, allowing evidence selection and memory updating to co-adapt."}
+{"order": 63, "page": 1, "type": "body", "text": "We evaluate MemDuet on RULER-HQA, LongBench v2, and long-context 2WikiMultihopQA."}
+{"order": 64, "page": 1, "type": "body", "text": "Results show that MemDuet improves the performance–efficiency trade-off over full-update recurrent memory agents, scaling to 3.5M-token contexts while achieving higher reasoning accuracy with substantially lower inference cost."}
+{"order": 65, "page": 1, "type": "body", "text": "Our contributions are summarized as follows:"}
+{"order": 66, "page": 1, "type": "list", "text": "1. We propose MemDuet, a cognitively inspired dual-process memory framework for longcontext reasoning, which instantiates System 1 as fast, parallel evidence selection with a small language model and System 2 as memoryupdate verification and memory rewriting with a large language model."}
+{"order": 67, "page": 1, "type": "list", "text": "2. We develop a three-stage training strategy that first establishes the selection and memoryupdating capabilities of the two systems through SFT and GRPO, respectively, and then jointly optimizes their cooperation under a shared downstream reasoning objective."}
+{"order": 68, "page": 1, "type": "list", "text": "3. Extensive experiments on long-context reasoning benchmarks demonstrate that MemDuet achieves a favorable balance between reasoning performance and inference efficiency."}
+{"order": 69, "page": 1, "type": "heading", "text": "2 Related Work"}
+{"order": 70, "page": 1, "type": "heading", "text": "2.1 Recurrent Memory for Long-Context Reasoning"}
+{"order": 71, "page": 1, "type": "body", "text": "Recurrent-memory methods process documents incrementally while maintaining a bounded state, allowing language models to handle inputs far beyond their context windows."}
+{"order": 72, "page": 1, "type": "body", "text": "MemAgent sequentially processes text chunks and repeatedly rewrites a textual memory, using end-to-end reinforcement learning to retain task-relevant information and discard distractors based on downstream rewards (Yu et al., 2026)."}
+{"order": 73, "page": 1, "type": "body", "text": "Building on this paradigm, InfMem and GRU-Mem learn retrieval, memory updating, and early-stopping decisions through SFT-to-RL training or behavior-specific rewards (Wang et al., 2026; Sheng et al., 2026)."}
+{"order": 74, "page": 1, "type": "body", "text": "LycheeMemory compresses individual chunks and selectively invokes the reasoner, jointly optimizing its compressor and reasoner through end-to-end reinforcement learning (Chen et al., 2026)."}
+{"order": 75, "page": 1, "type": "body", "text": "These studies turn memory management from a fixed procedure into a taskdriven policy, but their control decisions remain within the sequential loop or operate on already compressed evidence."}
+{"order": 76, "page": 1, "type": "body", "text": "MemDuet instead scans raw chunks in parallel before recurrent updating and progressively coordinates evidence selection with memory consolidation."}
+{"order": 77, "page": 2, "type": "heading", "text": "Overall Inference Workflow"}
+{"order": 78, "page": 2, "type": "body", "text": "Start from q and c₁ to initialize memory, then process"}
+{"order": 79, "page": 2, "type": "table", "text": "Long Document (in chunks, in order) c 1 c 2 c 3 c T ··· ···"}
+{"order": 80, "page": 2, "type": "body", "text": "later chunks speculatively."}
+{"order": 81, "page": 2, "type": "body", "text": "c₁ for initialization Later chunks processed by speculative workflow"}
+{"order": 82, "page": 2, "type": "table", "text": "system1 system2"}
+{"order": 83, "page": 2, "type": "body", "text": "Continue to"}
+{"order": 84, "page": 2, "type": "body", "text": "q Query"}
+{"order": 85, "page": 2, "type": "body", "text": "What is the main contribution … ?"}
+{"order": 86, "page": 2, "type": "table", "text": "Earliest accepted"}
+{"order": 87, "page": 2, "type": "table", "text": "Acceptance results (for each candidate)"}
+{"order": 88, "page": 2, "type": "table", "text": "Predictions for each chunk"}
+{"order": 89, "page": 2, "type": "body", "text": "next step (next window …)"}
+{"order": 90, "page": 2, "type": "table", "text": "chunk Overwrite Memory mt+1"}
+{"order": 91, "page": 2, "type": "table", "text": "(under the same mₜ)"}
+{"order": 92, "page": 2, "type": "table", "text": "ci t"}
+{"order": 93, "page": 2, "type": "table", "text": "*"}
+{"order": 94, "page": 2, "type": "table", "text": "earlier"}
+{"order": 95, "page": 2, "type": "table", "text": "c i c i+1 c i+2"}
+{"order": 96, "page": 2, "type": "body", "text": "Query q"}
+{"order": 97, "page": 2, "type": "heading", "text": "SKIP"}
+{"order": 98, "page": 2, "type": "table", "text": "c i+2"}
+{"order": 99, "page": 2, "type": "table", "text": "accept"}
+{"order": 100, "page": 2, "type": "heading", "text": "SKIP"}
+{"order": 101, "page": 2, "type": "table", "text": "c i+3"}
+{"order": 102, "page": 2, "type": "table", "text": "reject"}
+{"order": 103, "page": 2, "type": "heading", "text": "Small"}
+{"order": 104, "page": 2, "type": "heading", "text": "Large"}
+{"order": 105, "page": 2, "type": "heading", "text": "UPDATE"}
+{"order": 106, "page": 2, "type": "body", "text": "Current Memory mₜ"}
+{"order": 107, "page": 2, "type": "table", "text": "c i+4"}
+{"order": 108, "page": 2, "type": "heading", "text": "LM"}
+{"order": 109, "page": 2, "type": "table", "text": "accept"}
+{"order": 110, "page": 2, "type": "heading", "text": "LM"}
+{"order": 111, "page": 2, "type": "table", "text": "* = ci+2"}
+{"order": 112, "page": 2, "type": "table", "text": "ci t"}
+{"order": 113, "page": 2, "type": "body", "text": "ALL UPDATE candidates ci"}
+{"order": 114, "page": 2, "type": "body", "text": "… eventually produce final answer"}
+{"order": 115, "page": 2, "type": "table", "text": "c i+5"}
+{"order": 116, "page": 2, "type": "table", "text": "c i+k−2"}
+{"order": 117, "page": 2, "type": "table", "text": "accept"}
+{"order": 118, "page": 2, "type": "heading", "text": "SKIP"}
+{"order": 119, "page": 2, "type": "body", "text": "…"}
+{"order": 120, "page": 2, "type": "table", "text": "Speculative acceptance:"}
+{"order": 121, "page": 2, "type": "table", "text": "c j later"}
+{"order": 122, "page": 2, "type": "table", "text": "reject"}
+{"order": 123, "page": 2, "type": "table", "text": "ver"}
+{"order": 124, "page": 2, "type": "body", "text": "c i c i+1 c i+k−1"}
+{"order": 125, "page": 2, "type": "table", "text": "αt,i = min(1,"}
+{"order": 126, "page": 2, "type": "table", "text": "( UPDATE |q,ci,mt)"}
+{"order": 127, "page": 2, "type": "table", "text": "( UPDATE |q,ci,mt))"}
+{"order": 128, "page": 2, "type": "table", "text": "πθ"}
+{"order": 129, "page": 2, "type": "body", "text": "Current Memorymt"}
+{"order": 130, "page": 2, "type": "body", "text": "Resume from the chunk"}
+{"order": 131, "page": 2, "type": "table", "text": "sel"}
+{"order": 132, "page": 2, "type": "body", "text": "k chunks (in document order)"}
+{"order": 133, "page": 2, "type": "table", "text": "c j"}
+{"order": 134, "page": 2, "type": "table", "text": "πφ"}
+{"order": 135, "page": 2, "type": "heading", "text": "UPDATE"}
+{"order": 136, "page": 2, "type": "body", "text": "immediately after the"}
+{"order": 137, "page": 2, "type": "table", "text": "Accept if ξt,i ≤ αt,i."}
+{"order": 138, "page": 2, "type": "body", "text": "committed chunk."}
+{"order": 139, "page": 2, "type": "body", "text": "ci t"}
+{"order": 140, "page": 2, "type": "body", "text": "mt+1 : Earliest accepted chunk"}
+{"order": 141, "page": 2, "type": "table", "text": "Legend: : document chunkc i : current memory mt : UPDATE candidate ci : updated memory"}
+{"order": 142, "page": 2, "type": "body", "text": "*"}
+{"order": 143, "page": 2, "type": "caption", "text": "Figure 2: MemDuet’s overall inference workflow."}
+{"order": 144, "page": 2, "type": "caption", "text": "System 1 predicts Skip/Update in parallel for raw chunks under a shared memory state."}
+{"order": 145, "page": 2, "type": "caption", "text": "Candidate chunks retain their original text."}
+{"order": 146, "page": 2, "type": "caption", "text": "System 2 verifies whether a selected chunk warrants a memory update given the current memory, then generates and commits memory from the first accepted chunk in document order."}
+{"order": 147, "page": 2, "type": "caption", "text": "Later chunks are reevaluated under the updated memory."}
+{"order": 148, "page": 2, "type": "heading", "text": "2.2 Cognitively Inspired Language Models and Memory"}
+{"order": 149, "page": 2, "type": "body", "text": "Cognitive theories have informed both memory design and computational allocation in languagemodel systems."}
+{"order": 150, "page": 2, "type": "body", "text": "CoALA organizes language agents around modular memory, decision-making, and action components derived from cognitive architectures (Sumers et al., 2024)."}
+{"order": 151, "page": 2, "type": "body", "text": "MemoryBank adopts an Ebbinghaus-inspired mechanism for dynamically forgetting and reinforcing memories (Zhong et al., 2024), whereas HippoRAG draws on hippocampal indexing theory to support associative knowledge retrieval (Gutiérrez et al., 2024)."}
+{"order": 152, "page": 2, "type": "body", "text": "For reasoning, System 2 Attention deliberately rewrites the context to remove irrelevant information (Weston and Sukhbaatar, 2023), while Dualformer learns switchable fast and slow reasoning modes within a single model (Su et al., 2025)."}
+{"order": 153, "page": 2, "type": "body", "text": "These studies primarily apply cognitive principles to memory organization, retrieval, or the allocation of reasoning effort."}
+{"order": 154, "page": 2, "type": "body", "text": "MemDuet instead introduces dual-process specialization into recurrent memory: System 1 selects raw candidate chunks in parallel; System 2 verifies whether they warrant memory updates under the current memory and consolidates their evidence."}
+{"order": 155, "page": 2, "type": "heading", "text": "3 Methodology"}
+{"order": 156, "page": 2, "type": "heading", "text": "3.1 Preliminaries"}
+{"order": 157, "page": 2, "type": "body", "text": "Problem setup."}
+{"order": 158, "page": 2, "type": "body", "text": "We consider query-conditioned reasoning over a long document D. Given a query q, the goal is to generate an answer y using evidence from D, whose length may exceed the model’s context window."}
+{"order": 159, "page": 2, "type": "body", "text": "We divide D into T chunks (c1, . . . , cT ) in their original order, with |ci| ≤C, where | · | denotes token length and C is the chunk-size budget."}
+{"order": 160, "page": 2, "type": "body", "text": "The query is available throughout document processing."}
+{"order": 161, "page": 2, "type": "body", "text": "Recurrent textual memory."}
+{"order": 162, "page": 2, "type": "body", "text": "Following MemAgent (Yu et al., 2026), an LLM carries information across chunks through bounded textual memory, using the common interface"}
+{"order": 163, "page": 2, "type": "equation", "text": "m′ ∼πmem"}
+{"order": 164, "page": 2, "type": "equation", "text": "θ (· | q, ci, m), |m′| ≤B, (1)"}
+{"order": 165, "page": 2, "type": "body", "text": "Here m and m′ are the preceding and replacement memories, and B is the memory budget."}
+{"order": 166, "page": 2, "type": "body", "text": "Under the memory prompt, πmem"}
+{"order": 167, "page": 2, "type": "body", "text": "θ is the autoregressive product of System 2’s next-token policy πgen"}
+{"order": 168, "page": 2, "type": "body", "text": "θ ."}
+{"order": 169, "page": 2, "type": "body", "text": "The same model answers from q and the final memory under the answer prompt."}
+{"order": 170, "page": 2, "type": "body", "text": "Both C and B are independent of document length."}
+{"order": 171, "page": 2, "type": "heading", "text": "3.2 MemDuet Workflow"}
+{"order": 172, "page": 2, "type": "body", "text": "MemDuet alternates parallel raw-chunk selection by System 1 with verification and memory updates in document order by System 2 (Figure 2)."}
+{"order": 173, "page": 2, "type": "heading", "text": "3.2.1 System 1: Memory-Conditioned Parallel Candidate Selection"}
+{"order": 174, "page": 2, "type": "body", "text": "Here t indexes speculative rounds and i document chunks."}
+{"order": 175, "page": 2, "type": "body", "text": "At round t, System 1 independently evaluates a window Wt of up to k consecutive chunks in parallel, using the shared query q and memory mt to select candidate chunks for memory updating:"}
+{"order": 176, "page": 3, "type": "equation", "text": "at,i ∼πsel"}
+{"order": 177, "page": 3, "type": "equation", "text": "ϕ (· | q, ci, mt) ,"}
+{"order": 178, "page": 3, "type": "body", "text": "at,i ∈{Skip, Update}."}
+{"order": 179, "page": 3, "type": "body", "text": "(2)"}
+{"order": 180, "page": 3, "type": "body", "text": "The chunks predicted as Update form the candidate set"}
+{"order": 181, "page": 3, "type": "equation", "text": "Ct = {ci ∈Wt | at,i = Update}, (3)"}
+{"order": 182, "page": 3, "type": "body", "text": "which is forwarded to System 2."}
+{"order": 183, "page": 3, "type": "body", "text": "3.2.2 System 2: Speculative Verification and Memory Consolidation Inspired by speculative decoding’s acceptance rule (Leviathan et al., 2023; Chen et al., 2023a), System 2’s binary policy πver θ assesses whether selected chunks warrant memory updates."}
+{"order": 184, "page": 3, "type": "body", "text": "For candidate indices It = {i | ci ∈Ct}, the action-level acceptance probability is"}
+{"order": 185, "page": 3, "type": "equation", "text": "αt,i = min"}
+{"order": 186, "page": 3, "type": "equation", "text": "!"}
+{"order": 187, "page": 3, "type": "body", "text": "1, πver θ (Update | q, ci, mt) πsel"}
+{"order": 188, "page": 3, "type": "equation", "text": "ϕ (Update | q, ci, mt)"}
+{"order": 189, "page": 3, "type": "body", "text": "."}
+{"order": 190, "page": 3, "type": "body", "text": "(4)"}
+{"order": 191, "page": 3, "type": "body", "text": "Independently draw ξt,i ∼U(0, 1) for each candidate and accept it if ξt,i ≤αt,i."}
+{"order": 192, "page": 3, "type": "body", "text": "If any candidate is accepted, commit the first accepted chunk in document order and generate its replacement memory:"}
+{"order": 193, "page": 3, "type": "equation", "text": "mt+1 ∼πmem"}
+{"order": 194, "page": 3, "type": "equation", "text": "θ (· | q, ci⋆"}
+{"order": 195, "page": 3, "type": "equation", "text": "t , mt), (5)"}
+{"order": 196, "page": 3, "type": "body", "text": "where i⋆"}
+{"order": 197, "page": 3, "type": "body", "text": "t = min{i ∈It | ξt,i ≤αt,i}."}
+{"order": 198, "page": 3, "type": "body", "text": "As a special case, if no candidate is accepted, retain the current memory and advance past the window."}
+{"order": 199, "page": 3, "type": "body", "text": "Otherwise, discard remaining predictions conditioned on mt and resume immediately after the committed chunk with mt+1."}
+{"order": 200, "page": 3, "type": "body", "text": "Answering uses the query and final memory; Algorithm 3 in Appendix B.4 gives the complete transitions."}
+{"order": 201, "page": 3, "type": "heading", "text": "3.3 Training of MemDuet"}
+{"order": 202, "page": 3, "type": "body", "text": "Figure 3 summarizes three-stage training."}
+{"order": 203, "page": 3, "type": "body", "text": "Stage I trains memory-conditioned evidence selection."}
+{"order": 204, "page": 3, "type": "body", "text": "Stage II freezes System 1 and trains System 2 to verify candidates, rewrite memory, and generate answers."}
+{"order": 205, "page": 3, "type": "body", "text": "Stage III jointly optimizes both systems with task rewards, coordinating selection with verification and memory updates."}
+{"order": 206, "page": 3, "type": "body", "text": "3.3.1 Stage I: System 1 Supervised Warm-up We initialize System 1 on HotpotQA (Yang et al., 2018) by aligning gold supporting facts with document chunks."}
+{"order": 207, "page": 3, "type": "list", "text": "Evidence-containing chunks are labeled Update, and other chunks Skip."}
+{"order": 208, "page": 3, "type": "heading", "text": "Stage 1: System 1 Supervised Warm-up"}
+{"order": 209, "page": 3, "type": "body", "text": "Non-supporting q, c, m SKIP"}
+{"order": 210, "page": 3, "type": "heading", "text": "System 1"}
+{"order": 211, "page": 3, "type": "heading", "text": "(SLM)"}
+{"order": 212, "page": 3, "type": "body", "text": "Gold, before q, c, m UPDATE"}
+{"order": 213, "page": 3, "type": "body", "text": "Gold, after q, c, m′ SKIP"}
+{"order": 214, "page": 3, "type": "body", "text": "Trainable"}
+{"order": 215, "page": 3, "type": "body", "text": "LoRA only"}
+{"order": 216, "page": 3, "type": "body", "text": "LI = LwCE + λpair Lpair"}
+{"order": 217, "page": 3, "type": "body", "text": "update System 1 only"}
+{"order": 218, "page": 3, "type": "heading", "text": "Stage 2: System 2 Reinforcement Learning"}
+{"order": 219, "page": 3, "type": "body", "text": "Chunks Chunk 1 Chunk 2"}
+{"order": 220, "page": 3, "type": "heading", "text": "Output"}
+{"order": 221, "page": 3, "type": "heading", "text": "System 1"}
+{"order": 222, "page": 3, "type": "heading", "text": "System 2"}
+{"order": 223, "page": 3, "type": "body", "text": "Update Memory"}
+{"order": 224, "page": 3, "type": "heading", "text": "(SLM)"}
+{"order": 225, "page": 3, "type": "heading", "text": "(LLM)"}
+{"order": 226, "page": 3, "type": "body", "text": "q,c,m"}
+{"order": 227, "page": 3, "type": "body", "text": "⋮ Chunk K"}
+{"order": 228, "page": 3, "type": "body", "text": "Frozen"}
+{"order": 229, "page": 3, "type": "body", "text": "Trainable"}
+{"order": 230, "page": 3, "type": "body", "text": "Answer"}
+{"order": 231, "page": 3, "type": "body", "text": "q,c,m"}
+{"order": 232, "page": 3, "type": "body", "text": "GT Answer Reward Advantages GRPO"}
+{"order": 233, "page": 3, "type": "body", "text": "update System 2 only"}
+{"order": 234, "page": 3, "type": "heading", "text": "Stage 3: Joint policy optimization"}
+{"order": 235, "page": 3, "type": "body", "text": "Chunks Chunk 1 Chunk 2"}
+{"order": 236, "page": 3, "type": "heading", "text": "Output"}
+{"order": 237, "page": 3, "type": "heading", "text": "System 1"}
+{"order": 238, "page": 3, "type": "heading", "text": "System 2"}
+{"order": 239, "page": 3, "type": "body", "text": "Update Memory"}
+{"order": 240, "page": 3, "type": "heading", "text": "(SLM)"}
+{"order": 241, "page": 3, "type": "heading", "text": "(LLM)"}
+{"order": 242, "page": 3, "type": "body", "text": "q,c,m"}
+{"order": 243, "page": 3, "type": "equation", "text": "⋮"}
+{"order": 244, "page": 3, "type": "body", "text": "⋮ Chunk K"}
+{"order": 245, "page": 3, "type": "body", "text": "Trainable"}
+{"order": 246, "page": 3, "type": "body", "text": "Trainable"}
+{"order": 247, "page": 3, "type": "body", "text": "Answer"}
+{"order": 248, "page": 3, "type": "body", "text": "q,c,m"}
+{"order": 249, "page": 3, "type": "body", "text": "GT Answer Reward Advantages Joint update"}
+{"order": 250, "page": 3, "type": "body", "text": "update both systems"}
+{"order": 251, "page": 3, "type": "body", "text": "Figure 3: Three-stage training of MemDuet."}
+{"order": 252, "page": 3, "type": "body", "text": "Stage I trains System 1 with weighted classification and a paired-memory hinge loss."}
+{"order": 253, "page": 3, "type": "body", "text": "Stage II freezes System 1 and optimizes System 2 with GRPO."}
+{"order": 254, "page": 3, "type": "body", "text": "Stage III jointly optimizes both systems using task rewards."}
+{"order": 255, "page": 3, "type": "body", "text": "For each Update example (q, c, m), let m′ be the memory after incorporating the evidence from c."}
+{"order": 256, "page": 3, "type": "body", "text": "We retain the original example and add a postupdate negative:"}
+{"order": 257, "page": 3, "type": "body", "text": "(q, c, m) −→Update,"}
+{"order": 258, "page": 3, "type": "body", "text": "(q, c, m′) −→Skip."}
+{"order": 259, "page": 3, "type": "body", "text": "(6)"}
+{"order": 260, "page": 3, "type": "body", "text": "We train on the original examples and post-update"}
+{"order": 261, "page": 3, "type": "body", "text": "negatives using the memory-contrastive objective:"}
+{"order": 262, "page": 3, "type": "body", "text": "LStage I(ϕ) = LwCE + λpairLpair,"}
+{"order": 263, "page": 3, "type": "body", "text": "Lpair = EP"}
+{"order": 264, "page": 3, "type": "equation", "text": "\u0002"}
+{"order": 265, "page": 3, "type": "equation", "text": "\u0003"}
+{"order": 266, "page": 3, "type": "body", "text": "max(0, γ −∆sϕ)"}
+{"order": 267, "page": 3, "type": "body", "text": "."}
+{"order": 268, "page": 3, "type": "body", "text": "(7)"}
+{"order": 269, "page": 3, "type": "body", "text": "Here, LwCE is class-weighted action cross-entropy; P contains matched memory pairs, with ∆sϕ = sϕ(q, c, m) −sϕ(q, c, m′)."}
+{"order": 270, "page": 3, "type": "body", "text": "The score sϕ is the UPDATE-minus-SKIP logit difference, and γ is the margin."}
+{"order": 271, "page": 3, "type": "body", "text": "Hyperparameters are reported in Appendix B.1."}
+{"order": 272, "page": 3, "type": "body", "text": "3.3.2 Stage II: System 2 Reinforcement Learning We freeze System 1 at ϕSFT and optimize all System 2 parameters θ by reinforcement learning over"}

@@ -1,0 +1,217 @@
+{"order": 0, "page": 0, "type": "heading", "text": "SEA-HELM Audio: Evaluating Multilingual ASR-LLM Pipeline Performance"}
+{"order": 1, "page": 0, "type": "heading", "text": "Across SEA-HELM Subsets"}
+{"order": 2, "page": 0, "type": "heading", "text": "Yixian Tan, Aulia Adila, Jonathan Heng, Kunat Pipatanakul, Donghang Wu, Anocha"}
+{"order": 3, "page": 0, "type": "heading", "text": "Sutaveephamochanon"}
+{"order": 4, "page": 0, "type": "heading", "text": "AI Singapore, Singapore"}
+{"order": 5, "page": 0, "type": "heading", "text": "Abstract"}
+{"order": 6, "page": 0, "type": "body", "text": "We introduce SEA-HELM Audio, a Southeast Asian (SEA) multilingual evaluation framework that extends the text-based SEA-HELM benchmark to assess performance degradation in cascaded automatic speech recognition and large language model (ASR–LLM) pipelines."}
+{"order": 7, "page": 0, "type": "body", "text": "Using synthesized speech, we compare speech-input and text-input performance across five languages—Chinese, English, Malay, Indonesian, and Tamil—on multiple-choice reasoning and instruction-following tasks."}
+{"order": 8, "page": 0, "type": "body", "text": "We evaluate open-weight and commercial ASR–LLM systems using identical verifiers and quantify the speech gap as the difference between text and speech accuracy."}
+{"order": 9, "page": 0, "type": "body", "text": "Results show substantial degradation, with accuracy drops of 9.00–18.50 percentage points for multiple-choice reasoning and 20.00–42.86 points for instruction following."}
+{"order": 10, "page": 0, "type": "body", "text": "Tamil exhibits the largest degradation, exceeding 40 percentage points."}
+{"order": 11, "page": 0, "type": "body", "text": "Our findings highlight the limitations of text-only benchmarks in predicting voice-agent reliability and demonstrate the value of SEA- HELM Audio for evaluating multilingual voice-agent systems."}
+{"order": 12, "page": 0, "type": "body", "text": "Index Terms: automatic speech recognition, multilingual evaluation, spoken language understanding, SEA-HELM Audio"}
+{"order": 13, "page": 0, "type": "heading", "text": "1. Introduction"}
+{"order": 14, "page": 0, "type": "body", "text": "As artificial intelligence systems transition from text-based interfaces to conversational voice-enabled agents, evaluating the end-to-end accuracy of cascaded speech-language stacks has become a critical research priority."}
+{"order": 15, "page": 0, "type": "body", "text": "While text-based Large Language Models (LLMs) continue to achieve high benchmark scores, deploying these models within voice pipelines introduces acoustic transcription errors, phonetic ambiguities, and domain-specific degradation."}
+{"order": 16, "page": 0, "type": "body", "text": "Quantifying this degradation, specifically measuring the accuracy penalty a user incurs by speaking rather than typing, is essential for understanding realworld agent reliability across diverse tasks."}
+{"order": 17, "page": 0, "type": "body", "text": "Existing spoken language model benchmarks, such as VoiceBench [1], evaluate capabilities including speech recognition, reasoning, and instruction following through spoken inputs."}
+{"order": 18, "page": 0, "type": "body", "text": "However, their predominantly English-language evaluation settings provide limited insight into how voice-agent systems perform on Southeast Asian languages and tasks."}
+{"order": 19, "page": 0, "type": "body", "text": "In particular, it remains unclear to what extent transcription errors alter task-critical information and how these errors affect downstream task performance, especially in the context of Southeast Asian languages."}
+{"order": 20, "page": 0, "type": "body", "text": "To address the need for localized evaluation, AI Singapore developed SEA-HELM (Southeast Asian Holistic Evaluation of Language Models) [2]."}
+{"order": 21, "page": 0, "type": "body", "text": "SEA-HELM provides authentic perlanguage prompts and tailored programmatic verifiers across regional languages."}
+{"order": 22, "page": 0, "type": "body", "text": "However, SEA-HELM was engineered natively as a text-only benchmark, consisting exclusively of written prompts without paired audio recordings."}
+{"order": 23, "page": 0, "type": "body", "text": "This paper addresses the central research question: How can a text-based, regionally grounded benchmark be adapted into a speech-based evaluation dataset to systematically measure the impact of speech input on downstream LLM task performance across Southeast Asian languages?"}
+{"order": 24, "page": 0, "type": "body", "text": "By bridging SEA-HELM’s text prompts with synthesized audio pipelines, we establish a framework to quantify the Speech gap, the difference between Scoretext and Scorespeech, across multiple Southeast Asian languages, providing empirical baselines for regional speech agent deployment."}
+{"order": 25, "page": 0, "type": "heading", "text": "2. Methodology"}
+{"order": 26, "page": 0, "type": "body", "text": "This section outlines the experimental framework, dataset selection, and evaluation metrics employed to systematically isolate and quantify the performance degradation introduced by the speech modality across our five target languages."}
+{"order": 27, "page": 0, "type": "heading", "text": "2.1."}
+{"order": 28, "page": 0, "type": "heading", "text": "Experimental Design"}
+{"order": 29, "page": 0, "type": "body", "text": "Prior to finalizing the evaluation pipeline, we conducted an exploratory phase to establish a robust and regionally relevant testing environment."}
+{"order": 30, "page": 0, "type": "body", "text": "A primary distinction between our setup and existing voice evaluation frameworks lies in audio corpus generation: VoiceBench uses pre-recorded human speech, whereas SEA-HELM provides only text prompts."}
+{"order": 31, "page": 0, "type": "body", "text": "Consequently, our cascade architecture synthesizes its own input speech before evaluating downstream models."}
+{"order": 32, "page": 0, "type": "body", "text": "To ensure audio fidelity across regional languages, we generated synthetic speech with OmniVoice [3] Text-to-Speech (TTS) engines, selected for acoustic naturalness, prosodic accuracy, and regional accent representation."}
+{"order": 33, "page": 0, "type": "body", "text": "For task design, we selected multiple-choice and instruction-following formats, which are established in voice evaluation, and instantiated them with SEA-HELM text prompts."}
+{"order": 34, "page": 0, "type": "body", "text": "This approach preserves regional nuances, codeswitching patterns, and local cultural contexts across Chinese, Malay, Tamil, Indonesian, and English."}
+{"order": 35, "page": 0, "type": "body", "text": "By evaluating each sample twice, once through the synthesized voice pipeline (Scorespeech) and once via direct text prompts (Scoretext), we establish a controlled baseline to isolate and measure the precise performance penalty imposed by the speech-to-text layer."}
+{"order": 36, "page": 0, "type": "heading", "text": "2.2."}
+{"order": 37, "page": 0, "type": "heading", "text": "Datasets and Task Selection"}
+{"order": 38, "page": 0, "type": "body", "text": "To evaluate the voice cascade cost-effectively and deterministically, we selected tasks from SEA-HELM that rely on rulebased scoring and closely align with established VoiceBench task types."}
+{"order": 39, "page": 1, "type": "body", "text": "The evaluation suite draws from four primary SEA-HELM task subsets, summarized in Table 1."}
+{"order": 40, "page": 1, "type": "body", "text": "2.2.1."}
+{"order": 41, "page": 1, "type": "body", "text": "Benchmark Alignment and Active Subset Scope"}
+{"order": 42, "page": 1, "type": "body", "text": "For the initial empirical runs detailed in this study, benchmarking focuses on the SEA-HELM IFEval and Global-MMLU-Lite subsets across our five focus languages (Chinese, Malay, Tamil, Indonesian, and English)."}
+{"order": 43, "page": 1, "type": "body", "text": "The selection criteria prioritized two key attributes:"}
+{"order": 44, "page": 1, "type": "body", "text": "1. Speakable Prompts: Prompts can be read aloud as natural speech without removing formatting or template markup first."}
+{"order": 45, "page": 1, "type": "body", "text": "2. Verifiable Evaluation: All scoring is executed via programmatic, rule-based verifiers, so the text path and the speech path are scored in exactly the same way."}
+{"order": 46, "page": 1, "type": "heading", "text": "2.3."}
+{"order": 47, "page": 1, "type": "heading", "text": "Evaluation Metrics"}
+{"order": 48, "page": 1, "type": "body", "text": "To formalize the measurement of the speech modality penalty, the following metrics were captured across every benchmark run:"}
+{"order": 49, "page": 1, "type": "list", "text": "• Text accuracy (Scoretext): The accuracy of the target LLM when provided with the original, ground-truth text input."}
+{"order": 50, "page": 1, "type": "list", "text": "This represents the theoretical performance ceiling for the task."}
+{"order": 51, "page": 1, "type": "list", "text": "• Speech accuracy (Scorespeech): The end-to-end accuracy of the target LLM when the prompt is spoken, synthesized by TTS and transcribed by ASR."}
+{"order": 52, "page": 1, "type": "list", "text": "• ∆(The Gap): ∆= Scoretext −Scorespeech."}
+{"order": 53, "page": 1, "type": "list", "text": "This absolute difference represents the modality penalty, quantifying how much task performance degrades due to transcription errors, phonetic ambiguities, or missing acoustic signals."}
+{"order": 54, "page": 1, "type": "heading", "text": "3. SEA-HELM Audio"}
+{"order": 55, "page": 1, "type": "body", "text": "SEA-HELM contains only written prompts, so SEA-HELM Audio creates the spoken input itself: each prompt is read aloud by a speech synthesizer, transcribed by the ASR system under test, and answered by the LLM."}
+{"order": 56, "page": 1, "type": "body", "text": "Comparing this against the same LLM answering the original text isolates the cost of the speech front-end."}
+{"order": 57, "page": 1, "type": "heading", "text": "3.1."}
+{"order": 58, "page": 1, "type": "heading", "text": "Evaluation Flow"}
+{"order": 59, "page": 1, "type": "body", "text": "Each SEA-HELM prompt is evaluated in two ways (Figure 1)."}
+{"order": 60, "page": 1, "type": "body", "text": "In the speech path, the prompt is converted to speech with TTS, transcribed back to text by ASR, and the transcript is answered by the LLM."}
+{"order": 61, "page": 1, "type": "body", "text": "In the text path, the LLM answers the original prompt directly."}
+{"order": 62, "page": 1, "type": "body", "text": "Both answers are scored by the same rulebased verifier, giving Scorespeech and Scoretext."}
+{"order": 63, "page": 1, "type": "body", "text": "Because the two paths share the same LLM and the same verifier, the difference between them (∆= Scoretext −Scorespeech) is the accuracy lost by speaking the prompt instead of typing it."}
+{"order": 64, "page": 1, "type": "heading", "text": "3.2."}
+{"order": 65, "page": 1, "type": "heading", "text": "Spoken Prompt Construction"}
+{"order": 66, "page": 1, "type": "body", "text": "The TTS system plays the role of the user."}
+{"order": 67, "page": 1, "type": "body", "text": "Its voice is chosen independently of the system being evaluated, so every ASR–LLM configuration hears the same spoken prompts and differences in Scorespeech reflect the system rather than the input."}
+{"order": 68, "page": 1, "type": "body", "text": "Only the content a user would actually say is synthesized."}
+{"order": 69, "page": 1, "type": "body", "text": "For multiple-choice tasks, this is a short instruction followed by the question and its four options; for instruction-following tasks, it is the prompt exactly as written."}
+{"order": 70, "page": 1, "type": "body", "text": "Written conventions that do not read naturally aloud are adapted per language: in Chinese, the option labels A–D and the answer marker are written as Chinese words."}
+{"order": 71, "page": 1, "type": "body", "text": "The answer key (the correct option, or the constraints an IFEval response must satisfy) is never spoken and is used only at scoring time."}
+{"order": 72, "page": 1, "type": "heading", "text": "3.3."}
+{"order": 73, "page": 1, "type": "heading", "text": "Speech Recognition"}
+{"order": 74, "page": 1, "type": "body", "text": "The ASR system turns the synthesized speech back into text."}
+{"order": 75, "page": 1, "type": "body", "text": "We evaluate three systems chosen for their coverage of the target languages (Table 2): Qwen3-ASR-1.7B [7] as an openweight multilingual baseline, MERaLiON3-ASR-3B [8] as a regionally adapted open-weight model for Tamil, and ElevenLabs Scribe Realtime as a commercial service."}
+{"order": 76, "page": 1, "type": "body", "text": "Open-weight models use greedy decoding so that transcripts are reproducible."}
+{"order": 77, "page": 1, "type": "body", "text": "Transcription quality is also measured directly, as Word Error Rate (WER) and Character Error Rate (CER) between the transcript and the original prompt."}
+{"order": 78, "page": 1, "type": "body", "text": "This separates how much the ASR changed the prompt from how much those changes affected the task."}
+{"order": 79, "page": 1, "type": "heading", "text": "3.4."}
+{"order": 80, "page": 1, "type": "heading", "text": "Response Generation"}
+{"order": 81, "page": 1, "type": "body", "text": "The LLM answers the ASR transcript (speech path) and the original prompt (text path)."}
+{"order": 82, "page": 1, "type": "body", "text": "We evaluate SEA-LION-4.5- 27B [9], a regional open-weight model, and Gemini 3.5 Flash, a commercial model."}
+{"order": 83, "page": 1, "type": "body", "text": "Both use deterministic decoding (temperature 0), so any difference between the two paths comes from the input rather than from sampling."}
+{"order": 84, "page": 1, "type": "heading", "text": "3.5."}
+{"order": 85, "page": 1, "type": "heading", "text": "Scoring"}
+{"order": 86, "page": 1, "type": "body", "text": "All responses are scored with rule-based verifiers taken from SEA-HELM, which keeps scoring deterministic, cheap to repeat, and identical across the two paths."}
+{"order": 87, "page": 1, "type": "body", "text": "For multiple-choice questions, the chosen option letter (A–D) is extracted from the response and compared with the answer key."}
+{"order": 88, "page": 1, "type": "body", "text": "For instruction following, each response is checked against the constraints stated in its prompt and is counted as correct only if it also uses the expected language."}
+{"order": 89, "page": 1, "type": "heading", "text": "4. Results"}
+{"order": 90, "page": 1, "type": "body", "text": "This section presents the empirical findings from our multilingual voice cascade evaluations."}
+{"order": 91, "page": 1, "type": "body", "text": "Performance is reported across two primary axes: task type (multiple-choice questions via Global-MMLU-Lite vs. instruction following via SEA- HELM IFEval) and pipeline configuration (Regional Open- Weight Baseline vs. Commercial Stack)."}
+{"order": 92, "page": 1, "type": "heading", "text": "4.1."}
+{"order": 93, "page": 1, "type": "heading", "text": "Multiple Choice Reasoning (Global-MMLU-Lite)"}
+{"order": 94, "page": 1, "type": "body", "text": "Evaluations on the SEA-HELM Global-MMLU-Lite subset were conducted for Chinese and English, assessing general domain knowledge under a multiple-choice format (400 samples per run)."}
+{"order": 95, "page": 1, "type": "body", "text": "Across both languages, the commercial stack (Eleven- Labs Scribe Realtime paired with Gemini 3.5 Flash) outperformed the regional open-weight baseline in both text accuracy and speech accuracy."}
+{"order": 96, "page": 1, "type": "body", "text": "However, Chinese demonstrated a distinct resilience to the modality shift compared to English."}
+{"order": 97, "page": 1, "type": "body", "text": "For Chinese, ∆remained between 9.00 and 10.75 points, whereas English incurred a much steeper penalty of 15.50 to 18.50 points."}
+{"order": 98, "page": 2, "type": "body", "text": "Table 1: SEA-HELM tasks considered for SEA-HELM Audio and their evaluation scope."}
+{"order": 99, "page": 2, "type": "heading", "text": "Task Task Type SEA- HELM Languages"}
+{"order": 100, "page": 2, "type": "heading", "text": "Evaluated Here Selection Rationale"}
+{"order": 101, "page": 2, "type": "body", "text": "SEA-HELM IFEval Instruction following [4]"}
+{"order": 102, "page": 2, "type": "body", "text": "10 English, Malay, Indonesian, Tamil"}
+{"order": 103, "page": 2, "type": "body", "text": "Prompts are plain instructions that can be spoken as written."}
+{"order": 104, "page": 2, "type": "body", "text": "Scored by SEA-HELM’s multilingual verifier, which also verifies the response language."}
+{"order": 105, "page": 2, "type": "body", "text": "Global-MMLU-Lite Multiple choice [5] 7 Chinese, English Short questions with four options; the answer is a single letter, so scoring is exact."}
+{"order": 106, "page": 2, "type": "body", "text": "SEA-HELM NLU QA Question answering 5 Future work Scored with SEA-HELM’s rule-based token-F1 matching."}
+{"order": 107, "page": 2, "type": "body", "text": "SEA-HELM Safeguard Harmful-request refusal"}
+{"order": 108, "page": 2, "type": "body", "text": "8 Future work Harmful prompts used as a refusal probe (analogous to AdvBench [6] in VoiceBench), testing whether the LLM still refuses when the request is spoken."}
+{"order": 109, "page": 2, "type": "heading", "text": "Speech path"}
+{"order": 110, "page": 2, "type": "heading", "text": "SEA-HELM"}
+{"order": 111, "page": 2, "type": "heading", "text": "prompt TTS ASR LLM Verifier Accspeech"}
+{"order": 112, "page": 2, "type": "body", "text": "∆= Acctext −Accspeech"}
+{"order": 113, "page": 2, "type": "heading", "text": "Text path (baseline)"}
+{"order": 114, "page": 2, "type": "heading", "text": "SEA-HELM"}
+{"order": 115, "page": 2, "type": "heading", "text": "prompt LLM Verifier Acctext"}
+{"order": 116, "page": 2, "type": "body", "text": "Figure 1: SEA-HELM Audio evaluation: speech path (TTS →Speech →LLM) vs. text path (LLM only)."}
+{"order": 117, "page": 2, "type": "body", "text": "Table 2: ASR systems evaluated."}
+{"order": 118, "page": 2, "type": "heading", "text": "ASR System Type Languages Decoding"}
+{"order": 119, "page": 2, "type": "body", "text": "Qwen3-ASR-1.7B Open-weight en, zh, ms, id Greedy MERaLiON3-ASR-3B Open-weight ta Greedy ElevenLabs Scribe Realtime"}
+{"order": 120, "page": 2, "type": "body", "text": "Commercial API"}
+{"order": 121, "page": 2, "type": "body", "text": "en, zh, ms, id, ta Provider default"}
+{"order": 122, "page": 2, "type": "body", "text": "Table 3: Global-MMLU-Lite results (400 samples per run; TTS: OmniVoice)."}
+{"order": 123, "page": 2, "type": "body", "text": "Accuracy (Speech, Text) and ∆= Text −Speech, in percentage points."}
+{"order": 124, "page": 2, "type": "heading", "text": "Language ASR Model LLM Speech Text ∆"}
+{"order": 125, "page": 2, "type": "body", "text": "Chinese Qwen3-ASR-1.7B SEA-LION- 4.5-27B 71.50 80.50 9.00"}
+{"order": 126, "page": 2, "type": "body", "text": "Chinese ElevenLabs Scribe Realtime"}
+{"order": 127, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
+{"order": 128, "page": 2, "type": "body", "text": "79.75 90.50 10.75"}
+{"order": 129, "page": 2, "type": "body", "text": "English Qwen3-ASR-1.7B SEA-LION- 4.5-27B 69.00 87.50 18.50"}
+{"order": 130, "page": 2, "type": "body", "text": "English ElevenLabs Scribe Realtime"}
+{"order": 131, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
+{"order": 132, "page": 2, "type": "body", "text": "76.75 92.25 15.50"}
+{"order": 133, "page": 2, "type": "heading", "text": "4.2."}
+{"order": 134, "page": 2, "type": "heading", "text": "Instruction Following (SEA-HELM IFEval)"}
+{"order": 135, "page": 2, "type": "body", "text": "SEA-HELM IFEval provided multiple test of deterministic instruction adherence across English, Malay, Indonesian, and Tamil (105 samples per run)."}
+{"order": 136, "page": 2, "type": "body", "text": "The text-only baselines achieved exceptionally high scores, peaking at 97.14% for English, but introducing the speech modality resulted in severe performance degradation across all tested languages."}
+{"order": 137, "page": 2, "type": "body", "text": "The modality gap (∆) expanded significantly in instructionfollowing tasks compared to the MCQ evaluations."}
+{"order": 138, "page": 2, "type": "body", "text": "Tamil suffered the steepest performance drops (exceeding 40 points) for both the specialized MERaLiON3-ASR-3B pipeline and the commercial ElevenLabs equivalent, indicating severe structural vulnerabilities in Tamil ASR transcriptions."}
+{"order": 139, "page": 2, "type": "body", "text": "While the commercial stack generally outperformed the baseline, SEA-LION-4.5-27B proved highly competitive in text accuracy for Southeast Asian languages, notably surpassing Gemini 3.5 Flash in Indonesian IFEval (93.33% vs 89.52%)."}
+{"order": 140, "page": 2, "type": "body", "text": "Table 4: SEA-HELM IFEval results (105 samples per run; TTS: ElevenLabs v3)."}
+{"order": 141, "page": 2, "type": "body", "text": "Accuracy (Speech, Text) and ∆= Text − Speech, in percentage points."}
+{"order": 142, "page": 2, "type": "heading", "text": "Language ASR Model LLM Speech Text ∆"}
+{"order": 143, "page": 2, "type": "body", "text": "English Qwen3-ASR-1.7B SEA-LION- 4.5-27B 69.52 97.14 27.62"}
+{"order": 144, "page": 2, "type": "body", "text": "English ElevenLabs Scribe Realtime"}
+{"order": 145, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
+{"order": 146, "page": 2, "type": "body", "text": "76.19 97.14 20.95"}
+{"order": 147, "page": 2, "type": "body", "text": "Indonesian Qwen3-ASR-1.7B SEA-LION- 4.5-27B 60.95 94.29 33.33"}
+{"order": 148, "page": 2, "type": "body", "text": "Indonesian ElevenLabs Scribe Realtime"}
+{"order": 149, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
+{"order": 150, "page": 2, "type": "body", "text": "58.10 89.52 31.43"}
+{"order": 151, "page": 2, "type": "body", "text": "Malay Qwen3-ASR-1.7B SEA-LION- 4.5-27B 52.38 84.76 32.38"}
+{"order": 152, "page": 2, "type": "body", "text": "Malay ElevenLabs Scribe Realtime"}
+{"order": 153, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
+{"order": 154, "page": 2, "type": "body", "text": "60.00 80.00 20.00"}
+{"order": 155, "page": 2, "type": "body", "text": "Tamil MERaLiON3- ASR-3B"}
+{"order": 156, "page": 2, "type": "body", "text": "SEA-LION- 4.5-27B 47.62 87.62 40.00"}
+{"order": 157, "page": 2, "type": "body", "text": "Tamil ElevenLabs Scribe Realtime"}
+{"order": 158, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
+{"order": 159, "page": 2, "type": "body", "text": "41.90 81.90 40.00"}
+{"order": 160, "page": 2, "type": "body", "text": "Despite this strong text foundation, the open-weight pipeline struggled to recover from ASR-induced errors, reflecting ∆of over 25 points in Malay and Indonesian."}
+{"order": 161, "page": 2, "type": "heading", "text": "5. Discussion & Analysis"}
+{"order": 162, "page": 2, "type": "body", "text": "The empirical results underscore a critical reality in voiceagent deployment: strong text-based LLM performance does not guarantee equivalent voice capabilities."}
+{"order": 163, "page": 2, "type": "body", "text": "The modality gap (∆) observed across our evaluations highlights significant disparities driven by language, task structure, and pipeline composition."}
+{"order": 164, "page": 3, "type": "heading", "text": "5.1."}
+{"order": 165, "page": 3, "type": "heading", "text": "Linguistic Resilience vs. Vulnerability"}
+{"order": 166, "page": 3, "type": "body", "text": "The most striking finding is the sheer variance in the gap across the five evaluated languages."}
+{"order": 167, "page": 3, "type": "list", "text": "• Resilience in Chinese: Chinese exhibited the lowest performance degradation across all configurations, maintaining a Delta of approximately 9.00 to 10.75 points."}
+{"order": 168, "page": 3, "type": "list", "text": "This suggests two compounding advantages: first, modern ASR systems (both Qwen and ElevenLabs) possess highly robust acoustic models for Chinese; second, the downstream LLMs demonstrate strong semantic recovery, able to infer correct answers even in the presence of minor phonetic transcription errors."}
+{"order": 169, "page": 3, "type": "list", "text": "• The Tamil Bottleneck: Conversely, Tamil suffered the most severe modality penalty, shedding over 40 points in accuracy when transitioning from text to voice."}
+{"order": 170, "page": 3, "type": "list", "text": "Despite SEA-LION- 4.5-27B achieving a respectable 85.71% baseline accuracy on perfect text, the end-to-end performance collapsed to 42.86% utilizing the specialized MERaLiON3-ASR-3B model."}
+{"order": 171, "page": 3, "type": "list", "text": "This indicates a severe bottleneck at the acoustic processing layer, highlighting a critical data scarcity issue in Tamil ASR training corpora compared to high-resource languages."}
+{"order": 172, "page": 3, "type": "heading", "text": "5.2."}
+{"order": 173, "page": 3, "type": "heading", "text": "Task Format Sensitivity: MCQ vs. Instruction Following"}
+{"order": 174, "page": 3, "type": "body", "text": "The data reveals that the modality gap is heavily influenced by the nature of the evaluation task."}
+{"order": 175, "page": 3, "type": "body", "text": "On Global-MMLU-Lite (MCQ), LLMs could often recover from noisy transcripts because multiple-choice reasoning primarily requires identifying key semantic concepts to select an option (A, B, C, or D)."}
+{"order": 176, "page": 3, "type": "body", "text": "If an ASR model slightly misheard a noun, the LLM could still deduce the correct multiple-choice letter from contextual clues."}
+{"order": 177, "page": 3, "type": "body", "text": "IFEval, in contrast, scores each response against explicit lexical, length, and format constraints stated in the prompt."}
+{"order": 178, "page": 3, "type": "body", "text": "When ASR drops or substitutes a word that carries one of these constraints, the LLM answers a different instruction, and the rule-based verifier marks the response as a failure even if it is otherwise correct."}
+{"order": 179, "page": 3, "type": "body", "text": "This mechanism accounts for the larger IFEval gaps of 20 to 43 points."}
+{"order": 180, "page": 3, "type": "heading", "text": "5.3."}
+{"order": 181, "page": 3, "type": "heading", "text": "Commercial vs. Open-Weight"}
+{"order": 182, "page": 3, "type": "body", "text": "While the commercial stack (ElevenLabs Scribe Realtime + Gemini 3.5 Flash) consistently delivered higher speech accuracy, analyzing text accuracy reveals a nuanced picture of regional model capabilities."}
+{"order": 183, "page": 3, "type": "body", "text": "The SEA-LION-4.5-27B model proved highly competitive, and occasionally superior, in pure-text regional evaluations."}
+{"order": 184, "page": 3, "type": "body", "text": "Most notably, it outperformed Gemini in the Indonesian IFEval text baseline (94.29% vs. 89.52%)."}
+{"order": 185, "page": 3, "type": "body", "text": "The fact that SEA-LION’s end-to-end voice performance drops so sharply (a 33.33 point penalty) confirms that the limiting factor in the open-weight pipeline is not the LLM’s regional reasoning capability, but rather the fragility of the open-weight ASR models (Qwen3-ASR-1.7B and MERaLiON3-ASR-3B) handling Southeast Asian accents and code-switching."}
+{"order": 186, "page": 3, "type": "body", "text": "For organizations deploying regional voice agents, these findings suggest that heavily investing in localized ASR finetuning will yield a much higher return on investment than further scaling the LLM parameters."}
+{"order": 187, "page": 3, "type": "heading", "text": "6. Conclusion and Future Work"}
+{"order": 188, "page": 3, "type": "body", "text": "This study shows that a text-native benchmark, such as SEA-HELM, can be adapted to benchmark end-to-end voice pipelines, provided the evaluation tasks are highly deterministic."}
+{"order": 189, "page": 3, "type": "body", "text": "By measuring the modality gap (∆) between pure text accuracy and speech accuracy across five languages, we have isolated the precise performance penalty introduced when a user speaks to a conversational agent rather than typing."}
+{"order": 190, "page": 3, "type": "body", "text": "Our findings demonstrate that voice pipeline reliability is heavily dependent on the target language and the structural rigidity of the task."}
+{"order": 191, "page": 3, "type": "body", "text": "While Chinese multiple-choice reasoning exhibited a robust resilience to the modality shift (∆< 11 points), instruction following in Tamil suffered catastrophic degradation (∆> 40 points)."}
+{"order": 192, "page": 3, "type": "body", "text": "Furthermore, while the commercial stack (ElevenLabs Scribe Realtime + Gemini 3.5 Flash) provided the most stable end-to-end performance, the strong pure-text baseline of SEA-LION-4.5-27B suggests that the primary bottleneck for regional open-weight deployments lies in the acoustic transcription layer, not the language model’s reasoning capabilities."}
+{"order": 193, "page": 3, "type": "heading", "text": "7. References"}
+{"order": 194, "page": 3, "type": "body", "text": "[1] Y. Chen, X. Yue, C. Zhang, X. Gao, R. T. Tan, and H. Li,"}
+{"order": 195, "page": 3, "type": "body", "text": "“VoiceBench: Benchmarking LLM-based voice assistants,” arXiv preprint arXiv:2410.17196, 2024."}
+{"order": 196, "page": 3, "type": "body", "text": "[2] Y. Susanto, A. V. Hulagadri, J. R. Montalan, J. G. Ngui, X. Yong,"}
+{"order": 197, "page": 3, "type": "body", "text": "W. Q. Leong, H. Rengarajan, P. Limkonchotiwat, Y. Mai, and W. C. Tjhi, “SEA-HELM: Southeast Asian holistic evaluation of language models,” in Findings of the Association for Computational Linguistics: ACL 2025."}
+{"order": 198, "page": 3, "type": "body", "text": "Vienna, Austria: Association for Computational Linguistics, Jul. 2025, pp. 12 308–12 336."}
+{"order": 199, "page": 3, "type": "body", "text": "[3] H. Zhu, L. Ye, W. Kang, Z. Yao, L. Guo, F. Kuang, Z. Han,"}
+{"order": 200, "page": 3, "type": "body", "text": "W. Zhuang, L. Lin, and D. Povey, “OmniVoice: Towards omnilingual zero-shot text-to-speech with diffusion language models,” arXiv preprint arXiv:2604.00688, 2026."}
+{"order": 201, "page": 3, "type": "body", "text": "[4] J. Zhou, T. Lu, S. Mishra, S. Brahma, S. Basu, Y. Luan, D. Zhou,"}
+{"order": 202, "page": 3, "type": "body", "text": "and L. Hou, “Instruction-following evaluation for large language models,” arXiv preprint arXiv:2311.07911, 2023."}
+{"order": 203, "page": 3, "type": "body", "text": "[5] S. Singh, A. Romanou, C. Fourrier, D. I. Adelani, J. G. Ngui,"}
+{"order": 204, "page": 3, "type": "body", "text": "D. Vila-Suero, P. Limkonchotiwat, K. Marchisio, W. Q. Leong, Y. Susanto, R. Ng, S. Longpre, S. Ruder, W."}
+{"order": 205, "page": 3, "type": "body", "text": "-Y."}
+{"order": 206, "page": 3, "type": "body", "text": "Ko, A. Bosselut, A. Oh, A. Martins, L. Choshen, D. Ippolito, E. Ferrante, M. Fadaee, B. Ermis, and S. Hooker, “Global MMLU: Understanding and addressing cultural and linguistic biases in multilingual evaluation,” in Proc."}
+{"order": 207, "page": 3, "type": "body", "text": "63rd Annual Meeting of the Association for Computational Linguistics (ACL)."}
+{"order": 208, "page": 3, "type": "body", "text": "Vienna, Austria: Association for Computational Linguistics, Jul. 2025, pp. 18 761–18 799."}
+{"order": 209, "page": 3, "type": "body", "text": "[6] A. Zou, Z. Wang, N. Carlini, M. Nasr, J. Z. Kolter, and M. Fredrik-"}
+{"order": 210, "page": 3, "type": "body", "text": "son, “Universal and transferable adversarial attacks on aligned language models,” arXiv preprint arXiv:2307.15043, 2023."}
+{"order": 211, "page": 3, "type": "body", "text": "[7] X. Shi, X. Wang, Z. Guo, Y. Wang, P. Zhang, X. Zhang, Z. Guo,"}
+{"order": 212, "page": 3, "type": "body", "text": "H. Hao, Y. Xi, B. Yang, J. Xu, J. Zhou, and J. Lin, “Qwen3-ASR technical report,” arXiv preprint arXiv:2601.21337, 2026."}
+{"order": 213, "page": 3, "type": "body", "text": "[8] Y. He, Z. Liu, S. Sun, B. Wang, W. Zhang, X. Zou, N. F. Chen, and"}
+{"order": 214, "page": 3, "type": "body", "text": "A. T. Aw, “MERaLiON-AudioLLM: Bridging audio and language with large language models,” arXiv preprint arXiv:2412.09818, 2024."}
+{"order": 215, "page": 3, "type": "body", "text": "[9] R. Ng, T. N. Nguyen, Y. Huang, N. C. Tai, W. Y. Leong, W. Q."}
+{"order": 216, "page": 3, "type": "body", "text": "Leong, X. Yong, J. G. Ngui, Y. Susanto, N. Cheng et al., “SEA- LION: Southeast Asian languages in one network,” arXiv preprint arXiv:2504.05747, 2025."}
