@@ -47,6 +47,11 @@ INDENT_NEW_BLOCK: float | None = 0.5
 # the margin, e.g. an opening "(" or "W" set by microtype) opens a block; larger moves are
 # hanging indents of list items and wrapped headings.
 UNTAGGED_INDENT_MAX: float | None = 2.0
+# ... and so does a centred line under a wider centred line (title, author list), and the
+# hanging-indented continuation of a numbered reference entry ("[12] A. Author, ...").
+CENTRE_TOL: float | None = 3.0
+CENTRE_INDENT = 5.0
+_REF_ENTRY = re.compile(r"^\[\d+\]\s")
 # MuPDF's "way off the baseline" paragraph rule: a line whose baseline sits more than
 # PARA_BASELINE font sizes below the previous line's opens a new block, even when tall glyphs
 # (display-equation delimiters, stacked limits) make the boxes touch.
@@ -426,6 +431,8 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
                     _tagged(prev_line, line)
                     or (UNTAGGED_INDENT_MAX is not None
                         and box.x0 <= prev_box.x0 + UNTAGGED_INDENT_MAX)
+                    or _centred_pair(prev_box, box)
+                    or _REF_ENTRY.match(_text(prev_line)) is not None
                 )
             ):
                 join = False
@@ -480,6 +487,20 @@ def is_math_font(font: str) -> bool:
 def _is_accent(c: LayoutChar) -> bool:
     """A spacing accent, or a CMEX wide hat/tilde (pdfminer maps those to "b".."g")."""
     return c.text in _SPACING_ACCENTS or (c.font.startswith("CMEX") and c.text in "bcdefg")
+
+
+def _text(line: Sequence[LayoutChar]) -> str:
+    return "".join(c.text for c in line).strip()
+
+
+def _centred_pair(prev: BBox, box: BBox) -> bool:
+    """Two centred lines (a title, an author list): same centre within CENTRE_TOL points,
+    the second at least CENTRE_INDENT points narrower on the left."""
+    return (
+        CENTRE_TOL is not None
+        and abs(box.x_mid - prev.x_mid) <= CENTRE_TOL
+        and box.x0 - prev.x0 >= CENTRE_INDENT
+    )
 
 
 def _baseline(line: list[LayoutChar]) -> float:

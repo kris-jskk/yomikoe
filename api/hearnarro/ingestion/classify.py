@@ -44,6 +44,9 @@ HEADING_MAX_WORDS = 12
 CAPTION_MAX_DIST = 40.0
 FOOTNOTE_SIZE_RATIO = 0.85
 FOOTNOTE_TOP_FRAC = 0.75
+# A block opening with a superscript digit is a footnote only below this share of the page
+# height; above it, it is an affiliation line under the authors (tuned 2026-10-16).
+SUPERSCRIPT_FOOTNOTE_TOP_FRAC = 0.5
 FOOTNOTE_MIN_CHARS = 3  # 1-3 char small blocks are equation sub/superscripts, not footnotes
 BAND_UPPER_RATIO = 0.6
 BAND_SMALL_RATIO = 0.95
@@ -254,7 +257,10 @@ def _classify(block: Block, page: Page, median: float, repeated: set[str]) -> Bl
         and size <= FOOTNOTE_SIZE_RATIO * median
         and block.bbox.y0 >= FOOTNOTE_TOP_FRAC * page.height
         and len("".join(text.split())) > FOOTNOTE_MIN_CHARS
-    ) or _starts_with_superscript_digit(block):
+    ) or (
+        _starts_with_superscript_digit(block)
+        and block.bbox.y0 >= SUPERSCRIPT_FOOTNOTE_TOP_FRAC * page.height
+    ):
         return "footnote"
     if any(block.bbox.overlaps(t) for t in page.table_bboxes):
         return "table"
