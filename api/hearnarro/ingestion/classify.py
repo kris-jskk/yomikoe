@@ -3,13 +3,16 @@
 Rules from docs/TECHNICAL_DESIGN.md stage 2, first match wins:
 noise (rotated text), header/footer, noise (boilerplate text), heading, caption, footnote,
 table, equation, list, body. Then (D12) any block but a caption whose bbox lies at least
-FIGURE_INSIDE_FRAC inside a figure region (Page.figure_bboxes) is typed figure.
+FIGURE_INSIDE_FRAC inside a figure region (Page.figure_bboxes) is typed figure. Two document
+passes follow: cover-page pull quotes typed heading by size become body, and a table of
+contents (a "Contents" heading and the TOC-like blocks after it) is typed toc (never read).
 """
 
 from __future__ import annotations
 
 import math
 import re
+import unicodedata
 from collections import defaultdict
 
 from hearnarro.ingestion.models import BBox, Block, BlockType, Page
@@ -55,6 +58,22 @@ COVER_PAGES = 2
 MARGIN_FRAC = 0.10
 SIGNATURE_TOP_FRAC = 0.70
 FIGURE_INSIDE_FRAC = 0.80  # share of a block's area inside a figure region to be figure text
+
+# Table of contents (ING-3, type toc; found on a user PDF 2026-10-16).
+TOC_HEADING_RE = re.compile(r"^(?:table of )?contents$")
+LEADER_RE = re.compile(r"^[\s.·…]+$")
+LEADER_MIN_DOTS = 3
+TOC_PAGE_NUMBER_RE = re.compile(r"\d{1,4}\s*$")
+TOC_INNER_NUMBER_RE = re.compile(r"(?<=\s)\d{1,4}(?=\s)")  # "3 Title 6 Title 9 Title"
+TOC_LINE_SHARE = 0.5
+TOC_MAX_PAGES = 6
+TOC_LEAD_MAX_LINES = 2  # a short non-TOC-like block before the first TOC line (entry title)
+# Cover pages: a digit-free table region with at most this many lines is a title, not a table.
+COVER_TABLE_MAX_LINES = 4
+EQUATION_PUNCT = set(".,;:!?")
+OPENING_QUOTES = '“"‘«„'
+SENTENCE_END_RE = re.compile(r"[a-z]{2,}[.!?][\"”’)]*(?=\s|$)")
+PULL_QUOTE_MIN_SENTENCES = 2
 
 
 def normalize_key(text: str) -> str:
@@ -209,10 +228,25 @@ def _looks_like_running_header(block: Block, text: str, median: float) -> bool:
     return median > 0 and _max_size(block) <= BAND_SMALL_RATIO * median
 
 
+def _is_leader_line(line: str) -> bool:
+    return LEADER_RE.match(line) is not None and sum(c in ".·…" for c in line) >= LEADER_MIN_DOTS
+
+
+def _is_punctuation_only(text: str) -> bool:
+    """Only punctuation (quotes, dashes, asterisks...). A bare ``.`` ``,`` ``!`` etc. is
+    left to the equation rule: it trails a display equation or is a factorial."""
+    chars = [c for c in text if not c.isspace()]
+    if not chars or all(c in EQUATION_PUNCT for c in chars):
+        return False
+    return all(unicodedata.category(c).startswith("P") for c in chars)
+
+
 def _is_noise_text(block: Block, page: Page) -> bool:
     lines = [" ".join(ln.text.split()) for ln in block.lines if ln.text.strip()]
     if not lines:
         return False
+    if all(_is_leader_line(ln) for ln in lines) or _is_punctuation_only(" ".join(lines)):
+        return True  # TOC leader dots; a stray closing quote or dash (found on a user PDF)
     if all(CONTACT_ONLY_RE.match(ln) or BOILERPLATE_RE.match(ln) for ln in lines):
         return True
     if all(RULE_RE.match(ln) for ln in lines):
@@ -227,7 +261,9 @@ def _is_noise_text(block: Block, page: Page) -> bool:
     )
 
 
-def _classify(block: Block, page: Page, median: float, repeated: set[str]) -> BlockType:
+def _classify(
+    block: Block, page: Page, median: float, repeated: set[str], tables: list[BBox]
+) -> BlockType:
     text = block.text.strip()
     if _is_margin_stamp(block, page):
         return "noise"
@@ -242,7 +278,7 @@ def _classify(block: Block, page: Page, median: float, repeated: set[str]) -> Bl
         return "body"
     if _is_noise_text(block, page):
         return "noise"
-    if TABLE_FIRST and _inside(block, page.table_bboxes):
+    if TABLE_FIRST and _inside(block, tables):
         return "table"
     size = _max_size(block)
     if median > 0 and size >= HEADING_SIZE_RATIO * median:
@@ -250,8 +286,7 @@ def _classify(block: Block, page: Page, median: float, repeated: set[str]) -> Bl
     if _bold_majority(block) and len(text.split()) <= HEADING_MAX_WORDS and not text.endswith("."):
         return "heading"
     if CAPTION_RE.match(text) and any(
-        _distance(block.bbox, other) <= CAPTION_MAX_DIST
-        for other in [*page.image_bboxes, *page.table_bboxes]
+        _distance(block.bbox, other) <= CAPTION_MAX_DIST for other in [*page.image_bboxes, *tables]
     ):
         return "caption"
     if (
@@ -264,7 +299,7 @@ def _classify(block: Block, page: Page, median: float, repeated: set[str]) -> Bl
         and block.bbox.y0 >= SUPERSCRIPT_FOOTNOTE_TOP_FRAC * page.height
     ):
         return "footnote"
-    if any(block.bbox.overlaps(t) for t in page.table_bboxes):
+    if any(block.bbox.overlaps(t) for t in tables):
         return "table"
     if _is_equation(block):
         return "equation"
@@ -297,16 +332,119 @@ def in_figure(block: Block, regions: list[BBox]) -> bool:
     return any(_inter_area(b, r) >= FIGURE_INSIDE_FRAC * area for r in regions)
 
 
+def _cover_tables(page: Page, median: float) -> list[BBox]:
+    """Table regions to use on ``page``. On page 0 a region whose blocks hold no digit, at most
+    COVER_TABLE_MAX_LINES lines in all, and are all set at heading size is a ruled title frame,
+    not a table (ING-3)."""
+    if page.number != 0:
+        return page.table_bboxes
+    kept = []
+    for region in page.table_bboxes:
+        members = [b for b in page.blocks if _inside(b, [region]) or b.bbox.overlaps(region)]
+        lines = sum(1 for b in members for ln in b.lines if ln.text.strip())
+        title_sized = median > 0 and all(
+            _max_size(b) >= HEADING_SIZE_RATIO * median for b in members
+        )
+        has_digit = any(c.isdigit() for b in members for c in b.text)
+        if has_digit or lines > COVER_TABLE_MAX_LINES or not members or not title_sized:
+            kept.append(region)
+    return kept
+
+
+def _retype_pull_quotes(page: Page, median: float) -> None:
+    """On a cover page, a run of consecutive blocks typed heading by the size rule whose joined
+    text starts with an opening quote or holds PULL_QUOTE_MIN_SENTENCES sentence ends is a
+    pull quote: each block becomes body (ING-3)."""
+    run: list[Block] = []
+    for block in [*page.blocks, None]:
+        if (
+            block is not None
+            and block.type == "heading"
+            and median > 0
+            and _max_size(block) >= HEADING_SIZE_RATIO * median
+        ):
+            run.append(block)
+            continue
+        text = " ".join(" ".join(b.text.split()) for b in run)
+        if run and (
+            text.startswith(tuple(OPENING_QUOTES))
+            or len(SENTENCE_END_RE.findall(text)) >= PULL_QUOTE_MIN_SENTENCES
+        ):
+            for b in run:
+                b.type = "body"
+        run = []
+
+
+def _toc_like(block: Block) -> bool:
+    lines = [" ".join(ln.text.split()) for ln in block.lines if ln.text.strip()]
+    if not lines:
+        return False
+    if len(lines) == 1 and _is_leader_line(lines[0]):
+        return True
+    hits = sum(
+        1
+        for ln in lines
+        if _is_leader_line(ln)
+        or TOC_PAGE_NUMBER_RE.search(ln)
+        or len(TOC_INNER_NUMBER_RE.findall(ln)) >= 2
+    )
+    return hits >= TOC_LINE_SHARE * len(lines)
+
+
+def _mark_toc(pages: list[Page], median: float) -> None:
+    """A heading reading "Contents" or "Table of contents" opens a TOC region; it runs over the
+    TOC-like blocks after it, across pages, and ends at the first other block once one TOC-like
+    block was seen, at a body-size-or-larger heading, or after TOC_MAX_PAGES pages. Short blocks
+    before the first TOC-like one join it. A region with no TOC-like block types nothing (ING-3).
+    """
+    region: list[Block] = []
+    seen = False
+    start = 0
+
+    def close() -> None:
+        nonlocal region, seen
+        if seen:
+            for b in region:
+                b.type = "toc"
+        region, seen = [], False
+
+    for page in pages:
+        if region and page.number - start >= TOC_MAX_PAGES:
+            close()
+        for block in page.blocks:
+            if block.type in ("header", "footer", "figure", "image") or not block.text.strip():
+                continue
+            if region:
+                lines = [ln for ln in block.lines if ln.text.strip()]
+                if _toc_like(block):
+                    region.append(block)
+                    seen = True
+                    continue
+                big_heading = block.type == "heading" and _max_size(block) >= median
+                if not seen and not big_heading and len(lines) <= TOC_LEAD_MAX_LINES:
+                    region.append(block)
+                    continue
+                close()
+            if block.type == "heading" and TOC_HEADING_RE.match(normalize_key(block.text)):
+                region, seen, start = [block], False, page.number
+    close()
+
+
 def classify_pages(pages: list[Page]) -> list[Page]:
     """Set block.type in place (first matching rule wins) and return pages.
 
-    Figure-internal text (D12) overrides every type but caption.
+    Figure-internal text (D12) overrides every type but caption. Then cover pull quotes are
+    retyped body and a table of contents is typed toc.
     """
     median = body_median_size(pages)
     repeated = repeated_band_texts(pages)
     for page in pages:
+        tables = _cover_tables(page, median)
         for block in page.blocks:
-            block.type = _classify(block, page, median, repeated)
+            block.type = _classify(block, page, median, repeated, tables)
             if block.type != "caption" and in_figure(block, page.figure_bboxes):
                 block.type = "figure"
+        if page.number < COVER_PAGES:
+            _retype_pull_quotes(page, median)
+    _mark_toc(pages, median)
     return pages

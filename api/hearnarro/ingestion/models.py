@@ -76,6 +76,7 @@ BlockType = Literal[
     "image",
     "noise",  # never read: rotated stamps, email/URL-only lines, cover boilerplate
     "figure",  # never read: text >= 80% inside a figure region (D12)
+    "toc",  # never read: a table of contents (heading "Contents" and its entries)
 ]
 
 

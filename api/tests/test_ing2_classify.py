@@ -10,6 +10,7 @@ from hearnarro.ingestion.classify import (
     repeated_band_texts,
 )
 from hearnarro.ingestion.models import BBox, Block, Page
+from hearnarro.ingestion.order import READ_TYPES
 from tests.conftest import make_block, make_page, make_span
 
 FILLER = "This sentence is ordinary body text set in the document's main size."
@@ -347,3 +348,151 @@ def test_ing3_d12_figure_regions_union_and_area_bounds() -> None:
     assert regions == [img, BBox(100, 100, 300, 200)]
     assert figure_regions([], [bg], w, h) == []
     assert figure_regions([], [small], w, h) == []
+
+
+# --- Table of contents (ING-3, type toc; found on a user PDF 2026-10-16) ---------------------
+
+
+def _toc_doc(*later: list[Block]) -> list[Page]:
+    """Page 0 is filler body (median 10); page 1 opens with a "Table of Contents" heading;
+    each argument of ``later`` is the block list of one further page (pages 2, 3, ...)."""
+    toc_page = [
+        make_block(1, 0, ["Table of Contents"], y0=80, size=20.0),
+        make_block(1, 1, ["What Is the Internet of Things?"], y0=200),
+        make_block(1, 2, [". . . . . . . . . . . . . . . ."], y0=220),
+        make_block(
+            1, 3, ["So What's New? . . . . . . 3", "Disrupting Economies of Scale 6"], y0=240
+        ),
+    ]
+    pages = [make_page(0, _filler(0, 0)), make_page(1, toc_page)]
+    pages += [make_page(2 + i, blocks) for i, blocks in enumerate(later)]
+    return pages
+
+
+def _types(page: Page) -> list[str]:
+    return [b.type for b in page.blocks]
+
+
+def test_ing3_toc_heading_opens_region_typed_toc() -> None:
+    pages = classify_pages(_toc_doc())
+    assert _types(pages[1]) == ["toc", "toc", "toc", "toc"]
+
+
+def test_ing3_toc_region_continues_across_pages_and_ends_at_real_heading() -> None:
+    pages = classify_pages(
+        _toc_doc(
+            [make_block(2, 0, ["Being a Software Company . . . 9", "Standards 14"], y0=80)],
+            [
+                make_block(3, 0, ["What Is the Internet of Things?"], y0=80, size=20.0),
+                make_block(3, 1, [FILLER, FILLER], y0=200),
+            ],
+        )
+    )
+    assert _types(pages[2]) == ["toc"]
+    assert _types(pages[3]) == ["heading", "body"]
+
+
+def test_ing3_toc_region_ends_at_first_non_toc_block() -> None:
+    pages = classify_pages(_toc_doc([make_block(2, 0, [FILLER, FILLER, FILLER], y0=80)]))
+    assert _types(pages[2]) == ["body"]
+
+
+def test_ing3_toc_run_together_titles_and_page_numbers_block_is_toc() -> None:
+    run = (
+        "3 Disrupting Economies of Scale 6 Being a Software Company 9 Frictionless "
+        "Manufacturing 10 Software Above the Level of a Single Device"
+    )
+    pages = classify_pages(_toc_doc([make_block(2, 0, [run], y0=80)]))
+    assert _types(pages[2]) == ["toc"]
+
+
+def test_ing3_contents_heading_without_toc_lines_stays_heading() -> None:
+    pages = [
+        make_page(0, _filler(0, 0)),
+        make_page(
+            1,
+            [
+                make_block(1, 0, ["Contents"], y0=80, size=20.0),
+                make_block(1, 1, [FILLER, FILLER, FILLER], y0=200),
+            ],
+        ),
+    ]
+    assert _types(classify_pages(pages)[1]) == ["heading", "body"]
+
+
+def test_ing3_leader_dot_line_is_noise_outside_a_toc_region() -> None:
+    pages = classify_pages(_doc(make_block(0, 0, [". . . . . . . ."], y0=300)))
+    assert _type_of(pages, 0) == "noise"
+
+
+def test_ing3_toc_is_not_read() -> None:
+    assert "toc" not in READ_TYPES
+
+
+# --- Cover pages (ING-3; found on a user PDF 2026-10-16) -------------------------------------
+
+
+@pytest.mark.parametrize("text", ["”", "— –", "…", '"', "* * *"])
+def test_ing3_punctuation_only_block_is_noise(text: str) -> None:
+    pages = classify_pages(_doc(make_block(0, 0, [text], y0=300)))
+    assert _type_of(pages, 0) == "noise"
+
+
+def test_ing3_dash_attribution_is_not_punctuation_noise() -> None:
+    pages = classify_pages(_doc(make_block(0, 0, ["— Wired"], y0=300)))
+    assert _type_of(pages, 0) == "body"
+
+
+def _cover_table_doc(page: int, author: str) -> list[Page]:
+    title = make_block(page, 0, ["What Is the", "Internet of", "Things?"], y0=70, size=40.0)
+    authors = make_block(page, 1, [author], y0=300, size=20.0)
+    cover = make_page(page, [title, authors], table_bboxes=[BBox(60, 0, 560, 400)])
+    filler = make_page(page + 1, _filler(page + 1, 0))
+    return [cover, filler] if page == 0 else [make_page(0, _filler(0, 0)), cover, filler]
+
+
+def test_ing3_cover_digit_free_table_is_retyped_by_the_cascade() -> None:
+    pages = classify_pages(_cover_table_doc(0, "Mike Loukides & Jon Bruner"))
+    assert _types(pages[0]) == ["heading", "heading"]
+
+
+def test_ing3_cover_table_with_digits_or_off_cover_stays_table() -> None:
+    assert _types(classify_pages(_cover_table_doc(0, "Revenue 2014 2015"))[0]) == [
+        "table",
+        "table",
+    ]
+    assert _types(classify_pages(_cover_table_doc(1, "Mike Loukides & Jon Bruner"))[1]) == [
+        "table",
+        "table",
+    ]
+
+
+def test_ing3_cover_pull_quote_run_is_body() -> None:
+    quote = [
+        make_block(0, 0, ["“The future has a funny way of"], y0=150, size=27.0),
+        make_block(
+            0,
+            1,
+            [
+                "sneaking up on you. You don’t",
+                "notice it until you’re soaking in it.",
+                "That was the feeling at Solid Conference.”",
+            ],
+            y0=184,
+            size=27.0,
+        ),
+    ]
+    pages = classify_pages(_doc(*quote))
+    assert _type_of(pages, 0) == "body"
+    assert _type_of(pages, 1) == "body"
+
+
+def test_ing3_cover_title_and_authors_stay_heading() -> None:
+    pages = classify_pages(
+        _doc(
+            make_block(0, 0, ["What Is the Internet of Things?"], y0=100, size=30.0),
+            make_block(0, 1, ["J. R. Smith and A. B. Jones"], y0=160, size=16.0),
+        )
+    )
+    assert _type_of(pages, 0) == "heading"
+    assert _type_of(pages, 1) == "heading"
