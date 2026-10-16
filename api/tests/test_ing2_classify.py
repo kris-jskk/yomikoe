@@ -149,12 +149,56 @@ def test_ing3_footnote_by_small_size_low_on_page() -> None:
 
 
 def test_ing3_footnote_by_leading_superscript_digit() -> None:
-    spans = [
+    """Low on the page a leading superscript digit marks a footnote; in the upper half
+    (tuned 2026-10-16) it is an affiliation line under the authors."""
+    low = [
+        make_span("2", 72, 600, 77, 606, size=6.0, superscript=True),
+        make_span("Further details are given elsewhere.", 78, 600, 400, 612),
+    ]
+    high = [
         make_span("2", 72, 300, 77, 306, size=6.0, superscript=True),
         make_span("Further details are given elsewhere.", 78, 300, 400, 312),
     ]
-    pages = classify_pages(_doc(make_block(0, 0, [spans])))
+    pages = classify_pages(_doc(make_block(0, 0, [low]), make_block(0, 1, [high])))
     assert _type_of(pages, 0) == "footnote"
+    assert _type_of(pages, 1) == "body"
+
+
+def test_ing3_equation_by_low_prose_share() -> None:
+    """A math-font block whose text-font letters are under EQ_PROSE_LETTERS is an equation
+    (operands in CMR do not make it prose); a sentence with one math glyph stays body."""
+    eq = [
+        make_span("p", 200, 400, 205, 410, font="CMMI10"),
+        make_span("(", 205, 400, 209, 410, font="CMR10"),
+        make_span("y", 209, 400, 214, 410, font="CMMI10"),
+        make_span(") = 1 + 2, (1)", 214, 400, 290, 410, font="CMR10"),
+    ]
+    prose = [
+        make_span("the value of ", 72, 450, 140, 460, font="CMR10"),
+        make_span("x", 140, 450, 145, 460, font="CMMI10"),
+        make_span(" is positive in every case we tried", 145, 450, 330, 460, font="CMR10"),
+    ]
+    pages = classify_pages(_doc(make_block(0, 0, [eq]), make_block(0, 1, [prose])))
+    assert _type_of(pages, 0) == "equation"
+    assert _type_of(pages, 1) == "body"
+
+
+def test_ing3_bare_equation_number_is_equation() -> None:
+    pages = classify_pages(_doc(make_block(0, 0, ["(12)"], x0=500, y0=400)))
+    assert _type_of(pages, 0) == "equation"
+
+
+def test_ing3_table_region_wins_over_heading() -> None:
+    """A bold header row inside a table region is table, not heading (tuned 2026-10-16)."""
+    pages = classify_pages(
+        _doc(
+            make_block(0, 0, ["Model Accuracy Recall"], y0=310, bold=True),
+            make_block(0, 1, ["Model Accuracy Recall"], y0=200, bold=True),
+            table_bboxes=[BBox(72, 300, 540, 400)],
+        )
+    )
+    assert _type_of(pages, 0) == "table"
+    assert _type_of(pages, 1) == "heading"
 
 
 def test_ing3_table_by_table_bbox_overlap() -> None:

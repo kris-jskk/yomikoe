@@ -1,15 +1,23 @@
 """Stage 1, extract (D1, D13, ING-2)."""
 
+from dataclasses import replace
 from pathlib import Path
 
 from hearnarro.ingestion.extract import (
+    FIGURE_JOIN,
+    NORMAL_DESCENT,
     LayoutChar,
+    _font_drops,
     extract_pages,
+    figure_regions,
     font_flags,
     group_blocks,
     group_lines,
+    has_columns,
+    is_math_line,
     ocr_available,
     page_from_layout,
+    rule_tables,
 )
 from hearnarro.ingestion.models import BBox
 
@@ -149,3 +157,127 @@ def test_ing2_group_blocks_splits_on_gap_and_size() -> None:
     big = [_chars("Title", 72, 151, "T", 14)]  # size jump: new block
     blocks = group_blocks([*body, *far, *big])
     assert [len(b) for b in blocks] == [2, 1, 1]
+
+
+# --- tuning round 3 on pdfplumber (2026-10-16): grouping, spacing, tables, figures ---
+
+
+def _texts(blocks: list[list[list[LayoutChar]]]) -> list[str]:
+    return [" / ".join("".join(c.text for c in ln) for ln in b) for b in blocks]
+
+
+def _tag(chars: list[LayoutChar], mcid: int) -> list[LayoutChar]:
+    return [replace(c, mcid=mcid) for c in chars]
+
+
+def test_ing4_tagged_indented_line_opens_block_untagged_hanging_indent_does_not() -> None:
+    """MuPDF's text-indent rule: in a tagged PDF a line starting right of the previous one
+    opens a block; in an untagged one a 10 pt hanging indent keeps the block."""
+    first = _chars("Scott Rose Oliver Borchert", 72, 100, "Times", 10)
+    second = _chars("Advanced Network Division", 82, 112, "Times", 10)
+    tagged = group_blocks(group_lines([*_tag(first, 1), *_tag(second, 2)]))
+    untagged = group_blocks(group_lines([*first, *second]))
+    assert len(tagged) == 2
+    assert len(untagged) == 1
+
+
+def test_ing4_untagged_small_indent_opens_block() -> None:
+    """A line one point right of a previous line that hung into the margin opens a block."""
+    first = _chars("Whether this holds is a question", 71.0, 100, "Times", 10)
+    second = _chars("uncertainty. Existing work on it", 72.0, 112, "Times", 10)
+    assert len(group_blocks(group_lines([*first, *second]))) == 2
+
+
+def test_ing4_centred_title_lines_and_reference_entries_split() -> None:
+    title = [
+        *_chars("Evaluating Multilingual Pipelines Across", 100, 100, "Times", 10),
+        *_chars("Subsets of Tasks", 160, 112, "Times", 10),
+    ]
+    refs = [
+        *_chars("[1] Y. Chen, X. Yue, and H. Li,", 72, 300, "Times", 10),
+        *_chars("VoiceBench: benchmarking assistants", 86, 312, "Times", 10),
+    ]
+    assert len(group_blocks(group_lines(title))) == 2
+    assert len(group_blocks(group_lines(refs))) == 2
+
+
+def _glyph(text: str, x0: float, x1: float, top: float, font: str, size: float) -> LayoutChar:
+    return LayoutChar(text, BBox(x0, top, x1, top + size), font, size)
+
+
+def test_ing2_no_word_space_after_tex_relation_but_after_equals() -> None:
+    """MuPDF parity: a thick space after a CMSY relation is not a word space ("x ∈S"); the same
+    gap after a CMR "=" is ("x = S")."""
+    rel = [
+        _glyph("x", 100, 105, 100, "CMMI10", 10),
+        _glyph("∈", 107.8, 114.5, 100, "CMSY10", 10),
+        _glyph("S", 117.3, 123, 100, "CMMI10", 10),
+    ]
+    eq = [replace(rel[0]), replace(rel[1], text="=", font="CMR10"), replace(rel[2])]
+    assert "".join(c.text for c in group_lines(rel)[0]) == "x ∈S"
+    assert "".join(c.text for c in group_lines(eq)[0]) == "x = S"
+
+
+def test_ing2_stacked_scripts_are_read_with_a_space() -> None:
+    """A baseline jump of more than BASELINE_JUMP sizes (superscript C over subscript r)."""
+    chars = [
+        _glyph("V", 100, 106, 100, "CMMI10", 10),
+        _glyph("C", 106.5, 111, 97, "CMMI7", 7),
+        _glyph("r", 106.5, 110, 104, "CMMI7", 7),
+    ]
+    assert "".join(c.text for c in group_lines(chars)[0]) == "VC r"
+
+
+def test_ing2_overstrike_accent_stays_on_the_line() -> None:
+    """An accent drawn after its base's neighbour and the letter stepping back under it."""
+    chars = [
+        _glyph("B", 249.0, 256.1, 214.7, "CMR10", 10),
+        _glyph("¨", 256.4, 261.3, 210.0, "CMR10", 10),
+        _glyph("u", 256.1, 261.6, 214.7, "CMR10", 10),
+        _glyph("h", 261.6, 267.2, 214.7, "CMR10", 10),
+    ]
+    lines = group_lines(chars)
+    assert len(lines) == 1
+    assert "".join(c.text for c in lines[0]) == "B¨uh"
+
+
+def test_ing3_display_math_line_opens_its_own_block() -> None:
+    prose = _chars("we model the response as Gaussian, i.e.,", 72, 100, "Times", 10)
+    math = _chars("y ~ N(f(x), s)", 150, 112, "CMMI10", 10)
+    after = _chars("where f is an unknown function of x", 72, 124, "Times", 10)
+    assert is_math_line(math) and not is_math_line(prose)
+    assert len(group_blocks(group_lines([*prose, *math, *after]))) == 3
+
+
+def test_ing2_font_drops_lift_cmsy_boxes_only() -> None:
+    """pdfminer hangs CMSY glyph boxes ~0.96 em below the baseline; that font is lifted."""
+    chars = [
+        {"fontname": "AB+CMSY10", "size": 10.0, "y0": 90.4, "matrix": (10, 0, 0, 10, 0, 100.0)},
+        {"fontname": "AB+CMR10", "size": 10.0, "y0": 97.5, "matrix": (10, 0, 0, 10, 0, 100.0)},
+    ]
+    drops = _font_drops(chars)
+    assert set(drops) == {"AB+CMSY10"}
+    assert abs(drops["AB+CMSY10"] - (0.96 - NORMAL_DESCENT)) < 1e-6
+
+
+def test_ing3_booktabs_rule_stack_is_a_table_only_with_column_rows() -> None:
+    rules = [BBox(72, y, 300, y + 0.4) for y in (100, 115, 200)]
+    region = rule_tables(rules, 792)
+    assert region == [BBox(72, 100, 300, 200.4)]
+    assert rule_tables(rules[:2], 792) == []  # two rules: a framed title, not a table
+    row = [*_chars("Model", 80, 120, "Times", 10), *_chars("0.91", 200, 120, "Times", 10)]
+    row2 = [*_chars("Base", 80, 135, "Times", 10), *_chars("0.85", 200, 135, "Times", 10)]
+    banner = _chars("C O M P U T E R", 80, 150, "Times", 10)
+    assert has_columns(region[0], group_lines([*row, *row2]))
+    assert not has_columns(region[0], group_lines(banner))
+
+
+def test_ing3_figure_regions_curves_join_nearby_parts_rules_never_seed() -> None:
+    """Separate boxes within FIGURE_JOIN of a curve form one figure; a wide thin rule alone
+    is never a figure part."""
+    boxes = [BBox(320, 245, 388, 277), BBox(391, 245, 473, 278)]
+    curve = BBox(386 - FIGURE_JOIN, 255 - FIGURE_JOIN, 393 + FIGURE_JOIN, 260 + FIGURE_JOIN)
+    regions = figure_regions([], [*boxes, curve], 200, 200)
+    assert len(regions) == 1
+    assert regions[0].x0 == 320 and regions[0].x1 == 473
+    assert figure_regions([], [BBox(10, 50, 190, 50.5)], 200, 200) == []

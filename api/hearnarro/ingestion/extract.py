@@ -7,6 +7,7 @@ page rendering for OCR comes from pypdfium2 (Apache-2.0/BSD-3). D13 replaced PyM
 from __future__ import annotations
 
 import importlib.util
+import itertools
 import re
 import shutil
 from collections import Counter
@@ -55,7 +56,7 @@ UNTAGGED_INDENT_MAX: float | None = 2.0
 # hanging-indented continuation of a numbered reference entry ("[12] A. Author, ...").
 CENTRE_TOL: float | None = 3.0
 CENTRE_INDENT = 5.0
-_REF_ENTRY = re.compile(r"^\[\d+\]\s")
+_REF_ENTRY = re.compile(r"^\[\d+\]")
 # MuPDF's "way off the baseline" paragraph rule: a line whose baseline sits more than
 # PARA_BASELINE font sizes below the previous line's opens a new block, even when tall glyphs
 # (display-equation delimiters, stacked limits) make the boxes touch.
@@ -416,9 +417,7 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
                 and prev_box is not None
                 and min(box.y1, prev_box.y1) <= max(box.y0, prev_box.y0)  # a new text row
                 and is_math_line(line) != is_math_line(prev_line)
-            ):
-                join = False
-            elif (
+            ) or (
                 upright
                 and PARA_BASELINE is not None
                 and prev_line
@@ -435,8 +434,10 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
                 and box.x0 > prev_box.x0 + INDENT_NEW_BLOCK
                 and (
                     _tagged(prev_line, line)
-                    or (UNTAGGED_INDENT_MAX is not None
-                        and box.x0 <= prev_box.x0 + UNTAGGED_INDENT_MAX)
+                    or (
+                        UNTAGGED_INDENT_MAX is not None
+                        and box.x0 <= prev_box.x0 + UNTAGGED_INDENT_MAX
+                    )
                     or _centred_pair(prev_box, box)
                     or _REF_ENTRY.match(_text(prev_line)) is not None
                 )
@@ -648,7 +649,7 @@ def has_columns(region: BBox, lines: Sequence[Sequence[LayoutChar]]) -> bool:
             continue
         if any(
             b.bbox.x0 - a.bbox.x1 > COLUMN_GAP * max(a.size, b.size, 1.0)
-            for a, b in zip(glyphs, glyphs[1:], strict=False)
+            for a, b in itertools.pairwise(glyphs)
             if a.bbox is not None and b.bbox is not None
         ):
             rows += 1

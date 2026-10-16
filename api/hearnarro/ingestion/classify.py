@@ -157,7 +157,9 @@ def _is_equation(block: Block) -> bool:
         return False
     if math_chars * 2 > total:
         return True
-    return EQ_PROSE_LETTERS is not None and has_math_font and prose_letters < EQ_PROSE_LETTERS * total
+    return (
+        EQ_PROSE_LETTERS is not None and has_math_font and prose_letters < EQ_PROSE_LETTERS * total
+    )
 
 
 def _starts_with_superscript_digit(block: Block) -> bool:
