@@ -9,7 +9,8 @@ from typing import Any
 import aiosqlite
 
 DOCUMENT_COLUMNS = (
-    "id, title, filename, sha256, page_count, status, fail_reason, voice_id, speed, "
+    "id, title, filename, sha256, page_count, pages_done, parse_ms, status, fail_reason, "
+    "voice_id, speed, "
     "position_segment_id, position_offset_ms, created_at, last_opened_at"
 )
 DuplicateDocument = sqlite3.IntegrityError

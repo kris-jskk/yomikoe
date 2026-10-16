@@ -41,7 +41,17 @@ Conn = Annotated[aiosqlite.Connection, Depends(get_conn)]
 
 
 def _document_summary(doc: dict[str, Any]) -> dict[str, Any]:
-    keys = ("id", "title", "filename", "sha256", "page_count", "status", "fail_reason")
+    keys = (
+        "id",
+        "title",
+        "filename",
+        "sha256",
+        "page_count",
+        "pages_done",
+        "parse_ms",
+        "status",
+        "fail_reason",
+    )
     return {k: doc[k] for k in keys} | {
         "created_at": doc["created_at"],
         "last_opened_at": doc["last_opened_at"],

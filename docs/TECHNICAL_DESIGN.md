@@ -190,7 +190,9 @@ CREATE TABLE documents (
   fail_reason TEXT,
   voice_id TEXT, speed REAL,              -- per-document settings, NULL = use global
   position_segment_id INTEGER, position_offset_ms INTEGER DEFAULT 0,
-  created_at TEXT NOT NULL, last_opened_at TEXT
+  created_at TEXT NOT NULL, last_opened_at TEXT,
+  pages_done INTEGER NOT NULL DEFAULT 0,  -- parse progress, updated every 10 pages + last (added 2026-10-16, migration 0002)
+  parse_ms INTEGER                        -- worker wall time to ready/failed, NULL while parsing (added 2026-10-16, migration 0002)
 );
 
 CREATE TABLE blocks (

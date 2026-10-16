@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,9 +21,19 @@ class IngestResult:
     segments: list[Segment]
 
 
-def ingest(pdf_path: str | Path, *, document_id: int = 0, ocr: bool = True) -> IngestResult:
-    """extract_pages -> classify_pages -> order_document -> merge_blocks -> split_sentences."""
-    pages = classify_pages(extract_pages(pdf_path, ocr=ocr))
+def ingest(
+    pdf_path: str | Path,
+    *,
+    document_id: int = 0,
+    ocr: bool = True,
+    on_page: Callable[[int, int], None] | None = None,
+) -> IngestResult:
+    """extract_pages -> classify_pages -> order_document -> merge_blocks -> split_sentences.
+
+    ``on_page(pages_done, total)`` is forwarded to ``extract_pages``; it does not change the
+    result.
+    """
+    pages = classify_pages(extract_pages(pdf_path, ocr=ocr, on_page=on_page))
     blocks = merge_blocks(order_document(pages))
     segments: list[Segment] = []
     for block in blocks:

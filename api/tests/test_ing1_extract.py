@@ -386,3 +386,25 @@ def test_ing2_ligature_repair_replaces_only_mapped_punctuation() -> None:
     assert repair_ligature("%", "ABCDEF+Fanwood", fixes) == "ffi"
     assert repair_ligature("!", "GHIJKL+Fanwood", fixes) == "!"  # a real exclamation mark
     assert repair_ligature("a", "ABCDEF+Fanwood", fixes) == "a"
+
+
+# --- page progress callback (ING-1: pages_done) ---
+
+REPORT_PDF = Path(__file__).parent / "fixtures" / "pdfs" / "report_01_zero_trust.pdf"
+
+
+def test_ing1_extract_pages_calls_on_page_after_each_page() -> None:
+    calls: list[tuple[int, int]] = []
+    pages = extract_pages(REPORT_PDF, ocr=False, on_page=lambda d, t: calls.append((d, t)))
+    assert calls == [(i, len(pages)) for i in range(1, len(pages) + 1)]
+    assert len(pages) == 4
+
+
+def test_ing1_ingest_passes_on_page_through_and_none_is_unchanged() -> None:
+    from hearnarro.ingestion.pipeline import ingest
+
+    calls: list[tuple[int, int]] = []
+    with_cb = ingest(REPORT_PDF, ocr=False, on_page=lambda d, t: calls.append((d, t)))
+    without = ingest(REPORT_PDF, ocr=False)
+    assert calls[-1] == (4, 4) and len(calls) == 4
+    assert [s.text for s in with_cb.segments] == [s.text for s in without.segments]

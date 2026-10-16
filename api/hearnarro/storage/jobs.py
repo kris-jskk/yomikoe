@@ -1,8 +1,10 @@
 """Ingestion job run inside the ``ProcessPoolExecutor`` (D9; ING-1..ING-6).
 
 ``run_ingestion`` is module-level so it pickles by reference into a spawned worker. It
-parses the PDF, then writes every block and segment and flips the document to ``ready`` in
-one transaction; any exception flips it to ``failed`` with the message instead.
+records ``page_count`` before extraction, updates ``pages_done`` while extracting (every 10
+pages and the last, on its own connection), then writes every block and segment and flips
+the document to ``ready`` in one transaction; any exception flips it to ``failed`` with the
+message instead. Both outcomes set ``parse_ms``, the worker's wall time from job start.
 """
 
 from __future__ import annotations
@@ -10,11 +12,45 @@ from __future__ import annotations
 import re
 import sqlite3
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 from hearnarro.ingestion.models import BBox
 from hearnarro.ingestion.pipeline import IngestResult, ingest
 from hearnarro.storage.db import connect_sync, pack_char_map
+
+PROGRESS_EVERY = 10  # pages between pages_done writes (plus one write for the last page)
+
+
+class PageProgress:
+    """``on_page`` callback that calls ``write(pages_done)`` every ``every`` pages and at the end."""
+
+    def __init__(self, write: Callable[[int], None], every: int = PROGRESS_EVERY) -> None:
+        self.write = write
+        self.every = every
+
+    def __call__(self, done: int, total: int) -> None:
+        if done % self.every == 0 or done == total:
+            self.write(done)
+
+
+def pdf_page_count(pdf_path: str | Path) -> int:
+    import pypdfium2
+
+    doc = pypdfium2.PdfDocument(str(pdf_path))
+    try:
+        return len(doc)
+    finally:
+        doc.close()
+
+
+def _update(db_file: str | Path, sql: str, params: tuple[object, ...]) -> None:
+    conn = connect_sync(db_file)
+    try:
+        with conn:
+            conn.execute(sql, params)
+    finally:
+        conn.close()
 
 
 def pdf_title(pdf_path: str | Path) -> str | None:
@@ -60,7 +96,11 @@ def _first_heading(result: IngestResult) -> str | None:
 
 
 def _write_result(
-    conn: sqlite3.Connection, document_id: int, result: IngestResult, title: str | None
+    conn: sqlite3.Connection,
+    document_id: int,
+    result: IngestResult,
+    title: str | None,
+    parse_ms: int,
 ) -> None:
     """Blocks + segments + status in one transaction (``with conn`` commits or rolls back)."""
     raw_bbox: dict[tuple[int, int], BBox] = {
@@ -103,38 +143,52 @@ def _write_result(
         filename = row[0] if row and row[0] else "document.pdf"
         conn.execute(
             "UPDATE documents SET status = 'ready', fail_reason = NULL, page_count = ?, "
-            "title = ? WHERE id = ?",
+            "pages_done = ?, parse_ms = ?, title = ? WHERE id = ?",
             (
                 len(result.pages),
+                len(result.pages),
+                parse_ms,
                 choose_title(title, _first_heading(result), filename),
                 document_id,
             ),
         )
 
 
-def mark_failed(db_file: str | Path, document_id: int, reason: str) -> None:
-    conn = connect_sync(db_file)
-    try:
-        with conn:
-            conn.execute(
-                "UPDATE documents SET status = 'failed', fail_reason = ? WHERE id = ?",
-                (reason, document_id),
-            )
-    finally:
-        conn.close()
+def mark_failed(
+    db_file: str | Path, document_id: int, reason: str, parse_ms: int | None = None
+) -> None:
+    _update(
+        db_file,
+        "UPDATE documents SET status = 'failed', fail_reason = ?, parse_ms = ? WHERE id = ?",
+        (reason, parse_ms, document_id),
+    )
+
+
+def _elapsed_ms(start: float) -> int:
+    return max(1, round((time.perf_counter() - start) * 1000))
 
 
 def run_ingestion(db_file: str, document_id: int, pdf_path: str) -> float:
     """Parse ``pdf_path`` and store the result for ``document_id``. Returns wall seconds."""
     start = time.perf_counter()
     try:
-        result = ingest(pdf_path, document_id=document_id)
+        _update(
+            db_file,
+            "UPDATE documents SET page_count = ?, pages_done = 0, parse_ms = NULL WHERE id = ?",
+            (pdf_page_count(pdf_path), document_id),
+        )
+        progress = PageProgress(
+            lambda done: _update(
+                db_file, "UPDATE documents SET pages_done = ? WHERE id = ?", (done, document_id)
+            )
+        )
+        result = ingest(pdf_path, document_id=document_id, on_page=progress)
         title = pdf_title(pdf_path)
         conn = connect_sync(db_file)
         try:
-            _write_result(conn, document_id, result, title)
+            _write_result(conn, document_id, result, title, _elapsed_ms(start))
         finally:
             conn.close()
     except Exception as exc:  # noqa: BLE001 - any parse/store error becomes fail_reason
-        mark_failed(db_file, document_id, f"{type(exc).__name__}: {exc}")
+        mark_failed(db_file, document_id, f"{type(exc).__name__}: {exc}", _elapsed_ms(start))
     return time.perf_counter() - start

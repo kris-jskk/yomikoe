@@ -12,7 +12,7 @@ import re
 import shutil
 import struct
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
@@ -922,12 +922,20 @@ def ocr_page(pdf_path: str | Path, number: int) -> list[Block]:
 
 
 def extract_pages(
-    pdf_path: str | Path, *, ocr: bool = True, min_text_chars: int = 20
+    pdf_path: str | Path,
+    *,
+    ocr: bool = True,
+    min_text_chars: int = 20,
+    on_page: Callable[[int, int], None] | None = None,
 ) -> list[Page]:
-    """Extract every page of ``pdf_path``; OCR pages with fewer than ``min_text_chars``."""
+    """Extract every page of ``pdf_path``; OCR pages with fewer than ``min_text_chars``.
+
+    ``on_page(pages_done, total)`` is called after each page is extracted (ING-1 progress).
+    """
     pages: list[Page] = []
     font_cache: dict[Any, dict[str, str]] = {}
     with pdfplumber.open(str(pdf_path)) as pdf:
+        total = len(pdf.pages)
         for number, pdf_page in enumerate(pdf.pages):
             coords = _Coords(pdf_page)
             fixes = _ligature_fixes(pdf_page, font_cache)
@@ -955,4 +963,6 @@ def extract_pages(
                 if ocr and ocr_available():
                     page.blocks = ocr_page(pdf_path, number)
             pages.append(page)
+            if on_page is not None:
+                on_page(number + 1, total)
     return pages

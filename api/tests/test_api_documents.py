@@ -220,6 +220,67 @@ async def test_ing1_corrupt_pdf_fails_in_process_pool(tmp_path: Path) -> None:
         assert doc["fail_reason"]
 
 
+# --- parse progress and duration (pages_done, page_count, parse_ms; migration 0002) ---
+
+
+async def test_ing1_parse_progress_pages_done_reaches_page_count_documents_table(
+    tmp_path: Path,
+) -> None:
+    async with client_for(tmp_path) as client:
+        doc_id = (await upload(client, REPORT_PDF)).json()["id"]
+        seen: list[dict[str, Any]] = []
+        deadline = time.monotonic() + READY_TIMEOUT_S
+        while True:
+            body = (await client.get(f"/documents/{doc_id}")).json()
+            seen.append(body)
+            if body["status"] in ("ready", "failed"):
+                break
+            assert time.monotonic() < deadline
+            await asyncio.sleep(0.02)
+        done = [b["pages_done"] for b in seen]
+        assert done == sorted(done), done  # non-decreasing
+        assert all(isinstance(d, int) and d >= 0 for d in done)
+        for b in seen[:-1]:  # still parsing: no duration yet
+            assert b["parse_ms"] in (None, 0), b
+        final = seen[-1]
+        assert final["status"] == "ready", final
+        assert final["page_count"] == 4
+        assert final["pages_done"] == final["page_count"]
+        assert isinstance(final["parse_ms"], int) and final["parse_ms"] > 0
+
+        (row,) = (await client.get("/documents")).json()
+        assert row["pages_done"] == 4
+        assert row["page_count"] == 4
+        assert row["parse_ms"] == final["parse_ms"]
+
+
+async def test_ing1_failed_document_carries_parse_ms_documents_table(tmp_path: Path) -> None:
+    async with client_for(tmp_path) as client:
+        resp = await upload(client, Path("broken.pdf"), b"%PDF-1.4\nthis is not a pdf body\n")
+        doc = await wait_settled(client, resp.json()["id"])
+        assert doc["status"] == "failed"
+        assert isinstance(doc["parse_ms"], int) and doc["parse_ms"] >= 0
+        assert doc["pages_done"] == 0
+
+
+@pytest.mark.parametrize(
+    ("total", "expected_writes"),
+    [(242, 25), (4, 1), (10, 1), (11, 2), (30, 3), (1, 1)],
+)
+def test_ing1_page_progress_writes_every_10_pages_and_last(
+    total: int, expected_writes: int
+) -> None:
+    from hearnarro.storage.jobs import PageProgress
+
+    writes: list[int] = []
+    progress = PageProgress(writes.append)
+    for done in range(1, total + 1):
+        progress(done, total)
+    assert len(writes) == expected_writes, writes
+    assert writes[-1] == total
+    assert all(w % 10 == 0 for w in writes[:-1])
+
+
 async def test_ing1_missing_document_returns_404(tmp_path: Path) -> None:
     async with client_for(tmp_path) as client:
         assert (await client.get("/documents/999")).status_code == 404

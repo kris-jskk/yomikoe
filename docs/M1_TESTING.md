@@ -88,16 +88,43 @@ own code (`tests/golden_util.py`): only prose segments are kept (heading, body, 
 footnote), and the score is 1 minus the word-level edit distance divided by the number of
 expected words. Columns:
 
+- `pages`, `parse_ms`, `pg/s`: the document's `page_count` and `parse_ms` from the API
+  (wall time measured by the ingestion worker, not the client) and pages per second.
 - `segs`: segments stored for the document.
 - `word`: the score; the gate needs **0.95 per PDF** and **0.97 mean**.
 - `mass a/e`: share of characters in table/equation segments, actual / expected; must agree
   within 0.05, so that calling prose a "table" cannot hide an error.
 - `result`: `pass` or `FAIL`.
 
+After the table, a total line sums pages and `parse_ms` over the fixtures:
+`pages: N  parse time: X s  throughput: Y pages/s`. Sample (fresh data dir; timings vary by
+machine):
+
+```
+fixture                            class     status  pages parse_ms   pg/s  segs    word      mass a/e  result
+--------------------------------------------------------------------------------------------------------------
+academic_01_seahelm_audio          academic  ready       4      307   13.0   214  0.9919 0.0903/0.0839  pass
+...
+tables_01_pfn_bayes                tables    ready       4      290   13.8   169  0.9779 0.0369/0.0388  pass
+...
+report_01_zero_trust               report    ready       4      161   24.8    57  1.0000 0.0000/0.0000  pass
+...
+--------------------------------------------------------------------------------------------------------------
+fixtures: 15  passed: 15  failed: 0  skipped (class): 5
+word-level mean: 0.9914 (gate >= 0.97); per-fixture gate >= 0.95
+pages: 60  parse time: 3.5 s  throughput: 17.1 pages/s
+RESULT: PASS
+```
+
+While a document parses, `GET /documents/{id}` shows `page_count` (set before extraction) and
+`pages_done` (updated every 10 pages and at the last), so a client can show a percentage;
+`parse_ms` is null until the document is `ready` or `failed`.
+
 Exit code 0 means every fixture passed and the mean cleared 0.97. Options: `--classes report`
 (one class only), `--timeout 60` (seconds per document), `--fixtures-dir`.
 
-**Your own PDFs:** `--one` uploads any PDF and prints its first 20 segments with their types:
+**Your own PDFs:** `--one` uploads any PDF and prints `pages / parse_ms / pages/s`, then its
+first 20 segments with their types:
 
 ```bash
 .venv/bin/python scripts/m1_smoke.py --one tests/fixtures/unit/text.pdf
@@ -152,7 +179,7 @@ again. Ids restart at 1.
 | Re-upload same file | `200`, same id |
 | `.txt` upload / unknown id | `415` / `404` |
 | `report_01_zero_trust` | 4 pages, 57 segments, identical to `dump` |
-| Smoke script | 15 rows, all `pass`, `fixtures: 15 passed: 15`, `word-level mean: 0.9914`, `RESULT: PASS`, exit 0 |
+| Smoke script | 15 rows, all `pass`, `fixtures: 15 passed: 15`, `word-level mean: 0.9914`, a `pages: 60  parse time: ... throughput: ...` line, `RESULT: PASS`, exit 0 |
 | Lowest fixture | `tables_03_copula_subspaces` at 0.9710 |
 | `report_*` fixtures | 1.0000 each |
 | pytest | 0 failed; the scanned fixtures skipped |
