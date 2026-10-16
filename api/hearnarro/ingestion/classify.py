@@ -92,6 +92,7 @@ VSTACK_TYPES = {"heading", "body", "noise", "footnote", "caption", "list"}
 
 
 OFF_PAGE_INSIDE_FRAC = 0.5  # a block with less of its bbox area inside the page box is noise
+OFF_PAGE_KEEP_SIZE_RATIO = 1.0  # ...unless its largest span is at least this x the body median
 
 
 def normalize_key(text: str) -> str:
@@ -130,6 +131,14 @@ def _off_page(block: Block, page: Page) -> bool:
     if area <= 0:
         return not (0 <= b.x_mid <= page.width and 0 <= b.y_mid <= page.height)
     return _inter_area(b, box) < OFF_PAGE_INSIDE_FRAC * area
+
+
+def _off_page_noise(block: Block, page: Page, median: float) -> bool:
+    """An off-page block is noise unless its largest span is at least the body median
+    (user decision 2026-10-16: keep a back-cover tagline, drop the small-print blurb)."""
+    if not _off_page(block, page):
+        return False
+    return not (median > 0 and _max_size(block) >= OFF_PAGE_KEEP_SIZE_RATIO * median)
 
 
 def _band(block: Block, page: Page, band_frac: float) -> str | None:
@@ -316,7 +325,7 @@ def _classify(
     block: Block, page: Page, median: float, repeated: set[str], tables: list[BBox]
 ) -> BlockType:
     text = block.text.strip()
-    if _off_page(block, page):
+    if _off_page_noise(block, page, median):
         return "noise"
     if _is_margin_stamp(block, page):
         return "noise"
@@ -555,8 +564,8 @@ def classify_pages(pages: list[Page]) -> list[Page]:
             _retype_pull_quotes(page, median)
         _fold_vertical_titles(page)
     _mark_toc(pages, median)
-    for page in pages:  # off-page text stays noise whatever the document passes did
+    for page in pages:  # off-page small print stays noise whatever the document passes did
         for block in page.blocks:
-            if _off_page(block, page):
+            if _off_page_noise(block, page, median):
                 block.type = "noise"
     return pages

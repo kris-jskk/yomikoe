@@ -544,8 +544,11 @@ def test_ing3_four_stacked_letters_are_not_a_vertical_title() -> None:
 
 
 # Off-page text (user decision 2026-10-16): a block with less than half its bbox area inside
-# the page box [0, 612] x [0, 792] is noise before every other rule. Blocks are 200 pt wide.
+# the page box [0, 612] x [0, 792] is noise before every other rule, unless its largest span
+# is at least the body median (refinement 2026-10-16: keep a back-cover tagline, drop the
+# small-print blurb). Blocks are 200 pt wide; the filler sets the median to 10.
 OFF_PAGE_TEXT = "These aspirations may seem out of reach, but they are skills we can learn."
+SMALL_PRINT = 6.0  # below body size, like the blurb (ratio 0.589 on the book)
 
 
 @pytest.mark.parametrize(
@@ -558,15 +561,34 @@ OFF_PAGE_TEXT = "These aspirations may seem out of reach, but they are skills we
     ],
 )
 def test_ing3_off_page_block_is_noise(x0: float, expected: str) -> None:
-    block = make_block(0, 0, [OFF_PAGE_TEXT, OFF_PAGE_TEXT], x0=x0, y0=200, width=200)
+    block = make_block(
+        0, 0, [OFF_PAGE_TEXT, OFF_PAGE_TEXT], x0=x0, y0=200, width=200, size=SMALL_PRINT
+    )
     assert _type_of(classify_pages(_doc(block)), 0) == expected
 
 
-def test_ing3_off_page_rule_wins_over_heading_size() -> None:
+@pytest.mark.parametrize(
+    ("size", "expected"),
+    [
+        (10.0, "body"),  # ratio 1.0: at body size, kept and typed by the cascade
+        (9.9, "noise"),  # ratio 0.99: below body size, off-page noise
+    ],
+)
+def test_ing3_off_page_block_kept_from_body_size(size: float, expected: str) -> None:
+    block = make_block(0, 0, [OFF_PAGE_TEXT, OFF_PAGE_TEXT], x0=-300, y0=200, width=200, size=size)
+    assert _type_of(classify_pages(_doc(block)), 0) == expected
+
+
+def test_ing3_off_page_heading_sized_block_is_read_as_heading() -> None:
     title = make_block(0, 0, ["GETTING RICH"], x0=-250, y0=200, width=200, size=24)
-    assert _type_of(classify_pages(_doc(title)), 0) == "noise"
+    assert _type_of(classify_pages(_doc(title)), 0) == "heading"
+
+
+def test_ing3_off_page_small_print_beats_heading_rules() -> None:
+    bold = make_block(0, 0, ["ERIC JORGENSON"], x0=-250, y0=200, width=200, size=7.6, bold=True)
+    assert _type_of(classify_pages(_doc(bold)), 0) == "noise"
 
 
 def test_ing3_block_below_the_page_is_noise() -> None:
-    block = make_block(0, 0, [OFF_PAGE_TEXT, OFF_PAGE_TEXT], y0=800, width=200)
+    block = make_block(0, 0, [OFF_PAGE_TEXT, OFF_PAGE_TEXT], y0=800, width=200, size=SMALL_PRINT)
     assert _type_of(classify_pages(_doc(block)), 0) == "noise"
