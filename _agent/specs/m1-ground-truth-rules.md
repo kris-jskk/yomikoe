@@ -70,3 +70,17 @@ differently. Three rules change; everything above still holds.
    ING-7 (M4) defines how they are read; the test also asserts that the number of excluded
    segments on the actual side is within 15% of the expected side, so misclassifying prose as
    table cannot hide an error.
+
+## Amendment 2026-10-16 (decision D14, user-approved): word-level gate
+
+The sentence-level comparison penalized segment-boundary differences that are artifacts of the
+extractor the truth was drawn from (results 144, 146; supervisor log 2026-10-16). The M1 gate is now:
+
+- **Score:** both sides keep prose segments only (rule 3); join their texts with single spaces,
+  lowercase, split on whitespace, strip ASCII and typographic punctuation from each token, drop
+  empty tokens. `score = 1 − seq_levenshtein(actual_words, expected_words) / len(expected_words)`.
+  Thresholds unchanged: ≥ 0.95 per fixture, ≥ 0.97 mean.
+- **Guard:** excluded character mass (chars in table/equation segments ÷ chars in all segments)
+  on each side must agree within 0.05 absolute. Replaces the segment-count guard.
+- **Diagnostic:** the sentence-level score (rule 3 definition) is still computed and printed per
+  fixture, never asserted. Sentence boundaries are covered by the stage-5 unit tests.
