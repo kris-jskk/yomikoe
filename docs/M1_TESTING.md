@@ -94,6 +94,11 @@ expected words. Columns:
 - `word`: the score; the gate needs **0.95 per PDF** and **0.97 mean**.
 - `mass a/e`: share of characters in table/equation segments, actual / expected; must agree
   within 0.05, so that calling prose a "table" cannot hide an error.
+- `checks`: the quality checklist (see "Quality checklist" below) run on the segments the
+  API returned: `ok`, or `N fail` (N failing checks). The failing checks are listed under the
+  table with up to three examples each. The smoke does not apply the fixture `ALLOWED` dict,
+  so known, pinned fixture findings (mostly `midsentence_breaks`) show as `1 fail` here.
+  `empty_text_document` cannot be judged over HTTP and always passes in the smoke.
 - `result`: `pass` or `FAIL`.
 
 After the table, a total line sums pages and `parse_ms` over the fixtures:
@@ -101,34 +106,60 @@ After the table, a total line sums pages and `parse_ms` over the fixtures:
 machine):
 
 ```
-fixture                            class     status  pages parse_ms   pg/s  segs    word      mass a/e  result
---------------------------------------------------------------------------------------------------------------
-academic_01_seahelm_audio          academic  ready       4      307   13.0   214  0.9919 0.0903/0.0839  pass
+fixture                            class     status  pages parse_ms   pg/s  segs    word      mass a/e  checks  result
+----------------------------------------------------------------------------------------------------------------------
+academic_01_seahelm_audio          academic  ready       4      310   12.9   214  0.9919 0.0903/0.0839  1 fail  pass
 ...
-tables_01_pfn_bayes                tables    ready       4      290   13.8   169  0.9779 0.0369/0.0388  pass
+academic_03_pruned_reasoning       academic  ready       4      318   12.6   138  0.9963 0.0529/0.0532      ok  pass
 ...
-report_01_zero_trust               report    ready       4      161   24.8    57  1.0000 0.0000/0.0000  pass
+report_01_zero_trust               report    ready       4      159   25.2    57  1.0000 0.0000/0.0000      ok  pass
 ...
---------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
+failing checks:
+  academic_01_seahelm_audio: midsentence_breaks (2): [4] J. Zhou, T. Lu, ... || and L. H | ...
+  ...
 fixtures: 15  passed: 15  failed: 0  skipped (class): 5
 word-level mean: 0.9914 (gate >= 0.97); per-fixture gate >= 0.95
 pages: 60  parse time: 3.5 s  throughput: 17.1 pages/s
 RESULT: PASS
+quality: 7 documents with failing checks (informational; exit code unchanged)
 ```
 
 While a document parses, `GET /documents/{id}` shows `page_count` (set before extraction) and
 `pages_done` (updated every 10 pages and at the last), so a client can show a percentage;
 `parse_ms` is null until the document is `ready` or `failed`.
 
-Exit code 0 means every fixture passed and the mean cleared 0.97. Options: `--classes report`
+Exit code 0 means every fixture passed and the mean cleared 0.97. The `quality:` line is
+printed but never changes the exit code. Options: `--classes report`
 (one class only), `--timeout 60` (seconds per document), `--fixtures-dir`.
 
 **Your own PDFs:** `--one` uploads any PDF and prints `pages / parse_ms / pages/s`, then its
-first 20 segments with their types:
+first 20 segments with their types, then `checks: ok` or `checks: N fail` and the failing
+checks:
 
 ```bash
 .venv/bin/python scripts/m1_smoke.py --one tests/fixtures/unit/text.pdf
 .venv/bin/python scripts/m1_smoke.py --one ~/Downloads/some-paper.pdf
+```
+
+**A folder of your own PDFs:** put PDFs in `api/tests/user_docs/` (git-ignored: only its
+`.gitkeep` is committed) and add `--user-docs`; after the fixture table the script uploads
+every PDF there and prints `pages / parse_ms / pg/s / segs / checks`, the failing checks, and
+`quality (user documents): N documents with failing checks`. There is no score (user PDFs have
+no expected file), and the user-docs section does not change the exit code. Another folder:
+`--user-docs ~/some/folder`.
+
+```bash
+.venv/bin/python scripts/m1_smoke.py --base-url http://127.0.0.1:8765 --user-docs
+```
+
+```
+user documents: .../user_docs (3 PDFs)
+document                                     status  pages parse_ms   pg/s  segs  checks
+----------------------------------------------------------------------------------------
+The -3-Alarms-personalithy Dev               ready     135     2297   58.8  1862      ok
+The-Almanack-of-Naval-Ravikant               ready     242     3709   65.2  3713  1 fail
+what-is-the-internet-of-things               ready      32      781   41.0   527      ok
 ```
 
 If the server is not running, the script says `cannot reach ...` and exits 2.
@@ -149,18 +180,28 @@ to five examples. The 15 text fixtures run in `tests/test_quality_fixtures.py`; 
 fixture findings are pinned per fixture in its `ALLOWED` dict, each with a reason, so a
 higher count fails.
 
-1. `dangling_hyphens`: "inter- national" (hyphen, space, lowercase). Threshold 0.
-2. `ligature_artifacts`: "e!ect", "di#erent". Threshold 0.
+Informational checks (`thr -`, result `info`) are reported but never fail a document.
+
+1. `dangling_hyphens`: "inter- national" (hyphen, space, lowercase). The suspended hyphen
+   ("16K- and 65K-token", "pre- or post-war": hyphen, space, and/or/to/nor) is not counted.
+   Threshold 0.
+2. `ligature_artifacts`: "e!ect", "di#erent". Tokens that look like URLs or e-mail addresses
+   ("://", "www.", "@", or a "#" in a token with "/" or an inner ".") are skipped, so
+   "angel.co/syndicates/ for-investors#syndicates" is not a hit. Threshold 0.
 3. `single_letter_segments`: a prose segment that is one letter (split drop cap). Threshold 0.
    One-digit segments are counted as `chapter_number_segments`, informational.
 4. `tracked_lines`: letter-spaced text ("C H A P T E R"). Threshold 0.
-5. `leader_dots`: ". . . ." or "....". Threshold 0.
+5. `leader_dots`: ". . . . " (4+) or "....." (5+), only in a segment that is at least 60%
+   dots and spaces, so a math ellipsis "x1, . . . , xd" in prose is not a hit. Threshold 0.
 6. `midsentence_breaks`: body segment without a sentence end followed by one starting
    lowercase. Threshold: ratio to body segments at most 0.01.
 7. `toc_leak`: within 60 segments after "Contents", segments ending in a page number. Threshold 0.
-8. `punctuation_only`: segments with no letter or digit. Threshold 0.
+8. `punctuation_only`: segments with no letter or digit. **Informational until M2**: most
+   hits are a closing quote split off by the sentence splitter, an M2 sentence-boundary
+   issue; it gets a threshold in M2 together with the boundary metric.
 9. `duplicate_runs`: the same segment twice in a row (12+ chars), or a heading repeated
-   within 20 segments. Threshold 0.
+   within 20 segments. **Informational**: books repeat the title on the cover, title page and
+   chapter 1 heading, and NIST reports repeat it on the cover and inner title page.
 10. `title_filename_like`: the chosen title looks like a file name. Threshold 0.
 11. `empty_text_document`: a text layer (200+ chars on a page) but no segments. Threshold 0.
 

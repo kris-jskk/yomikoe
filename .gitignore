@@ -21,3 +21,6 @@ data/
 .idea/
 .vscode/
 .env
+
+# User PDFs for local smoke runs (never committed)
+api/tests/user_docs/*.pdf

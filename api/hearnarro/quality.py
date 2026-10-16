@@ -13,13 +13,18 @@ docs/guide/m1-ingest-map.html phase 8):
 3. single_letter_segments  a drop cap split from its word ("W" / "e start")
    (chapter_number_segments: one-digit segments, informational only)
 4. tracked_lines           letter-spaced text ("C H A P T E R")
-5. leader_dots             table-of-contents leaders (". . . ." or "....")
+5. leader_dots             table-of-contents leaders (". . . . " or "....."), only in a
+                           segment that is >= 60% dots/spaces (not a math ellipsis)
 6. midsentence_breaks      a body sentence split across segments (ratio to body segments)
 7. toc_leak                table-of-contents entries read after a "Contents" heading
-8. punctuation_only        segments with no letter or digit
+8. punctuation_only        segments with no letter or digit (informational until M2)
 9. duplicate_runs          the same segment twice in a row, or a repeated nearby heading
+                           (informational)
 10. title_filename_like    the chosen title looks like a file name
 11. empty_text_document    a PDF with a text layer that yields no segments
+
+Known false positives excluded: a suspended hyphen ("16K- and 65K-token"), "#" or "!" inside
+a URL, and a math ellipsis (". . . ,") inside prose.
 
 Not checked: off-page text leaks (text outside the page box). Stage 1 drops it before any
 segment exists, so it cannot be observed after the pipeline.
@@ -38,12 +43,16 @@ PROSE_TYPES = frozenset({"heading", "body", "list", "caption", "footnote"})
 # Block types whose text is never read aloud; their segments are not checked.
 UNREAD_TYPES = frozenset({"header", "footer", "noise", "figure", "toc", "image"})
 
-DANGLING_HYPHEN_RE = re.compile(r"[A-Za-z][‐‑-] [a-z]")
+# a suspended hyphen ("16K- and 65K-token", "pre- or post-war") is correct English
+DANGLING_HYPHEN_RE = re.compile(r"[A-Za-z][‐‑-] (?!(?:and|or|to|nor)\b)[a-z]")
 LIGATURE_RE = re.compile(r"[A-Za-z][!#$%][a-z]")
 SINGLE_LETTER_RE = re.compile(r"^[A-Za-z]$")
 SINGLE_DIGIT_RE = re.compile(r"^[0-9]$")
 TRACKED_RE = re.compile(r"([A-Za-z] ){5,}[A-Za-z]")
-LEADER_RE = re.compile(r"(\. ){3,}|\.{4,}")
+LEADER_RE = re.compile(r"(\. ){4,}|\.{5,}")
+LEADER_MIN_SHARE = 0.6  # dots + spaces as a share of the segment's characters
+URL_MARKERS = ("://", "www.", "@")
+TRAILING_PUNCT = ".,;:!?)]}\"'”’"
 SENTENCE_END_RE = re.compile(r"[.!?:;\"”’)\]]$")
 LOWER_START_RE = re.compile(r"^[(\[\"'“‘]?[a-z]")
 TOC_MARKERS = frozenset({"contents", "table of contents"})
@@ -128,9 +137,46 @@ def _regex_check(name: str, pattern: re.Pattern[str]) -> Callable[[Sequence[QSeg
 
 
 check_dangling_hyphens = _regex_check("dangling_hyphens", DANGLING_HYPHEN_RE)
-check_ligature_artifacts = _regex_check("ligature_artifacts", LIGATURE_RE)
 check_tracked_lines = _regex_check("tracked_lines", TRACKED_RE)
-check_leader_dots = _regex_check("leader_dots", LEADER_RE)
+
+
+def _url_like(token: str) -> bool:
+    """A token that is (part of) a URL or e-mail address.
+
+    "://", "www." or "@" anywhere; or a "#" between letters in a token that also has a "/" or
+    an inner "." (a sentence-final period does not count, so "di#erent." stays a hit).
+    """
+    if any(m in token for m in URL_MARKERS):
+        return True
+    core = token.rstrip(TRAILING_PUNCT)
+    return bool(re.search(r"[A-Za-z]#[A-Za-z]", core)) and ("/" in core or "." in core)
+
+
+def _ligature_hit(text: str) -> bool:
+    prev = ""
+    for tok in text.split():
+        # a URL broken by a space ("https://angel.co/syndicates/ for-investors#syndicates")
+        url_tail = _url_like(prev) and prev.endswith("/") and "#" in tok
+        if LIGATURE_RE.search(tok) and not (_url_like(tok) or url_tail):
+            return True
+        prev = tok
+    return False
+
+
+def check_ligature_artifacts(segs: Sequence[QSeg]) -> CheckResult:
+    """Ligature glyphs ("e!ect", "di#erent"); tokens that look like URLs or e-mail addresses are skipped."""
+    return _count("ligature_artifacts", [s.text for s in _read(segs) if _ligature_hit(s.text)])
+
+
+def check_leader_dots(segs: Sequence[QSeg]) -> CheckResult:
+    """TOC leaders; a segment counts only when >= 60% of it is dots and spaces."""
+
+    def leader(text: str) -> bool:
+        if not text or not LEADER_RE.search(text):
+            return False
+        return sum(c in ". " for c in text) / len(text) >= LEADER_MIN_SHARE
+
+    return _count("leader_dots", [s.text for s in _read(segs) if leader(s.text)])
 
 
 def check_single_letter_segments(segs: Sequence[QSeg]) -> CheckResult:
@@ -180,12 +226,22 @@ def check_toc_leak(segs: Sequence[QSeg]) -> CheckResult:
 
 
 def check_punctuation_only(segs: Sequence[QSeg]) -> CheckResult:
+    """Segments with no letter or digit. Informational until M2.
+
+    Most hits today are a closing quote split off by the sentence splitter ('”' as its own
+    segment), which is an M2 sentence-boundary issue; this check becomes thresholded in M2
+    together with the boundary metric.
+    """
     hits = [s.text for s in _read(segs) if not any(c.isalnum() for c in s.text)]
-    return _count("punctuation_only", hits)
+    return _count("punctuation_only", hits, threshold=None)
 
 
 def check_duplicate_runs(segs: Sequence[QSeg]) -> CheckResult:
-    """Identical consecutive texts (>= 12 chars); a heading repeated within 20 segments."""
+    """Identical consecutive texts (>= 12 chars); a heading repeated within 20 segments.
+
+    Informational: legitimate repeats are common (a book's cover, title page and chapter 1
+    heading; a NIST cover page and inner title page), so a count cannot tell a defect apart.
+    """
     read = _read(segs)
     hits: list[str] = []
     for a, b in itertools.pairwise(read):
@@ -200,7 +256,7 @@ def check_duplicate_runs(segs: Sequence[QSeg]) -> CheckResult:
         consecutive = read[i - 1].text == s.text and len(s.text) >= DUPLICATE_MIN_CHARS
         if repeated and not consecutive:
             hits.append(s.text)
-    return _count("duplicate_runs", hits)
+    return _count("duplicate_runs", hits, threshold=None)
 
 
 def check_title_filename_like(title: str | None, segs: Sequence[QSeg]) -> CheckResult:

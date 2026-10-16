@@ -11,11 +11,23 @@ Each row also reports throughput from the API: ``pages``, ``parse_ms`` (measured
 ingestion worker, not the client) and ``pg/s``; a total line sums them over freshly parsed fixtures (HTTP 202). Fixtures the server already held
 (HTTP 200) show status ``cached`` and are left out of the total.
 
+Every document also runs the quality checklist (``hearnarro.quality``) on the segments the
+API returns (text + block type; title from ``GET /documents/{id}``). The ``checks`` column
+shows ``ok`` or ``N fail``; the failing checks are listed under the table with up to three
+examples. A ``quality:`` line counts documents with failing checks; it is printed but never
+changes the exit code (RESULT stays score-based). ``empty_text_document`` cannot be judged over
+HTTP (no per-page character count) and always passes here.
+
 One mode: ``--one some.pdf`` uploads any PDF and prints pages / parse_ms / pages/s, then its
-first 20 segments.
+first 20 segments and its checklist.
+
+User documents: ``--user-docs [DIR]`` (default ``tests/user_docs/``, git-ignored PDFs) uploads
+every PDF in DIR after the gate and prints pages / parse_ms / pg/s / segs / checks. No score
+(user documents have no expected file).
 
     cd api
     .venv/bin/python scripts/m1_smoke.py --base-url http://127.0.0.1:8765
+    .venv/bin/python scripts/m1_smoke.py --user-docs
     .venv/bin/python scripts/m1_smoke.py --one ~/Downloads/paper.pdf
 """
 
@@ -34,6 +46,7 @@ API_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(API_DIR))
 
 # needs the sys.path line above (one definition of the gate scoring)
+from hearnarro.quality import QSeg, QualityReport, run_checks
 from tests.golden_util import (
     char_mass_balanced,
     char_mass_ratio,
@@ -42,6 +55,8 @@ from tests.golden_util import (
 )
 
 DEFAULT_FIXTURES = API_DIR / "tests" / "fixtures" / "pdfs"
+DEFAULT_USER_DOCS = API_DIR / "tests" / "user_docs"
+MAX_SHOWN_EXAMPLES = 3
 DEFAULT_CLASSES = "academic,report,tables"  # "scanned" needs OCR (Tesseract), deferred to M4
 PER_PDF_MIN = 0.95
 MEAN_MIN = 0.97
@@ -98,6 +113,33 @@ def throughput_cells(doc: dict[str, Any]) -> str:
     )
 
 
+def quality(doc: dict[str, Any], segments: list[dict[str, Any]], name: str) -> QualityReport:
+    """Run the checklist on API segments; ``doc`` is the GET /documents/{id} body."""
+    segs = [QSeg(s["text"], s["type"]) for s in segments]
+    # no per-page char count over HTTP: empty_text_document cannot fire here
+    return run_checks(segs, title=doc.get("title"), max_page_chars=0, source=name)
+
+
+def checks_cell(report: QualityReport | None) -> str:
+    if report is None:
+        return "-"
+    n = sum(not c.passed for c in report.checks)
+    return "ok" if n == 0 else f"{n} fail"
+
+
+def print_failing(reports: list[QualityReport]) -> int:
+    """List each document's failing checks with up to 3 examples; return how many failed."""
+    bad = [r for r in reports if not r.passed]
+    if bad:
+        print("failing checks:")
+    for r in bad:
+        for c in r.checks:
+            if not c.passed:
+                ex = " | ".join(e[:80] for e in c.examples[:MAX_SHOWN_EXAMPLES])
+                print(f"  {r.source}: {c.name} ({c.count}): {ex}")
+    return len(bad)
+
+
 def score(segments: list[dict[str, Any]], expected_path: Path) -> tuple[float, float, float]:
     """(word score, excluded char mass actual, expected) exactly as the M1 golden test does."""
     lines = [json.loads(x) for x in expected_path.read_text().splitlines() if x.strip()]
@@ -116,7 +158,7 @@ def run_gate(client: httpx.Client, fixtures: Path, classes: set[str], timeout: f
     entries = [e for e in entries if e["class"] in classes]
     header = (
         f"{'fixture':34} {'class':9} {'status':7} {'pages':>5} {'parse_ms':>8} {'pg/s':>6} "
-        f"{'segs':>5} {'word':>7} {'mass a/e':>13}  result"
+        f"{'segs':>5} {'word':>7} {'mass a/e':>13} {'checks':>7}  result"
     )
     print(header)
     print("-" * len(header))
@@ -125,6 +167,7 @@ def run_gate(client: httpx.Client, fixtures: Path, classes: set[str], timeout: f
     total_pages = 0
     total_ms = 0
     fresh = 0
+    reports: list[QualityReport] = []
     for e in entries:
         name = e["name"]
         doc_id, code = upload(client, fixtures / f"{name}.pdf")
@@ -139,7 +182,8 @@ def run_gate(client: httpx.Client, fixtures: Path, classes: set[str], timeout: f
             failures += 1
             reason = doc.get("fail_reason") or "timed out"
             print(
-                f"{name:34} {e['class']:9} {doc['status']:7} {tp} {'-':>5} {'-':>7} {'-':>13}  "
+                f"{name:34} {e['class']:9} {doc['status']:7} {tp} {'-':>5} {'-':>7} {'-':>13} "
+                f"{'-':>7}  "
                 f"FAIL ({reason})"
             )
             continue
@@ -149,11 +193,14 @@ def run_gate(client: httpx.Client, fixtures: Path, classes: set[str], timeout: f
         failures += not ok
         scores.append(word)
         mass = f"{mass_a:.4f}/{mass_e:.4f}"
+        report = quality(doc, segs, name)
+        reports.append(report)
         print(
-            f"{name:34} {e['class']:9} {'cached' if cached else 'ready':7} {tp} {len(segs):5d} {word:7.4f} {mass:>13}  "
-            f"{'pass' if ok else 'FAIL'}"
+            f"{name:34} {e['class']:9} {'cached' if cached else 'ready':7} {tp} {len(segs):5d} "
+            f"{word:7.4f} {mass:>13} {checks_cell(report):>7}  {'pass' if ok else 'FAIL'}"
         )
     print("-" * len(header))
+    n_bad = print_failing(reports)
     mean = sum(scores) / len(scores) if scores else 0.0
     passed = len(entries) - failures
     print(
@@ -171,7 +218,41 @@ def run_gate(client: httpx.Client, fixtures: Path, classes: set[str], timeout: f
         )
     ok = failures == 0 and bool(scores) and mean >= MEAN_MIN
     print("RESULT: PASS" if ok else "RESULT: FAIL")
+    print(f"quality: {n_bad} documents with failing checks (informational; exit code unchanged)")
     return 0 if ok else 1
+
+
+def run_user_docs(client: httpx.Client, folder: Path, timeout: float) -> None:
+    """Upload every PDF in ``folder``; throughput and checklist only (no expected file)."""
+    pdfs = sorted(folder.glob("*.pdf"))
+    print()
+    print(f"user documents: {folder} ({len(pdfs)} PDFs)")
+    if not pdfs:
+        return
+    header = (
+        f"{'document':44} {'status':7} {'pages':>5} {'parse_ms':>8} {'pg/s':>6} {'segs':>5} "
+        f"{'checks':>7}"
+    )
+    print(header)
+    print("-" * len(header))
+    reports: list[QualityReport] = []
+    for pdf in pdfs:
+        doc_id, code = upload(client, pdf)
+        doc = wait_settled(client, doc_id, timeout)
+        tp = throughput_cells(doc)
+        name = pdf.stem[:44]
+        if doc["status"] != "ready":
+            reason = doc.get("fail_reason") or "timed out"
+            print(f"{name:44} {doc['status']:7} {tp} {'-':>5} {'-':>7}  ({reason})")
+            continue
+        segs = all_segments(client, doc_id)
+        report = quality(doc, segs, pdf.name)
+        reports.append(report)
+        status = "cached" if code == 200 else "ready"
+        print(f"{name:44} {status:7} {tp} {len(segs):5d} {checks_cell(report):>7}")
+    print("-" * len(header))
+    n_bad = print_failing(reports)
+    print(f"quality (user documents): {n_bad} documents with failing checks (informational)")
 
 
 def run_one(client: httpx.Client, pdf: Path, timeout: float) -> int:
@@ -193,6 +274,9 @@ def run_one(client: httpx.Client, pdf: Path, timeout: float) -> int:
     print(f"segments: {page['total']} total; first {len(page['segments'])}:")
     for s in page["segments"]:
         print(f"{s['order']:4d} [{s['type']:8}] {s['text']}")
+    report = quality(doc, all_segments(client, doc_id), pdf.name)
+    print(f"checks: {checks_cell(report)}")
+    print_failing([report])
     return 0
 
 
@@ -203,6 +287,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--classes", default=DEFAULT_CLASSES, help="comma-separated manifest classes")
     ap.add_argument("--timeout", type=float, default=60.0, help="seconds to wait per document")
     ap.add_argument("--one", type=Path, metavar="PDF", help="upload one PDF, print 20 segments")
+    ap.add_argument(
+        "--user-docs",
+        type=Path,
+        nargs="?",
+        const=DEFAULT_USER_DOCS,
+        metavar="DIR",
+        help=f"after the gate, upload every PDF in DIR (default {DEFAULT_USER_DOCS})",
+    )
     args = ap.parse_args(argv)
     with httpx.Client(base_url=args.base_url, timeout=30.0) as client:
         try:
@@ -213,7 +305,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.one:
             return run_one(client, args.one, args.timeout)
         classes = {c.strip() for c in args.classes.split(",") if c.strip()}
-        return run_gate(client, args.fixtures_dir, classes, args.timeout)
+        code = run_gate(client, args.fixtures_dir, classes, args.timeout)
+        if args.user_docs is not None:
+            run_user_docs(client, args.user_docs, args.timeout)
+        return code
 
 
 if __name__ == "__main__":

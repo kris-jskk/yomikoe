@@ -34,10 +34,31 @@ def test_quality_dangling_hyphens() -> None:
     assert check_dangling_hyphens(body("A well-known fact.", "Pages 3 - 5.")).passed
 
 
+def test_quality_dangling_hyphens_suspended_idiom() -> None:
+    """ "16K- and 65K-token" is a suspended hyphen, not a missed join; real breaks still count."""
+    ok = body("Both 16K- and 65K-token runs.", "pre- or post-war", "first- to third-order")
+    assert check_dangling_hyphens(ok).passed
+    assert check_dangling_hyphens(body("neither long- nor short-term")).passed
+    bad = check_dangling_hyphens(body("I was fantasy- answering them.", "an- order"))
+    assert bad.count == 2  # "answering" / "order" are not and|or|to|nor
+
+
 def test_quality_ligature_artifacts() -> None:
     bad = check_ligature_artifacts(body("The e!ect of di#erent o$ces."))
     assert (bad.count, bad.passed) == (1, False)
     assert check_ligature_artifacts(body("Wow! amazing", "C# and $5")).passed
+
+
+def test_quality_ligature_artifacts_urls() -> None:
+    """URL-ish tokens are not ligature artifacts; artifacts in ordinary words still count."""
+    urls = body(
+        "See https://angel.co/syndicates/ for-investors#syndicates.",
+        "Docs at www.example.org/a#b and mail me@ex!ample.com",
+        "Open docs.python.org/library#re for details",
+    )
+    assert check_ligature_artifacts(urls).passed
+    bad = check_ligature_artifacts(body("The di#erent e!ect.", "a di#erent."))
+    assert bad.count == 2  # a sentence-final period does not make a word URL-ish
 
 
 def test_quality_single_letter_segments_and_chapter_numbers() -> None:
@@ -56,9 +77,20 @@ def test_quality_tracked_lines() -> None:
 
 
 def test_quality_leader_dots() -> None:
-    assert check_leader_dots(body("Introduction . . . . 5")).count == 1
-    assert check_leader_dots(body("Introduction.......5")).count == 1
+    assert check_leader_dots(body("Intro . . . . . . . . . . . . . 5")).count == 1
+    assert check_leader_dots(body("Intro....................5")).count == 1
+    assert check_leader_dots(body(". . . . . . . .")).count == 1
     assert check_leader_dots(body("Wait... what?", "Wait . . then")).passed
+
+
+def test_quality_leader_dots_math_ellipsis() -> None:
+    """A math ellipsis inside prose is not a TOC leader (needs >= 60% dots/spaces)."""
+    ok = body(
+        "for samples x1, . . . , xd drawn from the prior",
+        "the indices i = 1, . . . . , n are visited in order",
+        "and so on..... until the end of the sequence is reached",
+    )
+    assert check_leader_dots(ok).passed
 
 
 def test_quality_midsentence_breaks() -> None:
@@ -83,19 +115,20 @@ def test_quality_toc_leak() -> None:
 
 
 def test_quality_punctuation_only() -> None:
+    """Informational until M2 (closing-quote splits are a sentence-splitter issue)."""
     bad = check_punctuation_only(body("* * *", "—", "Fine."))
-    assert (bad.count, bad.passed) == (2, False)
+    assert (bad.count, bad.threshold, bad.passed) == (2, None, True)
     assert check_punctuation_only(body("1.", "A")).passed
 
 
 def test_quality_duplicate_runs() -> None:
     bad = check_duplicate_runs(body("The same sentence.", "The same sentence."))
-    assert (bad.count, bad.passed) == (1, False)
-    assert check_duplicate_runs(body("Short.", "Short.")).passed  # under 12 chars
+    assert (bad.count, bad.threshold, bad.passed) == (1, None, True)  # informational
+    assert check_duplicate_runs(body("Short.", "Short.")).count == 0  # under 12 chars
     heads = [QSeg("Chapter One", "heading")] + body("Text.") + [QSeg("Chapter One", "heading")]
     assert check_duplicate_runs(heads).count == 1
     far = [QSeg("Chapter One", "heading")] + body(*["x."] * 25) + [QSeg("Chapter One", "heading")]
-    assert check_duplicate_runs(far).passed
+    assert check_duplicate_runs(far).count == 0
 
 
 def test_quality_title_filename_like() -> None:
@@ -116,7 +149,7 @@ def test_quality_run_checks_overall() -> None:
     good = run_checks(body(*["A fine sentence."] * 1), title="A Good Title", max_page_chars=300)
     assert good.passed
     names = [c.name for c in good.checks]
-    assert len([c for c in good.checks if c.threshold is not None]) == 11
+    assert len([c for c in good.checks if c.threshold is not None]) == 9
     assert "chapter_number_segments" in names
     bad = run_checks(body("inter- national"), title="A Good Title", max_page_chars=300)
     assert not bad.passed
