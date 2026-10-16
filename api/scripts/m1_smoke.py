@@ -8,7 +8,8 @@ Exit 1 if any fixture scores under 0.95, fails its char-mass guard, or does not 
 ``ready``, or if the mean is under 0.97.
 
 Each row also reports throughput from the API: ``pages``, ``parse_ms`` (measured by the
-ingestion worker, not the client) and ``pg/s``; a total line sums them over the fixtures.
+ingestion worker, not the client) and ``pg/s``; a total line sums them over freshly parsed fixtures (HTTP 202). Fixtures the server already held
+(HTTP 200) show status ``cached`` and are left out of the total.
 
 One mode: ``--one some.pdf`` uploads any PDF and prints pages / parse_ms / pages/s, then its
 first 20 segments.
@@ -123,11 +124,14 @@ def run_gate(client: httpx.Client, fixtures: Path, classes: set[str], timeout: f
     failures = 0
     total_pages = 0
     total_ms = 0
+    fresh = 0
     for e in entries:
         name = e["name"]
-        doc_id, _ = upload(client, fixtures / f"{name}.pdf")
+        doc_id, code = upload(client, fixtures / f"{name}.pdf")
+        cached = code == 200  # deduplicated: parsed by an earlier upload, not this run
+        fresh += not cached
         doc = wait_settled(client, doc_id, timeout)
-        if doc.get("page_count") and doc.get("parse_ms"):
+        if not cached and doc.get("page_count") and doc.get("parse_ms"):
             total_pages += doc["page_count"]
             total_ms += doc["parse_ms"]
         tp = throughput_cells(doc)
@@ -146,7 +150,7 @@ def run_gate(client: httpx.Client, fixtures: Path, classes: set[str], timeout: f
         scores.append(word)
         mass = f"{mass_a:.4f}/{mass_e:.4f}"
         print(
-            f"{name:34} {e['class']:9} {'ready':7} {tp} {len(segs):5d} {word:7.4f} {mass:>13}  "
+            f"{name:34} {e['class']:9} {'cached' if cached else 'ready':7} {tp} {len(segs):5d} {word:7.4f} {mass:>13}  "
             f"{'pass' if ok else 'FAIL'}"
         )
     print("-" * len(header))
@@ -157,10 +161,14 @@ def run_gate(client: httpx.Client, fixtures: Path, classes: set[str], timeout: f
     )
     print(f"word-level mean: {mean:.4f} (gate >= {MEAN_MIN}); per-fixture gate >= {PER_PDF_MIN}")
     rate = pages_per_s(total_pages, total_ms)
-    print(
-        f"pages: {total_pages}  parse time: {total_ms / 1000:.1f} s  "
-        f"throughput: {f'{rate:.1f}' if rate is not None else '-'} pages/s"
-    )
+    if entries and fresh == 0:
+        print("throughput: n/a (all documents cached; use a fresh --data-dir to measure)")
+    else:
+        print(
+            f"pages: {total_pages}  parse time: {total_ms / 1000:.1f} s  "
+            f"throughput: {f'{rate:.1f}' if rate is not None else '-'} pages/s"
+            + (f"  (excludes {len(entries) - fresh} cached)" if fresh < len(entries) else "")
+        )
     ok = failures == 0 and bool(scores) and mean >= MEAN_MIN
     print("RESULT: PASS" if ok else "RESULT: FAIL")
     return 0 if ok else 1
