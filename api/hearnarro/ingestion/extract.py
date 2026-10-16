@@ -23,6 +23,10 @@ from hearnarro.ingestion.models import BBox, Block, Line, Page, Span
 OCR_DPI = 300
 FIGURE_MIN_FRAC = 0.02  # a drawings union covering less of the page is a rule or a box
 FIGURE_MAX_FRAC = 0.80  # ... and one covering this much or more is a page background
+# pdfplumber reports each box, arrow and curve of a vector figure separately; a curve joins
+# drawings within FIGURE_JOIN points of it (tuned 2026-10-16 on pdfplumber; padding plain
+# rects too merges the shaded rows of report text boxes into "figures", results 139).
+FIGURE_JOIN = 6.0
 # Glyph grouping (D13). pdfminer's own layout analysis (LAParams) splits justified lines at
 # wide word gaps and splits inline math into separate boxes, so stage 1 groups pdfplumber's
 # glyphs itself, in content-stream order, the way PyMuPDF's text device did: a glyph continues
@@ -257,6 +261,8 @@ def figure_regions(
     [FIGURE_MIN_FRAC, FIGURE_MAX_FRAC) of the page area."""
     clusters: list[BBox] = []
     for rect in drawing_rects:
+        if rect.height <= RULE_MAX_HEIGHT and rect.width >= RULE_MIN_WIDTH:
+            continue  # a table rule or separator, never a figure part on its own
         cur = rect
         merged = True
         while merged:
@@ -651,10 +657,12 @@ def has_columns(region: BBox, lines: Sequence[Sequence[LayoutChar]]) -> bool:
 
 def _drawing_rects(page: Any, coords: _Coords) -> list[BBox]:
     try:
-        objs = [*page.rects, *page.curves, *page.lines]
+        rects = [coords.obj(o) for o in [*page.rects, *page.lines]]
+        curves = [coords.obj(o) for o in page.curves]
     except Exception:  # noqa: BLE001 - vector analysis is best effort
         return []
-    return [coords.obj(o) for o in objs]
+    pad = FIGURE_JOIN  # curves (arrows, rounded boxes, plot lines) reach FIGURE_JOIN further
+    return [*rects, *(BBox(c.x0 - pad, c.y0 - pad, c.x1 + pad, c.y1 + pad) for c in curves)]
 
 
 def ocr_page(pdf_path: str | Path, number: int) -> list[Block]:
