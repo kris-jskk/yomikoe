@@ -1,0 +1,221 @@
+"""API contract tests for the M1 skeleton (ING-1; documents, blocks, segments tables).
+
+D11 "API contract" row: each endpoint via ``httpx.AsyncClient`` against a temp SQLite.
+The app's lifespan (migrations + process pool) is entered explicitly because
+``httpx.ASGITransport`` does not send lifespan events.
+
+``hearnarro.app`` is imported inside the helpers, not at module level, so that before the
+feature exists every test fails on its own instead of the module failing to collect.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import sqlite3
+import sys
+import time
+from array import array
+from collections.abc import AsyncIterator
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any
+
+import httpx
+import pytest
+
+from hearnarro.ingestion.pipeline import ingest
+
+FIXTURES = Path(__file__).parent / "fixtures"
+TEXT_PDF = FIXTURES / "unit" / "text.pdf"
+REPORT_PDF = FIXTURES / "pdfs" / "report_01_zero_trust.pdf"
+READY_TIMEOUT_S = 90.0
+
+
+@asynccontextmanager
+async def client_for(data_dir: Path, **kwargs: Any) -> AsyncIterator[httpx.AsyncClient]:
+    from hearnarro.app import create_app
+
+    app = create_app(data_dir, **kwargs)
+    async with app.router.lifespan_context(app):
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            client.app = app  # type: ignore[attr-defined]
+            yield client
+
+
+async def upload(client: httpx.AsyncClient, path: Path, data: bytes | None = None):
+    body = path.read_bytes() if data is None else data
+    return await client.post("/documents", files={"file": (path.name, body, "application/pdf")})
+
+
+async def wait_settled(client: httpx.AsyncClient, doc_id: int) -> dict[str, Any]:
+    """Poll GET /documents/{id} until ready or failed (bounded)."""
+    deadline = time.monotonic() + READY_TIMEOUT_S
+    while True:
+        resp = await client.get(f"/documents/{doc_id}")
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        if body["status"] in ("ready", "failed"):
+            return body
+        assert time.monotonic() < deadline, f"document {doc_id} stuck in {body['status']}"
+        await asyncio.sleep(0.05)
+
+
+def unpack_char_map(blob: bytes) -> list[int]:
+    arr = array("H")
+    arr.frombytes(blob)
+    if sys.byteorder == "big":
+        arr.byteswap()
+    return arr.tolist()
+
+
+async def test_ing1_upload_returns_202_parsing_then_ready_documents_table(tmp_path: Path) -> None:
+    async with client_for(tmp_path) as client:
+        resp = await upload(client, TEXT_PDF)
+        assert resp.status_code == 202, resp.text
+        body = resp.json()
+        assert isinstance(body["id"], int)
+        assert body["status"] == "parsing"
+
+        doc = await wait_settled(client, body["id"])
+        assert doc["status"] == "ready", doc
+        assert doc["fail_reason"] is None
+        assert doc["page_count"] == 1
+        assert doc["title"] == "text"  # no PDF Title metadata -> filename stem
+        assert doc["filename"] == "text.pdf"
+        assert len(doc["sha256"]) == 64
+        assert (tmp_path / "pdfs" / f"{doc['sha256']}.pdf").read_bytes() == TEXT_PDF.read_bytes()
+
+        listing = await client.get("/documents")
+        assert listing.status_code == 200
+        assert [d["id"] for d in listing.json()] == [body["id"]]
+
+
+async def test_ing1_ingestion_uses_process_pool_of_two(tmp_path: Path) -> None:
+    async with client_for(tmp_path) as client:
+        pool = client.app.state.ingest_executor  # type: ignore[attr-defined]
+        assert isinstance(pool, ProcessPoolExecutor)
+        assert pool._max_workers == 2
+
+
+async def test_ing1_reupload_same_bytes_dedupes_by_sha256_documents_table(tmp_path: Path) -> None:
+    async with client_for(tmp_path) as client:
+        first = await upload(client, TEXT_PDF)
+        assert first.status_code == 202
+        await wait_settled(client, first.json()["id"])
+        again = await upload(client, TEXT_PDF)
+        assert again.status_code == 200, again.text
+        assert again.json()["id"] == first.json()["id"]
+        assert again.json()["status"] == "ready"
+        assert len((await client.get("/documents")).json()) == 1
+
+
+async def test_ing1_segments_paging_segments_table(tmp_path: Path) -> None:
+    expected = ingest(REPORT_PDF).segments
+    assert len(expected) > 20
+    async with client_for(tmp_path) as client:
+        doc_id = (await upload(client, REPORT_PDF)).json()["id"]
+        assert (await wait_settled(client, doc_id))["status"] == "ready"
+
+        page1 = (await client.get(f"/documents/{doc_id}/segments?from=0&limit=20")).json()
+        assert page1["total"] == len(expected)
+        assert page1["next_from"] == 20
+        rows = page1["segments"]
+        assert [r["order"] for r in rows] == list(range(20))
+        keys = {"id", "order", "block_id", "text", "normalized_text", "char_start", "char_end"}
+        assert keys <= set(rows[0])
+        assert [r["text"] for r in rows] == [s.text for s in expected[:20]]
+
+        page2 = (await client.get(f"/documents/{doc_id}/segments?from=20&limit=20")).json()
+        assert [r["order"] for r in page2["segments"]] == list(range(20, 40))
+
+        last = (await client.get(f"/documents/{doc_id}/segments?from=40&limit=20")).json()
+        assert [r["order"] for r in last["segments"]] == list(range(40, len(expected)))
+        assert last["next_from"] is None
+
+        capped = (await client.get(f"/documents/{doc_id}/segments?from=0&limit=100000")).json()
+        assert capped["limit"] == 500  # documented cap
+        assert len(capped["segments"]) == len(expected)
+
+        bad = await client.get(f"/documents/{doc_id}/segments?from=-1")
+        assert bad.status_code == 422
+
+
+async def test_ing1_report01_segments_match_ingest_blocks_segments_tables(tmp_path: Path) -> None:
+    result = ingest(REPORT_PDF)
+    async with client_for(tmp_path) as client:
+        t0 = time.perf_counter()
+        doc_id = (await upload(client, REPORT_PDF)).json()["id"]
+        doc = await wait_settled(client, doc_id)
+        elapsed = time.perf_counter() - t0
+        print(f"\nINGEST_WALL report_01 upload->ready {elapsed:.3f}s")
+        assert doc["status"] == "ready", doc
+        assert doc["page_count"] == len(result.pages)
+
+    db = sqlite3.connect(tmp_path / "hearnarro.db")
+    try:
+        n_blocks = db.execute("SELECT count(*) FROM blocks WHERE document_id=?", (doc_id,))
+        assert n_blocks.fetchone()[0] == len(result.blocks)
+        rows = db.execute(
+            'SELECT "order", text, normalized_text, char_start, char_end, char_map '
+            'FROM segments WHERE document_id=? ORDER BY "order"',
+            (doc_id,),
+        ).fetchall()
+    finally:
+        db.close()
+    assert len(rows) == len(result.segments)
+    assert [r[0] for r in rows] == list(range(len(result.segments)))
+    for row, seg in zip(rows[:5], result.segments[:5], strict=True):
+        assert row[1:5] == (seg.text, seg.normalized_text, seg.char_start, seg.char_end)
+        assert unpack_char_map(row[5]) == seg.char_map
+
+
+async def test_ing1_non_pdf_returns_415(tmp_path: Path) -> None:
+    async with client_for(tmp_path) as client:
+        resp = await client.post(
+            "/documents", files={"file": ("notes.txt", b"just some text", "text/plain")}
+        )
+        assert resp.status_code == 415, resp.text
+        assert (await client.get("/documents")).json() == []
+
+
+async def test_ing1_pdf_over_limit_returns_413(tmp_path: Path) -> None:
+    assert TEXT_PDF.stat().st_size > 1024
+    async with client_for(tmp_path, max_upload_bytes=1024) as client:
+        resp = await upload(client, TEXT_PDF)
+        assert resp.status_code == 413, resp.text
+        assert (await client.get("/documents")).json() == []
+
+
+async def test_ing1_ingest_raises_sets_failed_documents_table(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from hearnarro.storage import jobs
+
+    def boom(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError("synthetic ingest failure")
+
+    monkeypatch.setattr(jobs, "ingest", boom)
+    # A monkeypatch does not cross a spawned process boundary, so this test swaps in a
+    # thread executor; test_ing1_corrupt_pdf_fails_in_process_pool covers the real pool.
+    async with client_for(tmp_path, executor_factory=lambda: ThreadPoolExecutor(1)) as client:
+        doc_id = (await upload(client, TEXT_PDF)).json()["id"]
+        doc = await wait_settled(client, doc_id)
+        assert doc["status"] == "failed"
+        assert "synthetic ingest failure" in doc["fail_reason"]
+
+
+async def test_ing1_corrupt_pdf_fails_in_process_pool(tmp_path: Path) -> None:
+    async with client_for(tmp_path) as client:
+        resp = await upload(client, Path("broken.pdf"), b"%PDF-1.4\nthis is not a pdf body\n")
+        assert resp.status_code == 202, resp.text
+        doc = await wait_settled(client, resp.json()["id"])
+        assert doc["status"] == "failed"
+        assert doc["fail_reason"]
+
+
+async def test_ing1_missing_document_returns_404(tmp_path: Path) -> None:
+    async with client_for(tmp_path) as client:
+        assert (await client.get("/documents/999")).status_code == 404
+        assert (await client.get("/documents/999/segments")).status_code == 404

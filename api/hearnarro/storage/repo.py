@@ -1,0 +1,95 @@
+"""Async repository functions over one aiosqlite connection (D7 tables; ING-1)."""
+
+from __future__ import annotations
+
+import sqlite3
+from datetime import UTC, datetime
+from typing import Any
+
+import aiosqlite
+
+DOCUMENT_COLUMNS = (
+    "id, title, filename, sha256, page_count, status, fail_reason, voice_id, speed, "
+    "position_segment_id, position_offset_ms, created_at, last_opened_at"
+)
+DuplicateDocument = sqlite3.IntegrityError
+
+
+def now_iso() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+async def _one(conn: aiosqlite.Connection, sql: str, params: tuple[Any, ...]) -> dict | None:
+    async with conn.execute(sql, params) as cur:
+        row = await cur.fetchone()
+    return dict(row) if row is not None else None
+
+
+async def _all(conn: aiosqlite.Connection, sql: str, params: tuple[Any, ...]) -> list[dict]:
+    async with conn.execute(sql, params) as cur:
+        return [dict(r) for r in await cur.fetchall()]
+
+
+async def get_document(conn: aiosqlite.Connection, document_id: int) -> dict[str, Any] | None:
+    return await _one(
+        conn, f"SELECT {DOCUMENT_COLUMNS} FROM documents WHERE id = ?", (document_id,)
+    )
+
+
+async def get_document_by_sha256(conn: aiosqlite.Connection, sha256: str) -> dict[str, Any] | None:
+    return await _one(conn, f"SELECT {DOCUMENT_COLUMNS} FROM documents WHERE sha256 = ?", (sha256,))
+
+
+async def list_documents(conn: aiosqlite.Connection) -> list[dict[str, Any]]:
+    return await _all(conn, f"SELECT {DOCUMENT_COLUMNS} FROM documents ORDER BY id", ())
+
+
+async def insert_document(
+    conn: aiosqlite.Connection, *, title: str, filename: str, sha256: str, status: str
+) -> int:
+    """Insert and commit; raises ``DuplicateDocument`` when the sha256 already exists."""
+    cur = await conn.execute(
+        "INSERT INTO documents (title, filename, sha256, status, created_at) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (title, filename, sha256, status, now_iso()),
+    )
+    await conn.commit()
+    assert cur.lastrowid is not None
+    return int(cur.lastrowid)
+
+
+async def set_status(
+    conn: aiosqlite.Connection, document_id: int, status: str, fail_reason: str | None = None
+) -> None:
+    await conn.execute(
+        "UPDATE documents SET status = ?, fail_reason = ? WHERE id = ?",
+        (status, fail_reason, document_id),
+    )
+    await conn.commit()
+
+
+async def list_sections(conn: aiosqlite.Connection, document_id: int) -> list[dict[str, Any]]:
+    return await _all(
+        conn,
+        "SELECT id, title, level, first_segment_id FROM sections WHERE document_id = ? ORDER BY id",
+        (document_id,),
+    )
+
+
+async def count_segments(conn: aiosqlite.Connection, document_id: int) -> int:
+    row = await _one(
+        conn, "SELECT count(*) AS n FROM segments WHERE document_id = ?", (document_id,)
+    )
+    return int(row["n"]) if row else 0
+
+
+async def list_segments(
+    conn: aiosqlite.Connection, document_id: int, from_order: int, limit: int
+) -> list[dict[str, Any]]:
+    """Range scan on the unique index segments(document_id, "order")."""
+    return await _all(
+        conn,
+        'SELECT id, "order", block_id, section_id, text, normalized_text, char_start, char_end '
+        'FROM segments WHERE document_id = ? AND "order" >= ? ORDER BY "order" LIMIT ?',
+        (document_id, from_order, limit),
+    )

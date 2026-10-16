@@ -208,10 +208,10 @@ Speeds above the backend's native range are handled by the service, not the back
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | /documents | Upload a PDF; returns id, status=parsing |
+| POST | /documents | Upload a PDF; 202 {id, status=parsing} (row goes uploaded → parsing before the parse is queued); same bytes again (sha256) → 200 with the existing id and status; non-PDF → 415; over 100 MB → 413 |
 | GET | /documents | Library list with progress |
-| GET | /documents/{id} | Metadata, sections, settings, position |
-| GET | /documents/{id}/segments?from=&limit= | Ordered segments for the text view |
+| GET | /documents/{id} | Metadata (status, fail\_reason, page\_count, sha256), sections, settings, position; unknown id → 404 |
+| GET | /documents/{id}/segments?from=&limit= | Ordered segments for the text view: rows with `order` ≥ from (default 0), limit default 100, clamped to 500; returns total and next\_from (null after the last page); unknown id → 404 |
 | PATCH | /documents/{id} | Update voice, speed, position |
 | DELETE | /documents/{id} | Remove document and cached audio |
 | GET | /voices | All voices across backends |
