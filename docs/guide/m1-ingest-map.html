@@ -46,7 +46,7 @@ code { font-family: var(--font-mono); font-size: 0.9em; background: var(--accent
 .gate { border-left: 3px solid var(--accent); padding: 8px 14px; background: var(--surface); display: grid; gap: 4px; margin-top: 16px; }
 .gate b { font-weight: 600; }
 .stamp { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 14px; font-family: var(--font-mono); }
-.stamp .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--done); }
+.stamp .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--run); }
 nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; margin-top: 14px; }
 nav.toc a { color: var(--accent); text-decoration: none; }
 nav.toc a:hover, nav.toc a:focus-visible { text-decoration: underline; outline: none; }
@@ -107,7 +107,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
       <b>The gate that ends M1</b>
       <span>20 fixture PDFs, each with a hand-checked expected reading order. The parser must score at least 0.95 on every PDF and 0.97 on average. Score = 1 − (edit distance between the parser's sentence sequence and the expected sequence) ÷ (expected length).</span>
     </div>
-    <div class="stamp"><span class="dot"></span><span>status as of 2026-10-16 13:40 PDT · M1 COMPLETE: gate green, skeleton done, end-to-end kit verified over HTTP (15 of 15, mean 0.991) · ready for your hands-on test: docs/M1_TESTING.md · updated at every phase change</span></div>
+    <div class="stamp"><span class="dot"></span><span>status as of 2026-10-16 14:10 PDT · M1 complete · phase 8: hands-on test; three findings from the user's PDF fixed (hyphens, contents page, cover typing), 202 tests pass, golden unchanged · updated at every phase change</span></div>
     <nav class="toc">
       <a href="#why">1 Why M1 is the risky milestone</a>
       <a href="#fixtures">2 Why fixture PDFs</a>
@@ -275,7 +275,8 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
           <p><b>What:</b> each block gets one type from a rule table, first match wins. The body font size is the character-weighted median across the whole document, not per page, so a page of headings cannot fool it.</p>
           <div class="tablewrap"><table class="rules">
             <tr><th>type</th><th>rule</th><th>why this signal</th></tr>
-            <tr><td>noise</td><td>any line not horizontal; email-only or URL-only lines; "Preprint." footers; cover boilerplate</td><td>never read aloud; added after review</td></tr>
+            <tr><td>noise</td><td>any line not horizontal; email-only or URL-only lines; "Preprint." footers; cover boilerplate; leader-dot lines; punctuation-only blocks</td><td>never read aloud; added after review and the user's test</td></tr>
+            <tr><td>toc</td><td>a "Contents" heading and the blocks after it, across pages, while they look like entries (leader dots, trailing page numbers, titles and numbers run together); ends at the first real block</td><td>a listener does not want the contents page read; navigation comes from headings later (ING-8)</td></tr>
             <tr><td>header / footer</td><td>same normalized text in the top or bottom 8% band on 3+ pages, or a page-number pattern, or (new) a single all-caps or small line inside the band</td><td>repetition is the classic signal; short fixtures need the band-only fallback</td></tr>
             <tr><td>heading</td><td>size ≥ 1.15 × body median, or bold and ≤ 12 words with no final period</td><td>headings are bigger or bolder and are not sentences</td></tr>
             <tr><td>caption</td><td>starts with Figure / Fig. / Table / Listing + number, within 40 pt of an image or table box</td><td>the prefix alone also matches body references ("Table 2 shows")</td></tr>
@@ -286,54 +287,32 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
             <tr><td>body</td><td>everything else</td><td></td></tr>
           </table></div>
           <figure>
-            <svg viewBox="0 0 860 200" role="img" aria-label="Stage 2 mechanism: a block enters a cascade of tests from left to right: noise, header or footer, heading, caption, footnote, table, equation, list; the first test that matches assigns the type and the block exits; a block that matches none is body. The document-wide body font median feeds the heading and footnote tests; page image and table boxes feed the caption and table tests.">
+            <svg viewBox="0 0 860 200" role="img" aria-label="Stage 2 mechanism: a block enters a cascade of tests from left to right: noise, table of contents, header or footer, heading, caption, footnote, table, equation, list; the first test that matches assigns the type and the block exits; a block that matches none is body. The document-wide body font median feeds the heading and footnote tests; page image and table boxes feed the caption and table tests.">
               <defs><marker id="arrC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
               <g fill="none" stroke="currentColor" stroke-width="1.2">
                 <rect x="10" y="70" width="60" height="40" rx="3"/>
-                <g>
-                  <rect x="100" y="70" width="74" height="40" rx="20"/>
-                  <rect x="194" y="70" width="74" height="40" rx="20"/>
-                  <rect x="288" y="70" width="74" height="40" rx="20"/>
-                  <rect x="382" y="70" width="74" height="40" rx="20"/>
-                  <rect x="476" y="70" width="74" height="40" rx="20"/>
-                  <rect x="570" y="70" width="74" height="40" rx="20"/>
-                  <rect x="664" y="70" width="74" height="40" rx="20"/>
-                  <rect x="758" y="70" width="74" height="40" rx="20"/>
-                </g>
-                <line x1="70" y1="90" x2="98" y2="90" marker-end="url(#arrC)"/>
-                <line x1="174" y1="90" x2="192" y2="90" marker-end="url(#arrC)"/>
-                <line x1="268" y1="90" x2="286" y2="90" marker-end="url(#arrC)"/>
-                <line x1="362" y1="90" x2="380" y2="90" marker-end="url(#arrC)"/>
-                <line x1="456" y1="90" x2="474" y2="90" marker-end="url(#arrC)"/>
-                <line x1="550" y1="90" x2="568" y2="90" marker-end="url(#arrC)"/>
-                <line x1="644" y1="90" x2="662" y2="90" marker-end="url(#arrC)"/>
-                <line x1="738" y1="90" x2="756" y2="90" marker-end="url(#arrC)"/>
-                <path d="M832,90 L848,90 L848,150 L820,150" marker-end="url(#arrC)"/>
-                <g stroke-dasharray="3 3">
-                  <line x1="137" y1="110" x2="137" y2="135"/><line x1="231" y1="110" x2="231" y2="135"/><line x1="325" y1="110" x2="325" y2="135"/><line x1="419" y1="110" x2="419" y2="135"/>
-                  <line x1="513" y1="110" x2="513" y2="135"/><line x1="607" y1="110" x2="607" y2="135"/><line x1="701" y1="110" x2="701" y2="135"/><line x1="795" y1="110" x2="795" y2="135"/>
-                </g>
-                <path d="M325,30 L325,68" marker-end="url(#arrC)" stroke-dasharray="3 3"/>
-                <path d="M513,30 L513,68" marker-end="url(#arrC)" stroke-dasharray="3 3"/>
-                <path d="M419,30 L419,68" marker-end="url(#arrC)" stroke-dasharray="3 3"/>
-                <path d="M607,30 L607,68" marker-end="url(#arrC)" stroke-dasharray="3 3"/>
+                <rect x="96" y="70" width="70" height="40" rx="20"/><rect x="178" y="70" width="70" height="40" rx="20"/><rect x="260" y="70" width="70" height="40" rx="20"/><rect x="342" y="70" width="70" height="40" rx="20"/><rect x="424" y="70" width="70" height="40" rx="20"/><rect x="506" y="70" width="70" height="40" rx="20"/><rect x="588" y="70" width="70" height="40" rx="20"/><rect x="670" y="70" width="70" height="40" rx="20"/><rect x="752" y="70" width="70" height="40" rx="20"/>
+                <line x1="70" y1="90" x2="94" y2="90" marker-end="url(#arrC)"/>
+                <line x1="166" y1="90" x2="176" y2="90" marker-end="url(#arrC)"/><line x1="248" y1="90" x2="258" y2="90" marker-end="url(#arrC)"/><line x1="330" y1="90" x2="340" y2="90" marker-end="url(#arrC)"/><line x1="412" y1="90" x2="422" y2="90" marker-end="url(#arrC)"/><line x1="494" y1="90" x2="504" y2="90" marker-end="url(#arrC)"/><line x1="576" y1="90" x2="586" y2="90" marker-end="url(#arrC)"/><line x1="658" y1="90" x2="668" y2="90" marker-end="url(#arrC)"/><line x1="740" y1="90" x2="750" y2="90" marker-end="url(#arrC)"/>
+                <path d="M822,90 L836,90 L836,150 L808,150" marker-end="url(#arrC)"/>
+                <g stroke-dasharray="3 3"><line x1="131" y1="110" x2="131" y2="135"/><line x1="213" y1="110" x2="213" y2="135"/><line x1="295" y1="110" x2="295" y2="135"/><line x1="377" y1="110" x2="377" y2="135"/><line x1="459" y1="110" x2="459" y2="135"/><line x1="541" y1="110" x2="541" y2="135"/><line x1="623" y1="110" x2="623" y2="135"/><line x1="705" y1="110" x2="705" y2="135"/><line x1="787" y1="110" x2="787" y2="135"/></g>
+                <path d="M377,30 L377,68" marker-end="url(#arrC)" stroke-dasharray="3 3"/>
+                <path d="M541,30 L541,68" marker-end="url(#arrC)" stroke-dasharray="3 3"/>
+                <path d="M459,30 L459,68" marker-end="url(#arrC)" stroke-dasharray="3 3"/>
+                <path d="M623,30 L623,68" marker-end="url(#arrC)" stroke-dasharray="3 3"/>
               </g>
               <g fill="currentColor" font-size="11" text-anchor="middle">
                 <text x="40" y="94">block</text>
-                <text x="137" y="94">noise?</text><text x="231" y="94">header/footer?</text><text x="325" y="94">heading?</text><text x="419" y="94">caption?</text>
-                <text x="513" y="94">footnote?</text><text x="607" y="94">table?</text><text x="701" y="94">equation?</text><text x="795" y="94">list?</text>
-                <text x="137" y="150" font-size="10" opacity="0.8">yes ↓ exit</text><text x="231" y="150" font-size="10" opacity="0.8">yes ↓ exit</text><text x="325" y="150" font-size="10" opacity="0.8">yes ↓ exit</text><text x="419" y="150" font-size="10" opacity="0.8">yes ↓ exit</text>
-                <text x="513" y="150" font-size="10" opacity="0.8">yes ↓ exit</text><text x="607" y="150" font-size="10" opacity="0.8">yes ↓ exit</text><text x="701" y="150" font-size="10" opacity="0.8">yes ↓ exit</text><text x="795" y="150" font-size="10" opacity="0.8">yes ↓ exit</text>
-                <text x="780" y="154" font-size="11" opacity="0.9" text-anchor="start"></text>
-                <text x="800" y="180" font-size="11" text-anchor="end">none matched → body</text>
-                <text x="325" y="22" font-size="10" opacity="0.8">body median size (document-wide)</text>
-                <text x="513" y="22" font-size="10" opacity="0.8">+ page height band</text>
-                <text x="419" y="40" font-size="10" opacity="0.8"></text>
-                <text x="607" y="40" font-size="10" opacity="0.8">find_tables() boxes</text>
-                <text x="419" y="52" font-size="10" opacity="0.8">image / table boxes</text>
+                <text x="131" y="94" font-size="11">noise?</text><text x="213" y="94" font-size="11">toc?</text><text x="295" y="94" font-size="10">header/footer?</text><text x="377" y="94" font-size="11">heading?</text><text x="459" y="94" font-size="11">caption?</text><text x="541" y="94" font-size="10">footnote?</text><text x="623" y="94" font-size="11">table?</text><text x="705" y="94" font-size="10">equation?</text><text x="787" y="94" font-size="11">list?</text>
+                <text x="131" y="150" font-size="9" opacity="0.8">yes ↓ exit</text><text x="213" y="150" font-size="9" opacity="0.8">yes ↓ exit</text><text x="295" y="150" font-size="9" opacity="0.8">yes ↓ exit</text><text x="377" y="150" font-size="9" opacity="0.8">yes ↓ exit</text><text x="459" y="150" font-size="9" opacity="0.8">yes ↓ exit</text><text x="541" y="150" font-size="9" opacity="0.8">yes ↓ exit</text><text x="623" y="150" font-size="9" opacity="0.8">yes ↓ exit</text><text x="705" y="150" font-size="9" opacity="0.8">yes ↓ exit</text><text x="787" y="150" font-size="9" opacity="0.8">yes ↓ exit</text>
+                <text x="836" y="180" font-size="11" text-anchor="end">none matched → body</text>
+                <text x="377" y="22" font-size="10" opacity="0.8">body median size (document-wide)</text>
+                <text x="541" y="22" font-size="10" opacity="0.8">+ page height band</text>
+                <text x="623" y="40" font-size="10" opacity="0.8">find_tables() + booktabs boxes</text>
+                <text x="459" y="52" font-size="10" opacity="0.8">image / table boxes</text>
               </g>
             </svg>
-            <figcaption>Stage 2 is a first-match cascade: the order of the tests is the whole design. Noise and header/footer come first so a page number can never be promoted to a heading by its size; the document-wide body median feeds the size tests so no single page can skew them.</figcaption>
+            <figcaption>Stage 2 is a first-match cascade: the order of the tests is the whole design. Noise, contents and header/footer come first so a page number or a contents entry can never be promoted to a heading by its size; the document-wide body median feeds the size tests so no single page can skew them.</figcaption>
           </figure>
         </div>
       </div>
@@ -701,8 +680,18 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
               <li><b>Result:</b> the smoke script, driving a real server over HTTP on a fresh data directory, reproduces the gate exactly: 15 of 15 pass, mean 0.9914, exit code 0. The written procedure was executed end to end on a fresh server (upload 202, poll to ready, dedupe 200, .txt 415, unknown id 404, segments paging, CLI dump identical to the stored segments, reset). Segment rows now carry the block type so the API output can be scored the same way as the pipeline output.</li></ul></div>
       </div>
       <div class="phase">
+        <div class="who"><span class="pill run">running</span><span>User + supervisor + 1 worker</span></div>
+        <div class="what"><b>8. Hands-on test on a real document</b>
+          <span class="why-line">Why: the fixtures only contain the problems their reviewers saw; a document from outside the set is the first honest test.</span>
+          <ul><li>Server started on port 8765, smoke script run live: 15 of 15, mean 0.9914, identical to the gate.</li>
+              <li>The user's PDF (a 32-page O'Reilly report with a contents page, comparison tables and diagrams) parsed to 538 segments in about a second. Body text and the chapter-heading sequence read cleanly; the full-page diagram produced nothing and no figure labels leaked.</li>
+              <li><b>Bug found and fixed (commit 9aa26c1):</b> 121 words left as "dis‐ cussion". The document breaks lines with the Unicode hyphen (U+2010); the de-hyphenation rule only knew the ASCII one. Six ING-5 tests written red first; U+2010, U+2011 and the soft hyphen now follow the ASCII rule. Server restarted, document re-parsed: 538 segments, zero dangling hyphens, suite at 185 passed.</li>
+              <li><b>Contents page and cover, fixed (commit 90b3782):</b> a new <code>toc</code> type skips the contents heading and its entries; leader-dot and punctuation-only blocks are noise; a digit-free ruled box on the cover is not a table; pull-quote runs on the cover pages are body, not headings. 16 ING-3 tests, golden byte-identical, 202 passed. Re-parse: 527 segments, the copyright page runs straight into chapter 1.</li>
+              <li><b>Observed, deferred:</b> two unruled comparison tables read as prose rows (ING-7, M4); a closing quotation mark split into its own segment by the sentence splitter (M2 boundary work); the pull quote still arrives as four segments because the PDF draws each line as a block.</li></ul></div>
+      </div>
+      <div class="phase">
         <div class="who"><span class="pill next">next</span><span>Not started</span></div>
-        <div class="what"><b>After the skeleton</b>
+        <div class="what"><b>After the hands-on test</b>
           <ul>
               <li>PP-DocLayoutV3 spike against the fixture set behind a flag (decided 2026-10-16), to compare an ML reading-order model with the geometric parser on the same word-level score.</li>
               <li>Install Tesseract before M4 so the five scanned fixtures score; their provisional expected files then need a hand-correction against OCR output.</li>
