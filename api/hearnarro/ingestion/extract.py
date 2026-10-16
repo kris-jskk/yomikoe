@@ -17,6 +17,8 @@ from hearnarro.ingestion.models import BBox, Block, Line, Page, Span
 pymupdf.no_recommend_layout()
 
 OCR_DPI = 300
+FIGURE_MIN_FRAC = 0.02  # a drawings union covering less of the page is a rule or a box
+FIGURE_MAX_FRAC = 0.80  # ... and one covering this much or more is a page background
 _FLAG_SUPERSCRIPT = 1
 _FLAG_ITALIC = 2
 _FLAG_BOLD = 16
@@ -155,6 +157,54 @@ def _union(boxes: Sequence[BBox]) -> BBox:
     )
 
 
+def _touch(a: BBox, b: BBox) -> bool:
+    """Boxes overlap or share an edge."""
+    return a.x0 <= b.x1 and b.x0 <= a.x1 and a.y0 <= b.y1 and b.y0 <= a.y1
+
+
+def _area(b: BBox) -> float:
+    return max(0.0, b.width) * max(0.0, b.height)
+
+
+def figure_regions(
+    image_bboxes: Sequence[BBox],
+    drawing_rects: Sequence[BBox],
+    page_width: float,
+    page_height: float,
+) -> list[BBox]:
+    """Figure regions of a page (D12, ING-3): every image bbox, plus the bbox of each
+    transitive union of touching/overlapping drawing rects whose area is in
+    [FIGURE_MIN_FRAC, FIGURE_MAX_FRAC) of the page area."""
+    clusters: list[BBox] = []
+    for rect in drawing_rects:
+        cur = rect
+        merged = True
+        while merged:
+            merged = False
+            keep: list[BBox] = []
+            for c in clusters:
+                if _touch(c, cur):
+                    cur = _union([c, cur])
+                    merged = True
+                else:
+                    keep.append(c)
+            clusters = keep
+        clusters.append(cur)
+    page_area = page_width * page_height
+    drawn = [
+        c for c in clusters if FIGURE_MIN_FRAC * page_area <= _area(c) < FIGURE_MAX_FRAC * page_area
+    ]
+    return [*image_bboxes, *drawn]
+
+
+def _drawing_rects(page: pymupdf.Page) -> list[BBox]:
+    try:
+        drawings = page.get_drawings()
+    except Exception:  # noqa: BLE001 - vector analysis is best effort
+        return []
+    return [BBox(r.x0, r.y0, r.x1, r.y1) for d in drawings if (r := d.get("rect")) is not None]
+
+
 def extract_pages(
     pdf_path: str | Path, *, ocr: bool = True, min_text_chars: int = 20
 ) -> list[Page]:
@@ -169,6 +219,9 @@ def extract_pages(
                 float(pdf_page.rect.height),
                 text_dict,
                 table_bboxes=_table_bboxes(pdf_page),
+            )
+            page.figure_bboxes = figure_regions(
+                page.image_bboxes, _drawing_rects(pdf_page), page.width, page.height
             )
             if _char_count(page) < min_text_chars:
                 page.has_text_layer = False

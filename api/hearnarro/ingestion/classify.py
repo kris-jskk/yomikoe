@@ -2,7 +2,8 @@
 
 Rules from docs/TECHNICAL_DESIGN.md stage 2, first match wins:
 noise (rotated text), header/footer, noise (boilerplate text), heading, caption, footnote,
-table, equation, list, body.
+table, equation, list, body. Then (D12) any block but a caption whose bbox lies at least
+FIGURE_INSIDE_FRAC inside a figure region (Page.figure_bboxes) is typed figure.
 """
 
 from __future__ import annotations
@@ -46,6 +47,7 @@ BAND_MAX_LINES = 3
 COVER_PAGES = 2
 MARGIN_FRAC = 0.10
 SIGNATURE_TOP_FRAC = 0.70
+FIGURE_INSIDE_FRAC = 0.80  # share of a block's area inside a figure region to be figure text
 
 
 def normalize_key(text: str) -> str:
@@ -236,11 +238,34 @@ def _classify(block: Block, page: Page, median: float, repeated: set[str]) -> Bl
     return "body"
 
 
+def _inter_area(a: BBox, b: BBox) -> float:
+    w = min(a.x1, b.x1) - max(a.x0, b.x0)
+    h = min(a.y1, b.y1) - max(a.y0, b.y0)
+    return max(0.0, w) * max(0.0, h)
+
+
+def in_figure(block: Block, regions: list[BBox]) -> bool:
+    """``block`` lies at least FIGURE_INSIDE_FRAC (by area) inside one region (D12).
+
+    A zero-area block counts when it lies wholly inside a region.
+    """
+    b = block.bbox
+    area = max(0.0, b.width) * max(0.0, b.height)
+    if area <= 0:
+        return any(r.x0 <= b.x0 and b.x1 <= r.x1 and r.y0 <= b.y0 and b.y1 <= r.y1 for r in regions)
+    return any(_inter_area(b, r) >= FIGURE_INSIDE_FRAC * area for r in regions)
+
+
 def classify_pages(pages: list[Page]) -> list[Page]:
-    """Set block.type in place (first matching rule wins) and return pages."""
+    """Set block.type in place (first matching rule wins) and return pages.
+
+    Figure-internal text (D12) overrides every type but caption.
+    """
     median = body_median_size(pages)
     repeated = repeated_band_texts(pages)
     for page in pages:
         for block in page.blocks:
             block.type = _classify(block, page, median, repeated)
+            if block.type != "caption" and in_figure(block, page.figure_bboxes):
+                block.type = "figure"
     return pages

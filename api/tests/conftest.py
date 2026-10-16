@@ -81,6 +81,7 @@ def make_page(
     image_bboxes: Sequence[BBox] = (),
     table_bboxes: Sequence[BBox] = (),
     has_text_layer: bool = True,
+    figure_bboxes: Sequence[BBox] = (),
 ) -> Page:
     return Page(
         number=number,
@@ -90,4 +91,5 @@ def make_page(
         image_bboxes=list(image_bboxes),
         table_bboxes=list(table_bboxes),
         has_text_layer=has_text_layer,
+        figure_bboxes=list(figure_bboxes),
     )

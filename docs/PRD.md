@@ -70,7 +70,7 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | --- | --- | --- |
 | ING-1 | P0 | Accept PDF upload up to 100 MB via drag-drop or file picker |
 | ING-2 | P0 | Detect per page whether a text layer exists; run OCR only on pages without one |
-| ING-3 | P0 | Extract text as structured blocks with type: heading, body, caption, footnote, header/footer, table, equation, list item |
+| ING-3 | P0 | Extract text as structured blocks with type: heading, body, caption, footnote, header/footer, table, equation, list item; figure-internal text is typed figure and never read (D12) |
 | ING-4 | P0 | Produce a linear reading order that handles two-column layouts and excludes header/footer/page-number blocks |
 | ING-5 | P0 | Join hyphenated line breaks and merge lines into sentences; split into sentence-level segments with character offsets back to the source block |
 | ING-6 | P1 | Normalize text for speech: numbers, currency, dates, URLs, citations like \[12\], common abbreviations |
@@ -247,6 +247,8 @@ Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate:
 parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up
 ```
 
+M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments.
+
 Each milestone is one or two coding-agent sessions and ends with its gate passing in a test, not by inspection. Nothing in a later milestone starts until the gate before it is green; the gates are the acceptance tests the coding session should write first.
 
 **What each milestone covers**
@@ -270,6 +272,7 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 | Kokoro quality judged too robotic for long listening | Medium | Backend interface makes a GPU model a drop-in; try Fish Speech on a cloud GPU before committing |
 | OCR on photographed pages too slow or inaccurate | Medium | Tesseract first; PaddleOCR behind a flag; cap OCR to pages without a text layer |
 | Scope creep toward summaries and chat | High | Non-goals list; v1 ships the reader only |
+| M1 gate is prose-only (D12): table and equation internals are not order-checked until ING-7 | Medium | Golden test asserts excluded segment counts match the ground truth within 15%, so prose misread as table cannot hide; ING-7 (M4) adds the table/equation reading rules and their comparison |
 
 **Open questions**
 

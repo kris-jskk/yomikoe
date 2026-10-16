@@ -260,3 +260,46 @@ def test_ing3_tiny_small_print_block_low_on_page_is_not_a_footnote() -> None:
     )
     assert _type_of(pages, 0) != "footnote"
     assert _type_of(pages, 1) == "footnote"
+
+
+# --- D12: figure-internal text -------------------------------------------------------------
+
+FIG = BBox(100, 100, 400, 300)  # a figure region on a 612 x 792 page
+
+
+def _fig_doc(*extra: Block) -> list[Page]:
+    blocks = list(extra) + _filler(0, len(extra))
+    return [make_page(0, blocks, image_bboxes=[FIG], figure_bboxes=[FIG])]
+
+
+def test_ing3_d12_block_inside_figure_region_is_figure() -> None:
+    label = make_block(0, 0, ["Accuracy vs. tokens"], x0=150, width=150, y0=200)
+    assert _type_of(classify_pages(_fig_doc(label)), 0) == "figure"
+
+
+def test_ing3_d12_caption_inside_figure_region_stays_caption() -> None:
+    cap = make_block(0, 0, ["Figure 1: Results on the benchmark."], x0=120, width=250, y0=280)
+    assert _type_of(classify_pages(_fig_doc(cap)), 0) == "caption"
+
+
+def test_ing3_d12_half_overlap_is_not_figure() -> None:
+    # x 300-500: half of the block's width lies inside the region (x <= 400)
+    half = make_block(0, 0, ["Ordinary body text beside a figure."], x0=300, width=200, y0=200)
+    assert _type_of(classify_pages(_fig_doc(half)), 0) == "body"
+
+
+def test_ing3_d12_figure_regions_union_and_area_bounds() -> None:
+    from hearnarro.ingestion.extract import figure_regions
+
+    w, h = 612.0, 792.0  # page area 484704; 2% = 9694
+    # two overlapping rects (union 200 x 100 = 20000, ~4%) form one region
+    a, b = BBox(100, 100, 200, 200), BBox(190, 100, 300, 200)
+    # a small isolated box: 50 x 50 = 2500 (~0.5%) is ignored
+    small = BBox(400, 500, 450, 550)
+    # a page-background box (>= 80%) is ignored
+    bg = BBox(0, 0, 612, 792)
+    img = BBox(10, 600, 20, 610)  # images are regions whatever their size
+    regions = figure_regions([img], [a, b, small], w, h)
+    assert regions == [img, BBox(100, 100, 300, 200)]
+    assert figure_regions([], [bg], w, h) == []
+    assert figure_regions([], [small], w, h) == []

@@ -2,6 +2,9 @@
 
 score = 1 - levenshtein(actual_seq, expected_seq) / len(expected_seq), sequences of
 whitespace-collapsed segment texts. Gate: >= 0.95 per PDF and >= 0.97 mean.
+
+D12 (prose-only): both sequences keep only heading, body, list, caption and footnote
+segments; per fixture the excluded counts must balance within 15% (golden_util).
 """
 
 import json
@@ -13,7 +16,7 @@ import pytest
 
 from hearnarro.ingestion.extract import ocr_available
 from hearnarro.ingestion.pipeline import ingest
-from tests.golden_util import norm, seq_levenshtein
+from tests.golden_util import exclusion_balanced, prose_only, seq_levenshtein
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 MANIFEST = FIXTURES / "manifest.json"
@@ -41,16 +44,18 @@ def _skip_reason(entry: dict) -> str | None:
 
 
 @cache
-def _score(name: str) -> float:
-    expected = [
-        norm(json.loads(line)["text"])
-        for line in _expected_path(name).read_text().splitlines()
-        if line.strip()
+def _score(name: str) -> tuple[float, int, int]:
+    """(score, excluded_actual, excluded_expected) on the prose-only sequences (D12)."""
+    rows = [
+        json.loads(line) for line in _expected_path(name).read_text().splitlines() if line.strip()
     ]
+    expected, excluded_expected = prose_only((r["type"], r["text"]) for r in rows)
     result = ingest(FIXTURES / f"{name}.pdf", document_id=0, ocr=True)
-    actual = [norm(s.text) for s in result.segments]
-    assert expected, f"{name}.expected.jsonl is empty"
-    return 1 - seq_levenshtein(actual, expected) / len(expected)
+    block_type = {b.id: b.type for b in result.blocks}
+    actual, excluded_actual = prose_only((block_type[s.block_id], s.text) for s in result.segments)
+    assert expected, f"{name}.expected.jsonl has no prose segments"
+    score = 1 - seq_levenshtein(actual, expected) / len(expected)
+    return score, excluded_actual, excluded_expected
 
 
 def test_fixture_set_complete() -> None:
@@ -67,16 +72,22 @@ def test_reading_order_golden(name: str) -> None:
     reason = _skip_reason(entry)
     if reason:
         pytest.skip(reason)
-    score = _score(name)
-    print(f"{name}\t{entry['class']}\t{score:.4f}")
+    score, excl_actual, excl_expected = _score(name)
+    print(
+        f"{name}\t{entry['class']}\t{score:.4f}"
+        f"\texcluded actual={excl_actual} expected={excl_expected}"
+    )
     assert score >= PER_PDF_MIN, f"{name} ({entry['class']}): {score:.4f} < {PER_PDF_MIN}"
+    assert exclusion_balanced(excl_actual, excl_expected), (
+        f"{name}: excluded actual={excl_actual} vs expected={excl_expected} beyond 15%"
+    )
 
 
 def test_reading_order_mean() -> None:
     scored = [e["name"] for e in ENTRIES if _skip_reason(e) is None]
     if not scored:
         pytest.skip("no scoreable fixtures")
-    scores = [_score(n) for n in scored]
+    scores = [_score(n)[0] for n in scored]
     mean = sum(scores) / len(scores)
     print(f"mean over {len(scores)} fixtures: {mean:.4f}")
     assert mean >= MEAN_MIN, f"mean {mean:.4f} < {MEAN_MIN}"

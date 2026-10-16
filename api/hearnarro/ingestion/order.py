@@ -160,9 +160,10 @@ def attach_inline(blocks: list[Block]) -> list[Block]:
     +INLINE_GAP] font sizes of where that line ends. The leftmost fragment among the next
     INLINE_LOOKAHEAD blocks (or a one-line fragment sorted just before the host) is placed
     after the host, and the search repeats from the end of the fragment (a multi-line
-    fragment's last line becomes the new line). When the chain differs from the extraction
-    order, every fragment in it is marked ``inline`` and stage 4 joins it to the host's
-    text; a chain already in order keeps its blocks separate.
+    fragment's last line becomes the new line). Every fragment in the chain is marked
+    ``inline`` and stage 4 joins it to the host's text, whether or not extraction order had
+    split the chain (D12 rule 2). Display equations (own block, own line) never overlap a
+    prose line, so they stay separate.
     """
     pool = list(blocks)
     out: list[Block] = []
@@ -175,11 +176,9 @@ def attach_inline(blocks: list[Block]) -> list[Block]:
         y0, y1 = lines[-1].bbox.y0, lines[-1].bbox.y1
         x1, size = lines[-1].bbox.x1, _line_size(lines[-1])
         chain: list[Block] = []
-        moved = False
         if len(out) >= 2 and _is_fragment_of(out[-2], host, y0, y1, x1, size):
             chain.append(out.pop(-2))  # a fragment sorted just before its host (ties on top y)
             out.append(chain[-1])
-            moved = True
             x1 = max(x1, _text_lines(chain[-1])[-1].bbox.x1)
         while True:
             cands = [
@@ -193,7 +192,6 @@ def attach_inline(blocks: list[Block]) -> list[Block]:
             if not cands:
                 break
             frag = min(cands, key=lambda b: _text_lines(b)[0].bbox.x0)
-            moved = moved or pool.index(frag) > 0
             pool.remove(frag)
             out.append(frag)
             chain.append(frag)
@@ -204,7 +202,7 @@ def attach_inline(blocks: list[Block]) -> list[Block]:
             else:
                 x1 = max(x1, flines[0].bbox.x1)
         for frag in chain:
-            frag.inline = moved  # joined only when extraction order had split the line
+            frag.inline = True  # D12 rule 2: joined in all cases
     return out
 
 

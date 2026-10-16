@@ -150,13 +150,13 @@ def test_ing4_attach_inline_fragment_sorted_before_host_follows_it() -> None:
     assert _indices(out) == [0, 1] and frag.inline
 
 
-def test_ing4_attach_inline_in_order_chain_stays_separate() -> None:
+def test_ing4_attach_inline_in_order_chain_is_joined_d12() -> None:
     from hearnarro.ingestion.order import attach_inline
 
     host = _host(0, 100)
     frag = make_block(0, 1, ["i x"], x0=202, width=20, y0=100, type="equation")
     out = attach_inline([host, frag])
-    assert _indices(out) == [0, 1] and not frag.inline
+    assert _indices(out) == [0, 1] and frag.inline
 
 
 def test_ing4_attach_inline_ignores_hanging_and_distant_and_equation_hosts() -> None:
@@ -173,3 +173,8 @@ def test_ing4_attach_inline_ignores_hanging_and_distant_and_equation_hosts() -> 
     )
     frag = make_block(0, 2, ["f"], x0=202, width=10, y0=100, type="equation")
     assert _indices(attach_inline([eq_host, nxt, frag])) == [0, 1, 2]
+
+
+def test_ing4_order_page_drops_figure_text() -> None:
+    blocks = [col1(0, 100), col1(1, 200, type="figure"), col1(2, 300)]
+    assert _indices(order_page(make_page(0, blocks))) == [0, 2]

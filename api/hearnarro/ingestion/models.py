@@ -75,6 +75,7 @@ BlockType = Literal[
     "list",
     "image",
     "noise",  # never read: rotated stamps, email/URL-only lines, cover boilerplate
+    "figure",  # never read: text >= 80% inside a figure region (D12)
 ]
 
 
@@ -102,6 +103,8 @@ class Page:
     blocks: list[Block]
     image_bboxes: list[BBox] = field(default_factory=list)
     table_bboxes: list[BBox] = field(default_factory=list)
+    # D12: image bboxes plus unions of vector drawings covering 2%-80% of the page
+    figure_bboxes: list[BBox] = field(default_factory=list)
     has_text_layer: bool = True
 
 

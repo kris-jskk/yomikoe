@@ -3,6 +3,8 @@
 import pytest
 
 from hearnarro.ingestion.merge import merge_blocks, merge_lines
+from hearnarro.ingestion.models import Block
+from hearnarro.ingestion.order import attach_inline
 from tests.conftest import make_block
 
 
@@ -169,3 +171,47 @@ def test_ing5_merge_blocks_keeps_fragment_not_marked_inline() -> None:
     host = make_block(0, 0, ["and E[P"], x0=72, width=100, y0=100)
     frag = make_block(0, 1, ["i D(p, q)] = O(1)."], x0=172, width=80, y0=100, type="equation")
     assert [b.text for b in merge_blocks([host, frag])] == ["and E[P", "i D(p, q)] = O(1)."]
+
+
+# --- D12 rule 2: inline maths joins its host sentence whatever the extraction order --------
+
+
+def _inline_case() -> tuple[Block, Block, Block]:
+    host = make_block(
+        0, 0, ["the training loss is bounded above by the norm of"], x0=72, width=200, y0=100
+    )
+    frag = make_block(0, 1, ["r )∥2"], x0=274, width=24, y0=100, type="equation")
+    nxt = make_block(0, 2, ["Next sentence of the paragraph."], x0=72, width=300, y0=113)
+    return host, frag, nxt
+
+
+def test_ing5_d12_inline_math_in_order_chain_joins_host() -> None:
+    host, frag, nxt = _inline_case()
+    out = merge_blocks(attach_inline([host, frag, nxt]))
+    assert [b.text for b in out] == [
+        "the training loss is bounded above by the norm of r )∥2",
+        "Next sentence of the paragraph.",
+    ]
+    assert out[0].source == [(0, 0), (0, 1)]
+
+
+def test_ing5_d12_inline_math_out_of_order_chain_joins_host() -> None:
+    host, frag, nxt = _inline_case()
+    out = merge_blocks(attach_inline([host, nxt, frag]))
+    assert [b.text for b in out] == [
+        "the training loss is bounded above by the norm of r )∥2",
+        "Next sentence of the paragraph.",
+    ]
+
+
+def test_ing5_d12_display_equation_stays_separate() -> None:
+    host = make_block(0, 0, ["We minimise the following objective:"], x0=72, width=200, y0=100)
+    eq = make_block(0, 1, ["L = ∑ ∥x − y∥2"], x0=200, width=120, y0=130, type="equation")
+    nxt = make_block(0, 2, ["where x is the input."], x0=72, width=300, y0=160)
+    out = merge_blocks(attach_inline([host, eq, nxt]))
+    assert [(b.type, b.text) for b in out] == [
+        ("body", "We minimise the following objective:"),
+        ("equation", "L = ∑ ∥x − y∥2"),
+        ("body", "where x is the input."),
+    ]
+    assert not eq.inline
