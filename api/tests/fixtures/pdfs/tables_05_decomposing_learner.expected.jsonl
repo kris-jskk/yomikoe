@@ -30,11 +30,11 @@
 {"order": 29, "page": 1, "type": "body", "text": "For each instance, we introduce a latent binary variable z ∈{0, 1} indicating whether a relationship between x and y is present."}
 {"order": 30, "page": 1, "type": "body", "text": "We define the reliability score as w(x) = p(z = 1 | x), which is assumed to be a smooth function of x."}
 {"order": 31, "page": 1, "type": "body", "text": "By interpreting z as an indicator of predictability, the conditional distribution of y can be decomposed as"}
-{"order": 32, "page": 1, "type": "body", "text": "p(y |"}
-{"order": 33, "page": 1, "type": "body", "text": "x) = p(y | x, z = 1)w"}
-{"order": 34, "page": 1, "type": "body", "text": "(x) + prand"}
-{"order": 35, "page": 1, "type": "body", "text": "(y)[1 −w"}
-{"order": 36, "page": 1, "type": "body", "text": "(x)], (1)"}
+{"order": 32, "page": 1, "type": "equation", "text": "p(y |"}
+{"order": 33, "page": 1, "type": "equation", "text": "x) = p(y | x, z = 1)w"}
+{"order": 34, "page": 1, "type": "equation", "text": "(x) + prand"}
+{"order": 35, "page": 1, "type": "equation", "text": "(y)[1 −w"}
+{"order": 36, "page": 1, "type": "equation", "text": "(x)], (1)"}
 {"order": 37, "page": 1, "type": "body", "text": "where prand(y) := p(y | x, z = 0), since y is independent of x when z = 0."}
 {"order": 38, "page": 1, "type": "body", "text": "As illustrated in Figure 1c, the reliability score can be learned by a separate neural network in a principled manner, resulting in the learner network identifying the predictable component p(y | x, z = 1) instead."}
 {"order": 39, "page": 1, "type": "body", "text": "The proposed framework applies to both regression and classification, can be trained efficiently with probabilistic guarantees, and can be extended to incorporate supervised feature transformations that preserve locality."}
@@ -87,24 +87,24 @@
 {"order": 86, "page": 3, "type": "body", "text": "For a neural regressor, we further model these conditional distributions as Gaussian, i.e.,"}
 {"order": 87, "page": 3, "type": "equation", "text": "y; µ0, σ2"}
 {"order": 88, "page": 3, "type": "equation", "text": "y; f(x), σ2"}
-{"order": 89, "page": 3, "type": "body", "text": "0 \u0001"}
-{"order": 90, "page": 3, "type": "body", "text": "1 \u0001"}
+{"order": 89, "page": 3, "type": "equation", "text": "0 \u0001"}
+{"order": 90, "page": 3, "type": "equation", "text": "1 \u0001"}
 {"order": 91, "page": 3, "type": "equation", "text": "\u0000"}
 {"order": 92, "page": 3, "type": "equation", "text": "\u0000"}
 {"order": 93, "page": 3, "type": "equation", "text": ", y | x, z = 0 ∼N"}
 {"order": 94, "page": 3, "type": "equation", "text": "y | x, z = 1 ∼N"}
-{"order": 95, "page": 3, "type": "body", "text": ", (2)"}
+{"order": 95, "page": 3, "type": "equation", "text": ", (2)"}
 {"order": 96, "page": 3, "type": "body", "text": "where f, µ0, σ2 0 and σ2 1 are unknown functions and parameters."}
 {"order": 97, "page": 3, "type": "body", "text": "In other words, when z = 1, we have E[y | x, z = 1] = f(x), whereas when z = 0, y is independent of x and behaves like white noise."}
 {"order": 98, "page": 3, "type": "body", "text": "Notice that in both cases, we have"}
 {"order": 99, "page": 3, "type": "equation", "text": "p(y, z | x) = p(z | x)p(y | x, z)"}
-{"order": 100, "page": 3, "type": "body", "text": "= p(z = 1 |"}
-{"order": 101, "page": 3, "type": "body", "text": "x)z[1 −p(z = 1 |"}
-{"order": 102, "page": 3, "type": "body", "text": "x)]1−zp(y | x, z = 1)zprand"}
+{"order": 100, "page": 3, "type": "equation", "text": "= p(z = 1 |"}
+{"order": 101, "page": 3, "type": "equation", "text": "x)z[1 −p(z = 1 |"}
+{"order": 102, "page": 3, "type": "equation", "text": "x)]1−zp(y | x, z = 1)zprand"}
 {"order": 103, "page": 3, "type": "body", "text": "(y)1−z, (3) hence, the joint log-density of y and z can be obtained as"}
-{"order": 104, "page": 3, "type": "body", "text": "log p(y, z | x) = z log p(z = 1 | x) + (1 −z) log[1 −p(z = 1 | x)] | {z } reliability network + z log p(y | x, z = 1) | {z } learner network"}
-{"order": 105, "page": 3, "type": "body", "text": "+ (1 −z) log prand(y) | {z } random-response component"}
-{"order": 106, "page": 3, "type": "body", "text": ", (4)"}
+{"order": 104, "page": 3, "type": "equation", "text": "log p(y, z | x) = z log p(z = 1 | x) + (1 −z) log[1 −p(z = 1 | x)] | {z } reliability network + z log p(y | x, z = 1) | {z } learner network"}
+{"order": 105, "page": 3, "type": "equation", "text": "+ (1 −z) log prand(y) | {z } random-response component"}
+{"order": 106, "page": 3, "type": "equation", "text": ", (4)"}
 {"order": 107, "page": 3, "type": "body", "text": "which is naturally decomposed into three components corresponding to the reliability network, the learner network, and the estimation of the distribution of the unpredictable component, respectively."}
 {"order": 108, "page": 3, "type": "body", "text": "Ideally, according to Equation 4, if the latent variable z is known, the learner network should be trained on instances with z = 1, which should lead to it learn the distribution of the predictable component p(y | x, z = 1)."}
 {"order": 109, "page": 3, "type": "body", "text": "However, since z is not observable, as we will demonstrate in Section 3.2, the empirical learner target used in training is actually the log likelihood of the clean component weighted by the posterior reliability"}

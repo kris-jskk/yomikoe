@@ -85,8 +85,8 @@
 {"order": 84, "page": 2, "type": "body", "text": "At round t, System 1 independently evaluates a window Wt of up to k consecutive chunks in parallel, using the shared query q and memory mt to select candidate chunks for memory updating:"}
 {"order": 85, "page": 3, "type": "equation", "text": "at,i ∼πsel"}
 {"order": 86, "page": 3, "type": "equation", "text": "ϕ (· | q, ci, mt) ,"}
-{"order": 87, "page": 3, "type": "body", "text": "at,i ∈{Skip, Update}."}
-{"order": 88, "page": 3, "type": "body", "text": "(2)"}
+{"order": 87, "page": 3, "type": "equation", "text": "at,i ∈{Skip, Update}."}
+{"order": 88, "page": 3, "type": "equation", "text": "(2)"}
 {"order": 89, "page": 3, "type": "body", "text": "The chunks predicted as Update form the candidate set"}
 {"order": 90, "page": 3, "type": "equation", "text": "Ct = {ci ∈Wt | at,i = Update}, (3)"}
 {"order": 91, "page": 3, "type": "body", "text": "which is forwarded to System 2."}
@@ -94,10 +94,10 @@
 {"order": 93, "page": 3, "type": "body", "text": "For candidate indices It = {i | ci ∈Ct}, the action-level acceptance probability is"}
 {"order": 94, "page": 3, "type": "equation", "text": "αt,i = min"}
 {"order": 95, "page": 3, "type": "equation", "text": "!"}
-{"order": 96, "page": 3, "type": "body", "text": "1, πver θ (Update | q, ci, mt) πsel"}
+{"order": 96, "page": 3, "type": "equation", "text": "1, πver θ (Update | q, ci, mt) πsel"}
 {"order": 97, "page": 3, "type": "equation", "text": "ϕ (Update | q, ci, mt)"}
-{"order": 98, "page": 3, "type": "body", "text": "."}
-{"order": 99, "page": 3, "type": "body", "text": "(4)"}
+{"order": 98, "page": 3, "type": "equation", "text": "."}
+{"order": 99, "page": 3, "type": "equation", "text": "(4)"}
 {"order": 100, "page": 3, "type": "body", "text": "Independently draw ξt,i ∼U(0, 1) for each candidate and accept it if ξt,i ≤αt,i."}
 {"order": 101, "page": 3, "type": "body", "text": "If any candidate is accepted, commit the first accepted chunk in document order and generate its replacement memory:"}
 {"order": 102, "page": 3, "type": "equation", "text": "mt+1 ∼πmem"}
@@ -120,18 +120,18 @@
 {"order": 119, "page": 3, "type": "body", "text": "Stage III jointly optimizes both systems using task rewards."}
 {"order": 120, "page": 3, "type": "body", "text": "For each Update example (q, c, m), let m′ be the memory after incorporating the evidence from c."}
 {"order": 121, "page": 3, "type": "body", "text": "We retain the original example and add a postupdate negative:"}
-{"order": 122, "page": 3, "type": "body", "text": "(q, c, m) −→Update,"}
-{"order": 123, "page": 3, "type": "body", "text": "(q, c, m′) −→Skip."}
-{"order": 124, "page": 3, "type": "body", "text": "(6)"}
+{"order": 122, "page": 3, "type": "equation", "text": "(q, c, m) −→Update,"}
+{"order": 123, "page": 3, "type": "equation", "text": "(q, c, m′) −→Skip."}
+{"order": 124, "page": 3, "type": "equation", "text": "(6)"}
 {"order": 125, "page": 3, "type": "body", "text": "We train on the original examples and post-update"}
 {"order": 126, "page": 3, "type": "body", "text": "negatives using the memory-contrastive objective:"}
-{"order": 127, "page": 3, "type": "body", "text": "LStage I(ϕ) = LwCE + λpairLpair,"}
-{"order": 128, "page": 3, "type": "body", "text": "Lpair = EP"}
+{"order": 127, "page": 3, "type": "equation", "text": "LStage I(ϕ) = LwCE + λpairLpair,"}
+{"order": 128, "page": 3, "type": "equation", "text": "Lpair = EP"}
 {"order": 129, "page": 3, "type": "equation", "text": "\u0002"}
 {"order": 130, "page": 3, "type": "equation", "text": "\u0003"}
-{"order": 131, "page": 3, "type": "body", "text": "max(0, γ −∆sϕ)"}
-{"order": 132, "page": 3, "type": "body", "text": "."}
-{"order": 133, "page": 3, "type": "body", "text": "(7)"}
+{"order": 131, "page": 3, "type": "equation", "text": "max(0, γ −∆sϕ)"}
+{"order": 132, "page": 3, "type": "equation", "text": "."}
+{"order": 133, "page": 3, "type": "equation", "text": "(7)"}
 {"order": 134, "page": 3, "type": "body", "text": "Here, LwCE is class-weighted action cross-entropy; P contains matched memory pairs, with ∆sϕ = sϕ(q, c, m) −sϕ(q, c, m′)."}
 {"order": 135, "page": 3, "type": "body", "text": "The score sϕ is the UPDATE-minus-SKIP logit difference, and γ is the margin."}
 {"order": 136, "page": 3, "type": "body", "text": "Hyperparameters are reported in Appendix B.1."}

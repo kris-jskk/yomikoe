@@ -51,8 +51,8 @@
 {"order": 50, "page": 1, "type": "body", "text": "A PFN assumes a prior Π over pairs (p, N) of a task and a context size, whose marginal over N is the size distribution Ψ."}
 {"order": 51, "page": 1, "type": "body", "text": "Given (p, N=n), the context is Dn ∼p⊗n, and the PFN targets the posterior predictive distribution (PPD)"}
 {"order": 52, "page": 1, "type": "equation", "text": "Z"}
-{"order": 53, "page": 1, "type": "body", "text": "p(y | x) dΠ(p | x, Dn)."}
-{"order": 54, "page": 1, "type": "body", "text": "(1)"}
+{"order": 53, "page": 1, "type": "equation", "text": "p(y | x) dΠ(p | x, Dn)."}
+{"order": 54, "page": 1, "type": "equation", "text": "(1)"}
 {"order": 55, "page": 1, "type": "equation", "text": "πΠ(y | x, Dn) ="}
 {"order": 56, "page": 1, "type": "body", "text": "At deployment, pairs follow a different distribution Π′ with size marginal Ψ′."}
 {"order": 57, "page": 1, "type": "body", "text": "In the following, we study PFNs through the lens of risk minimization."}
@@ -63,8 +63,8 @@
 {"order": 62, "page": 1, "type": "body", "text": "A PFN with parameters θ ∈Θ is a measurable map qθ : (x, Dn) 7→qθ(· | x, Dn) into the distributions on Y. Deployed on Π′, its risk under the log loss is"}
 {"order": 63, "page": 1, "type": "equation", "text": "RΠ′(qθ) := EΠ′\u0002"}
 {"order": 64, "page": 1, "type": "equation", "text": "\u0003"}
-{"order": 65, "page": 1, "type": "body", "text": "."}
-{"order": 66, "page": 1, "type": "body", "text": "(2)"}
+{"order": 65, "page": 1, "type": "equation", "text": "."}
+{"order": 66, "page": 1, "type": "equation", "text": "(2)"}
 {"order": 67, "page": 1, "type": "equation", "text": "−log qθ(Y | X, DN)"}
 {"order": 68, "page": 1, "type": "body", "text": "The following proposition characterizes the optimal predictor under an arbitrary task distribution."}
 {"order": 69, "page": 1, "type": "body", "text": "Proposition 1."}
@@ -72,36 +72,36 @@
 {"order": 71, "page": 1, "type": "body", "text": "Then for every predictor q,"}
 {"order": 72, "page": 1, "type": "equation", "text": "RΠ′(q) −RΠ′(πΠ′) ="}
 {"order": 73, "page": 1, "type": "equation", "text": "q(· | X, DN)"}
-{"order": 74, "page": 1, "type": "body", "text": "EΠ′\u0002"}
+{"order": 74, "page": 1, "type": "equation", "text": "EΠ′\u0002"}
 {"order": 75, "page": 1, "type": "equation", "text": "\u0000"}
 {"order": 76, "page": 1, "type": "equation", "text": "\u0001\u0003"}
-{"order": 77, "page": 1, "type": "body", "text": "≥0, (3)"}
+{"order": 77, "page": 1, "type": "equation", "text": "≥0, (3)"}
 {"order": 78, "page": 1, "type": "equation", "text": "πΠ′(· | X, DN)"}
-{"order": 79, "page": 1, "type": "body", "text": "DKL"}
+{"order": 79, "page": 1, "type": "equation", "text": "DKL"}
 {"order": 80, "page": 1, "type": "body", "text": "with equality if and only if q = πΠ′ almost surely under Π′."}
 {"order": 81, "page": 1, "type": "body", "text": "In particular, πΠ′ is the unique minimizer of RΠ′ and RΠ′(πΠ′), the Bayes risk of Π′, is the lowest risk any predictor can attain on Π′."}
 {"order": 82, "page": 1, "type": "body", "text": "The proof is given in Appendix B.1."}
 {"order": 83, "page": 1, "type": "body", "text": "A PFN qθ is pretrained on the population objective"}
-{"order": 84, "page": 1, "type": "body", "text": "L(θ) := RΠ(qθ)."}
-{"order": 85, "page": 1, "type": "body", "text": "(4)"}
+{"order": 84, "page": 1, "type": "equation", "text": "L(θ) := RΠ(qθ)."}
+{"order": 85, "page": 1, "type": "equation", "text": "(4)"}
 {"order": 86, "page": 1, "type": "body", "text": "With Π′ = Π, Proposition 1 thus gives the pretraining objective: a PFN is trained to minimize its risk under its own prior, the minimizer over all predictors is πΠ (Müller et al., 2021), and the excess risk"}
-{"order": 87, "page": 1, "type": "body", "text": "AΠ(qθ) := RΠ(qθ)−RΠ(πΠ) = EΠ"}
+{"order": 87, "page": 1, "type": "equation", "text": "AΠ(qθ) := RΠ(qθ)−RΠ(πΠ) = EΠ"}
 {"order": 88, "page": 1, "type": "equation", "text": "\u0002"}
 {"order": 89, "page": 1, "type": "equation", "text": "\u0000"}
 {"order": 90, "page": 1, "type": "equation", "text": "\u0001\u0003"}
 {"order": 91, "page": 1, "type": "equation", "text": "πΠ ∥qθ"}
-{"order": 92, "page": 1, "type": "body", "text": "≥0"}
-{"order": 93, "page": 1, "type": "body", "text": "DKL"}
+{"order": 92, "page": 1, "type": "equation", "text": "≥0"}
+{"order": 93, "page": 1, "type": "equation", "text": "DKL"}
 {"order": 94, "page": 1, "type": "body", "text": "(5) is the amortization error."}
 {"order": 95, "page": 1, "type": "body", "text": "This error is the distance, in expected KL, of the network from the PPD it is supposed to amortize."}
 {"order": 96, "page": 1, "type": "body", "text": "In practice, Eq."}
 {"order": 97, "page": 1, "type": "body", "text": "(4) is approximated by empirical risk minimization over M datasets D(j) whose task and size (pj, nj) are drawn from the prior,"}
 {"order": 98, "page": 1, "type": "equation", "text": "PM"}
-{"order": 99, "page": 1, "type": "body", "text": "Lemp(θ) := −1"}
+{"order": 99, "page": 1, "type": "equation", "text": "Lemp(θ) := −1"}
 {"order": 100, "page": 1, "type": "equation", "text": "yj | xj, D(j)\u0001"}
 {"order": 101, "page": 1, "type": "equation", "text": "\u0000"}
-{"order": 102, "page": 1, "type": "body", "text": ", (6)"}
-{"order": 103, "page": 1, "type": "body", "text": "j=1 log qθ"}
+{"order": 102, "page": 1, "type": "equation", "text": ", (6)"}
+{"order": 103, "page": 1, "type": "equation", "text": "j=1 log qθ"}
 {"order": 104, "page": 1, "type": "equation", "text": "M"}
 {"order": 105, "page": 1, "type": "body", "text": "optimized with first-order stochastic gradient methods such that, in general, we have no guarantee how close we get to the target πΠ."}
 {"order": 106, "page": 1, "type": "body", "text": "Figure 1 places the amortization error among the two other sources of error of a deployed PFN: the context error, incurred even by πΠ because a finite context leaves the task uncertain, and the prior error, incurred because real tasks follow Π′̸ = Π."}
@@ -125,8 +125,8 @@
 {"order": 124, "page": 2, "type": "equation", "text": "y | fw(x∗)"}
 {"order": 125, "page": 2, "type": "equation", "text": "\u0000"}
 {"order": 126, "page": 2, "type": "equation", "text": "\u0001"}
-{"order": 127, "page": 2, "type": "body", "text": "dΠ(w | Dn)."}
-{"order": 128, "page": 2, "type": "body", "text": "(7)"}
+{"order": 127, "page": 2, "type": "equation", "text": "dΠ(w | Dn)."}
+{"order": 128, "page": 2, "type": "equation", "text": "(7)"}
 {"order": 129, "page": 2, "type": "equation", "text": "p"}
 {"order": 130, "page": 2, "type": "body", "text": "Making use of recent advances in both MCMC algorithm development (Robnik and Seljak, 2024) as well as sampling-based inference for BNNs (Sommer et al., 2025, 2026), we compare the prediction of PFNs against the PPD they are trained to amortize to obtain an empirical lower bound on the approximation error."}
 {"order": 131, "page": 2, "type": "body", "text": "MCMC yields a reference ˆπΠ against which DKL(ˆπΠ∥q) can be computed for each pair (x∗, Dn)."}
@@ -141,21 +141,21 @@
 {"order": 140, "page": 2, "type": "heading", "text": "3.1 Amortization Error Without a Reference"}
 {"order": 141, "page": 2, "type": "body", "text": "Beyond tractable priors, we cannot compute a reference PPD, and the amortization error has to be studied without an (approximate) ground-truth."}
 {"order": 142, "page": 2, "type": "body", "text": "Viewing the PFN with parameters ˆθ via empirical risk minimization, the amortization error splits into three components"}
-{"order": 143, "page": 2, "type": "body", "text": "AΠ(q ˆθ) = RΠ(q ˆθ) −RΠ(q ˜θM )"}
+{"order": 143, "page": 2, "type": "equation", "text": "AΠ(q ˆθ) = RΠ(q ˆθ) −RΠ(q ˜θM )"}
 {"order": 144, "page": 2, "type": "equation", "text": "+ RΠ(q ˜θM ) −RΠ(qθ∗)"}
-{"order": 145, "page": 2, "type": "body", "text": "| {z } optimization"}
-{"order": 146, "page": 2, "type": "body", "text": "| {z } estimation + RΠ(qθ∗) −RΠ(πΠ) | {z } approximation"}
-{"order": 147, "page": 2, "type": "body", "text": ", (8)"}
+{"order": 145, "page": 2, "type": "equation", "text": "| {z } optimization"}
+{"order": 146, "page": 2, "type": "equation", "text": "| {z } estimation + RΠ(qθ∗) −RΠ(πΠ) | {z } approximation"}
+{"order": 147, "page": 2, "type": "equation", "text": ", (8)"}
 {"order": 148, "page": 2, "type": "body", "text": "where ˜θM minimizes the empirical risk for M training samples and θ∗= arg minθ∈Θ L(θ), i.e., minimizes the population risk (4)."}
 {"order": 149, "page": 2, "type": "body", "text": "The estimation error is the part that classical learning theory ties to the number of pretraining datasets M and expects to decrease at a 1/M rate (Nagler, 2023)."}
 {"order": 150, "page": 3, "type": "body", "text": "This is where PFNs profit from effectively unlimited synthetic data."}
 {"order": 151, "page": 3, "type": "body", "text": "The approximation error is a property of the hypothesis class and is reduced only by enlarging it, which extensive work on architectures attempts (Qu et al., 2026; Grinsztajn et al., 2025; Kong et al., 2026)."}
 {"order": 152, "page": 3, "type": "body", "text": "The optimization error is a consequence of the optimizer and for overparameterized networks trained on a non-convex risk, it is not guaranteed to decrease with model size or training duration."}
 {"order": 153, "page": 3, "type": "body", "text": "To confirm that the estimation error vanishes as expected, we can study K models that share all optimizer settings but differ in seed and training data, at several scales M1 < · · · < ML, and compute"}
-{"order": 154, "page": 3, "type": "body", "text": "k=1 Ltest(θ(k)"}
+{"order": 154, "page": 3, "type": "equation", "text": "k=1 Ltest(θ(k)"}
 {"order": 155, "page": 3, "type": "equation", "text": "PK"}
 {"order": 156, "page": 3, "type": "equation", "text": "d EE(M) = 1"}
-{"order": 157, "page": 3, "type": "body", "text": "M ) −Ltest(θref), (9)"}
+{"order": 157, "page": 3, "type": "equation", "text": "M ) −Ltest(θref), (9)"}
 {"order": 158, "page": 3, "type": "equation", "text": "K"}
 {"order": 159, "page": 3, "type": "body", "text": "where θref is a reference checkpoint with Mref ≫ML."}
 {"order": 160, "page": 3, "type": "body", "text": "Averaging over the K runs cancels the zero-mean optimization noise of individual runs."}
@@ -168,26 +168,26 @@
 {"order": 167, "page": 3, "type": "body", "text": "Lemma 1."}
 {"order": 168, "page": 3, "type": "body", "text": "For any distribution p on Y and predictors q1, . . . , qK with mixture ¯q = 1 K PK k=1 qk,"}
 {"order": 169, "page": 3, "type": "equation", "text": "PK"}
-{"order": 170, "page": 3, "type": "body", "text": "1 K"}
-{"order": 171, "page": 3, "type": "body", "text": "k=1 DKL(p ∥qk) = DKL(p ∥¯q) + ∆p, (10)"}
+{"order": 170, "page": 3, "type": "equation", "text": "1 K"}
+{"order": 171, "page": 3, "type": "equation", "text": "k=1 DKL(p ∥qk) = DKL(p ∥¯q) + ∆p, (10)"}
 {"order": 172, "page": 3, "type": "body", "text": "where ∆p := Ey∼p \u0002 log ¯q(y) −1 PK k=1 log qk(y) \u0003 ≥0, with equality if and only if all qk agree p-almost everywhere."}
 {"order": 173, "page": 3, "type": "body", "text": "∆p is the averaging gain, i.e., the amount by which the"}
 {"order": 174, "page": 3, "type": "body", "text": "mixture improves on its average member in expected log loss under p."}
 {"order": 175, "page": 3, "type": "body", "text": "Applied with p = πΠ, Lemma 1 splits the amortization error itself:"}
 {"order": 176, "page": 3, "type": "body", "text": "Corollary 1."}
 {"order": 177, "page": 3, "type": "body", "text": "For PFNs q1, . . . , qK with mixture ¯q,"}
-{"order": 178, "page": 3, "type": "body", "text": "+ EΠ"}
+{"order": 178, "page": 3, "type": "equation", "text": "+ EΠ"}
 {"order": 179, "page": 3, "type": "equation", "text": "\u0002"}
 {"order": 180, "page": 3, "type": "equation", "text": "\u0003"}
 {"order": 181, "page": 3, "type": "equation", "text": "P"}
-{"order": 182, "page": 3, "type": "body", "text": "."}
-{"order": 183, "page": 3, "type": "body", "text": "(11)"}
+{"order": 182, "page": 3, "type": "equation", "text": "."}
+{"order": 183, "page": 3, "type": "equation", "text": "(11)"}
 {"order": 184, "page": 3, "type": "equation", "text": "k AΠ(qk) = AΠ(¯q) | {z }"}
-{"order": 185, "page": 3, "type": "body", "text": "∆πΠ"}
-{"order": 186, "page": 3, "type": "body", "text": "| {z } removable ≥0"}
-{"order": 187, "page": 3, "type": "footnote", "text": "K"}
-{"order": 188, "page": 3, "type": "footnote", "text": "1 K"}
-{"order": 189, "page": 3, "type": "footnote", "text": "shared"}
+{"order": 185, "page": 3, "type": "equation", "text": "∆πΠ"}
+{"order": 186, "page": 3, "type": "equation", "text": "| {z } removable ≥0"}
+{"order": 187, "page": 3, "type": "equation", "text": "K"}
+{"order": 188, "page": 3, "type": "equation", "text": "1 K"}
+{"order": 189, "page": 3, "type": "equation", "text": "shared"}
 {"order": 190, "page": 3, "type": "body", "text": "Thus, the average amortization error of K PFNs splits into two parts that differ in what can be observed without the PPD."}
 {"order": 191, "page": 3, "type": "body", "text": "The first, AΠ(¯q), is the error the members have in common as they jointly deviate from πΠ, which cannot be measured without a reference as in Section 2.3."}
 {"order": 192, "page": 3, "type": "body", "text": "The second term is the part of the amortization error that differs between the members and does not require a reference to compute."}
@@ -205,9 +205,9 @@
 {"order": 204, "page": 3, "type": "body", "text": "If the PFN training on Π does not perfectly align with the deployment distribution Π′, this difference needs to be taken into account."}
 {"order": 205, "page": 3, "type": "body", "text": "To locate the deployment pairs (p, n) relative to the prior, the Lebesgue decomposition"}
 {"order": 206, "page": 3, "type": "body", "text": "splits the deployment distribution uniquely into a part the prior can express ˜Π, and a part Π′ ⊥it cannot,"}
-{"order": 207, "page": 3, "type": "body", "text": "Π′ = λ ˜Π + (1 −λ) Π′"}
+{"order": 207, "page": 3, "type": "equation", "text": "Π′ = λ ˜Π + (1 −λ) Π′"}
 {"order": 208, "page": 3, "type": "equation", "text": "⊥, ˜Π ≪Π, Π′"}
-{"order": 209, "page": 3, "type": "body", "text": "⊥⊥Π, (12)"}
+{"order": 209, "page": 3, "type": "equation", "text": "⊥⊥Π, (12)"}
 {"order": 210, "page": 3, "type": "body", "text": "with density ˜rΠ = d˜Π/dΠ on the absolutely continuous part."}
 {"order": 211, "page": 3, "type": "body", "text": "The weight λ ∈[0, 1] is the fraction of deployment pairs reachable by reweighting the prior."}
 {"order": 212, "page": 3, "type": "body", "text": "The singular part Π′ ⊥lives on pairs to which Π assigns probability zero, and no reweighting reaches it."}

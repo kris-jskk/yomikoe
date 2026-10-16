@@ -112,9 +112,9 @@
 {"order": 111, "page": 3, "type": "body", "text": "Replacing squared error with the objective matched to the (known) noise distribution yields a family of conditional risks that support the same recursive strategies, in both directions, while using the full noise density rather than only second moments."}
 {"order": 112, "page": 3, "type": "heading", "text": "4.1 Conditional Variance and Least Squares"}
 {"order": 113, "page": 3, "type": "body", "text": "For a subset S ⊂[d] and i /∈S, the linear conditional variance of Xi given XS admits the variational form"}
-{"order": 114, "page": 3, "type": "body", "text": "\u00012."}
-{"order": 115, "page": 3, "type": "body", "text": "(2)"}
-{"order": 116, "page": 3, "type": "body", "text": "Varlin(Xi | XS) = min β∈R|S| E"}
+{"order": 114, "page": 3, "type": "equation", "text": "\u00012."}
+{"order": 115, "page": 3, "type": "equation", "text": "(2)"}
+{"order": 116, "page": 3, "type": "equation", "text": "Varlin(Xi | XS) = min β∈R|S| E"}
 {"order": 117, "page": 3, "type": "equation", "text": "Xi −β⊤XS"}
 {"order": 118, "page": 3, "type": "equation", "text": "\u0000"}
 {"order": 119, "page": 3, "type": "body", "text": "For jointly Gaussian variables this statistic coincides with the conditional variance, but in general is only the linear conditional variance."}
@@ -129,9 +129,9 @@
 {"order": 128, "page": 3, "type": "equation", "text": "\u0000"}
 {"order": 129, "page": 3, "type": "equation", "text": "\u0001"}
 {"order": 130, "page": 3, "type": "equation", "text": "Xi | X−i"}
-{"order": 131, "page": 3, "type": "body", "text": ", (3)"}
-{"order": 132, "page": 3, "type": "body", "text": "Varlin"}
-{"order": 133, "page": 3, "type": "body", "text": "j∈CH(i) Λ2"}
+{"order": 131, "page": 3, "type": "equation", "text": ", (3)"}
+{"order": 132, "page": 3, "type": "equation", "text": "Varlin"}
+{"order": 133, "page": 3, "type": "equation", "text": "j∈CH(i) Λ2"}
 {"order": 134, "page": 3, "type": "equation", "text": "1 + P"}
 {"order": 135, "page": 3, "type": "equation", "text": "ji"}
 {"order": 136, "page": 3, "type": "body", "text": "so that Varlin(Xi | X−i) = σ2 if i is a sink and Varlin(Xi | X−i) ≤σ2/(1 + b2 min) < σ2 otherwise, where bmin = min(i,j)∈E |Λji|."}

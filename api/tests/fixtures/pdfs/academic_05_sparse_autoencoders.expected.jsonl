@@ -61,8 +61,8 @@
 {"order": 60, "page": 1, "type": "body", "text": "For activation h ∈Rd, an encoder produces z = fθ(h) ∈Rm and a decoder reconstructs ˆh = b + Dz."}
 {"order": 61, "page": 1, "type": "body", "text": "A common objective is"}
 {"order": 62, "page": 1, "type": "equation", "text": "L = E[∥h −b −Dfθ(h)∥2"}
-{"order": 63, "page": 1, "type": "body", "text": "2 + λΩ(z)]."}
-{"order": 64, "page": 1, "type": "body", "text": "(1)"}
+{"order": 63, "page": 1, "type": "equation", "text": "2 + λΩ(z)]."}
+{"order": 64, "page": 1, "type": "equation", "text": "(1)"}
 {"order": 65, "page": 1, "type": "body", "text": "This objective rewards reconstruction and sparsity; recovering a specified latent structure is a separate endpoint."}
 {"order": 66, "page": 1, "type": "body", "text": "Synthetic studies can compare against a known generating dictionary, whereas languagemodel studies must validate the proposed feature interpretation."}
 {"order": 67, "page": 1, "type": "heading", "text": "3.1 Defining the structure to be recovered"}

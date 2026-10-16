@@ -97,16 +97,16 @@
 {"order": 96, "page": 1, "type": "body", "text": "However, Chinese demonstrated a distinct resilience to the modality shift compared to English."}
 {"order": 97, "page": 1, "type": "body", "text": "For Chinese, ∆remained between 9.00 and 10.75 points, whereas English incurred a much steeper penalty of 15.50 to 18.50 points."}
 {"order": 98, "page": 2, "type": "body", "text": "Table 1: SEA-HELM tasks considered for SEA-HELM Audio and their evaluation scope."}
-{"order": 99, "page": 2, "type": "heading", "text": "Task Task Type SEA- HELM Languages"}
-{"order": 100, "page": 2, "type": "heading", "text": "Evaluated Here Selection Rationale"}
-{"order": 101, "page": 2, "type": "body", "text": "SEA-HELM IFEval Instruction following [4]"}
-{"order": 102, "page": 2, "type": "body", "text": "10 English, Malay, Indonesian, Tamil"}
-{"order": 103, "page": 2, "type": "body", "text": "Prompts are plain instructions that can be spoken as written."}
-{"order": 104, "page": 2, "type": "body", "text": "Scored by SEA-HELM’s multilingual verifier, which also verifies the response language."}
-{"order": 105, "page": 2, "type": "body", "text": "Global-MMLU-Lite Multiple choice [5] 7 Chinese, English Short questions with four options; the answer is a single letter, so scoring is exact."}
-{"order": 106, "page": 2, "type": "body", "text": "SEA-HELM NLU QA Question answering 5 Future work Scored with SEA-HELM’s rule-based token-F1 matching."}
-{"order": 107, "page": 2, "type": "body", "text": "SEA-HELM Safeguard Harmful-request refusal"}
-{"order": 108, "page": 2, "type": "body", "text": "8 Future work Harmful prompts used as a refusal probe (analogous to AdvBench [6] in VoiceBench), testing whether the LLM still refuses when the request is spoken."}
+{"order": 99, "page": 2, "type": "table", "text": "Task Task Type SEA- HELM Languages"}
+{"order": 100, "page": 2, "type": "table", "text": "Evaluated Here Selection Rationale"}
+{"order": 101, "page": 2, "type": "table", "text": "SEA-HELM IFEval Instruction following [4]"}
+{"order": 102, "page": 2, "type": "table", "text": "10 English, Malay, Indonesian, Tamil"}
+{"order": 103, "page": 2, "type": "table", "text": "Prompts are plain instructions that can be spoken as written."}
+{"order": 104, "page": 2, "type": "table", "text": "Scored by SEA-HELM’s multilingual verifier, which also verifies the response language."}
+{"order": 105, "page": 2, "type": "table", "text": "Global-MMLU-Lite Multiple choice [5] 7 Chinese, English Short questions with four options; the answer is a single letter, so scoring is exact."}
+{"order": 106, "page": 2, "type": "table", "text": "SEA-HELM NLU QA Question answering 5 Future work Scored with SEA-HELM’s rule-based token-F1 matching."}
+{"order": 107, "page": 2, "type": "table", "text": "SEA-HELM Safeguard Harmful-request refusal"}
+{"order": 108, "page": 2, "type": "table", "text": "8 Future work Harmful prompts used as a refusal probe (analogous to AdvBench [6] in VoiceBench), testing whether the LLM still refuses when the request is spoken."}
 {"order": 109, "page": 2, "type": "heading", "text": "Speech path"}
 {"order": 110, "page": 2, "type": "heading", "text": "SEA-HELM"}
 {"order": 111, "page": 2, "type": "heading", "text": "prompt TTS ASR LLM Verifier Accspeech"}
@@ -116,21 +116,21 @@
 {"order": 115, "page": 2, "type": "heading", "text": "prompt LLM Verifier Acctext"}
 {"order": 116, "page": 2, "type": "body", "text": "Figure 1: SEA-HELM Audio evaluation: speech path (TTS →Speech →LLM) vs. text path (LLM only)."}
 {"order": 117, "page": 2, "type": "body", "text": "Table 2: ASR systems evaluated."}
-{"order": 118, "page": 2, "type": "heading", "text": "ASR System Type Languages Decoding"}
-{"order": 119, "page": 2, "type": "body", "text": "Qwen3-ASR-1.7B Open-weight en, zh, ms, id Greedy MERaLiON3-ASR-3B Open-weight ta Greedy ElevenLabs Scribe Realtime"}
-{"order": 120, "page": 2, "type": "body", "text": "Commercial API"}
-{"order": 121, "page": 2, "type": "body", "text": "en, zh, ms, id, ta Provider default"}
+{"order": 118, "page": 2, "type": "table", "text": "ASR System Type Languages Decoding"}
+{"order": 119, "page": 2, "type": "table", "text": "Qwen3-ASR-1.7B Open-weight en, zh, ms, id Greedy MERaLiON3-ASR-3B Open-weight ta Greedy ElevenLabs Scribe Realtime"}
+{"order": 120, "page": 2, "type": "table", "text": "Commercial API"}
+{"order": 121, "page": 2, "type": "table", "text": "en, zh, ms, id, ta Provider default"}
 {"order": 122, "page": 2, "type": "body", "text": "Table 3: Global-MMLU-Lite results (400 samples per run; TTS: OmniVoice)."}
 {"order": 123, "page": 2, "type": "body", "text": "Accuracy (Speech, Text) and ∆= Text −Speech, in percentage points."}
-{"order": 124, "page": 2, "type": "heading", "text": "Language ASR Model LLM Speech Text ∆"}
-{"order": 125, "page": 2, "type": "body", "text": "Chinese Qwen3-ASR-1.7B SEA-LION- 4.5-27B 71.50 80.50 9.00"}
-{"order": 126, "page": 2, "type": "body", "text": "Chinese ElevenLabs Scribe Realtime"}
-{"order": 127, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
-{"order": 128, "page": 2, "type": "body", "text": "79.75 90.50 10.75"}
-{"order": 129, "page": 2, "type": "body", "text": "English Qwen3-ASR-1.7B SEA-LION- 4.5-27B 69.00 87.50 18.50"}
-{"order": 130, "page": 2, "type": "body", "text": "English ElevenLabs Scribe Realtime"}
-{"order": 131, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
-{"order": 132, "page": 2, "type": "body", "text": "76.75 92.25 15.50"}
+{"order": 124, "page": 2, "type": "table", "text": "Language ASR Model LLM Speech Text ∆"}
+{"order": 125, "page": 2, "type": "table", "text": "Chinese Qwen3-ASR-1.7B SEA-LION- 4.5-27B 71.50 80.50 9.00"}
+{"order": 126, "page": 2, "type": "table", "text": "Chinese ElevenLabs Scribe Realtime"}
+{"order": 127, "page": 2, "type": "table", "text": "Gemini 3.5 Flash"}
+{"order": 128, "page": 2, "type": "table", "text": "79.75 90.50 10.75"}
+{"order": 129, "page": 2, "type": "table", "text": "English Qwen3-ASR-1.7B SEA-LION- 4.5-27B 69.00 87.50 18.50"}
+{"order": 130, "page": 2, "type": "table", "text": "English ElevenLabs Scribe Realtime"}
+{"order": 131, "page": 2, "type": "table", "text": "Gemini 3.5 Flash"}
+{"order": 132, "page": 2, "type": "table", "text": "76.75 92.25 15.50"}
 {"order": 133, "page": 2, "type": "heading", "text": "4.2."}
 {"order": 134, "page": 2, "type": "heading", "text": "Instruction Following (SEA-HELM IFEval)"}
 {"order": 135, "page": 2, "type": "body", "text": "SEA-HELM IFEval provided multiple test of deterministic instruction adherence across English, Malay, Indonesian, and Tamil (105 samples per run)."}
@@ -140,24 +140,24 @@
 {"order": 139, "page": 2, "type": "body", "text": "While the commercial stack generally outperformed the baseline, SEA-LION-4.5-27B proved highly competitive in text accuracy for Southeast Asian languages, notably surpassing Gemini 3.5 Flash in Indonesian IFEval (93.33% vs 89.52%)."}
 {"order": 140, "page": 2, "type": "body", "text": "Table 4: SEA-HELM IFEval results (105 samples per run; TTS: ElevenLabs v3)."}
 {"order": 141, "page": 2, "type": "body", "text": "Accuracy (Speech, Text) and ∆= Text − Speech, in percentage points."}
-{"order": 142, "page": 2, "type": "heading", "text": "Language ASR Model LLM Speech Text ∆"}
-{"order": 143, "page": 2, "type": "body", "text": "English Qwen3-ASR-1.7B SEA-LION- 4.5-27B 69.52 97.14 27.62"}
-{"order": 144, "page": 2, "type": "body", "text": "English ElevenLabs Scribe Realtime"}
-{"order": 145, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
-{"order": 146, "page": 2, "type": "body", "text": "76.19 97.14 20.95"}
-{"order": 147, "page": 2, "type": "body", "text": "Indonesian Qwen3-ASR-1.7B SEA-LION- 4.5-27B 60.95 94.29 33.33"}
-{"order": 148, "page": 2, "type": "body", "text": "Indonesian ElevenLabs Scribe Realtime"}
-{"order": 149, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
-{"order": 150, "page": 2, "type": "body", "text": "58.10 89.52 31.43"}
-{"order": 151, "page": 2, "type": "body", "text": "Malay Qwen3-ASR-1.7B SEA-LION- 4.5-27B 52.38 84.76 32.38"}
-{"order": 152, "page": 2, "type": "body", "text": "Malay ElevenLabs Scribe Realtime"}
-{"order": 153, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
-{"order": 154, "page": 2, "type": "body", "text": "60.00 80.00 20.00"}
-{"order": 155, "page": 2, "type": "body", "text": "Tamil MERaLiON3- ASR-3B"}
-{"order": 156, "page": 2, "type": "body", "text": "SEA-LION- 4.5-27B 47.62 87.62 40.00"}
-{"order": 157, "page": 2, "type": "body", "text": "Tamil ElevenLabs Scribe Realtime"}
-{"order": 158, "page": 2, "type": "body", "text": "Gemini 3.5 Flash"}
-{"order": 159, "page": 2, "type": "body", "text": "41.90 81.90 40.00"}
+{"order": 142, "page": 2, "type": "table", "text": "Language ASR Model LLM Speech Text ∆"}
+{"order": 143, "page": 2, "type": "table", "text": "English Qwen3-ASR-1.7B SEA-LION- 4.5-27B 69.52 97.14 27.62"}
+{"order": 144, "page": 2, "type": "table", "text": "English ElevenLabs Scribe Realtime"}
+{"order": 145, "page": 2, "type": "table", "text": "Gemini 3.5 Flash"}
+{"order": 146, "page": 2, "type": "table", "text": "76.19 97.14 20.95"}
+{"order": 147, "page": 2, "type": "table", "text": "Indonesian Qwen3-ASR-1.7B SEA-LION- 4.5-27B 60.95 94.29 33.33"}
+{"order": 148, "page": 2, "type": "table", "text": "Indonesian ElevenLabs Scribe Realtime"}
+{"order": 149, "page": 2, "type": "table", "text": "Gemini 3.5 Flash"}
+{"order": 150, "page": 2, "type": "table", "text": "58.10 89.52 31.43"}
+{"order": 151, "page": 2, "type": "table", "text": "Malay Qwen3-ASR-1.7B SEA-LION- 4.5-27B 52.38 84.76 32.38"}
+{"order": 152, "page": 2, "type": "table", "text": "Malay ElevenLabs Scribe Realtime"}
+{"order": 153, "page": 2, "type": "table", "text": "Gemini 3.5 Flash"}
+{"order": 154, "page": 2, "type": "table", "text": "60.00 80.00 20.00"}
+{"order": 155, "page": 2, "type": "table", "text": "Tamil MERaLiON3- ASR-3B"}
+{"order": 156, "page": 2, "type": "table", "text": "SEA-LION- 4.5-27B 47.62 87.62 40.00"}
+{"order": 157, "page": 2, "type": "table", "text": "Tamil ElevenLabs Scribe Realtime"}
+{"order": 158, "page": 2, "type": "table", "text": "Gemini 3.5 Flash"}
+{"order": 159, "page": 2, "type": "table", "text": "41.90 81.90 40.00"}
 {"order": 160, "page": 2, "type": "body", "text": "Despite this strong text foundation, the open-weight pipeline struggled to recover from ASR-induced errors, reflecting ∆of over 25 points in Malay and Indonesian."}
 {"order": 161, "page": 2, "type": "heading", "text": "5. Discussion & Analysis"}
 {"order": 162, "page": 2, "type": "body", "text": "The empirical results underscore a critical reality in voiceagent deployment: strong text-based LLM performance does not guarantee equivalent voice capabilities."}

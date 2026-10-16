@@ -21,7 +21,7 @@
 {"order": 20, "page": 0, "type": "list", "text": "Part I [10] estimates a non-Gaussian noise density πn from residual samples, and tests the estimate against known noise laws."}
 {"order": 21, "page": 0, "type": "list", "text": "Such a comparison is unavailable in applications."}
 {"order": 22, "page": 0, "type": "list", "text": "We therefore consider the error"}
-{"order": 23, "page": 0, "type": "body", "text": "(1.1) DKL(πn ∥bπn),"}
+{"order": 23, "page": 0, "type": "equation", "text": "(1.1) DKL(πn ∥bπn),"}
 {"order": 24, "page": 0, "type": "body", "text": "of the Cas estimate bπn, estimating its individual contributions from the residual samples."}
 {"order": 25, "page": 0, "type": "body", "text": "The decomposition in Proposition 2.1 assigns one error term to each estimation step of Cas: (1.1) equals Emarg + Eproj + Edens."}
 {"order": 26, "page": 0, "type": "body", "text": "The marginal term Emarg consists of d one-dimensional divergences and two corrections; Edens is a divergence between r-dimensional laws."}
@@ -82,7 +82,7 @@
 {"order": 81, "page": 2, "type": "equation", "text": "Y"}
 {"order": 82, "page": 2, "type": "equation", "text": "bπn(x) := bZ−1"}
 {"order": 83, "page": 2, "type": "equation", "text": "r ( bV C⊤"}
-{"order": 84, "page": 2, "type": "body", "text": "comp bcU"}
+{"order": 84, "page": 2, "type": "equation", "text": "comp bcU"}
 {"order": 85, "page": 2, "type": "equation", "text": "r b Z(x))"}
 {"order": 86, "page": 2, "type": "equation", "text": "bπi(xi),"}
 {"order": 87, "page": 2, "type": "equation", "text": "i"}
@@ -92,7 +92,7 @@
 {"order": 91, "page": 2, "type": "equation", "text": "Rd bcU"}
 {"order": 92, "page": 2, "type": "equation", "text": "r b Z(x))"}
 {"order": 93, "page": 2, "type": "equation", "text": "bπi(xi) dx,"}
-{"order": 94, "page": 2, "type": "body", "text": "bZcomp :="}
+{"order": 94, "page": 2, "type": "equation", "text": "bZcomp :="}
 {"order": 95, "page": 2, "type": "equation", "text": "i"}
 {"order": 96, "page": 2, "type": "body", "text": "with copula factor bcZ(z) := bcU r ( bV C⊤ r z)."}
 {"order": 97, "page": 2, "type": "body", "text": "The normalizing constant bZcomp equals 1 when each bFi is the distribution function of bπi."}
@@ -112,16 +112,16 @@
 {"order": 111, "page": 2, "type": "equation", "text": "πn ∥πn( · ; bV C"}
 {"order": 112, "page": 2, "type": "equation", "text": "\u0001"}
 {"order": 113, "page": 2, "type": "equation", "text": "\u0000"}
-{"order": 114, "page": 2, "type": "body", "text": "i=1 DKL(πi ∥bπi) + RN + log bZcomp | {z } Emarg (the marginals)"}
-{"order": 115, "page": 2, "type": "body", "text": "+ DKL"}
-{"order": 116, "page": 2, "type": "body", "text": "r )"}
-{"order": 117, "page": 2, "type": "body", "text": "| {z } Eproj (the subspace)"}
+{"order": 114, "page": 2, "type": "equation", "text": "i=1 DKL(πi ∥bπi) + RN + log bZcomp | {z } Emarg (the marginals)"}
+{"order": 115, "page": 2, "type": "equation", "text": "+ DKL"}
+{"order": 116, "page": 2, "type": "equation", "text": "r )"}
+{"order": 117, "page": 2, "type": "equation", "text": "| {z } Eproj (the subspace)"}
 {"order": 118, "page": 2, "type": "equation", "text": "\u0000"}
 {"order": 119, "page": 2, "type": "equation", "text": "\u0001"}
-{"order": 120, "page": 2, "type": "body", "text": "+ DKL"}
+{"order": 120, "page": 2, "type": "equation", "text": "+ DKL"}
 {"order": 121, "page": 2, "type": "equation", "text": "πU ∥bπU"}
 {"order": 122, "page": 2, "type": "equation", "text": ","}
-{"order": 123, "page": 2, "type": "body", "text": "| {z } Edens (the reduced density)"}
+{"order": 123, "page": 2, "type": "equation", "text": "| {z } Edens (the reduced density)"}
 {"order": 124, "page": 2, "type": "body", "text": "where RN := Eπn[log bcZ(Z)]−Eπn[log bcZ( b Z)] is the difference between the expected log copula factors evaluated at the exact and estimated rank transforms."}
 {"order": 125, "page": 2, "type": "body", "text": "The normalizing constant bZcomp is defined above, and Eproj = EπU [DKL(πW |U ∥γd−r)]."}
 {"order": 126, "page": 2, "type": "body", "text": "Appendix A proves this decomposition at the estimated basis bV C r , without the eigenbasis of C. Neither RN nor log bZcomp has a prescribed sign, so Emarg can be negative."}
@@ -129,7 +129,7 @@
 {"order": 128, "page": 3, "type": "body", "text": "3.1."}
 {"order": 129, "page": 3, "type": "body", "text": "The marginals."}
 {"order": 130, "page": 3, "type": "body", "text": "For a fixed dictionary of degree K2 we assume the moment bounds (T), (3.1)"}
-{"order": 131, "page": 3, "type": "body", "text": "\u0012d(log N)K2"}
+{"order": 131, "page": 3, "type": "equation", "text": "\u0012d(log N)K2"}
 {"order": 132, "page": 3, "type": "equation", "text": "\u0013"}
 {"order": 133, "page": 3, "type": "equation", "text": "h"}
 {"order": 134, "page": 3, "type": "equation", "text": "(1 + ∥Z∥+ ∥b Z∥)2(K2−1)∥b Z −Z∥2i"}
@@ -141,8 +141,8 @@
 {"order": 140, "page": 3, "type": "body", "text": "A mean-value bound for the polynomial bLr and the Cauchy–Schwarz inequality give E|RN| = O( √ d (log N)K2/2N −1/2) (Appendix A)."}
 {"order": 141, "page": 3, "type": "body", "text": "Combining this with (M) gives"}
 {"order": 142, "page": 3, "type": "equation", "text": "\u0000√"}
-{"order": 143, "page": 3, "type": "body", "text": "(3.2) E[Emarg −log bZcomp] = O"}
-{"order": 144, "page": 3, "type": "body", "text": "d (log N)K2/2N −1/2\u0001"}
+{"order": 143, "page": 3, "type": "equation", "text": "(3.2) E[Emarg −log bZcomp] = O"}
+{"order": 144, "page": 3, "type": "equation", "text": "d (log N)K2/2N −1/2\u0001"}
 {"order": 145, "page": 3, "type": "equation", "text": ","}
 {"order": 146, "page": 3, "type": "body", "text": "and Emarg −log bZcomp = Op( √ d (log N)K2/2N −1/2)."}
 {"order": 147, "page": 3, "type": "body", "text": "The constants depend on d and the dictionary."}
@@ -157,30 +157,30 @@
 {"order": 156, "page": 3, "type": "equation", "text": "p"}
 {"order": 157, "page": 3, "type": "equation", "text": "\u0000"}
 {"order": 158, "page": 3, "type": "equation", "text": "(I −b Pr)C′\u0001"}
-{"order": 159, "page": 3, "type": "body", "text": "(3.3)"}
-{"order": 160, "page": 3, "type": "body", "text": "Tr"}
+{"order": 159, "page": 3, "type": "equation", "text": "(3.3)"}
+{"order": 160, "page": 3, "type": "equation", "text": "Tr"}
 {"order": 161, "page": 3, "type": "equation", "text": "."}
 {"order": 162, "page": 3, "type": "body", "text": "For S′ = S, the score-error term in (3.3) vanishes."}
 {"order": 163, "page": 3, "type": "body", "text": "Squaring the remaining inequality and dividing by two yields the oracle bound"}
 {"order": 164, "page": 3, "type": "equation", "text": "πn ∥πn( · ; bV C"}
-{"order": 165, "page": 3, "type": "body", "text": "≤C1 := 1 2 Tr \u0000"}
+{"order": 165, "page": 3, "type": "equation", "text": "≤C1 := 1 2 Tr \u0000"}
 {"order": 166, "page": 3, "type": "equation", "text": "\u0001"}
 {"order": 167, "page": 3, "type": "equation", "text": "\u0001"}
 {"order": 168, "page": 3, "type": "equation", "text": "\u0000"}
 {"order": 169, "page": 3, "type": "equation", "text": "(I −b Pr)C"}
-{"order": 170, "page": 3, "type": "body", "text": "(3.4) Eproj = DKL"}
-{"order": 171, "page": 3, "type": "body", "text": "r )"}
+{"order": 170, "page": 3, "type": "equation", "text": "(3.4) Eproj = DKL"}
+{"order": 171, "page": 3, "type": "equation", "text": "r )"}
 {"order": 172, "page": 3, "type": "equation", "text": ","}
 {"order": 173, "page": 3, "type": "body", "text": "The oracle bound uses half the trace of C over the discarded subspace."}
 {"order": 174, "page": 3, "type": "body", "text": "For comparison, let P C r := V C r V C⊤ r project onto the top-r eigenspace of C. Subtracting and adding the trace at this projector separates the rank and suboptimality contributions:"}
-{"order": 175, "page": 3, "type": "body", "text": "Tr(P C"}
-{"order": 176, "page": 3, "type": "body", "text": "(3.5) C1 = 1 2 P"}
-{"order": 177, "page": 3, "type": "body", "text": "+ 1 2 \u0002"}
+{"order": 175, "page": 3, "type": "equation", "text": "Tr(P C"}
+{"order": 176, "page": 3, "type": "equation", "text": "(3.5) C1 = 1 2 P"}
+{"order": 177, "page": 3, "type": "equation", "text": "+ 1 2 \u0002"}
 {"order": 178, "page": 3, "type": "equation", "text": "\u0003"}
 {"order": 179, "page": 3, "type": "equation", "text": "i>r λi(C) | {z } rank"}
 {"order": 180, "page": 3, "type": "equation", "text": "r C) −Tr( b PrC)"}
 {"order": 181, "page": 3, "type": "equation", "text": ","}
-{"order": 182, "page": 3, "type": "body", "text": "| {z } ∆subopt ≥0"}
+{"order": 182, "page": 3, "type": "equation", "text": "| {z } ∆subopt ≥0"}
 {"order": 183, "page": 3, "type": "body", "text": "where the rank term is fixed by C and r."}
 {"order": 184, "page": 3, "type": "body", "text": "The remaining term ∆subopt is of order ∥sin Θ( bV C r , V C r )∥2 F ."}
 {"order": 185, "page": 3, "type": "body", "text": "It is zero whenever span( bV C r ) = span(V C r ), and only in this case if λr(C) > λr+1(C)."}

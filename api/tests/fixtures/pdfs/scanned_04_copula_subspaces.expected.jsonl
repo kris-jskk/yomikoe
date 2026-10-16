@@ -21,7 +21,7 @@
 {"order": 20, "page": 0, "type": "list", "text": "Part I [10] estimates a non-Gaussian noise density πn from residual samples, and tests the estimate against known noise laws."}
 {"order": 21, "page": 0, "type": "list", "text": "Such a comparison is unavailable in applications."}
 {"order": 22, "page": 0, "type": "list", "text": "We therefore consider the error"}
-{"order": 23, "page": 0, "type": "body", "text": "(1.1) DKL(πn ∥bπn),"}
+{"order": 23, "page": 0, "type": "equation", "text": "(1.1) DKL(πn ∥bπn),"}
 {"order": 24, "page": 0, "type": "body", "text": "of the Cas estimate bπn, estimating its individual contributions from the residual samples."}
 {"order": 25, "page": 0, "type": "body", "text": "The decomposition in Proposition 2.1 assigns one error term to each estimation step of Cas: (1.1) equals Emarg + Eproj + Edens."}
 {"order": 26, "page": 0, "type": "body", "text": "The marginal term Emarg consists of d one-dimensional divergences and two corrections; Edens is a divergence between r-dimensional laws."}

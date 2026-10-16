@@ -105,9 +105,9 @@
 {"order": 104, "page": 3, "type": "body", "text": "Table 1 sets out the inputs."}
 {"order": 105, "page": 3, "type": "body", "text": "All three tiers receive the bill as a native PDF, the same target-format XML templates, and the same per-jurisdiction conversion rules; T1 carries these in a single hand-authored instruction, while T2 and T3 load them at run time."}
 {"order": 106, "page": 3, "type": "body", "text": "The rule we held to is that only the harness may vary across tiers, never the knowledge, so a capability T2 and T3 reach through a tool is written out in prose for T1 rather than withheld."}
-{"order": 107, "page": 3, "type": "body", "text": "T1 T2 T3"}
-{"order": 108, "page": 3, "type": "body", "text": "Bill PDF (native) yes yes yes XML templates yes yes yes Jurisdiction rules yes yes yes"}
-{"order": 109, "page": 3, "type": "body", "text": "Step-ordered playbook none 9 steps 21 steps Tools none 47 17 Sub-agents none none 7 Persisted state none none yes"}
+{"order": 107, "page": 3, "type": "table", "text": "T1 T2 T3"}
+{"order": 108, "page": 3, "type": "table", "text": "Bill PDF (native) yes yes yes XML templates yes yes yes Jurisdiction rules yes yes yes"}
+{"order": 109, "page": 3, "type": "table", "text": "Step-ordered playbook none 9 steps 21 steps Tools none 47 17 Sub-agents none none 7 Persisted state none none yes"}
 {"order": 110, "page": 3, "type": "body", "text": "Table 1: What each harness receives."}
 {"order": 111, "page": 3, "type": "body", "text": "Rows above the middle rule are knowledge and are held constant; rows below it are harness."}
 {"order": 112, "page": 3, "type": "body", "text": "T2 and T3 reach the same underlying tools: T2 calls the 47 leaf tools directly, while T3 reaches those same 47 leaves through 17 composite orchestrator tools—the counts differ in exposure, not in access."}

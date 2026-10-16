@@ -62,15 +62,15 @@
 {"order": 61, "page": 2, "type": "caption", "text": "Left: an example of reasoning divergence, where the pruned model continues reasoning after reaching the correct answer."}
 {"order": 62, "page": 2, "type": "caption", "text": "Right: the fraction of traces containing the gold answer and the median position of its first occurrence."}
 {"order": 63, "page": 2, "type": "caption", "text": "n denotes the number of non-terminating samples."}
-{"order": 64, "page": 2, "type": "heading", "text": "Model Ckpt Kept No-Term."}
-{"order": 65, "page": 2, "type": "heading", "text": "Wrong Kept|term"}
-{"order": 66, "page": 2, "type": "body", "text": "obc_50 91.7±0.8 3.8±0.3 4.5±0.6 95.3±0.6 obc_60 77.8±0.7 16.8±0.1 5.4±0.6 93.5±0.7"}
-{"order": 67, "page": 2, "type": "body", "text": "DS-Qwen"}
-{"order": 68, "page": 2, "type": "body", "text": "-7B"}
-{"order": 69, "page": 2, "type": "body", "text": "obc_50 89.2±0.6 2.4±1.5 8.4±0.9 91.4±0.8 obc_60 74.3±2.8 16.4±1.9 9.3±0.9 88.9±1.4"}
-{"order": 70, "page": 2, "type": "body", "text": "DS-Qwen"}
-{"order": 71, "page": 2, "type": "body", "text": "-14B"}
-{"order": 72, "page": 2, "type": "body", "text": "OT3-7B obc_50 79.3±2.9 13.1±2.4 7.6±1.9 91.3±2.2 obc_60 63.6±3.4 29.8±3.3 6.6±1.8 90.6±2.5"}
+{"order": 64, "page": 2, "type": "table", "text": "Model Ckpt Kept No-Term."}
+{"order": 65, "page": 2, "type": "table", "text": "Wrong Kept|term"}
+{"order": 66, "page": 2, "type": "table", "text": "obc_50 91.7±0.8 3.8±0.3 4.5±0.6 95.3±0.6 obc_60 77.8±0.7 16.8±0.1 5.4±0.6 93.5±0.7"}
+{"order": 67, "page": 2, "type": "table", "text": "DS-Qwen"}
+{"order": 68, "page": 2, "type": "table", "text": "-7B"}
+{"order": 69, "page": 2, "type": "table", "text": "obc_50 89.2±0.6 2.4±1.5 8.4±0.9 91.4±0.8 obc_60 74.3±2.8 16.4±1.9 9.3±0.9 88.9±1.4"}
+{"order": 70, "page": 2, "type": "table", "text": "DS-Qwen"}
+{"order": 71, "page": 2, "type": "table", "text": "-14B"}
+{"order": 72, "page": 2, "type": "table", "text": "OT3-7B obc_50 79.3±2.9 13.1±2.4 7.6±1.9 91.3±2.2 obc_60 63.6±3.4 29.8±3.3 6.6±1.8 90.6±2.5"}
 {"order": 73, "page": 2, "type": "body", "text": "Table 1: Accuracy on MATH-500 problems correctly solved by the dense model."}
 {"order": 74, "page": 2, "type": "body", "text": "Kept: correct; No-Term."}
 {"order": 75, "page": 2, "type": "body", "text": ": reasoning fails to terminate; Wrong: terminated but incorrect; Kept|term: accuracy among terminated generations."}
@@ -92,10 +92,10 @@
 {"order": 91, "page": 2, "type": "body", "text": "This suggests that non-termination often reflects reasoning divergence rather than an inability to reach the correct answer."}
 {"order": 92, "page": 2, "type": "body", "text": "We provide a headroom analysis in Appendix E.3, quantifying the recoverable accuracy loss by counting nonterminating traces that already contain the correct answer as correct."}
 {"order": 93, "page": 2, "type": "footnote", "text": "1We validate Conclusive against an independent LLM judge: on 250 sampled traces, the two agree on 96.0% of cases (κ = 0.898; Appendix C.3)."}
-{"order": 94, "page": 3, "type": "heading", "text": "DS-Qwen-7B DS-Qwen-14B"}
-{"order": 95, "page": 3, "type": "body", "text": "obc_50 obc_60 obc_70 obc_50 obc_60 obc_70"}
-{"order": 96, "page": 3, "type": "body", "text": "AIME-25 p(</think>) 0.998 0.957 0.036 0.995 0.854 0.073 Med. rank 0 0 5.5 0 0 2"}
-{"order": 97, "page": 3, "type": "body", "text": "MATH-500 p(</think>) 0.996 0.924 0.040 0.998 0.907 0.130 Med. rank 0 0 7 0 0 3"}
+{"order": 94, "page": 3, "type": "table", "text": "DS-Qwen-7B DS-Qwen-14B"}
+{"order": 95, "page": 3, "type": "table", "text": "obc_50 obc_60 obc_70 obc_50 obc_60 obc_70"}
+{"order": 96, "page": 3, "type": "table", "text": "AIME-25 p(</think>) 0.998 0.957 0.036 0.995 0.854 0.073 Med. rank 0 0 5.5 0 0 2"}
+{"order": 97, "page": 3, "type": "table", "text": "MATH-500 p(</think>) 0.996 0.924 0.040 0.998 0.907 0.130 Med. rank 0 0 7 0 0 3"}
 {"order": 98, "page": 3, "type": "body", "text": "Table 2: Teacher-forced stopping signal at the dense model’s STOP position: probability of </think> and its median rank (0 means </think> is the top prediction)."}
 {"order": 99, "page": 3, "type": "heading", "text": "3.2 Why Do Pruned Models Fail to Terminate?"}
 {"order": 100, "page": 3, "type": "body", "text": "Section 3.1 shows that pruned LRMs largely retain the ability to reach correct answers but increasingly fail to terminate."}
@@ -112,9 +112,9 @@
 {"order": 111, "page": 3, "type": "body", "text": "Definition."}
 {"order": 112, "page": 3, "type": "body", "text": "We investigate whether pruning alters reasoning trajectories at moments of reconsideration, where a model may either move forward or revisit previous reasoning."}
 {"order": 113, "page": 3, "type": "body", "text": "We define a decision point as the start of a paragraph beginning with a predefined reconsideration cue (e.g., \"wait\", \"hmm\", full list in Appendix D.4), following Lotfi et al. (2026)."}
-{"order": 114, "page": 3, "type": "heading", "text": "DS-Qwen-7B OT3-7B"}
-{"order": 115, "page": 3, "type": "body", "text": "dense obc_50 obc_60 obc_70 dense obc_50 obc_60 obc_70"}
-{"order": 116, "page": 3, "type": "body", "text": "n 794 788 796 782 800 800 796 790 ∆cyc −15.3 −11.9 −9.6 −5.0 −23.1 −15.8 −13.2 −5.6 Entropy 1.55 1.51 1.41 1.44 1.03 1.22 1.33 1.60"}
+{"order": 114, "page": 3, "type": "table", "text": "DS-Qwen-7B OT3-7B"}
+{"order": 115, "page": 3, "type": "table", "text": "dense obc_50 obc_60 obc_70 dense obc_50 obc_60 obc_70"}
+{"order": 116, "page": 3, "type": "table", "text": "n 794 788 796 782 800 800 796 790 ∆cyc −15.3 −11.9 −9.6 −5.0 −23.1 −15.8 −13.2 −5.6 Entropy 1.55 1.51 1.41 1.44 1.03 1.22 1.33 1.60"}
 {"order": 117, "page": 3, "type": "body", "text": "Table 3: Log-probability ratio between cyclic and progressive continuations at decision points on AIME-25."}
 {"order": 118, "page": 3, "type": "body", "text": "n: number of decision points; Entropy: predictive entropy at the decision points."}
 {"order": 119, "page": 3, "type": "body", "text": "Less negative (larger) ∆cyc values indicate a stronger preference for the repetitive continuation."}
@@ -124,21 +124,21 @@
 {"order": 123, "page": 3, "type": "body", "text": "To measure whether a model prefers to repeat or to move forward, we compare two candidate next paragraphs at each decision point of a dense trace: repeating the preceding paragraph (CYCLIC) or continuing with the next paragraph that adds new content (PROGRESS)."}
 {"order": 124, "page": 3, "type": "body", "text": "We score the first 32 tokens of each candidate under teacher forcing with the same prefix, and reuse the same decision points and candidates across all pruning checkpoints."}
 {"order": 125, "page": 3, "type": "body", "text": "We restrict evaluation to decision points that are followed by a PROGRESS paragraph, and define:"}
-{"order": 126, "page": 3, "type": "body", "text": "32 X"}
+{"order": 126, "page": 3, "type": "equation", "text": "32 X"}
 {"order": 127, "page": 3, "type": "equation", "text": "h"}
-{"order": 128, "page": 3, "type": "body", "text": "t | prefix, xcyclic"}
-{"order": 129, "page": 3, "type": "body", "text": "xcyclic"}
+{"order": 128, "page": 3, "type": "equation", "text": "t | prefix, xcyclic"}
+{"order": 129, "page": 3, "type": "equation", "text": "xcyclic"}
 {"order": 130, "page": 3, "type": "equation", "text": "\u0000"}
 {"order": 131, "page": 3, "type": "equation", "text": "\u0001"}
-{"order": 132, "page": 3, "type": "body", "text": "∆cyc ="}
-{"order": 133, "page": 3, "type": "body", "text": "log pθ"}
+{"order": 132, "page": 3, "type": "equation", "text": "∆cyc ="}
+{"order": 133, "page": 3, "type": "equation", "text": "log pθ"}
 {"order": 134, "page": 3, "type": "equation", "text": "\u0001i"}
-{"order": 135, "page": 3, "type": "body", "text": "t | prefix, xprogress"}
-{"order": 136, "page": 3, "type": "body", "text": "xprogress"}
+{"order": 135, "page": 3, "type": "equation", "text": "t | prefix, xprogress"}
+{"order": 136, "page": 3, "type": "equation", "text": "xprogress"}
 {"order": 137, "page": 3, "type": "equation", "text": "\u0000"}
-{"order": 138, "page": 3, "type": "body", "text": "−log pθ"}
-{"order": 139, "page": 3, "type": "footnote", "text": "<t"}
-{"order": 140, "page": 3, "type": "footnote", "text": "t=1"}
-{"order": 141, "page": 3, "type": "footnote", "text": "<t"}
+{"order": 138, "page": 3, "type": "equation", "text": "−log pθ"}
+{"order": 139, "page": 3, "type": "equation", "text": "<t"}
+{"order": 140, "page": 3, "type": "equation", "text": "t=1"}
+{"order": 141, "page": 3, "type": "equation", "text": "<t"}
 {"order": 142, "page": 3, "type": "body", "text": "where a larger ∆cyc indicates a stronger relative preference for CYCLIC over PROGRESS."}
 {"order": 143, "page": 3, "type": "body", "text": "As shown in Table 3, pruning progressively shifts the model’s preference from progressive toward cyclic continuations at decision points; Appendix D.4 shows a similar shift at randomly sam-"}

@@ -26,22 +26,22 @@
 {"order": 25, "page": 0, "type": "equation", "text": "Z"}
 {"order": 26, "page": 0, "type": "equation", "text": "Z"}
 {"order": 27, "page": 0, "type": "equation", "text": "f(Xt) →"}
-{"order": 28, "page": 0, "type": "body", "text": "bµT ⇀π, or, equivalently,"}
-{"order": 29, "page": 0, "type": "body", "text": "f dπ (2)"}
+{"order": 28, "page": 0, "type": "equation", "text": "bµT ⇀π, or, equivalently,"}
+{"order": 29, "page": 0, "type": "equation", "text": "f dπ (2)"}
 {"order": 30, "page": 0, "type": "equation", "text": "T"}
-{"order": 31, "page": 0, "type": "footnote", "text": "t=0"}
+{"order": 31, "page": 0, "type": "equation", "text": "t=0"}
 {"order": 32, "page": 0, "type": "body", "text": "for every bounded continuous test function f. For general Markov chains, however, convergence to a deterministic limiting measure is not automatic."}
 {"order": 33, "page": 0, "type": "body", "text": "For classical conditions ensuring almost-sure convergence of bµT as in (2), see,"}
 {"order": 34, "page": 0, "type": "body", "text": "e.g."}
 {"order": 35, "page": 0, "type": "body", "text": ", Meyn and Tweedie (2012)."}
 {"order": 36, "page": 0, "type": "body", "text": "To quantify the discrepancy between bµT and π, we need to choose a distance on the space of probability measures."}
 {"order": 37, "page": 0, "type": "body", "text": "A flexible framework is provided by integral probability metrics (IPMs),"}
-{"order": 38, "page": 0, "type": "body", "text": ", (3)"}
+{"order": 38, "page": 0, "type": "equation", "text": ", (3)"}
 {"order": 39, "page": 0, "type": "equation", "text": "Z"}
 {"order": 40, "page": 0, "type": "equation", "text": "Z"}
 {"order": 41, "page": 0, "type": "equation", "text": "f dµ −"}
 {"order": 42, "page": 0, "type": "equation", "text": "f dν"}
-{"order": 43, "page": 0, "type": "footnote", "text": "f∈F"}
+{"order": 43, "page": 0, "type": "equation", "text": "f∈F"}
 {"order": 44, "page": 0, "type": "body", "text": "dF(µ, ν) := sup where F is a class of measurable test functions integrable with respect to the measures under consideration."}
 {"order": 45, "page": 0, "type": "body", "text": "The choice of F determines which differences between probability measures are detected, and hence the notion of convergence being studied."}
 {"order": 46, "page": 0, "type": "body", "text": "For example, the class of measurable functions satisfying ∥f∥∞≤1 gives the total variation norm, while the class of 1-Lipschitz functions gives the Wasserstein distance W1 on probability measures with finite first moments."}
@@ -59,10 +59,10 @@
 {"order": 58, "page": 1, "type": "equation", "text": "Z"}
 {"order": 59, "page": 1, "type": "equation", "text": "Z"}
 {"order": 60, "page": 1, "type": "equation", "text": "ϕ(x) µ(dx) −"}
-{"order": 61, "page": 1, "type": "body", "text": ", (4)"}
+{"order": 61, "page": 1, "type": "equation", "text": ", (4)"}
 {"order": 62, "page": 1, "type": "equation", "text": "ϕ(x) ν(dx)"}
-{"order": 63, "page": 1, "type": "body", "text": "MMDϕ(µ, ν) ="}
-{"order": 64, "page": 1, "type": "body", "text": "H"}
+{"order": 63, "page": 1, "type": "equation", "text": "MMDϕ(µ, ν) ="}
+{"order": 64, "page": 1, "type": "equation", "text": "H"}
 {"order": 65, "page": 1, "type": "body", "text": "whenever the two Bochner integrals exist; see, e.g., Smola et al. (2007); Gretton et al. (2012)."}
 {"order": 66, "page": 1, "type": "body", "text": "The same construction applies to any measurable feature map ϕ : X →H into a separable Hilbert space, subject to the same integrability requirement."}
 {"order": 67, "page": 1, "type": "body", "text": "The resulting discrepancy is the MMD associated with the kernel k(x, y) = ⟨ϕ (x), ϕ (y)⟩H."}
@@ -75,11 +75,11 @@
 {"order": 74, "page": 1, "type": "body", "text": "Our first contribution is a non-asymptotic high-probability bound for empirical occupation measures of Markov chains on a general state space."}
 {"order": 75, "page": 1, "type": "body", "text": "Assume that the chain is stationary, has an absolute L2(π) spectral gap 1−ρ > 0, and satisfies the following uniform geometric relaxation condition:"}
 {"order": 76, "page": 1, "type": "equation", "text": "MMDϕ(P n(x, ·), π) ≤Cθn, n ≥0, (5)"}
-{"order": 77, "page": 1, "type": "body", "text": "sup x∈X"}
+{"order": 77, "page": 1, "type": "equation", "text": "sup x∈X"}
 {"order": 78, "page": 1, "type": "body", "text": "for some C < ∞and θ ∈[0, 1)."}
 {"order": 79, "page": 1, "type": "body", "text": "Then, for every T ≥1 and δ ∈(0, 1), with probability at least 1 −δ,"}
-{"order": 80, "page": 1, "type": "body", "text": "T + τθ√τrel log(4/δ)"}
+{"order": 80, "page": 1, "type": "equation", "text": "T + τθ√τrel log(4/δ)"}
 {"order": 81, "page": 1, "type": "equation", "text": "r"}
-{"order": 82, "page": 1, "type": "body", "text": "τrel log(4/δ)"}
+{"order": 82, "page": 1, "type": "equation", "text": "τrel log(4/δ)"}
 {"order": 83, "page": 1, "type": "equation", "text": "MMDϕ(bµT , π) ≲∥ϕ∥π"}
 {"order": 84, "page": 1, "type": "body", "text": "T , (6) where τrel := (1 −ρ)−1, τθ := C/(1 −θ), and ∥ϕ∥2 π := ∥ϕ(x)∥2 R Hπ(dx); the implicit constant is universal."}
