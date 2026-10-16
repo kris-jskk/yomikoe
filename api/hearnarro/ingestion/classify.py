@@ -36,6 +36,7 @@ MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "R
 EQ_NUMBER_RE = re.compile(r"^\(\d+[a-z]?\)[.,]?$")
 TEX_SCRIPT_ROMAN_RE = re.compile(r"^CMR[5-8]$")
 EQ_PROSE_LETTERS: float | None = 0.5
+TABLE_FIRST = True  # a block centred inside a table region is table before heading/caption
 
 BAND_FRAC = 0.08
 HEADING_SIZE_RATIO = 1.15
@@ -240,6 +241,8 @@ def _classify(block: Block, page: Page, median: float, repeated: set[str]) -> Bl
         return "body"
     if _is_noise_text(block, page):
         return "noise"
+    if TABLE_FIRST and _inside(block, page.table_bboxes):
+        return "table"
     size = _max_size(block)
     if median > 0 and size >= HEADING_SIZE_RATIO * median:
         return "heading"
@@ -270,6 +273,12 @@ def _inter_area(a: BBox, b: BBox) -> float:
     w = min(a.x1, b.x1) - max(a.x0, b.x0)
     h = min(a.y1, b.y1) - max(a.y0, b.y0)
     return max(0.0, w) * max(0.0, h)
+
+
+def _inside(block: Block, regions: list[BBox]) -> bool:
+    """The block's centre lies inside one region."""
+    x, y = block.bbox.x_mid, block.bbox.y_mid
+    return any(r.x0 <= x <= r.x1 and r.y0 <= y <= r.y1 for r in regions)
 
 
 def in_figure(block: Block, regions: list[BBox]) -> bool:

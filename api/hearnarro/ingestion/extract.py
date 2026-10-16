@@ -47,6 +47,13 @@ INDENT_NEW_BLOCK: float | None = 0.5
 PARA_BASELINE: float | None = 1.6
 MAX_DESCENT = 0.8  # glyph boxes of a font whose descent exceeds this (in sizes) are lifted ...
 NORMAL_DESCENT = 0.25  # ... to this descent (TeX text fonts)
+RULE_MAX_HEIGHT = 1.5  # a table rule is at most this thick ...
+RULE_MIN_WIDTH = 50.0  # ... and at least this wide (points)
+RULE_ALIGN = 3.0  # rules of one table start and end within this many points of each other
+RULE_STACK_GAP = 0.5  # ... and lie within this fraction of the page height of the next
+RULE_STACK_MIN = 3  # top rule, mid rule, bottom rule
+COLUMN_ROWS = 2  # ... on at least this many lines
+COLUMN_GAP = 1.0  # a glyph gap this many font sizes wide inside a ruled region is a column gap
 # Display-equation lines (ING-3): a line holding a math-font glyph whose text-font letters are
 # under MATH_LINE_PROSE of its glyphs is "math"; a block never mixes math and prose lines.
 MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
@@ -517,6 +524,69 @@ def _table_bboxes(page: Any, coords: _Coords) -> list[BBox]:
         return []
 
 
+def _hrules(page: Any, coords: _Coords) -> list[BBox]:
+    """Thin horizontal strokes and filled rects (table rules) at least RULE_MIN_WIDTH wide."""
+    try:
+        objs = [*page.lines, *page.rects]
+    except Exception:  # noqa: BLE001 - vector analysis is best effort
+        return []
+    out = []
+    for o in objs:
+        b = coords.obj(o)
+        if b.height <= RULE_MAX_HEIGHT and b.width >= RULE_MIN_WIDTH:
+            out.append(b)
+    return out
+
+
+def rule_tables(rules: Sequence[BBox], page_height: float) -> list[BBox]:
+    """Booktabs tables (ING-3, tuned 2026-10-16 on pdfplumber): pdfplumber's find_tables needs
+    vertical rules, booktabs has none. A stack of >= RULE_STACK_MIN horizontal rules sharing
+    their x-extent (each end within RULE_ALIGN points), each within RULE_STACK_GAP of the page
+    height of the next, bounds a table: the region from the top rule to the bottom rule. Pure.
+    """
+    rows: list[BBox] = []
+    for r in sorted(rules, key=lambda b: (b.y0, b.x0)):
+        if rows and abs(r.y0 - rows[-1].y0) < 1.0 and r.x0 <= rows[-1].x1 + RULE_ALIGN:
+            rows[-1] = _union([rows[-1], r])  # pieces of one rule (cmidrule segments, joins)
+        else:
+            rows.append(r)
+    stacks: list[list[BBox]] = []
+    for r in rows:
+        for st in stacks:
+            last = st[-1]
+            if (
+                abs(r.x0 - last.x0) <= RULE_ALIGN
+                and abs(r.x1 - last.x1) <= RULE_ALIGN
+                and 0 < r.y0 - last.y0 <= RULE_STACK_GAP * page_height
+            ):
+                st.append(r)
+                break
+        else:
+            stacks.append([r])
+    return [_union(st) for st in stacks if len(st) >= RULE_STACK_MIN]
+
+
+def has_columns(region: BBox, lines: Sequence[Sequence[LayoutChar]]) -> bool:
+    """Text lines centred in ``region`` have a glyph gap wider than COLUMN_GAP font sizes
+    on at least COLUMN_ROWS lines (table rows; a title page framed by rules, even with a
+    letter-spaced banner, has fewer). Pure."""
+    rows = 0
+    for line in lines:
+        glyphs = [c for c in line if c.bbox is not None and c.upright]
+        if len(glyphs) < 2:
+            continue
+        box = _union([c.bbox for c in glyphs if c.bbox is not None])
+        if not (region.x0 <= box.x_mid <= region.x1 and region.y0 <= box.y_mid <= region.y1):
+            continue
+        if any(
+            b.bbox.x0 - a.bbox.x1 > COLUMN_GAP * max(a.size, b.size, 1.0)
+            for a, b in zip(glyphs, glyphs[1:], strict=False)
+            if a.bbox is not None and b.bbox is not None
+        ):
+            rows += 1
+    return rows >= COLUMN_ROWS
+
+
 def _drawing_rects(page: Any, coords: _Coords) -> list[BBox]:
     try:
         objs = [*page.rects, *page.curves, *page.lines]
@@ -581,13 +651,19 @@ def extract_pages(
     with pdfplumber.open(str(pdf_path)) as pdf:
         for number, pdf_page in enumerate(pdf.pages):
             coords = _Coords(pdf_page)
+            lines = group_lines(_layout_chars(pdf_page, coords))
+            ruled = [
+                t
+                for t in rule_tables(_hrules(pdf_page, coords), float(pdf_page.height))
+                if has_columns(t, lines)
+            ]
             page = page_from_layout(
                 number,
                 float(pdf_page.width),
                 float(pdf_page.height),
-                group_blocks(group_lines(_layout_chars(pdf_page, coords))),
+                group_blocks(lines),
                 image_bboxes=[coords.obj(im) for im in pdf_page.images],
-                table_bboxes=_table_bboxes(pdf_page, coords),
+                table_bboxes=[*_table_bboxes(pdf_page, coords), *ruled],
             )
             page.figure_bboxes = figure_regions(
                 page.image_bboxes, _drawing_rects(pdf_page, coords), page.width, page.height
