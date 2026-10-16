@@ -32,7 +32,10 @@ RULE_RE = re.compile(r"^[_\-–—=\s]{5,}$")
 CAPTION_RE = re.compile(r"^(?:Figure|Fig\.|Table|Listing)\s*\d")
 LIST_RE = re.compile(r"^(?:[•·▪‣◦\-–*]|\d+[.)])\s")
 MATH_CHARS = set("=+−-×÷∑∫√∂∞≤≥≈∝∈∀∃αβγδεθλμπσφω^_{}|")
-MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX")
+MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
+EQ_NUMBER_RE = re.compile(r"^\(\d+[a-z]?\)[.,]?$")
+TEX_SCRIPT_ROMAN_RE = re.compile(r"^CMR[5-8]$")
+EQ_PROSE_LETTERS: float | None = 0.5
 
 BAND_FRAC = 0.08
 HEADING_SIZE_RATIO = 1.15
@@ -117,19 +120,44 @@ def _bold_majority(block: Block) -> bool:
     return total > 0 and bold * 2 > total
 
 
+def _is_math_font(font: str) -> bool:
+    return any(m in font for m in MATH_FONT_MARKERS)
+
+
 def _is_equation(block: Block) -> bool:
+    """Display-equation text (ING-3): math glyphs (math font or MATH_CHARS) are the majority;
+    or (tuned 2026-10-16 on pdfplumber) the block holds a math-font glyph and letters set in
+    text fonts are under EQ_PROSE_LETTERS of its non-space characters (operands in CMR, digits,
+    brackets and equation numbers do not count as prose); or it is a bare equation number."""
+    text = "".join(block.text.split())
+    if EQ_NUMBER_RE.match(text):
+        return True
     total = 0
     math_chars = 0
+    prose_letters = 0
+    has_math_font = False
     for ln in block.lines:
         for s in ln.spans:
-            math_font = any(m in s.font for m in MATH_FONT_MARKERS)
+            math_font = _is_math_font(s.font)
+            has_math_font = has_math_font or (math_font and bool(s.text.strip()))
             for ch in s.text:
                 if ch.isspace():
                     continue
                 total += 1
                 if math_font or ch in MATH_CHARS:
                     math_chars += 1
-    return total > 0 and math_chars * 2 > total
+                elif ch.isalpha() and not s.superscript and not _is_tex_roman(s.font):
+                    prose_letters += 1
+    if total == 0:
+        return False
+    if math_chars * 2 > total:
+        return True
+    return EQ_PROSE_LETTERS is not None and has_math_font and prose_letters < EQ_PROSE_LETTERS * total
+
+
+def _is_tex_roman(font: str) -> bool:
+    """CMR at a script size (5-8 pt designs) sets subscripts and operator names in maths."""
+    return bool(TEX_SCRIPT_ROMAN_RE.match(font))
 
 
 def _starts_with_superscript_digit(block: Block) -> bool:

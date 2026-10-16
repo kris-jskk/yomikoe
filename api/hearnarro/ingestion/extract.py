@@ -41,9 +41,26 @@ BLOCK_SIZE_RATIO = 1.25  # max ratio between line font sizes inside one block
 # ragged-left cover line). In untagged TeX output the same move is a hanging indent (list
 # item, wrapped heading) and keeps the block; measured in results 130.
 INDENT_NEW_BLOCK: float | None = 0.5
+# MuPDF's "way off the baseline" paragraph rule: a line whose baseline sits more than
+# PARA_BASELINE font sizes below the previous line's opens a new block, even when tall glyphs
+# (display-equation delimiters, stacked limits) make the boxes touch.
+PARA_BASELINE: float | None = 1.6
+MAX_DESCENT = 0.8  # glyph boxes of a font whose descent exceeds this (in sizes) are lifted ...
+NORMAL_DESCENT = 0.25  # ... to this descent (TeX text fonts)
+# Display-equation lines (ING-3): a line holding a math-font glyph whose text-font letters are
+# under MATH_LINE_PROSE of its glyphs is "math"; a block never mixes math and prose lines.
+MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
+MATH_LINE_PROSE: float | None = 0.3
+_TEX_SCRIPT_ROMAN = re.compile(r"^CMR[5-8]$")
 SUPERSCRIPT_SIZE_RATIO = 0.75  # a char this much smaller than the line's dominant size ...
 SUPERSCRIPT_RAISE = 0.2  # ... whose bottom sits this many dominant sizes higher is raised
 
+# TeX symbol glyphs MuPDF set without a following word space (D13 parity with the D11/D12
+# ground truth, measured in results 131): CMSY/CMR relations, arrows, minus and ∆, and spacing
+# accents in any font ("B¨ uhlmann"). "|", "×", "·", "′", "†", "Π", "Θ" keep their space.
+_TIGHT_FONT = re.compile(r"^CM(?:SY|R)\d")
+_TIGHT_SYMBOLS = frozenset("∈∉≤≥∼≈≃≡∝−→←↔⇒∥⊤⊂⊆⊃⊇∆7")
+_SPACING_ACCENTS = frozenset("¨ˆ˜´`¯˙˘ˇ˚")
 _SUBSET_PREFIX = re.compile(r"^[A-Z]{6}\+")
 _CID = re.compile(r"\(cid:(\d+)\)")
 _BOLD_RE = re.compile(r"bold|black|heavy|semibold|demi|medi|cmbx", re.IGNORECASE)
@@ -291,6 +308,13 @@ def _continues_line(prev: LayoutChar, line_v: tuple[float, float], c: LayoutChar
     return -LINE_BACKSTEP * size <= gap <= LINE_MAX_GAP * size
 
 
+def _tight_after(c: LayoutChar) -> bool:
+    """No word space is inserted after this glyph (see _TIGHT_FONT)."""
+    if c.text in _SPACING_ACCENTS:
+        return True
+    return bool(_TIGHT_FONT.match(c.font)) and c.text in _TIGHT_SYMBOLS
+
+
 def group_lines(chars: Sequence[LayoutChar]) -> list[list[LayoutChar]]:
     """Split glyphs (content-stream order, real glyphs only) into lines, inserting virtual
     spaces at word gaps. Pure."""
@@ -306,7 +330,11 @@ def group_lines(chars: Sequence[LayoutChar]) -> list[list[LayoutChar]]:
             continue
         if prev is not None and _continues_line(prev, line_v, c):
             gap = _hspan(c)[0] - _hspan(prev)[1]
-            if gap > SPACE_GAP * max(c.size, prev.size) and lines[-1][-1].bbox is not None:
+            if (
+                gap > SPACE_GAP * max(c.size, prev.size)
+                and lines[-1][-1].bbox is not None
+                and not _tight_after(prev)
+            ):
                 lines[-1].append(LayoutChar(" ", None))
             lines[-1].append(c)
             v0, v1 = _vspan(c)
@@ -340,7 +368,21 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
         box, size, upright = _line_metrics(line)
         join = False
         if cur_box is not None and upright == cur_upright:
-            if box.overlaps(cur_box):
+            if (
+                MATH_LINE_PROSE is not None
+                and prev_box is not None
+                and min(box.y1, prev_box.y1) <= max(box.y0, prev_box.y0)  # a new text row
+                and is_math_line(line) != is_math_line(prev_line)
+            ):
+                join = False
+            elif (
+                upright
+                and PARA_BASELINE is not None
+                and prev_line
+                and _baseline(line) - _baseline(prev_line) > PARA_BASELINE * size
+            ):
+                join = False
+            elif box.overlaps(cur_box):
                 join = True
             elif (
                 upright
@@ -375,6 +417,32 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
     return blocks
 
 
+def is_math_line(line: Sequence[LayoutChar]) -> bool:
+    """A display-maths line: it holds a math-font glyph and its letters set in text fonts
+    (script-size CMR excluded) are under MATH_LINE_PROSE of its glyphs."""
+    glyphs = [c for c in line if c.bbox is not None and c.text.strip()]
+    if not glyphs or MATH_LINE_PROSE is None:
+        return False
+    if not any(any(m in c.font for m in MATH_FONT_MARKERS) for c in glyphs):
+        return False
+    prose = sum(
+        1
+        for c in glyphs
+        if c.text.isalpha()
+        and not any(m in c.font for m in MATH_FONT_MARKERS)
+        and not _TEX_SCRIPT_ROMAN.match(c.font)
+    )
+    return prose < MATH_LINE_PROSE * len(glyphs)
+
+
+def _baseline(line: list[LayoutChar]) -> float:
+    """Median bottom of the line's dominant-size glyphs."""
+    glyphs = [c for c in line if c.bbox is not None]
+    sizes = Counter(round(c.size, 1) for c in glyphs)
+    size = max(sizes, key=lambda s: (sizes[s], s))
+    return median(c.bbox.y1 for c in glyphs if round(c.size, 1) == size and c.bbox is not None)
+
+
 def _tagged(prev: list[LayoutChar], line: list[LayoutChar]) -> bool:
     """Either line carries a marked-content id, i.e. the PDF is tagged."""
     return any(c.mcid is not None for c in (*prev, *line) if c.bbox is not None)
@@ -386,18 +454,51 @@ def _cid_text(text: str) -> str:
     return _CID.sub(lambda m: chr(n) if 32 <= (n := int(m.group(1))) < 127 else "", text)
 
 
+def _font_drops(chars: Sequence[dict[str, Any]]) -> dict[str, float]:
+    """Per font, how far (points per font size) its glyph boxes hang too low.
+
+    pdfminer places a glyph box at baseline + the font descriptor's Descent; TeX symbol fonts
+    (CMSY) declare a Descent near -0.96 em, so "→" sits most of a line below its text line.
+    A font whose usual drop (baseline minus box bottom, in sizes) exceeds MAX_DESCENT is moved
+    up to NORMAL_DESCENT. Rise (superscripts) is kept: the shift is per font, not per glyph.
+    """
+    seen: dict[str, Counter[float]] = {}
+    for ch in chars:
+        m, size = ch.get("matrix"), float(ch.get("size") or 0.0)
+        if not ch.get("upright", True) or not m or size <= 0:
+            continue
+        seen.setdefault(str(ch.get("fontname", "")), Counter())[
+            round((float(m[5]) - float(ch["y0"])) / size, 2)
+        ] += 1
+    drops: dict[str, float] = {}
+    for font, counts in seen.items():
+        descent = counts.most_common(1)[0][0]
+        if descent > MAX_DESCENT:
+            drops[font] = descent - NORMAL_DESCENT
+    return drops
+
+
 def _layout_chars(page: Any, coords: _Coords) -> list[LayoutChar]:
-    return [
-        LayoutChar(
-            text=_cid_text(str(ch["text"])),
-            bbox=coords.obj(ch),
-            font=_SUBSET_PREFIX.sub("", str(ch.get("fontname", ""))),
-            size=float(ch.get("size", 0.0)),
-            upright=bool(ch.get("upright", True)),
-            mcid=ch.get("mcid"),
+    chars = list(page.chars)
+    drops = _font_drops(chars)
+    out: list[LayoutChar] = []
+    for ch in chars:
+        box = coords.obj(ch)
+        drop = drops.get(str(ch.get("fontname", "")))
+        if drop and ch.get("upright", True):
+            up = drop * float(ch.get("size", 0.0))
+            box = BBox(box.x0, box.y0 - up, box.x1, box.y1 - up)
+        out.append(
+            LayoutChar(
+                text=_cid_text(str(ch["text"])),
+                bbox=box,
+                font=_SUBSET_PREFIX.sub("", str(ch.get("fontname", ""))),
+                size=float(ch.get("size", 0.0)),
+                upright=bool(ch.get("upright", True)),
+                mcid=ch.get("mcid"),
+            )
         )
-        for ch in page.chars
-    ]
+    return out
 
 
 def _real_tables(tables: Any, coords: _Coords) -> list[BBox]:
