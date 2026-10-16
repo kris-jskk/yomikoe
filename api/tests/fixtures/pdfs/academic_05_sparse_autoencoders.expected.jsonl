@@ -70,76 +70,69 @@
 {"order": 69, "page": 1, "type": "body", "text": "Residual streams contain accumulated information; attention and MLP outputs characterize component contributions."}
 {"order": 70, "page": 1, "type": "body", "text": "Transcoders instead approximate a component’s input–output map (Dunefsky et al., 2024; Paulo et al., 2025)."}
 {"order": 71, "page": 1, "type": "body", "text": "Layer transfer, shared dictionaries, and routing change training cost and parameter reuse (Ghilardi et al., 2024, 2025; Shi et al., 2025); comparisons still need to establish what structure is preserved across sites."}
-{"order": 72, "page": 2, "type": "heading", "text": "Claim-dependent evidence: choose tests for the claim"}
-{"order": 73, "page": 2, "type": "heading", "text": "Recoverability"}
-{"order": 74, "page": 2, "type": "body", "text": "Reference latent structure; recovery criteria and stated assumptions"}
-{"order": 75, "page": 2, "type": "table", "text": "Semantic interpretability Held-out contrasts; hard negatives; feature discrimination"}
-{"order": 76, "page": 2, "type": "table", "text": "Mechanistic faithfulness Controlled interventions; reconstruction controls; natural-pathway evidence"}
-{"order": 77, "page": 2, "type": "heading", "text": "Behavioral utility"}
-{"order": 78, "page": 2, "type": "body", "text": "Matched task baselines; retention and side effects; generalization"}
-{"order": 79, "page": 2, "type": "caption", "text": "Figure 1: Three facets jointly define a comparison (top), interpreted alongside its experimental settings (middle)."}
-{"order": 80, "page": 2, "type": "caption", "text": "Complementary evidence targets assess what the findings support (bottom)."}
-{"order": 81, "page": 2, "type": "caption", "text": "Arrows show how the facets inform study comparison and claim assessment; the tests are illustrative and tailored to the claim."}
-{"order": 82, "page": 2, "type": "body", "text": "Within a site, the question is how that structure should be represented."}
-{"order": 83, "page": 2, "type": "body", "text": "Splitting distributes a concept across latents, while absorption allows a specialized latent to carry a broader property (Chanin et al., 2025); neither supports equating an inactive coordinate with absent information."}
-{"order": 84, "page": 2, "type": "body", "text": "Subspace (Engels et al., 2025; Dalili and Mahdavi, 2026) and manifold approaches (Bhalla et al., 2026a) model structure beyond individual directions."}
-{"order": 85, "page": 2, "type": "body", "text": "Nested scales (Bussmann et al., 2025), parent–child gates (Muchane et al., 2025), and Kronecker factorization (Kurochkin et al., 2025) impose different forms of organization across features."}
-{"order": 86, "page": 2, "type": "body", "text": "Temporal smoothness (Bhalla et al., 2026b) and predictablecontext/novelty separation (Lubana et al., 2026) instead organize variation over sequences."}
-{"order": 87, "page": 2, "type": "body", "text": "These choices change the candidate unit of analysis: their NLP value depends on whether the resulting directions, groups, or temporal features capture the distinction under study."}
-{"order": 88, "page": 2, "type": "heading", "text": "3.2 Allocating sparse capacity"}
-{"order": 89, "page": 2, "type": "body", "text": "Once the target is specified, allocation determines which features can participate in each reconstruction."}
-{"order": 90, "page": 2, "type": "body", "text": "An ℓ1 penalty encourages sparsity but also shrinks amplitudes."}
-{"order": 91, "page": 2, "type": "body", "text": "Gated SAEs separate selection from magnitude estimation, while JumpReLU learns activation thresholds (Rajamanoharan et al., 2024a,b)."}
-{"order": 92, "page": 2, "type": "body", "text": "TopK fixes the number of retained coordinates per input (Gao et al., 2025); Batch- TopK distributes a budget across a batch and estimates an inference-time threshold (Bussmann et al., 2024)."}
-{"order": 93, "page": 2, "type": "body", "text": "Top-AFA selects counts through a quasiorthogonality approximation (Lee et al., 2025), AdaptiveK uses a learned complexity signal (Yao et al., 2026), and Group Bias Adaptation (GBA) targets activation-frequency coverage (Chen et al., 2026b)."}
-{"order": 94, "page": 2, "type": "body", "text": "These allocation rules make different assumptions about inputs, geometry, and feature frequency."}
-{"order": 95, "page": 2, "type": "body", "text": "The results show why allocation cannot be ranked by reconstruction alone."}
-{"order": 96, "page": 2, "type": "body", "text": "BatchTopK improves reconstruction over TopK, but its Gemma- 2-2B comparison with JumpReLU is mixed for downstream cross-entropy degradation (Bussmann et al., 2024)."}
-{"order": 97, "page": 2, "type": "body", "text": "In GBA’s variable-sparsity synthetic experiment, TopK recovery falls from 98.4% at K = 20 to 23.4% at K = 50; full versus misspecified frequency coverage gives GBA 100% versus 3.9% recovery (Chen et al., 2026b)."}
-{"order": 98, "page": 2, "type": "body", "text": "These rates use alignment threshold 0.9 and 128 generating features."}
-{"order": 99, "page": 2, "type": "body", "text": "They demonstrate sensitivity to allocation and coverage assumptions under known ground truth, rather than an NLP ranking."}
-{"order": 100, "page": 2, "type": "body", "text": "Comparisons should match average sparsity, data, and insertion protocol; decoder normalization must also be recorded because it changes coefficient scales (Appendix C)."}
-{"order": 101, "page": 2, "type": "heading", "text": "3.3 Separating coverage from inference error"}
-{"order": 102, "page": 2, "type": "body", "text": "Even a suitable representation and budget cannot resolve every failure."}
-{"order": 103, "page": 2, "type": "body", "text": "Specialized sampling and tilted risk improve access to rare concepts (Muhamed et al., 2025b), changing the training distribution and emphasis of the objective."}
-{"order": 104, "page": 2, "type": "body", "text": "Weighted SAEs analyze recovery and reweighting under an idealized tied-weight model (Cui et al., 2026); those assumptions delimit the result’s applicability to languagemodel activations."}
-{"order": 105, "page": 2, "type": "body", "text": "Locally amortized inference addresses a different limitation: a shared encoder can leave an optimization gap relative to per-input sparse coding (Sun et al., 2026)."}
-{"order": 106, "page": 2, "type": "body", "text": "Improving that approximation does not establish that the reference codes are the intended linguistic features."}
-{"order": 107, "page": 2, "type": "body", "text": "Thus data coverage, the learning objective, and encoding accuracy require separate comparisons."}
-{"order": 108, "page": 3, "type": "body", "text": "Answer to RQ1."}
-{"order": 109, "page": 3, "type": "body", "text": "Recoverability has separable bottlenecks: the representation and its geometry, sparse allocation, training coverage, and inference."}
-{"order": 110, "page": 3, "type": "body", "text": "The evidence supports diagnosing the suspected bottleneck while matching the remaining conditions."}
-{"order": 111, "page": 3, "type": "body", "text": "Reconstruction, recovery against a specified reference, and behavioral preservation should remain separate endpoints."}
-{"order": 112, "page": 3, "type": "body", "text": "Technical comparisons and assumptions are detailed in Appendix C."}
-{"order": 113, "page": 3, "type": "heading", "text": "4 From Features to Explanations and Mechanisms"}
-{"order": 114, "page": 3, "type": "body", "text": "Recovering sparse features leaves their explanatory role unresolved."}
-{"order": 115, "page": 3, "type": "body", "text": "RQ2 asks what distinguishes a meaningful or useful feature from a faithful account of model computation."}
-{"order": 116, "page": 3, "type": "body", "text": "A feature may predict sentiment, support sentiment steering, or mediate the model’s own sentiment decision; these claims require different tests."}
-{"order": 117, "page": 3, "type": "body", "text": "Table 1 organizes support for a specified claim and evaluation setting."}
-{"order": 118, "page": 3, "type": "body", "text": "Appendix D develops the assessment rules through worked claims and a causal counterexample."}
-{"order": 119, "page": 3, "type": "heading", "text": "4.1 Testing the feature’s meaning"}
-{"order": 120, "page": 3, "type": "body", "text": "A feature description is a hypothesis about its behavior."}
-{"order": 121, "page": 3, "type": "body", "text": "Input-oriented descriptions predict what elicits activation; output-oriented descriptions predict contributions to generation (Gur-Arieh et al., 2025)."}
-{"order": 122, "page": 3, "type": "body", "text": "Automated explanation (Paulo et al., 2024), agentic testing (Han et al., 2026), and counterexample-guided revision (Ma et al., 2025) make these hypotheses testable on held-out positives and hard negatives."}
-{"order": 123, "page": 3, "type": "body", "text": "The critical question is whether the description discriminates the intended property from alternatives."}
-{"order": 124, "page": 3, "type": "body", "text": "Descriptive collision tests whether one explanation also fits unrelated features (McCann, 2026); contrastive stories, semantic/functional neighborhoods, and conceptseparability tests examine complementary aspects of specificity (Gulko et al., 2025; Mercorio et al., 2025; Fereidouni et al., 2026; Härle et al., 2025)."}
-{"order": 125, "page": 3, "type": "body", "text": "The controls must preserve what the claim says should remain invariant."}
-{"order": 126, "page": 3, "type": "body", "text": "A grammatical feature should track the specified contrast across appropriate lexical controls; a lexical feature need not survive word substitution."}
-{"order": 127, "page": 3, "type": "body", "text": "Adversarial inputs test the limits of a description (Li et al., 2026a), while randomized SAE components and randomized host models challenge different sources of apparent interpretability (Korznikov et al., 2026; Heap et al., 2026)."}
-{"order": 128, "page": 3, "type": "body", "text": "In the latter comparison, similar aggregate scores in several tested settings show that those metrics need not distinguish learned computations from structure present without training (Heap et al., 2026)."}
-{"order": 129, "page": 3, "type": "body", "text": "Cross-run consistency asks whether features recur across learned dictionaries (Song et al., 2026); recurrence alone does not validate their meaning."}
-{"order": 130, "page": 3, "type": "heading", "text": "4.2 Testing predictive and causal effects"}
-{"order": 131, "page": 3, "type": "body", "text": "A useful predictor need not identify a variable the source model uses."}
-{"order": 132, "page": 3, "type": "body", "text": "For a known target, SAE probes should be compared with supervised probes on the original activations, given matched information (Kantamneni et al., 2025; Makelov et al., 2025)."}
-{"order": 133, "page": 3, "type": "body", "text": "For control, direct activation directions provide an alternative (Gurgurov et al., 2026)."}
-{"order": 134, "page": 3, "type": "body", "text": "These comparisons test the benefit of the SAE representation for the chosen objective."}
-{"order": 135, "page": 3, "type": "body", "text": "A reusable feature vocabulary can still support exploratory discovery beyond a predefined prediction task (Peng et al., 2025)."}
-{"order": 136, "page": 3, "type": "body", "text": "Interventions test what changes when a feature is edited."}
-{"order": 137, "page": 3, "type": "body", "text": "Their effects must be separated from damage introduced by reconstruction."}
-{"order": 138, "page": 3, "type": "body", "text": "With error e = h −(b + Dz), an error-preserving edit is"}
-{"order": 139, "page": 3, "type": "equation", "text": "h′ = b + Dz′ + e = h + D(z′ −z)."}
-{"order": 140, "page": 3, "type": "equation", "text": "(2)"}
-{"order": 141, "page": 3, "type": "body", "text": "Replacing h with b + Dz′ also removes e, so the measured effect combines the feature edit with reconstruction error."}
-{"order": 142, "page": 3, "type": "body", "text": "Retaining e isolates the decoded change but does not ensure that the edited activation lies within the model’s natural distribution."}
-{"order": 143, "page": 3, "type": "body", "text": "Null edits, matched-magnitude controls, naturally occurring replacement values, and off-target measurements test distinct alternatives."}
-{"order": 144, "page": 3, "type": "body", "text": "A controlled effect supports a causal claim about the manipulation; explaining the unmodified computation requires further evidence."}
+{"order": 72, "page": 2, "type": "caption", "text": "Figure 1: Three facets jointly define a comparison (top), interpreted alongside its experimental settings (middle)."}
+{"order": 73, "page": 2, "type": "caption", "text": "Complementary evidence targets assess what the findings support (bottom)."}
+{"order": 74, "page": 2, "type": "caption", "text": "Arrows show how the facets inform study comparison and claim assessment; the tests are illustrative and tailored to the claim."}
+{"order": 75, "page": 2, "type": "body", "text": "Within a site, the question is how that structure should be represented."}
+{"order": 76, "page": 2, "type": "body", "text": "Splitting distributes a concept across latents, while absorption allows a specialized latent to carry a broader property (Chanin et al., 2025); neither supports equating an inactive coordinate with absent information."}
+{"order": 77, "page": 2, "type": "body", "text": "Subspace (Engels et al., 2025; Dalili and Mahdavi, 2026) and manifold approaches (Bhalla et al., 2026a) model structure beyond individual directions."}
+{"order": 78, "page": 2, "type": "body", "text": "Nested scales (Bussmann et al., 2025), parent–child gates (Muchane et al., 2025), and Kronecker factorization (Kurochkin et al., 2025) impose different forms of organization across features."}
+{"order": 79, "page": 2, "type": "body", "text": "Temporal smoothness (Bhalla et al., 2026b) and predictablecontext/novelty separation (Lubana et al., 2026) instead organize variation over sequences."}
+{"order": 80, "page": 2, "type": "body", "text": "These choices change the candidate unit of analysis: their NLP value depends on whether the resulting directions, groups, or temporal features capture the distinction under study."}
+{"order": 81, "page": 2, "type": "heading", "text": "3.2 Allocating sparse capacity"}
+{"order": 82, "page": 2, "type": "body", "text": "Once the target is specified, allocation determines which features can participate in each reconstruction."}
+{"order": 83, "page": 2, "type": "body", "text": "An ℓ1 penalty encourages sparsity but also shrinks amplitudes."}
+{"order": 84, "page": 2, "type": "body", "text": "Gated SAEs separate selection from magnitude estimation, while JumpReLU learns activation thresholds (Rajamanoharan et al., 2024a,b)."}
+{"order": 85, "page": 2, "type": "body", "text": "TopK fixes the number of retained coordinates per input (Gao et al., 2025); Batch- TopK distributes a budget across a batch and estimates an inference-time threshold (Bussmann et al., 2024)."}
+{"order": 86, "page": 2, "type": "body", "text": "Top-AFA selects counts through a quasiorthogonality approximation (Lee et al., 2025), AdaptiveK uses a learned complexity signal (Yao et al., 2026), and Group Bias Adaptation (GBA) targets activation-frequency coverage (Chen et al., 2026b)."}
+{"order": 87, "page": 2, "type": "body", "text": "These allocation rules make different assumptions about inputs, geometry, and feature frequency."}
+{"order": 88, "page": 2, "type": "body", "text": "The results show why allocation cannot be ranked by reconstruction alone."}
+{"order": 89, "page": 2, "type": "body", "text": "BatchTopK improves reconstruction over TopK, but its Gemma- 2-2B comparison with JumpReLU is mixed for downstream cross-entropy degradation (Bussmann et al., 2024)."}
+{"order": 90, "page": 2, "type": "body", "text": "In GBA’s variable-sparsity synthetic experiment, TopK recovery falls from 98.4% at K = 20 to 23.4% at K = 50; full versus misspecified frequency coverage gives GBA 100% versus 3.9% recovery (Chen et al., 2026b)."}
+{"order": 91, "page": 2, "type": "body", "text": "These rates use alignment threshold 0.9 and 128 generating features."}
+{"order": 92, "page": 2, "type": "body", "text": "They demonstrate sensitivity to allocation and coverage assumptions under known ground truth, rather than an NLP ranking."}
+{"order": 93, "page": 2, "type": "body", "text": "Comparisons should match average sparsity, data, and insertion protocol; decoder normalization must also be recorded because it changes coefficient scales (Appendix C)."}
+{"order": 94, "page": 2, "type": "heading", "text": "3.3 Separating coverage from inference error"}
+{"order": 95, "page": 2, "type": "body", "text": "Even a suitable representation and budget cannot resolve every failure."}
+{"order": 96, "page": 2, "type": "body", "text": "Specialized sampling and tilted risk improve access to rare concepts (Muhamed et al., 2025b), changing the training distribution and emphasis of the objective."}
+{"order": 97, "page": 2, "type": "body", "text": "Weighted SAEs analyze recovery and reweighting under an idealized tied-weight model (Cui et al., 2026); those assumptions delimit the result’s applicability to languagemodel activations."}
+{"order": 98, "page": 2, "type": "body", "text": "Locally amortized inference addresses a different limitation: a shared encoder can leave an optimization gap relative to per-input sparse coding (Sun et al., 2026)."}
+{"order": 99, "page": 2, "type": "body", "text": "Improving that approximation does not establish that the reference codes are the intended linguistic features."}
+{"order": 100, "page": 2, "type": "body", "text": "Thus data coverage, the learning objective, and encoding accuracy require separate comparisons."}
+{"order": 101, "page": 3, "type": "body", "text": "Answer to RQ1."}
+{"order": 102, "page": 3, "type": "body", "text": "Recoverability has separable bottlenecks: the representation and its geometry, sparse allocation, training coverage, and inference."}
+{"order": 103, "page": 3, "type": "body", "text": "The evidence supports diagnosing the suspected bottleneck while matching the remaining conditions."}
+{"order": 104, "page": 3, "type": "body", "text": "Reconstruction, recovery against a specified reference, and behavioral preservation should remain separate endpoints."}
+{"order": 105, "page": 3, "type": "body", "text": "Technical comparisons and assumptions are detailed in Appendix C."}
+{"order": 106, "page": 3, "type": "heading", "text": "4 From Features to Explanations and Mechanisms"}
+{"order": 107, "page": 3, "type": "body", "text": "Recovering sparse features leaves their explanatory role unresolved."}
+{"order": 108, "page": 3, "type": "body", "text": "RQ2 asks what distinguishes a meaningful or useful feature from a faithful account of model computation."}
+{"order": 109, "page": 3, "type": "body", "text": "A feature may predict sentiment, support sentiment steering, or mediate the model’s own sentiment decision; these claims require different tests."}
+{"order": 110, "page": 3, "type": "body", "text": "Table 1 organizes support for a specified claim and evaluation setting."}
+{"order": 111, "page": 3, "type": "body", "text": "Appendix D develops the assessment rules through worked claims and a causal counterexample."}
+{"order": 112, "page": 3, "type": "heading", "text": "4.1 Testing the feature’s meaning"}
+{"order": 113, "page": 3, "type": "body", "text": "A feature description is a hypothesis about its behavior."}
+{"order": 114, "page": 3, "type": "body", "text": "Input-oriented descriptions predict what elicits activation; output-oriented descriptions predict contributions to generation (Gur-Arieh et al., 2025)."}
+{"order": 115, "page": 3, "type": "body", "text": "Automated explanation (Paulo et al., 2024), agentic testing (Han et al., 2026), and counterexample-guided revision (Ma et al., 2025) make these hypotheses testable on held-out positives and hard negatives."}
+{"order": 116, "page": 3, "type": "body", "text": "The critical question is whether the description discriminates the intended property from alternatives."}
+{"order": 117, "page": 3, "type": "body", "text": "Descriptive collision tests whether one explanation also fits unrelated features (McCann, 2026); contrastive stories, semantic/functional neighborhoods, and conceptseparability tests examine complementary aspects of specificity (Gulko et al., 2025; Mercorio et al., 2025; Fereidouni et al., 2026; Härle et al., 2025)."}
+{"order": 118, "page": 3, "type": "body", "text": "The controls must preserve what the claim says should remain invariant."}
+{"order": 119, "page": 3, "type": "body", "text": "A grammatical feature should track the specified contrast across appropriate lexical controls; a lexical feature need not survive word substitution."}
+{"order": 120, "page": 3, "type": "body", "text": "Adversarial inputs test the limits of a description (Li et al., 2026a), while randomized SAE components and randomized host models challenge different sources of apparent interpretability (Korznikov et al., 2026; Heap et al., 2026)."}
+{"order": 121, "page": 3, "type": "body", "text": "In the latter comparison, similar aggregate scores in several tested settings show that those metrics need not distinguish learned computations from structure present without training (Heap et al., 2026)."}
+{"order": 122, "page": 3, "type": "body", "text": "Cross-run consistency asks whether features recur across learned dictionaries (Song et al., 2026); recurrence alone does not validate their meaning."}
+{"order": 123, "page": 3, "type": "heading", "text": "4.2 Testing predictive and causal effects"}
+{"order": 124, "page": 3, "type": "body", "text": "A useful predictor need not identify a variable the source model uses."}
+{"order": 125, "page": 3, "type": "body", "text": "For a known target, SAE probes should be compared with supervised probes on the original activations, given matched information (Kantamneni et al., 2025; Makelov et al., 2025)."}
+{"order": 126, "page": 3, "type": "body", "text": "For control, direct activation directions provide an alternative (Gurgurov et al., 2026)."}
+{"order": 127, "page": 3, "type": "body", "text": "These comparisons test the benefit of the SAE representation for the chosen objective."}
+{"order": 128, "page": 3, "type": "body", "text": "A reusable feature vocabulary can still support exploratory discovery beyond a predefined prediction task (Peng et al., 2025)."}
+{"order": 129, "page": 3, "type": "body", "text": "Interventions test what changes when a feature is edited."}
+{"order": 130, "page": 3, "type": "body", "text": "Their effects must be separated from damage introduced by reconstruction."}
+{"order": 131, "page": 3, "type": "body", "text": "With error e = h −(b + Dz), an error-preserving edit is"}
+{"order": 132, "page": 3, "type": "equation", "text": "h′ = b + Dz′ + e = h + D(z′ −z)."}
+{"order": 133, "page": 3, "type": "equation", "text": "(2)"}
+{"order": 134, "page": 3, "type": "body", "text": "Replacing h with b + Dz′ also removes e, so the measured effect combines the feature edit with reconstruction error."}
+{"order": 135, "page": 3, "type": "body", "text": "Retaining e isolates the decoded change but does not ensure that the edited activation lies within the model’s natural distribution."}
+{"order": 136, "page": 3, "type": "body", "text": "Null edits, matched-magnitude controls, naturally occurring replacement values, and off-target measurements test distinct alternatives."}
+{"order": 137, "page": 3, "type": "body", "text": "A controlled effect supports a causal claim about the manipulation; explaining the unmodified computation requires further evidence."}
