@@ -26,7 +26,9 @@ class Line:
     # property text -> "".join(s.text for s in spans)
 
 BlockType = Literal["heading", "body", "caption", "footnote", "header", "footer",
-                    "table", "equation", "list", "image", "noise", "figure"]
+                    "table", "equation", "list", "image", "noise", "figure", "toc"]
+# "toc" (2026-10-16, from a user PDF): a "Contents" heading and the entry blocks that follow it, across
+# pages, while they look like entries (leader dots, trailing page numbers). Never read; dropped by order_page.
 # "figure" (D12, 2026-10-16): text whose raw blocks lie >=80% inside a figure region (image bbox or
 # union of vector drawings covering 2-80% of the page). Never read; dropped by order_page.
 # "noise" (added after ground-truth review): rotated margin stamps (arXiv, NIST DOI), email-only
