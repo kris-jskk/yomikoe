@@ -195,3 +195,14 @@ assert score >= 0.95 per PDF and mean >= 0.97. Class `scanned` is skipped when
 `order.py` drops `figure` and `noise`. `merge.py` joins inline-math fragments (see
 `_agent/specs/m1-ground-truth-rules.md`, amendment rule 2) into the host sentence whether or not
 extraction order had split the chain.
+
+## Amendment 2026-10-16 (D13): extractor is pdfplumber + pypdfium2
+
+PyMuPDF (AGPL-3.0 / commercial) is removed. `extract.py` opens the PDF with `pdfplumber`, reads
+characters (font name, size, upright flag, bbox) and groups them itself into lines and blocks in
+content-stream order (`group_lines`, `group_blocks`); `page_from_dict` is replaced by
+`page_from_layout(...)`. Coordinates are converted to top-left origin so `BBox` semantics are
+unchanged. Images from `page.images`; drawings for figure regions from `page.rects`, `page.curves`,
+`page.lines`; tables from `page.find_tables()` plus a geometric detector for tables without ruling
+lines (round 3). Rendering for OCR uses `pypdfium2`; `ocr_page(pdf_path, number)`. Superscripts stay
+inside lines as `Span.superscript` spans. Every other stage keeps its contract.
