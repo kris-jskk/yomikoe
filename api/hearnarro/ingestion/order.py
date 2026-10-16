@@ -209,14 +209,19 @@ def attach_inline(blocks: list[Block]) -> list[Block]:
 def order_page(
     page: Page, *, gap_frac: float = GUTTER_FRAC, full_width_frac: float = 0.60
 ) -> list[Block]:
-    """Readable blocks of one page in reading order, footnotes last."""
+    """Readable blocks of one page in reading order: lead blocks (stage 2's folded vertical
+    titles) first by top y, then the columns, footnotes last."""
     readable = [b for b in page.blocks if b.type in READ_TYPES and b.text.strip()]
+    leads = sorted((b for b in readable if b.lead), key=lambda b: b.bbox.y0)
+    readable = [b for b in readable if not b.lead]
     footnotes = [b for b in page.blocks if b.type == "footnote"]
     _, split_x = detect_columns(
         readable, page.width, gap_frac=gap_frac, full_width_frac=full_width_frac
     )
-    return attach_inline(_linearize(readable, split_x, page.width, full_width_frac)) + _linearize(
-        footnotes, split_x, page.width, full_width_frac
+    return (
+        leads
+        + attach_inline(_linearize(readable, split_x, page.width, full_width_frac))
+        + _linearize(footnotes, split_x, page.width, full_width_frac)
     )
 
 

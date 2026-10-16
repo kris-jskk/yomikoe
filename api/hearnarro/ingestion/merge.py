@@ -12,6 +12,12 @@ TERMINAL_PUNCT = '.!?:;"”’'
 # Non-body types that end a join candidate: a new section, a list or a display equation
 # interrupts the sentence. Other non-body types (footnote, caption, table, ...) are floats.
 JOIN_BLOCKERS = {"heading", "list", "equation"}
+PARA_JOIN_GAP = 1.0  # same-page join: B starts at most this many of A's font sizes below A
+# ... and the join is on only for documents where stage 1 split paragraphs systematically:
+# at least PARA_JOIN_MIN_COUNT candidate pairs making up PARA_JOIN_MIN_SHARE of the body
+# blocks (the user book: 350 pairs, 0.23; golden fixtures at most 8 pairs, 0.13; results 195).
+PARA_JOIN_MIN_COUNT = 10
+PARA_JOIN_MIN_SHARE = 0.15
 FLOAT_SIZE_RATIO = 0.85  # body text this much smaller than the open paragraph is a label
 EMAIL_TOKEN_RE = re.compile(
     r"\{[^}]*\}\s*@[\w-]+(?:\.[\w-]+)+|[\w.+-]+(?:,\s?[\w.+-]+)*@[\w-]+(?:\.[\w-]+)+"
@@ -70,6 +76,50 @@ def _continues(prev_text: str, next_text: str, page_break: bool) -> bool:
     return nxt[0].islower() or (page_break and prev[-1] not in TERMINAL_PUNCT)
 
 
+PARA_TERMINAL = TERMINAL_PUNCT + ")"
+OPENERS = "([{“‘\"'"
+
+
+def _starts_lower(text: str) -> bool:
+    """Starts with a lowercase letter, or an opening bracket/quote then a lowercase letter."""
+    if text[:1].islower():
+        return True
+    return len(text) > 1 and text[0] in OPENERS and text[1].islower()
+
+
+def _continues_paragraph(prev_text: str, next_text: str) -> bool:
+    """Same page, no flow break: stage 1 split a paragraph (found on a user book whose
+    justified lines start 0.5-2 pt apart, which UNTAGGED_INDENT_MAX reads as new blocks).
+    A ends with a line-end hyphen, or without terminal punctuation, and B starts lowercase."""
+    prev = prev_text.rstrip()
+    nxt = next_text.lstrip()
+    if not prev or not nxt or not _starts_lower(nxt):
+        return False
+    return prev.endswith((*LINE_END_HYPHENS, SOFT_HYPHEN)) or prev[-1] not in PARA_TERMINAL
+
+
+def _same_page_pair(prev: Block, prev_text: str, block: Block, text: str) -> bool:
+    """B sits directly under body block A on the same page and continues its paragraph."""
+    return (
+        block.page == prev.page
+        and not _is_flow_break(prev, block)
+        and block.bbox.y0 - prev.bbox.y1 <= PARA_JOIN_GAP * _size(prev)
+        and _continues_paragraph(prev_text, text)
+    )
+
+
+def _paragraph_joins_on(blocks: list[Block]) -> bool:
+    """Stage 1 split paragraphs systematically in this document (PARA_JOIN_MIN_*)."""
+    body = [b for b in blocks if b.type == "body" and not b.inline]
+    texts = [merge_lines([ln.text for ln in b.lines]) for b in body]
+    pairs = sum(
+        1
+        for i in range(1, len(body))
+        if _same_page_pair(body[i - 1], texts[i - 1], body[i], texts[i])
+    )
+    return pairs >= PARA_JOIN_MIN_COUNT and pairs >= PARA_JOIN_MIN_SHARE * len(body)
+
+
 def _first_sentence(text: str) -> tuple[str, str]:
     """Split ``text`` after its first sentence (pysbd, as stage 5 will split it)."""
     spans = _segmenter().segment(text)
@@ -91,13 +141,18 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
     previous one). Body block B joins the last body block A when only floats (caption,
     table, footnote, image, and body or heading text in a font smaller than
     FLOAT_SIZE_RATIO x A's, i.e. figure labels) lie between them, never a heading, list or equation, and
-    B starts lowercase, or B is on the next page and A lacks terminal punctuation. When
+    B starts lowercase, or B is on the next page and A lacks terminal punctuation. Without a
+    flow break, body block B joins the body block A directly before it on the same page when
+    B starts within PARA_JOIN_GAP font sizes below A and ``_continues_paragraph`` holds
+    (stage 1 split a paragraph), in documents where that happens systematically
+    (``_paragraph_joins_on``). When
     floats lie between A and B only B's first sentence moves up into A; the rest of B stays
     after the floats. Email-only and boilerplate lines (``is_noise_line``) are dropped, and
     on page 0 before the "Abstract" heading (the author block) email tokens are stripped
     from every line ("AI Singapore, Singapore a,b@x.org" -> "AI Singapore, Singapore").
     """
     in_author_block = True
+    paragraph_joins = _paragraph_joins_on(blocks)
     out: list[LogicalBlock] = []
     candidate: int | None = None  # index in ``out`` of the last body block seen
     last_body: Block | None = None
@@ -126,9 +181,18 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
             if (
                 candidate is not None
                 and last_body is not None
-                and block.page in (last_body.page, last_body.page + 1)
-                and _is_flow_break(last_body, block)
-                and _continues(out[candidate].text, text, block.page != last_body.page)
+                and (
+                    (
+                        block.page in (last_body.page, last_body.page + 1)
+                        and _is_flow_break(last_body, block)
+                        and _continues(out[candidate].text, text, block.page != last_body.page)
+                    )
+                    or (
+                        paragraph_joins
+                        and candidate == len(out) - 1
+                        and _same_page_pair(last_body, out[candidate].text, block, text)
+                    )
+                )
             ):
                 target = out[candidate]
                 head, rest = (text, "") if candidate == len(out) - 1 else _first_sentence(text)

@@ -7,6 +7,7 @@ one transaction; any exception flips it to ``failed`` with the message instead.
 
 from __future__ import annotations
 
+import re
 import sqlite3
 import time
 from pathlib import Path
@@ -26,6 +27,36 @@ def pdf_title(pdf_path: str | Path) -> str | None:
     finally:
         doc.close()
     return title or None
+
+
+FILENAME_TITLE_RE = re.compile(r"\.(?:indd|docx?|pdf|tex|pages|qxd)$", re.IGNORECASE)
+TITLE_HEADING_WORDS = (2, 12)
+
+
+def _filename_like(title: str) -> bool:
+    """A metadata Title that is really a file name ("Author_Book.indd") or a single token."""
+    return bool(FILENAME_TITLE_RE.search(title)) or not any(c.isspace() for c in title)
+
+
+def choose_title(meta_title: str | None, first_heading: str | None, filename: str) -> str:
+    """The document title (found on a user book whose metadata Title is an InDesign file name).
+
+    The PDF metadata Title unless it is missing, blank or filename-like; else the first
+    heading when it has 2-12 words; else the filename stem with "-" and "_" as spaces.
+    """
+    meta = " ".join((meta_title or "").split())
+    if meta and not _filename_like(meta):
+        return meta
+    heading = " ".join((first_heading or "").split())
+    lo, hi = TITLE_HEADING_WORDS
+    if lo <= len(heading.split()) <= hi:
+        return heading
+    stem = re.sub(r"[-_]+", " ", Path(filename).stem).strip()
+    return " ".join(stem.split()) or Path(filename).stem
+
+
+def _first_heading(result: IngestResult) -> str | None:
+    return next((b.text for b in result.blocks if b.type == "heading" and b.text.strip()), None)
 
 
 def _write_result(
@@ -68,10 +99,16 @@ def _write_result(
                 for seg in result.segments
             ],
         )
+        row = conn.execute("SELECT filename FROM documents WHERE id = ?", (document_id,)).fetchone()
+        filename = row[0] if row and row[0] else "document.pdf"
         conn.execute(
             "UPDATE documents SET status = 'ready', fail_reason = NULL, page_count = ?, "
-            "title = COALESCE(?, title) WHERE id = ?",
-            (len(result.pages), title, document_id),
+            "title = ? WHERE id = ?",
+            (
+                len(result.pages),
+                choose_title(title, _first_heading(result), filename),
+                document_id,
+            ),
         )
 
 

@@ -89,6 +89,7 @@ class Block:
     type: BlockType = "body"
     ocr: bool = False  # True when produced by OCR (ING-2)
     inline: bool = False  # set by stage 3: continues the previous block's text line (ING-4)
+    lead: bool = False  # set by stage 2: read first on its page (a folded vertical title)
 
     @property
     def text(self) -> str:

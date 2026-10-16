@@ -14,8 +14,11 @@ import math
 import re
 import unicodedata
 from collections import defaultdict
+from dataclasses import replace
+from itertools import pairwise
+from statistics import median as _median
 
-from hearnarro.ingestion.models import BBox, Block, BlockType, Page
+from hearnarro.ingestion.models import BBox, Block, BlockType, Line, Page
 
 PAGE_NUMBER_RE = re.compile(
     r"^(?:\d+|[ivxlc]+|page\s+(?:\d+|[ivxlc]+)\b.*|\d+\s+of\s+\d+)$", re.IGNORECASE
@@ -74,6 +77,17 @@ EQUATION_PUNCT = set(".,;:!?")
 OPENING_QUOTES = '“"‘«„'
 SENTENCE_END_RE = re.compile(r"[a-z]{2,}[.!?][\"”’)]*(?=\s|$)")
 PULL_QUOTE_MIN_SENTENCES = 2
+# Vertical titles (found on a user book's cover: one rotated letter per line). A single
+# letter (plus optional punctuation) on a cover page is noise; VSTACK_MIN or more such blocks
+# on any page whose x0 lie within VSTACK_X_TOL points, stacked with no gap above
+# VSTACK_SPLIT x their median height, fold into one heading read first on the page. A gap
+# above VSTACK_WORD_GAP x the median letter gap is a word break.
+SINGLE_LETTER_RE = re.compile(r"^[^\W\d_][.,;:!?]?$")
+VSTACK_MIN = 5
+VSTACK_X_TOL = 10.0
+VSTACK_SPLIT = 2.0
+VSTACK_WORD_GAP = 1.5
+VSTACK_TYPES = {"heading", "body", "noise", "footnote", "caption", "list"}
 
 
 def normalize_key(text: str) -> str:
@@ -241,6 +255,26 @@ def _is_punctuation_only(text: str) -> bool:
     return all(unicodedata.category(c).startswith("P") for c in chars)
 
 
+def _lone_letter(block: Block, page: Page) -> bool:
+    """A single rotated letter in a text font with no other block on its text row within three
+    of its heights (an upright drop cap or a maths letter in a cover-page formula is not one)."""
+    if not SINGLE_LETTER_RE.match(" ".join(block.text.split())):
+        return False
+    if any(ln.dir == (1.0, 0.0) for ln in block.lines):
+        return False  # upright: a drop cap or a maths letter, not a rotated title letter
+    if any(_is_math_font(s.font) for ln in block.lines for s in ln.spans):
+        return False
+    reach = 3 * block.bbox.height
+    return not any(
+        o is not block
+        and o.bbox.y0 < block.bbox.y1
+        and block.bbox.y0 < o.bbox.y1
+        and o.bbox.x0 - reach < block.bbox.x1
+        and block.bbox.x0 < o.bbox.x1 + reach
+        for o in page.blocks
+    )
+
+
 def _is_noise_text(block: Block, page: Page) -> bool:
     lines = [" ".join(ln.text.split()) for ln in block.lines if ln.text.strip()]
     if not lines:
@@ -251,6 +285,8 @@ def _is_noise_text(block: Block, page: Page) -> bool:
         return True
     if all(RULE_RE.match(ln) for ln in lines):
         return True
+    if page.number < COVER_PAGES and _lone_letter(block, page):
+        return True  # one letter of a vertical cover title
     tokens = " ".join(lines).split()
     if len(tokens) >= 6 and all(len(t) == 1 and t.isalpha() for t in tokens):
         return True  # letter-spaced banner, e.g. "C O M P U T E R   S E C U R I T Y"
@@ -430,11 +466,65 @@ def _mark_toc(pages: list[Page], median: float) -> None:
     close()
 
 
+def _fold_stack(run: list[Block]) -> None:
+    """Turn the first block of a vertical letter run into the whole title; the rest is noise."""
+    gaps = [b.bbox.y0 - a.bbox.y1 for a, b in pairwise(run)]
+    word_gap = VSTACK_WORD_GAP * max(_median(gaps), 0.1)
+    text = run[0].text.strip()
+    for gap, b in zip(gaps, run[1:], strict=False):
+        text += (" " if gap > word_gap else "") + b.text.strip()
+    spans = [s for b in run for ln in b.lines for s in ln.spans]
+    box = BBox(
+        min(b.bbox.x0 for b in run),
+        min(b.bbox.y0 for b in run),
+        max(b.bbox.x1 for b in run),
+        max(b.bbox.y1 for b in run),
+    )
+    head = max(spans, key=lambda s: s.size)
+    title = run[0]
+    title.lines = [Line(spans=[replace(head, text=text, bbox=box)], bbox=box)]
+    title.bbox = box
+    title.type = "heading"
+    title.lead = True
+    for b in run[1:]:
+        b.type = "noise"
+
+
+def _fold_vertical_titles(page: Page) -> None:
+    """Fold stacks of single-letter blocks (a vertical title) into one heading each."""
+    cands = [
+        b
+        for b in page.blocks
+        if b.type in VSTACK_TYPES and SINGLE_LETTER_RE.match(" ".join(b.text.split()))
+    ]
+    if len(cands) < VSTACK_MIN:
+        return
+    clusters: list[list[Block]] = []
+    for b in sorted(cands, key=lambda b: b.bbox.x0):
+        if clusters and b.bbox.x0 - clusters[-1][0].bbox.x0 <= VSTACK_X_TOL:
+            clusters[-1].append(b)
+        else:
+            clusters.append([b])
+    for cluster in clusters:
+        cluster.sort(key=lambda b: b.bbox.y0)
+        split = VSTACK_SPLIT * _median(b.bbox.height for b in cluster)
+        runs: list[list[Block]] = [[cluster[0]]]
+        for a, b in pairwise(cluster):
+            if b.bbox.y0 - a.bbox.y1 > split:
+                runs.append([b])
+            else:
+                runs[-1].append(b)
+        for run in runs:
+            if len(run) >= VSTACK_MIN:
+                _fold_stack(run)
+
+
 def classify_pages(pages: list[Page]) -> list[Page]:
     """Set block.type in place (first matching rule wins) and return pages.
 
     Figure-internal text (D12) overrides every type but caption. Then cover pull quotes are
-    retyped body and a table of contents is typed toc.
+    retyped body, vertical letter stacks fold into one heading, and a table of contents is
+    typed toc.
     """
     median = body_median_size(pages)
     repeated = repeated_band_texts(pages)
@@ -446,5 +536,6 @@ def classify_pages(pages: list[Page]) -> list[Page]:
                 block.type = "figure"
         if page.number < COVER_PAGES:
             _retype_pull_quotes(page, median)
+        _fold_vertical_titles(page)
     _mark_toc(pages, median)
     return pages

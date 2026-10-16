@@ -256,3 +256,74 @@ def test_ing5_d12_display_equation_stays_separate() -> None:
         ("body", "where x is the input."),
     ]
     assert not eq.inline
+
+
+# --- found on a user book (The Almanack of Naval Ravikant, 2026-10-16): an untagged
+# justified book whose lines start 0.5-2 pt apart, so stage 1 opens a block mid-paragraph ---
+
+
+def _para(index: int, text: str, y0: float, type: str = "body") -> Block:
+    return make_block(0, index, [text], y0=y0, type=type)  # type: ignore[arg-type]
+
+
+@pytest.fixture
+def joins_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Short synthetic documents: lower the document-level gate (PARA_JOIN_MIN_COUNT)."""
+    monkeypatch.setattr("hearnarro.ingestion.merge.PARA_JOIN_MIN_COUNT", 1)
+
+
+@pytest.mark.usefixtures("joins_on")
+def test_ing5_same_page_fragments_join_when_a_is_unpunctuated_and_b_lowercase() -> None:
+    blocks = [
+        _para(0, "They started out reading a set of weakly true things,", 100),
+        _para(1, "and those formed the axioms of their worldview.", 115),
+        _para(2, "When you are reading a book and you are confused, that con-", 150),
+        _para(3, "fusion is similar to the pain in the gym.", 165),
+        _para(4, "The best way to have a foundation", 200),
+        _para(5, "(you may not love this answer) is science.", 215),
+        _para(6, "The best way to have a high-quality foundation (you may not", 250),
+        _para(7, "love this answer), but the trick is science.", 265),
+    ]
+    assert [lb.text for lb in merge_blocks(blocks)] == [
+        (
+            "They started out reading a set of weakly true things, "
+            "and those formed the axioms of their worldview."
+        ),
+        (
+            "When you are reading a book and you are confused, that confusion is similar to "
+            "the pain in the gym."
+        ),
+        "The best way to have a foundation (you may not love this answer) is science.",
+        (
+            "The best way to have a high-quality foundation (you may not love this answer), "
+            "but the trick is science."
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("joins_on")
+def test_ing5_same_page_no_join_after_terminal_punct_uppercase_or_heading() -> None:
+    blocks = [
+        _para(0, "Your foundation is critical.", 100),
+        _para(1, "and this starts lowercase after a full stop.", 115),
+        _para(2, "This line has no full stop", 150),
+        _para(3, "Then an uppercase start is a new paragraph.", 165),
+        _para(4, "A section ends without punctuation", 200),
+        _para(5, "Reading", 215, type="heading"),
+        _para(6, "lowercase after a heading stays apart.", 230),
+    ]
+    assert len(merge_blocks(blocks)) == 7
+
+
+def test_ing5_same_page_joins_only_when_systematic_in_the_document() -> None:
+    """Fewer than PARA_JOIN_MIN_COUNT candidate pairs (or under PARA_JOIN_MIN_SHARE of the body
+    blocks): stage 1's splits are kept, as the golden ground truth expects."""
+    few = [_para(0, "a sentence without an end", 100), _para(1, "continues here.", 115)]
+    assert len(merge_blocks(few)) == 2
+    many: list[Block] = []
+    for i in range(12):
+        many += [
+            _para(2 * i, f"paragraph {i} runs on and on", 100 + 40 * i),
+            _para(2 * i + 1, "and ends on the next line.", 115 + 40 * i),
+        ]
+    assert len(merge_blocks(many)) == 12

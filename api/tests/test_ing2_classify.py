@@ -496,3 +496,48 @@ def test_ing3_cover_title_and_authors_stay_heading() -> None:
     )
     assert _type_of(pages, 0) == "heading"
     assert _type_of(pages, 1) == "heading"
+
+
+# --- found on a user book (The Almanack of Naval Ravikant, 2026-10-16): a vertical cover
+# title set one rotated letter per line ---
+
+
+def _letters(page: int, start: int, word_runs: list[str], y0: float) -> list[Block]:
+    """Single-letter blocks stacked at x0=44: 1.7 pt between letters, 6 pt between words."""
+    out: list[Block] = []
+    y = y0
+    for w, word in enumerate(word_runs):
+        if w:
+            y += 6.0 - 1.7
+        for ch in word:
+            out.append(make_block(page, start + len(out), [ch], x0=44, y0=y, width=11, size=6))
+            y += 7.2 + 1.7
+    return out
+
+
+def test_ing3_single_letter_block_on_cover_page_is_noise() -> None:
+    rotated = make_block(0, 0, ["T"], x0=44, y0=100, width=8, size=12)
+    rotated.lines[0].dir = (0.0, 1.0)
+    upright = make_block(0, 1, ["A"], x0=44, y0=200, width=8, size=12)  # a drop cap
+    pages = classify_pages(_doc(rotated, upright))
+    assert _type_of(pages, 0) == "noise"
+    assert _type_of(pages, 1) != "noise"
+
+
+def test_ing3_vertical_letter_stack_becomes_one_heading_read_first() -> None:
+    from hearnarro.ingestion.order import order_page
+
+    above = make_block(3, 0, ["A blurb line above the title."], x0=100, y0=60, width=200)
+    title = _letters(3, 1, ["THE", "ALMANACK"], y0=160)
+    author = _letters(3, 1 + len(title), ["ERIC", "JORGENSON"], y0=title[-1].bbox.y1 + 20)
+    page = make_page(3, [above, *title, *author, *_filler(3, 40)])
+    classify_pages([page])
+    ordered = [b.text for b in order_page(page)]
+    assert ordered[:3] == ["THE ALMANACK", "ERIC JORGENSON", "A blurb line above the title."]
+    assert sum(1 for b in page.blocks if b.type in READ_TYPES and len(b.text) == 1) == 0
+
+
+def test_ing3_four_stacked_letters_are_not_a_vertical_title() -> None:
+    page = make_page(3, [*_letters(3, 0, ["ABCD"], y0=160), *_filler(3, 10)])
+    classify_pages([page])
+    assert [b.text for b in page.blocks[:4]] == ["A", "B", "C", "D"]

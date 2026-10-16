@@ -281,3 +281,51 @@ def test_ing3_figure_regions_curves_join_nearby_parts_rules_never_seed() -> None
     assert len(regions) == 1
     assert regions[0].x0 == 320 and regions[0].x1 == 473
     assert figure_regions([], [BBox(10, 50, 190, 50.5)], 200, 200) == []
+
+
+# --- found on a user book (The Almanack of Naval Ravikant, 2026-10-16) ---
+
+
+def _tracked(text: str, x: float, gaps: dict[int, float], *, track: float = 1.8) -> list:
+    """Caps 6 pt wide on a 9 pt line, ``track`` pt apart; ``gaps`` overrides the gap after
+    glyph i (a word space)."""
+    out: list[LayoutChar] = []
+    for i, ch in enumerate(text):
+        out.append(LayoutChar(ch, BBox(x, 100, x + 6, 109), "Times", 9))
+        x += 6 + gaps.get(i, track)
+    return out
+
+
+def test_ing2_tracked_caps_line_is_resplit_at_wide_gaps() -> None:
+    """Letter-spaced caps get a virtual space between every glyph (1.8 pt > SPACE_GAP); the
+    line is re-split so only gaps >= 2x the median inter-glyph gap are word breaks."""
+    chars = _tracked("FORMYDAD,", 100, {2: 6.0, 4: 6.0})
+    assert ["".join(c.text for c in ln) for ln in group_lines(chars)] == ["FOR MY DAD,"]
+
+
+def test_ing2_pure_letter_spaced_banner_is_left_for_the_noise_rule() -> None:
+    """Every token a single letter ("C O M P U T E R"): left spaced; stage 2 types it noise."""
+    chars = _tracked("COMPUTERSECURITY", 100, {7: 6.0})
+    assert ["".join(c.text for c in ln) for ln in group_lines(chars)] == [
+        "C O M P U T E R S E C U R I T Y"
+    ]
+
+
+def test_ing2_tracked_caps_kerned_pairs_and_trailing_words() -> None:
+    """A kerned pair ("OT": no virtual space inside) still joins its word; ordinary words after
+    the tracked run keep their spaces."""
+    tracked = _tracked("NOTJUSTRIGHT", 100, {1: 0.5, 2: 6.0, 6: 6.0})
+    x = tracked[-1].bbox.x1 + 6
+    tail = [
+        *_chars("is", x, 100, "Times", 9),
+        *_chars("a", x + 12, 100, "Times", 9),
+        *_chars("product", x + 20, 100, "Times", 9),
+    ]
+    line = "".join(c.text for c in group_lines([*tracked, *tail])[0])
+    assert line == "NOT JUST RIGHT is a product"
+
+
+def test_ing2_short_spaced_line_is_not_resplit() -> None:
+    """Fewer than 6 tokens: left alone (a variable list such as "x y z" stays spaced)."""
+    chars = _tracked("ABCD", 100, {})
+    assert ["".join(c.text for c in ln) for ln in group_lines(chars)] == ["A B C D"]

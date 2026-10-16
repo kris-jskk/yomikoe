@@ -41,6 +41,12 @@ LINE_OVERLAP = 0.3  # min vertical overlap (fraction of the smaller height) to s
 LINE_BACKSTEP = 0.5  # a glyph starting this many sizes left of the previous one ends the line
 OVERSTRIKE = True  # see _continues_line
 LINE_MAX_GAP = 10.0  # ... as does a forward jump wider than this many sizes
+# Tracked (letter-spaced) text, found on a user book's cover and dedication: a line of at least
+# TRACKED_MIN_TOKENS tokens, TRACKED_SHARE of them single letters, keeps a word break only at
+# gaps of TRACKED_WORD_GAP x the median gap between its fragments (see retrack).
+TRACKED_MIN_TOKENS: int | None = 6
+TRACKED_SHARE = 0.7
+TRACKED_WORD_GAP = 2.0
 BLOCK_GAP = 0.5  # max vertical gap between a block and its next line, in font sizes
 BLOCK_SIZE_RATIO = 1.25  # max ratio between line font sizes inside one block
 # MuPDF's text-indent paragraph rule (D13), applied to tagged PDFs only (glyphs carry
@@ -355,6 +361,58 @@ def _tight_after(c: LayoutChar) -> bool:
     return bool(_TIGHT_FONT.match(c.font)) and c.text in _TIGHT_SYMBOLS
 
 
+def _tokens(line: Sequence[LayoutChar]) -> list[list[LayoutChar]]:
+    """Runs of real glyphs between virtual spaces."""
+    out: list[list[LayoutChar]] = [[]]
+    for c in line:
+        if c.bbox is None:
+            if out[-1]:
+                out.append([])
+        else:
+            out[-1].append(c)
+    return [t for t in out if t]
+
+
+def _is_fragment(tok: Sequence[LayoutChar]) -> bool:
+    """A piece of tracked text: one glyph, or a kerned pair of capitals ("OT", "AY")."""
+    text = "".join(c.text for c in tok)
+    return len(text) == 1 or (len(text) == 2 and text.isalpha() and text.isupper())
+
+
+def retrack(line: list[LayoutChar]) -> list[LayoutChar]:
+    """Re-split a letter-spaced (tracked) line: "F O R M Y" -> "FOR MY".
+
+    Applies when the line has at least TRACKED_MIN_TOKENS tokens, TRACKED_SHARE of them single
+    letters but not all (a pure banner such as "C O M P U T E R" stays for stage 2's noise
+    rule), and no maths-font glyph. Tracking puts every glyph gap above SPACE_GAP, so each
+    gets a virtual space; a space between two tracked fragments is kept only when its gap is
+    at least TRACKED_WORD_GAP x the median of such gaps. Other spaces are untouched.
+    """
+    if TRACKED_MIN_TOKENS is None or not line or not line[0].upright:
+        return line
+    toks = _tokens(line)
+    single = sum(1 for t in toks if len(t) == 1 and t[0].text.isalpha())
+    if len(toks) < TRACKED_MIN_TOKENS or single < TRACKED_SHARE * len(toks):
+        return line
+    if single == len(toks) or any(is_math_font(c.font) for t in toks for c in t):
+        return line  # a pure letter-spaced banner stays as it is (stage 2 types it noise)
+    pairs = [
+        (_hspan(b[0])[0] - _hspan(a[-1])[1], a, b)
+        for a, b in itertools.pairwise(toks)
+        if _is_fragment(a) and _is_fragment(b)
+    ]
+    if not pairs:
+        return line
+    limit = TRACKED_WORD_GAP * median(g for g, _, _ in pairs)
+    joined = {id(b) for g, _, b in pairs if g < limit}
+    out: list[LayoutChar] = []
+    for i, t in enumerate(toks):
+        if i and id(t) not in joined:
+            out.append(LayoutChar(" ", None))
+        out.extend(t)
+    return out
+
+
 def group_lines(chars: Sequence[LayoutChar]) -> list[list[LayoutChar]]:
     """Split glyphs (content-stream order, real glyphs only) into lines, inserting virtual
     spaces at word gaps. Pure."""
@@ -390,7 +448,7 @@ def group_lines(chars: Sequence[LayoutChar]) -> list[list[LayoutChar]]:
     for ln in lines:
         while ln and ln[-1].bbox is None:
             ln.pop()
-    return [ln for ln in lines if ln]
+    return [retrack(ln) for ln in lines if ln]
 
 
 def _line_metrics(line: list[LayoutChar]) -> tuple[BBox, float, bool]:

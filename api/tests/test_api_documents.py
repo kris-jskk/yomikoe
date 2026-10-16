@@ -82,7 +82,8 @@ async def test_ing1_upload_returns_202_parsing_then_ready_documents_table(tmp_pa
         assert doc["status"] == "ready", doc
         assert doc["fail_reason"] is None
         assert doc["page_count"] == 1
-        assert doc["title"] == "text"  # no PDF Title metadata -> filename stem
+        # no PDF Title metadata -> the first heading ("Bold heading", 2-12 words)
+        assert doc["title"] == "Bold heading"
         assert doc["filename"] == "text.pdf"
         assert len(doc["sha256"]) == 64
         assert (tmp_path / "pdfs" / f"{doc['sha256']}.pdf").read_bytes() == TEXT_PDF.read_bytes()
@@ -223,3 +224,77 @@ async def test_ing1_missing_document_returns_404(tmp_path: Path) -> None:
     async with client_for(tmp_path) as client:
         assert (await client.get("/documents/999")).status_code == 404
         assert (await client.get("/documents/999/segments")).status_code == 404
+
+
+# --- title choice (found on a user book whose metadata Title is an InDesign file name) ---
+
+
+@pytest.mark.parametrize(
+    ("meta", "heading", "filename", "expected"),
+    [
+        ("The Almanack", "Other Heading Here", "x.pdf", "The Almanack"),
+        (
+            "Eric-Jorgenson_The-Almanack-of-Naval-Ravikant.indd",
+            "THE ALMANACK OF NAVAL RAVIKANT",
+            "book.pdf",
+            "THE ALMANACK OF NAVAL RAVIKANT",
+        ),
+        ("draft.DOCX", "Two Words", "a.pdf", "Two Words"),
+        ("Untitled", "Two Words", "a.pdf", "Two Words"),  # no whitespace: filename-like
+        (None, "Two Words", "a.pdf", "Two Words"),
+        ("  ", None, "my-great_book.pdf", "my great book"),
+        (None, "Introduction", "my_book.pdf", "my book"),  # 1-word heading: too short
+        (None, " ".join(["word"] * 13), "my_book.pdf", "my book"),  # 13 words: too long
+    ],
+)
+def test_ing1_choose_title(
+    meta: str | None, heading: str | None, filename: str, expected: str
+) -> None:
+    from hearnarro.storage.jobs import choose_title
+
+    assert choose_title(meta, heading, filename) == expected
+
+
+def _pdf_with_title(meta_title: str) -> bytes:
+    """A one-page PDF with an Info Title, an 18 pt heading and 10 pt body lines."""
+    lines = ["BT /F1 18 Tf 72 720 Td (A Guide to Listening) Tj ET"]
+    for i in range(12):
+        lines.append(
+            f"BT /F1 10 Tf 72 {690 - 14 * i} Td "
+            "(This is an ordinary line of body text in the main size.) Tj ET"
+        )
+    stream = "\n".join(lines).encode()
+    objs = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
+        ),
+        b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Title (" + meta_title.encode() + b") >>",
+    ]
+    out = bytearray(b"%PDF-1.4\n")
+    offsets = []
+    for n, body in enumerate(objs, 1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % n + body + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1)
+    out += b"".join(b"%010d 00000 n \n" % o for o in offsets)
+    out += b"trailer\n<< /Size %d /Root 1 0 R /Info 6 0 R >>\n" % (len(objs) + 1)
+    out += b"startxref\n%d\n%%%%EOF\n" % xref
+    return bytes(out)
+
+
+async def test_ing1_filename_like_metadata_title_falls_back_to_first_heading(
+    tmp_path: Path,
+) -> None:
+    pdf = tmp_path / "Some-Author_Some-Book.pdf"
+    pdf.write_bytes(_pdf_with_title("Some-Author_Some-Book.indd"))
+    async with client_for(tmp_path / "data") as client:
+        resp = await upload(client, pdf)
+        doc = await wait_settled(client, resp.json()["id"])
+        assert doc["status"] == "ready", doc
+        assert doc["title"] == "A Guide to Listening"
