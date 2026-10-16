@@ -1,6 +1,7 @@
 """Command line entry point (M1).
 
 ``hearnarro dump <pdf> [--jsonl] [--no-ocr]`` prints segments (ING-2..ING-6);
+``hearnarro check <pdf> [--json] [--no-ocr]`` runs the document quality checklist;
 ``hearnarro serve [--data-dir DIR] [--host H] [--port N]`` runs the API (ING-1).
 """
 
@@ -28,6 +29,17 @@ def _dump(pdf: str, *, jsonl: bool, ocr: bool) -> int:
     return 0
 
 
+def _check(pdf: str, *, as_json: bool, ocr: bool) -> int:
+    from hearnarro.quality import check_pdf
+
+    report = check_pdf(pdf, ocr=ocr)
+    if as_json:
+        print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(report.table())
+    return 0 if report.passed else 1
+
+
 def _serve(data_dir: str | None, host: str, port: int) -> int:
     import uvicorn
 
@@ -44,6 +56,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     dump.add_argument("pdf", help="path to the PDF")
     dump.add_argument("--jsonl", action="store_true", help="one JSON object per segment")
     dump.add_argument("--no-ocr", action="store_true", help="skip OCR for pages without text")
+    check = sub.add_parser("check", help="run the document quality checklist on a PDF")
+    check.add_argument("pdf", help="path to the PDF")
+    check.add_argument("--json", action="store_true", help="print the structured result")
+    check.add_argument("--no-ocr", action="store_true", help="skip OCR for pages without text")
     serve = sub.add_parser("serve", help="run the HTTP API")
     serve.add_argument("--data-dir", default=None, help="default: $HEARNARRO_DATA_DIR or ./data")
     serve.add_argument("--host", default="127.0.0.1")
@@ -51,6 +67,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "dump":
         return _dump(args.pdf, jsonl=args.jsonl, ocr=not args.no_ocr)
+    if args.command == "check":
+        return _check(args.pdf, as_json=args.json, ocr=not args.no_ocr)
     if args.command == "serve":
         return _serve(args.data_dir, args.host, args.port)
     parser.error(f"unknown command {args.command}")

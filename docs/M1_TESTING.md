@@ -133,6 +133,39 @@ first 20 segments with their types:
 
 If the server is not running, the script says `cannot reach ...` and exits 2.
 
+## Quality checklist
+
+Run on any PDF (exit code 0 on PASS, 1 on FAIL; `--json` prints the structured result):
+
+```
+cd api
+.venv/bin/hearnarro check path/to/book.pdf          # table
+.venv/bin/hearnarro check path/to/book.pdf --json   # structured
+.venv/bin/python -m pytest tests/test_quality.py tests/test_quality_fixtures.py -q
+```
+
+Code: `api/hearnarro/quality.py`. Each check reports a count, its threshold, PASS/FAIL and up
+to five examples. The 15 text fixtures run in `tests/test_quality_fixtures.py`; known
+fixture findings are pinned per fixture in its `ALLOWED` dict, each with a reason, so a
+higher count fails.
+
+1. `dangling_hyphens`: "inter- national" (hyphen, space, lowercase). Threshold 0.
+2. `ligature_artifacts`: "e!ect", "di#erent". Threshold 0.
+3. `single_letter_segments`: a prose segment that is one letter (split drop cap). Threshold 0.
+   One-digit segments are counted as `chapter_number_segments`, informational.
+4. `tracked_lines`: letter-spaced text ("C H A P T E R"). Threshold 0.
+5. `leader_dots`: ". . . ." or "....". Threshold 0.
+6. `midsentence_breaks`: body segment without a sentence end followed by one starting
+   lowercase. Threshold: ratio to body segments at most 0.01.
+7. `toc_leak`: within 60 segments after "Contents", segments ending in a page number. Threshold 0.
+8. `punctuation_only`: segments with no letter or digit. Threshold 0.
+9. `duplicate_runs`: the same segment twice in a row (12+ chars), or a heading repeated
+   within 20 segments. Threshold 0.
+10. `title_filename_like`: the chosen title looks like a file name. Threshold 0.
+11. `empty_text_document`: a text layer (200+ chars on a page) but no segments. Threshold 0.
+
+Off-page text leaks are not checked: stage 1 drops that text before segments exist.
+
 ## 6. The test suite
 
 ```bash
