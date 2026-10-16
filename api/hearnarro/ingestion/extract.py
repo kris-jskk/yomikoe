@@ -49,6 +49,11 @@ def _span_from_dict(raw: dict[str, Any]) -> Span:
     )
 
 
+def _line_dir(raw: dict[str, Any]) -> tuple[float, float]:
+    d = raw.get("dir", (1.0, 0.0))
+    return (float(d[0]), float(d[1]))
+
+
 def page_from_dict(
     number: int,
     width: float,
@@ -65,7 +70,11 @@ def page_from_dict(
             images.append(BBox(*raw["bbox"]))
             continue
         lines = [
-            Line(spans=[_span_from_dict(s) for s in ln.get("spans", [])], bbox=BBox(*ln["bbox"]))
+            Line(
+                spans=[_span_from_dict(s) for s in ln.get("spans", [])],
+                bbox=BBox(*ln["bbox"]),
+                dir=_line_dir(ln),
+            )
             for ln in raw.get("lines", [])
         ]
         lines = [ln for ln in lines if ln.spans]

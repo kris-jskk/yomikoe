@@ -194,3 +194,69 @@ def test_ing3_list_items() -> None:
 def test_ing3_plain_text_is_body() -> None:
     pages = classify_pages(_doc())
     assert all(b.type == "body" for b in pages[0].blocks)
+
+
+def _rotated(block: Block) -> Block:
+    for ln in block.lines:
+        ln.dir = (0.0, -1.0)
+    return block
+
+
+def test_ing3_rotated_margin_stamp_is_noise_but_rotated_figure_label_is_not() -> None:
+    stamp = _rotated(make_block(0, 0, ["arXiv:2610.00001v1 [cs.CL] 14 Oct 2026"], x0=20, width=20))
+    label = _rotated(make_block(0, 1, ["Accuracy (%)"], x0=300, width=10, y0=200))
+    pages = classify_pages(_doc(stamp, label))
+    assert _type_of(pages, 0) == "noise"
+    assert _type_of(pages, 1) != "noise"
+
+
+def test_ing3_single_page_running_header_in_top_band() -> None:
+    pages = classify_pages(
+        _doc(
+            make_block(0, 0, ["NIST SP 800-207", "ZERO TRUST ARCHITECTURE"], y0=33, size=12),
+            make_block(0, 1, ["Smaller running title"], y0=20, size=8),
+            make_block(0, 2, ["Body text that starts high on the page."], y0=30, size=10),
+        )
+    )
+    assert _type_of(pages, 0) == "header"
+    assert _type_of(pages, 1) == "header"
+    assert _type_of(pages, 2) == "body"
+
+
+@pytest.mark.parametrize("text", ["ii", "PAGE i", "Page iv"])
+def test_ing3_page_number_regex_matches_roman(text: str) -> None:
+    assert PAGE_NUMBER_RE.match(text)
+
+
+@pytest.mark.parametrize(
+    "lines",
+    [
+        ["Preprint."],
+        ["alice@uni.edu, bob@lab.org"],
+        ["https://doi.org/10.6028/NIST.SP.800-207"],
+        ["This publication is available free of charge from:"],
+        ["C  O  M  P  U  T  E  R      S  E  C  U  R  I  T  Y"],
+        ["____________________________"],
+    ],
+)
+def test_ing3_boilerplate_lines_are_noise(lines: list[str]) -> None:
+    assert _type_of(classify_pages(_doc(make_block(0, 0, lines, y0=300))), 0) == "noise"
+
+
+def test_ing3_cover_signature_block_is_noise_only_low_on_cover_pages() -> None:
+    low = make_block(0, 0, ["U.S. Department of Commerce"], y0=650)
+    high = make_block(0, 1, ["Director of research"], y0=300)
+    pages = classify_pages(_doc(low, high))
+    assert _type_of(pages, 0) == "noise"
+    assert _type_of(pages, 1) == "body"
+
+
+def test_ing3_tiny_small_print_block_low_on_page_is_not_a_footnote() -> None:
+    pages = classify_pages(
+        _doc(
+            make_block(0, 0, ["ij"], y0=700, size=7, width=8),
+            make_block(0, 1, ["1 A real footnote text."], y0=720, size=7),
+        )
+    )
+    assert _type_of(pages, 0) != "footnote"
+    assert _type_of(pages, 1) == "footnote"

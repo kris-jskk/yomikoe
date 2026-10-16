@@ -92,3 +92,34 @@ def test_ing4_order_document_concatenates_pages() -> None:
     p1 = make_page(1, [full(0, 100, type="body", page=1)])
     ordered = order_document([p0, p1])
     assert [(b.page, b.index) for b in ordered] == [(0, 1), (0, 0), (1, 0)]
+
+
+def test_ing4_detect_columns_needs_a_gutter_not_just_a_midpoint_gap() -> None:
+    # Right-aligned cover lines: midpoints differ by > 8% of the width but every candidate
+    # gutter is crossed by the wide author block, so this is one column.
+    blocks = [
+        make_block(
+            0, 0, ["Scott Rose Oliver Borchert Advanced Network Division"], x0=305, width=238
+        ),
+        make_block(0, 1, ["Stu Mitchell"], x0=470, width=73, y0=300),
+        make_block(0, 2, ["Department of Homeland Security"], x0=348, width=195, y0=400),
+    ]
+    assert detect_columns(blocks, 612) == (1, None)
+
+
+def test_ing4_detect_columns_ignores_blocks_spanning_the_gutter() -> None:
+    # A narrow figure label spanning both columns (below the full-width threshold) is a
+    # break, not a reason to give up on two columns.
+    span = make_block(0, 4, ["Figure legend spanning both columns"], x0=150, width=300, y0=50)
+    blocks = [col1(0, 100), col1(1, 200), col2(2, 100), col2(3, 200), span]
+    assert detect_columns(blocks, 612) == (2, pytest.approx(306))
+
+
+def test_ing4_order_page_skips_empty_blocks() -> None:
+    blocks = [col1(0, 100), make_block(0, 1, [" "], x0=50, width=20, y0=300)]
+    assert _indices(order_page(make_page(0, blocks))) == [0]
+
+
+def test_ing4_order_page_drops_noise() -> None:
+    blocks = [col1(0, 100), make_block(0, 1, ["arXiv stamp"], x0=10, width=20, type="noise")]
+    assert _indices(order_page(make_page(0, blocks))) == [0]

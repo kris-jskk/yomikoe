@@ -98,3 +98,58 @@ def test_ing5_merge_blocks_does_not_join_non_body() -> None:
     ]
     logical = merge_blocks(blocks)
     assert len(logical) == 2
+
+
+def test_ing5_merge_blocks_joins_sentence_across_column_break() -> None:
+    blocks = [
+        make_block(0, 0, ["The left column ends with a sentence that"], x0=50, width=240, y0=700),
+        make_block(0, 1, ["continues at the top of the right column."], x0=322, width=240, y0=80),
+    ]
+    logical = merge_blocks(blocks)
+    assert [lb.text for lb in logical] == [
+        "The left column ends with a sentence that continues at the top of the right column."
+    ]
+
+
+def test_ing5_merge_blocks_does_not_join_within_a_column() -> None:
+    blocks = [
+        make_block(0, 0, ["A paragraph without a period"], y0=100),
+        make_block(0, 1, ["lowercase block further down the same column."], y0=200),
+    ]
+    assert len(merge_blocks(blocks)) == 2
+
+
+def test_ing5_merge_blocks_moves_only_first_sentence_past_a_float() -> None:
+    blocks = [
+        make_block(0, 0, ["Results show that the"], x0=50, width=240, y0=700),
+        make_block(0, 1, ["Figure 1: A caption."], x0=322, width=240, y0=80, type="caption"),
+        make_block(0, 2, ["tiny"], x0=322, width=40, y0=150, size=5),  # figure label
+        make_block(0, 3, ["method works. A new sentence follows."], x0=322, width=240, y0=200),
+    ]
+    texts = [lb.text for lb in merge_blocks(blocks)]
+    assert texts == [
+        "Results show that the method works.",
+        "Figure 1: A caption.",
+        "tiny",
+        "A new sentence follows.",
+    ]
+
+
+def test_ing5_merge_blocks_drops_email_only_and_boilerplate_lines() -> None:
+    blocks = [make_block(1, 0, ["Jane Doe", "jane@uni.edu", "This publication is available free"])]
+    assert [lb.text for lb in merge_blocks(blocks)] == [
+        "Jane Doe This publication is available free"
+    ]
+    blocks = [make_block(1, 0, ["Jane Doe", "This publication is available free of charge from:"])]
+    assert [lb.text for lb in merge_blocks(blocks)] == ["Jane Doe"]
+
+
+def test_ing5_merge_blocks_strips_emails_in_page0_author_block_only() -> None:
+    blocks = [
+        make_block(0, 0, ["AI Singapore, Singapore a.b,c@aisingapore.org"], y0=100),
+        make_block(0, 1, ["Abstract"], y0=200, type="heading"),
+        make_block(0, 2, ["Write to us at help@example.org for details."], y0=300),
+    ]
+    texts = [lb.text for lb in merge_blocks(blocks)]
+    assert texts[0] == "AI Singapore, Singapore"
+    assert texts[2] == "Write to us at help@example.org for details."

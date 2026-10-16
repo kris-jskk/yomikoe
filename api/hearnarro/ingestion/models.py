@@ -56,6 +56,7 @@ class Span:
 class Line:
     spans: list[Span]
     bbox: BBox
+    dir: tuple[float, float] = (1.0, 0.0)  # PyMuPDF line "dir"; anything else is rotated text
 
     @property
     def text(self) -> str:
@@ -73,6 +74,7 @@ BlockType = Literal[
     "equation",
     "list",
     "image",
+    "noise",  # never read: rotated stamps, email/URL-only lines, cover boilerplate
 ]
 
 

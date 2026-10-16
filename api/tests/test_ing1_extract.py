@@ -123,3 +123,17 @@ def test_ing2_extract_pages_blank_page_without_ocr(tmp_path: Path) -> None:
     assert len(pages) == 1
     assert pages[0].has_text_layer is False
     assert pages[0].blocks == []
+
+
+def test_ing2_page_from_dict_records_line_dir() -> None:
+    line = {"bbox": (10, 100, 22, 500), "spans": [_span("arXiv:1", (10, 100, 22, 500), "T", 9, 0)]}
+    flat = {"bbox": (72, 72, 300, 84), "spans": [_span("Body", (72, 72, 300, 84), "T", 9, 0)]}
+    text_dict = {
+        "blocks": [
+            {"type": 0, "bbox": (10, 100, 22, 500), "lines": [{**line, "dir": (0.0, -1.0)}]},
+            {"type": 0, "bbox": (72, 72, 300, 84), "lines": [flat]},
+        ]
+    }
+    page = page_from_dict(0, 612, 792, text_dict)
+    assert page.blocks[0].lines[0].dir == (0.0, -1.0)
+    assert page.blocks[1].lines[0].dir == (1.0, 0.0)
