@@ -1,0 +1,58 @@
+{"order": 0, "page": 0, "type": "heading", "text": "NIST Special Publication 800-218"}
+{"order": 1, "page": 0, "type": "heading", "text": "Secure Software Development Framework (SSDF) Version 1.1:"}
+{"order": 2, "page": 0, "type": "heading", "text": "Recommendations for Mitigating the Risk of Software Vulnerabilities"}
+{"order": 3, "page": 0, "type": "heading", "text": "Murugiah Souppaya"}
+{"order": 4, "page": 0, "type": "heading", "text": "Karen Scarfone"}
+{"order": 5, "page": 0, "type": "heading", "text": "Donna Dodson"}
+{"order": 6, "page": 1, "type": "heading", "text": "NIST Special Publication 800-218"}
+{"order": 7, "page": 1, "type": "heading", "text": "Secure Software Development Framework (SSDF) Version 1.1:"}
+{"order": 8, "page": 1, "type": "heading", "text": "Recommendations for Mitigating the Risk of Software Vulnerabilities"}
+{"order": 9, "page": 1, "type": "heading", "text": "Murugiah Souppaya Computer Security Division Information Technology Laboratory"}
+{"order": 10, "page": 1, "type": "heading", "text": "Karen Scarfone Scarfone Cybersecurity"}
+{"order": 11, "page": 1, "type": "body", "text": "Clifton, VA"}
+{"order": 12, "page": 1, "type": "heading", "text": "Donna Dodson* * Former NIST employee; all work for this publication was done while at NIST."}
+{"order": 13, "page": 1, "type": "heading", "text": "February 2022"}
+{"order": 14, "page": 2, "type": "heading", "text": "Authority"}
+{"order": 15, "page": 2, "type": "body", "text": "This publication has been developed by NIST in accordance with its statutory responsibilities under the Federal Information Security Modernization Act (FISMA) of 2014, 44 U.S.C. § 3551 et seq."}
+{"order": 16, "page": 2, "type": "body", "text": ", Public Law (P.L.) 113-283."}
+{"order": 17, "page": 2, "type": "body", "text": "NIST is responsible for developing information security standards and guidelines, including minimum requirements for federal information systems, but such standards and guidelines shall not apply to national security systems without the express approval of appropriate federal officials exercising policy authority over such systems."}
+{"order": 18, "page": 2, "type": "body", "text": "This guideline is consistent with the requirements of the Office of Management and Budget (OMB) Circular A-130."}
+{"order": 19, "page": 2, "type": "body", "text": "Nothing in this publication should be taken to contradict the standards and guidelines made mandatory and binding on federal agencies by the Secretary of Commerce under statutory authority."}
+{"order": 20, "page": 2, "type": "body", "text": "Nor should these guidelines be interpreted as altering or superseding the existing authorities of the Secretary of Commerce, Director of the OMB, or any other federal official."}
+{"order": 21, "page": 2, "type": "body", "text": "This publication may be used by nongovernmental organizations on a voluntary basis and is not subject to copyright in the United States."}
+{"order": 22, "page": 2, "type": "body", "text": "Attribution would, however, be appreciated by NIST."}
+{"order": 23, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Special Publication 800-218"}
+{"order": 24, "page": 2, "type": "body", "text": "Natl."}
+{"order": 25, "page": 2, "type": "body", "text": "Inst."}
+{"order": 26, "page": 2, "type": "body", "text": "Stand."}
+{"order": 27, "page": 2, "type": "body", "text": "Technol."}
+{"order": 28, "page": 2, "type": "body", "text": "Spec."}
+{"order": 29, "page": 2, "type": "body", "text": "Publ."}
+{"order": 30, "page": 2, "type": "body", "text": "800-218, 36 pages (February 2022)"}
+{"order": 31, "page": 2, "type": "body", "text": "CODEN: NSPUE2"}
+{"order": 32, "page": 2, "type": "body", "text": "Certain commercial entities, equipment, or materials may be identified in this document in order to describe an experimental procedure or concept adequately."}
+{"order": 33, "page": 2, "type": "body", "text": "Such identification is not intended to imply recommendation or endorsement by NIST, nor is it intended to imply that the entities, materials, or equipment are necessarily the best available for the purpose."}
+{"order": 34, "page": 2, "type": "body", "text": "There may be references in this publication to other publications currently under development by NIST in accordance with its assigned statutory responsibilities."}
+{"order": 35, "page": 2, "type": "body", "text": "The information in this publication, including concepts and methodologies, may be used by federal agencies even before the completion of such companion publications."}
+{"order": 36, "page": 2, "type": "body", "text": "Thus, until each publication is completed, current requirements, guidelines, and procedures, where they exist, remain operative."}
+{"order": 37, "page": 2, "type": "body", "text": "For planning and transition purposes, federal agencies may wish to closely follow the development of these new publications by NIST."}
+{"order": 38, "page": 2, "type": "body", "text": "Organizations are encouraged to review all draft publications during public comment periods and provide feedback to NIST."}
+{"order": 39, "page": 2, "type": "body", "text": "Many NIST cybersecurity publications, other than the ones noted above, are available at https://csrc.nist.gov/publications."}
+{"order": 40, "page": 2, "type": "heading", "text": "Submit comments on this publication to: ssdf@nist.gov"}
+{"order": 41, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Attn: Computer Security Division, Information Technology Laboratory"}
+{"order": 42, "page": 2, "type": "body", "text": "100 Bureau Drive (Mail Stop 8930) Gaithersburg, MD 20899-8930"}
+{"order": 43, "page": 2, "type": "body", "text": "All comments are subject to release under the Freedom of Information Act (FOIA)."}
+{"order": 44, "page": 3, "type": "heading", "text": "Reports on Computer Systems Technology"}
+{"order": 45, "page": 3, "type": "body", "text": "The Information Technology Laboratory (ITL) at the National Institute of Standards and Technology (NIST) promotes the U.S. economy and public welfare by providing technical leadership for the Nation’s measurement and standards infrastructure."}
+{"order": 46, "page": 3, "type": "body", "text": "ITL develops tests, test methods, reference data, proof of concept implementations, and technical analyses to advance the development and productive use of information technology."}
+{"order": 47, "page": 3, "type": "body", "text": "ITL’s responsibilities include the development of management, administrative, technical, and physical standards and guidelines for the cost-effective security and privacy of other than national security-related information in federal information systems."}
+{"order": 48, "page": 3, "type": "body", "text": "The Special Publication 800-series reports on ITL’s research, guidelines, and outreach efforts in information system security, and its collaborative activities with industry, government, and academic organizations."}
+{"order": 49, "page": 3, "type": "heading", "text": "Abstract"}
+{"order": 50, "page": 3, "type": "body", "text": "Few software development life cycle (SDLC) models explicitly address software security in detail, so secure software development practices usually need to be added to each SDLC model to ensure that the software being developed is well-secured."}
+{"order": 51, "page": 3, "type": "body", "text": "This document recommends the Secure Software Development Framework (SSDF) – a core set of high-level secure software development practices that can be integrated into each SDLC implementation."}
+{"order": 52, "page": 3, "type": "body", "text": "Following such practices should help software producers reduce the number of vulnerabilities in released software, reduce the potential impact of the exploitation of undetected or unaddressed vulnerabilities, and address the root causes of vulnerabilities to prevent future recurrences."}
+{"order": 53, "page": 3, "type": "body", "text": "Because the framework provides a common vocabulary for secure software development, software acquirers can also use it to foster communications with suppliers in acquisition processes and other management activities."}
+{"order": 54, "page": 3, "type": "heading", "text": "Keywords"}
+{"order": 55, "page": 3, "type": "body", "text": "secure software development; Secure Software Development Framework (SSDF); secure software development practices; software acquisition; software development; software development life cycle (SDLC); software security."}
+{"order": 56, "page": 3, "type": "heading", "text": "Trademark Information"}
+{"order": 57, "page": 3, "type": "body", "text": "All registered trademarks or trademarks belong to their respective organizations."}

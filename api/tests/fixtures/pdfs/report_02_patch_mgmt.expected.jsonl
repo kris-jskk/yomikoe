@@ -1,0 +1,65 @@
+{"order": 0, "page": 0, "type": "heading", "text": "NIST Special Publication"}
+{"order": 1, "page": 0, "type": "heading", "text": "NIST SP 800-40r4"}
+{"order": 2, "page": 0, "type": "heading", "text": "Guide to Enterprise Patch"}
+{"order": 3, "page": 0, "type": "heading", "text": "Management Planning:"}
+{"order": 4, "page": 0, "type": "heading", "text": "Preventive Maintenance for Technology"}
+{"order": 5, "page": 0, "type": "heading", "text": "Murugiah Souppaya"}
+{"order": 6, "page": 0, "type": "heading", "text": "Karen Scarfone"}
+{"order": 7, "page": 1, "type": "heading", "text": "NIST Special Publication"}
+{"order": 8, "page": 1, "type": "heading", "text": "NIST SP 800-40r4"}
+{"order": 9, "page": 1, "type": "heading", "text": "Guide to Enterprise Patch"}
+{"order": 10, "page": 1, "type": "heading", "text": "Management Planning:"}
+{"order": 11, "page": 1, "type": "heading", "text": "Preventive Maintenance for Technology"}
+{"order": 12, "page": 1, "type": "heading", "text": "Murugiah Souppaya Computer Security Division Information Technology Laboratory"}
+{"order": 13, "page": 1, "type": "heading", "text": "Karen Scarfone Scarfone Cybersecurity"}
+{"order": 14, "page": 1, "type": "body", "text": "Clifton, VA"}
+{"order": 15, "page": 1, "type": "heading", "text": "April 2022"}
+{"order": 16, "page": 2, "type": "heading", "text": "Authority"}
+{"order": 17, "page": 2, "type": "body", "text": "This publication has been developed by NIST in accordance with its statutory responsibilities under the Federal Information Security Modernization Act (FISMA) of 2014, 44 U.S.C. § 3551 et seq."}
+{"order": 18, "page": 2, "type": "body", "text": ", Public Law (P.L.) 113-283."}
+{"order": 19, "page": 2, "type": "body", "text": "NIST is responsible for developing information security standards and guidelines, including minimum requirements for federal information systems, but such standards and guidelines shall not apply to national security systems without the express approval of appropriate federal officials exercising policy authority over such systems."}
+{"order": 20, "page": 2, "type": "body", "text": "This guideline is consistent with the requirements of the Office of Management and Budget (OMB) Circular A-130."}
+{"order": 21, "page": 2, "type": "body", "text": "Nothing in this publication should be taken to contradict the standards and guidelines made mandatory and binding on federal agencies by the Secretary of Commerce under statutory authority."}
+{"order": 22, "page": 2, "type": "body", "text": "Nor should these guidelines be interpreted as altering or superseding the existing authorities of the Secretary of Commerce, Director of the OMB, or any other federal official."}
+{"order": 23, "page": 2, "type": "body", "text": "This publication may be used by nongovernmental organizations on a voluntary basis and is not subject to copyright in the United States."}
+{"order": 24, "page": 2, "type": "body", "text": "Attribution would, however, be appreciated by NIST."}
+{"order": 25, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Special Publication 800-40 Rev. 4"}
+{"order": 26, "page": 2, "type": "body", "text": "Natl."}
+{"order": 27, "page": 2, "type": "body", "text": "Inst."}
+{"order": 28, "page": 2, "type": "body", "text": "Stand."}
+{"order": 29, "page": 2, "type": "body", "text": "Technol."}
+{"order": 30, "page": 2, "type": "body", "text": "Spec."}
+{"order": 31, "page": 2, "type": "body", "text": "Publ."}
+{"order": 32, "page": 2, "type": "body", "text": "800-40r4, 28 pages (April 2022)"}
+{"order": 33, "page": 2, "type": "body", "text": "CODEN: NSPUE2"}
+{"order": 34, "page": 2, "type": "body", "text": "Certain commercial entities, equipment, or materials may be identified in this document in order to describe an experimental procedure or concept adequately."}
+{"order": 35, "page": 2, "type": "body", "text": "Such identification is not intended to imply recommendation or endorsement by NIST, nor is it intended to imply that the entities, materials, or equipment are necessarily the best available for the purpose."}
+{"order": 36, "page": 2, "type": "body", "text": "There may be references in this publication to other publications currently under development by NIST in accordance with its assigned statutory responsibilities."}
+{"order": 37, "page": 2, "type": "body", "text": "The information in this publication, including concepts and methodologies, may be used by federal agencies even before the completion of such companion publications."}
+{"order": 38, "page": 2, "type": "body", "text": "Thus, until each publication is completed, current requirements, guidelines, and procedures, where they exist, remain operative."}
+{"order": 39, "page": 2, "type": "body", "text": "For planning and transition purposes, federal agencies may wish to closely follow the development of these new publications by NIST."}
+{"order": 40, "page": 2, "type": "body", "text": "Organizations are encouraged to review all draft publications during public comment periods and provide feedback to NIST."}
+{"order": 41, "page": 2, "type": "body", "text": "Many NIST cybersecurity publications, other than the ones noted above, are available at https://csrc.nist.gov/publications."}
+{"order": 42, "page": 2, "type": "heading", "text": "Submit comments on this publication to: cyberhygiene@nist.gov"}
+{"order": 43, "page": 2, "type": "body", "text": "National Institute of Standards and Technology Attn: Applied Cybersecurity Division, Information Technology Laboratory"}
+{"order": 44, "page": 2, "type": "body", "text": "100 Bureau Drive (Mail Stop 2000) Gaithersburg, MD 20899-2000"}
+{"order": 45, "page": 2, "type": "body", "text": "All comments are subject to release under the Freedom of Information Act (FOIA)."}
+{"order": 46, "page": 3, "type": "heading", "text": "Reports on Computer Systems Technology"}
+{"order": 47, "page": 3, "type": "body", "text": "The Information Technology Laboratory (ITL) at the National Institute of Standards and Technology (NIST) promotes the U.S. economy and public welfare by providing technical leadership for the Nation’s measurement and standards infrastructure."}
+{"order": 48, "page": 3, "type": "body", "text": "ITL develops tests, test methods, reference data, proof of concept implementations, and technical analyses to advance the development and productive use of information technology."}
+{"order": 49, "page": 3, "type": "body", "text": "ITL’s responsibilities include the development of management, administrative, technical, and physical standards and guidelines for the cost-effective security and privacy of other than national security-related information in federal information systems."}
+{"order": 50, "page": 3, "type": "body", "text": "The Special Publication 800-series reports on ITL’s research, guidelines, and outreach efforts in information system security, and its collaborative activities with industry, government, and academic organizations."}
+{"order": 51, "page": 3, "type": "heading", "text": "Abstract"}
+{"order": 52, "page": 3, "type": "body", "text": "Enterprise patch management is the process of identifying, prioritizing, acquiring, installing, and verifying the installation of patches, updates, and upgrades throughout an organization."}
+{"order": 53, "page": 3, "type": "body", "text": "Patching is more important than ever because of the increasing reliance on technology, but there is often a divide between business/mission owners and security/technology management about the value of patching."}
+{"order": 54, "page": 3, "type": "body", "text": "This publication frames patching as a critical component of preventive maintenance for computing technologies – a cost of doing business, and a necessary part of what organizations need to do in order to achieve their missions."}
+{"order": 55, "page": 3, "type": "body", "text": "This publication also discusses common factors that affect enterprise patch management and recommends creating an enterprise strategy to simplify and operationalize patching while also improving reduction of risk."}
+{"order": 56, "page": 3, "type": "body", "text": "Preventive maintenance through enterprise patch management helps prevent compromises, data breaches, operational disruptions, and other adverse events."}
+{"order": 57, "page": 3, "type": "heading", "text": "Keywords"}
+{"order": 58, "page": 3, "type": "body", "text": "enterprise patch management; patch; risk management; update; upgrade; vulnerability management."}
+{"order": 59, "page": 3, "type": "heading", "text": "Acknowledgments"}
+{"order": 60, "page": 3, "type": "body", "text": "The authors wish to thank their colleagues who reviewed the document and contributed to its technical content, especially Mark Simos from Microsoft, and Jamie Brown, Vincent Gilcreest, and Glen Pendley from Tenable."}
+{"order": 61, "page": 3, "type": "body", "text": "The authors also appreciate the efforts of all the individuals and organizations that provided feedback on the public comment draft, especially BlackBerry, the Cybersecurity & Infrastructure Security Agency (CISA), the National Security Agency (NSA), The SECOND Advisories, Carla Brinker, and Ron Colvin."}
+{"order": 62, "page": 3, "type": "heading", "text": "Audience"}
+{"order": 63, "page": 3, "type": "body", "text": "The primary audience for this publication is chief information officers, chief information security officers, cybersecurity directors and managers, and others who are responsible for managing organizational risk related to the use of software."}
+{"order": 64, "page": 3, "type": "body", "text": "Others with an interest in the topic, including business and mission owners, security engineers and architects, system administrators, and security operations personnel, may find portions of the publication to be informative."}
