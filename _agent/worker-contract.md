@@ -38,6 +38,8 @@ On top of that, evidence works like this:
   or soften existing rows.
 - Edit files the brief does not list under **YOU OWN**.
 - Fork or spawn other agents.
+- Kill, restart or signal any process you did not start in this task (servers on other ports, the
+  user's dev server, other workers' processes). Clean up only by the PID you recorded yourself.
 - Explore. Read the files the brief names. If you need one it did not name, read it and say
   so in the report under "Files read beyond the brief".
 
