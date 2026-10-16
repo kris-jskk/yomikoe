@@ -1,0 +1,173 @@
+{"order": 0, "page": 0, "type": "heading", "text": "Learning Non-Gaussian SEMs with Conditional Risk, and Why the"}
+{"order": 1, "page": 0, "type": "heading", "text": "Direction of Recursion Matters"}
+{"order": 2, "page": 0, "type": "body", "text": "Ujas Shah Panagiota Birmpa Rebecca Morrison University of Colorado Boulder Heriot-Watt University University of Colorado Boulder"}
+{"order": 3, "page": 0, "type": "heading", "text": "Abstract"}
+{"order": 4, "page": 0, "type": "body", "text": "Variance-based methods recover a Gaussian linear structural equation model (SEM) with equal or suitably constrained error variances, either by recursively identifying the source nodes with smallest conditional variance (top-down method) or sink nodes with highest conditional variance (bottomup method)."}
+{"order": 5, "page": 0, "type": "body", "text": "We show that the use of conditional variance is incidental: replacing it with the conditional risk, i.e., the minimal expected loss of linear prediction under the negative log-likelihood of the noise distribution, extends both methods to non-Gaussian noise."}
+{"order": 6, "page": 0, "type": "body", "text": "Existing methods are the least-squares special case."}
+{"order": 7, "page": 0, "type": "body", "text": "This yields two main results."}
+{"order": 8, "page": 0, "type": "body", "text": "First, exploiting the noise distribution improves structure recovery: the matchedloss procedures recover the SEM more accurately than their least-squares counterparts and the LiNGAM methods, which are designed for non-Gaussianity."}
+{"order": 9, "page": 0, "type": "body", "text": "Second, the two methods, interchangeable in the Gaussian setting, separate under non-Gaussian noise: the top-down method is correct for every noise density with finite differential entropy, whereas the bottom-up method requires a regularity condition and can fail without it, for instance under mean-zero exponential or Cauchy noise."}
+{"order": 10, "page": 0, "type": "body", "text": "Simulations confirm both results."}
+{"order": 11, "page": 0, "type": "heading", "text": "1 INTRODUCTION"}
+{"order": 12, "page": 0, "type": "body", "text": "Directed acyclic graphs (DAGs), or Bayesian networks, provide a compact representation of the conditional independence and causal relations among a collection of random variables (Spirtes et al., 2000; Pearl, 2009)."}
+{"order": 13, "page": 0, "type": "body", "text": "Given a random vector X = (X1, . . . , Xd)⊤, its joint distribution can be associated with a DAG G whose nodes correspond to the variables and directed edges encode the dependence of each variable on its parents."}
+{"order": 14, "page": 0, "type": "body", "text": "Equivalently, the vector can be described by a structural equation model (SEM) as a collection of equations of the form:"}
+{"order": 15, "page": 0, "type": "equation", "text": "\u0000"}
+{"order": 16, "page": 0, "type": "equation", "text": "\u0001"}
+{"order": 17, "page": 0, "type": "equation", "text": "Xi = gi"}
+{"order": 18, "page": 0, "type": "equation", "text": "XPA(i), Ni"}
+{"order": 19, "page": 0, "type": "equation", "text": ", i = 1, . . . , d,"}
+{"order": 20, "page": 0, "type": "body", "text": "where PA(i) ⊂{1, . . . , d} \\ {i} indexes the parents of Xi, and Ni is an exogenous noise variable, i.e., a random variable whose generating mechanism is not specified by the causal model."}
+{"order": 21, "page": 0, "type": "body", "text": "Recovering the DAG, or the SEM, that generated the set of observations uncovers the dependence structure among the variables, and, under the causal Markov condition and the assumption of causal sufficiency, carries causal information (Eberhardt, 2017)."}
+{"order": 22, "page": 0, "type": "body", "text": "The SEM identifies which variables directly influence which others, and how the system would respond to interventions (understood as external modifications that fix the value of a variable and propagate through the causal structure to its descendants)."}
+{"order": 23, "page": 0, "type": "body", "text": "Consequently, structure learning has found applications in varied fields such as bioinformatics (Sachs et al., 2005; Shen et al., 2020), ecology (Lefcheck, 2016; Runge et al., 2019), and finance (Sanford and Moosa, 2012; Hyv¨arinen et al., 2010)."}
+{"order": 24, "page": 0, "type": "body", "text": "Learning the graph structure."}
+{"order": 25, "page": 0, "type": "body", "text": "Learning the graph from purely observational data is difficult, for two reasons."}
+{"order": 26, "page": 0, "type": "body", "text": "The first is computational: the number of DAGs grows super-exponentially in the number of nodes, and searching over this space is NP-hard in general (Chickering, 1996; Chickering et al., 2004)."}
+{"order": 27, "page": 0, "type": "body", "text": "The second is statistical: without further assumptions, the DAG is identifiable only up to its Markov equivalence class (the set of graphs encoding the same conditional independence relations)."}
+{"order": 28, "page": 0, "type": "body", "text": "A substantial literature has developed methods that recover this equivalence class, most prominently the constraint-based PC algorithm (Spirtes and Glymour, 1991), the scorebased greedy equivalence search (GES) (Chickering, 2002), and, more recently, continuous-optimization formulations (Deng et al., 2024)."}
+{"order": 29, "page": 0, "type": "body", "text": "In this paper, we are interested in recovering the true DAG itself, rather than its Markov equivalence class."}
+{"order": 30, "page": 1, "type": "body", "text": "We focus on the widely studied linear additive noise SEM, in which each variable is a linear function of its parents plus independent noise:"}
+{"order": 31, "page": 1, "type": "equation", "text": "X = ΛX + N, (1)"}
+{"order": 32, "page": 1, "type": "body", "text": "where Λ ∈Rd×d encodes the linear dependence of each variable on its parents and N = (N1, . . . , Nd)⊤is a vector of mutually independent noise variables."}
+{"order": 33, "page": 1, "type": "body", "text": "We assume that the system has no latent confounders."}
+{"order": 34, "page": 1, "type": "body", "text": "Additional assumptions, such as non-Gaussianity or equal error variances, can make DAGs identifiable from data (Shimizu et al., 2006; Loh and B¨uhlmann, 2014; Peters and B¨uhlmann, 2014)."}
+{"order": 35, "page": 1, "type": "body", "text": "Under equal error variances, simple variance-based algorithms can recover the topological order of the DAG by recursively identifying either source nodes, i.e., nodes without parents, with the smallest conditional variance (topdown method; Chen et al., 2019), or sink nodes, i.e., nodes without children, with the highest conditional variance (bottom-up method; Ghoshal and Honorio, 2018)."}
+{"order": 36, "page": 1, "type": "body", "text": "These variance-based methods are distribution free and make no use of knowledge of the error distribution."}
+{"order": 37, "page": 1, "type": "body", "text": "In many applications, however, one may have reasonable knowledge of the error distribution—for example, heavy-tailed errors in finance—and it is natural to ask whether this knowledge can be leveraged for more accurate structure recovery."}
+{"order": 38, "page": 1, "type": "body", "text": "Our results."}
+{"order": 39, "page": 1, "type": "body", "text": "In this work we answer this question affirmatively and uncover an unexpected asymmetry between the two methods (top-down and bottom-up) along the way."}
+{"order": 40, "page": 1, "type": "body", "text": "We extend the top-down and bottomup variance-based approaches by replacing their use of conditional variance with a conditional risk: the minimal expected loss of linear prediction under the negative log-likelihood of the assumed noise density."}
+{"order": 41, "page": 1, "type": "body", "text": "The Gaussian equal-variance methods are recovered as the least-squares case, and their recursive orderidentification logic transfers to our methods."}
+{"order": 42, "page": 1, "type": "body", "text": "Under least squares, the top-down and bottom-up recursions are equally valid; under general losses, they are not."}
+{"order": 43, "page": 1, "type": "body", "text": "The top-down recursion, which only ever regresses a variable on its non-descendants, is correct for any noise density of finite differential entropy; the bottom-up recursion additionally requires the noise to satisfy a regularity condition."}
+{"order": 44, "page": 1, "type": "body", "text": "We show examples of noise distributions that do not meet the condition, where the bottom-up method fails, but the top-down method recovers the graph."}
+{"order": 45, "page": 1, "type": "body", "text": "In this sense, our work is both a bridge between the Gaussian and non-Gaussian structure learning literature and a re-examination of the choice between top-down and bottom-up recursion."}
+{"order": 46, "page": 1, "type": "body", "text": "Simulation experiments confirm this: losses matched to the noise perform better than their least-squares counterparts and LiNGAM family methods, and the top-down method dominates the bottom-up method, mildly in the regular regime and decisively in degenerate ones."}
+{"order": 47, "page": 1, "type": "body", "text": "Paper organization."}
+{"order": 48, "page": 1, "type": "body", "text": "The remainder of the paper is organized as follows."}
+{"order": 49, "page": 1, "type": "body", "text": "Section 2 reviews related work, Section 3 fixes notation, Section 4 presents the method and theory, and Section 5 the experiments."}
+{"order": 50, "page": 1, "type": "heading", "text": "2 RELATED WORK"}
+{"order": 51, "page": 1, "type": "body", "text": "Literature on structure learning for the linear additive noise model (1) divides naturally according to whether the noise is Gaussian or non-Gaussian."}
+{"order": 52, "page": 1, "type": "body", "text": "We organize related work by noise distribution (Figure 1)."}
+{"order": 53, "page": 1, "type": "body", "text": "When the noise is Gaussian, the DAG is identifiable only up to Markov equivalence (Pearl, 2009)."}
+{"order": 54, "page": 1, "type": "body", "text": "Peters and B¨uhlmann (2014) showed that identifiability of the true DAG is restored under the assumption of equal error variances, σ2"}
+{"order": 55, "page": 1, "type": "body", "text": "1 = · · · = σ2 d = σ2: no two distinct DAGs with equal-variance Gaussian noise can generate the same observational distribution."}
+{"order": 56, "page": 1, "type": "body", "text": "This motivated variance-based algorithms that learn a topological ordering one node at a time, then select parents and estimate edge weights."}
+{"order": 57, "page": 1, "type": "body", "text": "Top-down methods (Chen et al., 2019) recursively identify a source node among the remaining vertices: under equal variances, a source of the remaining subgraph attains the minimal conditional variance given previously selected vertices."}
+{"order": 58, "page": 1, "type": "body", "text": "Bottom-up approaches (Ghoshal and Honorio, 2018) instead recursively identify a sink node: under equal variance, a sink shows the highest conditional variance given all other variables."}
+{"order": 59, "page": 1, "type": "body", "text": "These early variance-based guarantees hinge on accurate estimation of the covariance or precision matrix, and their sample complexity consequently degrades with the conditioning of the covariance matrix Σ: the required number of samples grows polynomially with the condition number, a dependence that can be severe since the condition number may itself grow with the depth of the graph."}
+{"order": 60, "page": 1, "type": "body", "text": "More recent work removes this dependence by replacing global precision-matrix estimation with nodewise regressions that directly estimate the relevant conditional variances (Park, 2023; Daskalakis et al., 2025)."}
+{"order": 61, "page": 1, "type": "body", "text": "The equal-variance assumption can be relaxed somewhat."}
+{"order": 62, "page": 1, "type": "body", "text": "Identifiability continues to hold when the error variances are not equal but known, and variance-based recovery extends to heteroscedastic settings in which the noise variances satisfy suitable ratio or ordering conditions (Ghoshal and Honorio, 2018; Park and Kim, 2020)."}
+{"order": 63, "page": 1, "type": "body", "text": "Our analysis carries over to these settings, but for clarity we focus on the equal-variance case here."}
+{"order": 64, "page": 2, "type": "heading", "text": "Arbitrary noise scales Identically distributed noise"}
+{"order": 65, "page": 2, "type": "list", "text": "– Identifiable only up to the Markov"}
+{"order": 66, "page": 2, "type": "table", "text": "– Greedy DAG search – Continuous optimization (NOTEARS,"}
+{"order": 67, "page": 2, "type": "body", "text": "equivalence class (e.g., PC, GES)"}
+{"order": 68, "page": 2, "type": "table", "text": "GOLEM, DAGMA) – Top-down and bottom-up conditional"}
+{"order": 69, "page": 2, "type": "heading", "text": "Gaussian"}
+{"order": 70, "page": 2, "type": "heading", "text": "errors"}
+{"order": 71, "page": 2, "type": "table", "text": "variance methods"}
+{"order": 72, "page": 2, "type": "table", "text": "– Methods from the cell above and the"}
+{"order": 73, "page": 2, "type": "list", "text": "– LiNGAM family (ICA-, Direct-,"}
+{"order": 74, "page": 2, "type": "table", "text": "cell to the left apply – Entropy-based ordering (ETPIA)"}
+{"order": 75, "page": 2, "type": "body", "text": "Opt-LiNGAM) – Continuous optimization (NOTIME)"}
+{"order": 76, "page": 2, "type": "heading", "text": "Non- Gaussian"}
+{"order": 77, "page": 2, "type": "heading", "text": "– Top-down and bottom-up"}
+{"order": 78, "page": 2, "type": "heading", "text": "errors"}
+{"order": 79, "page": 2, "type": "heading", "text": "conditional risk methods (ours)"}
+{"order": 80, "page": 2, "type": "body", "text": "Special case under"}
+{"order": 81, "page": 2, "type": "body", "text": "Gaussian noise"}
+{"order": 82, "page": 2, "type": "caption", "text": "Figure 1: Representative classes of methods that recover the true DAG of a linear SEM, by noise distribution (rows) and noise-scale assumption (columns)."}
+{"order": 83, "page": 2, "type": "caption", "text": "The list is not exhaustive."}
+{"order": 84, "page": 2, "type": "caption", "text": "The bottom-right assumptions are special cases of both neighboring cells, so their methods also apply there, provided the required moments exist."}
+{"order": 85, "page": 2, "type": "body", "text": "A complementary line of work casts structure learning as a continuous optimization problem by encoding acyclicity through a smooth function of the adjacency matrix, such as the trace exponential of NOTEARS (Zheng et al., 2018), or the logdeterminant characterization of DAGMA (Bello et al., 2022)."}
+{"order": 86, "page": 2, "type": "body", "text": "Another method, GOLEM (Ng et al., 2020), replaces the hard constraint with soft sparsity and acyclicity penalties."}
+{"order": 87, "page": 2, "type": "body", "text": "Because these scores are built on squared loss or the Gaussian likelihood, their minimizers are guaranteed to recover the true DAG only under equal (or known) noise variances, the same assumption that underlies variance-based methods (Reisach et al., 2021; Ng et al., 2024)."}
+{"order": 88, "page": 2, "type": "body", "text": "When the errors are non-Gaussian, the linear SEM is identifiable without any assumption on the noise scales by the LiNGAM (Linear non-Gaussian acyclic model) family of methods."}
+{"order": 89, "page": 2, "type": "body", "text": "ICA-LiNGAM (Shimizu et al., 2006) estimates the ordering with independent component analysis, while DirectLiNGAM (Shimizu et al., 2011) recovers topological order top-down, selecting at each step the variable that is most independent of the residuals of the remaining variables regressed on it."}
+{"order": 90, "page": 2, "type": "body", "text": "Hyv¨arinen and Smith (2013) replace the independence measure in DirectLiNGAM with pairwise likelihood ratios."}
+{"order": 91, "page": 2, "type": "body", "text": "More recently, Oh et al. (2025) introduced OptLiNGAM, a sample-optimal procedure for SEMs with sub-Gaussian noise, and NOTIME (Berrevoets et al., 2025) brought identifiability under LiNGAM to differentiable structure learning by penalizing the joint dependence of the fitted residuals."}
+{"order": 92, "page": 2, "type": "body", "text": "Closest to our work are methods that order variables by entropy."}
+{"order": 93, "page": 2, "type": "body", "text": "Xie et al. (2019) study linear SEMs with i.i.d. noise (ETPIA)."}
+{"order": 94, "page": 2, "type": "body", "text": "They approximate entropy with a Gram–Charlier expansion in the variance, skewness, and kurtosis, and then remove the source’s effect by least-squares regression during recursion, so the method requires finite fourth moments."}
+{"order": 95, "page": 2, "type": "body", "text": "Feigenbaum et al. (2024) identify sources and sinks by comparing conditional entropies with noise entropy, but their study is limited to discrete noise distributions."}
+{"order": 96, "page": 2, "type": "body", "text": "Our criterion is also entropy-based, but focuses on continuous variables in linear models."}
+{"order": 97, "page": 2, "type": "body", "text": "Other methods keep the recursive ordering but replace the variance with another measure of residual uncertainty."}
+{"order": 98, "page": 2, "type": "body", "text": "Gao et al. (2020) (NPVAR) order nonparametric DAGs top-down using residual variances from nonparametric regression, without assuming linearity or independent noise."}
+{"order": 99, "page": 2, "type": "body", "text": "Rajendran et al. (2021) replace the conditional variance with Bregman information, a generalization of variance induced by an exponential family, and prove identifiability when the Bregman information is equal across variables."}
+{"order": 100, "page": 2, "type": "body", "text": "Our conditional risk differs from both."}
+{"order": 101, "page": 2, "type": "body", "text": "While Gao et al. (2020) measure uncertainty by variance alone, our criterion assumes a known noise density and uses its full shape."}
+{"order": 102, "page": 2, "type": "body", "text": "Unlike Rajendran et al. (2021), we do not require an exponential family and cover densities such as Student-t and Cauchy."}
+{"order": 103, "page": 2, "type": "body", "text": "We also study both top-down and bottomup recursions, while both of these works use only the top-down direction."}
+{"order": 104, "page": 2, "type": "body", "text": "Our work sits between the Gaussian and non-Gaussian regimes."}
+{"order": 105, "page": 2, "type": "body", "text": "Like the variance-based methods, it learns the ordering by a recursion over nodewise regressions; like the LiNGAM family, it identifies the DAG under non-Gaussian noise, including heavy-tailed noise with no finite variance."}
+{"order": 106, "page": 2, "type": "body", "text": "The price is the constraint on the scale of noise variables."}
+{"order": 107, "page": 3, "type": "heading", "text": "3 NOTATION"}
+{"order": 108, "page": 3, "type": "body", "text": "For a positive integer d, let [d] = {1, . . . , d}."}
+{"order": 109, "page": 3, "type": "body", "text": "We consider a directed acyclic graph G = (V, E) with vertex set V = [d], where each vertex i is associated with a random variable Xi, and an edge set E ⊂V × V , where (j,"}
+{"order": 110, "page": 3, "type": "body", "text": "i) ∈E denotes the directed edge j →i."}
+{"order": 111, "page": 3, "type": "body", "text": "For a vertex i, we write PA"}
+{"order": 112, "page": 3, "type": "body", "text": "(i), CH"}
+{"order": 113, "page": 3, "type": "body", "text": "(i), AN"}
+{"order": 114, "page": 3, "type": "body", "text": "(i), and DE"}
+{"order": 115, "page": 3, "type": "body", "text": "(i) for its sets of parents, children, ancestors, and descendants in G, respectively."}
+{"order": 116, "page": 3, "type": "body", "text": "The non-descendants of i are V \\ (DE"}
+{"order": 117, "page": 3, "type": "body", "text": "(i) ∪{i}), i.e., the vertices other than i that cannot be reached from i by a directed path."}
+{"order": 118, "page": 3, "type": "body", "text": "A vertex with no parents is a source (or root) and a vertex with no children is a sink (or terminal vertex); every DAG contains at least one of each."}
+{"order": 119, "page": 3, "type": "body", "text": "A permutation t = (t1, . . . , td) of [d] is a topological ordering of G if every parent precedes its child: writing t−1"}
+{"order": 120, "page": 3, "type": "body", "text": "(i) for the position of vertex i, t−1"}
+{"order": 121, "page": 3, "type": "body", "text": "(j) < t−1"}
+{"order": 122, "page": 3, "type": "body", "text": "(i) whenever j ∈PA"}
+{"order": 123, "page": 3, "type": "body", "text": "(i)."}
+{"order": 124, "page": 3, "type": "body", "text": "Acyclicity guarantees that at least one such ordering exists, though it need not be unique."}
+{"order": 125, "page": 3, "type": "body", "text": "We study the linear structural equation model (1) where X = (X1, . . . , Xd)⊤, the matrix Λ ∈Rd×d"}
+{"order": 126, "page": 3, "type": "body", "text": "has Λij̸ = 0 if and only if j ∈PA(i), and N = (N1, . . . , Nd)⊤is a vector of i.i.d. noise variables with location zero."}
+{"order": 127, "page": 3, "type": "body", "text": "Acyclicity of G is equivalent to the existence of a permutation matrix P such that P ΛP ⊤"}
+{"order": 128, "page": 3, "type": "body", "text": "is strictly lower triangular."}
+{"order": 129, "page": 3, "type": "body", "text": "Writing B = I −Λ, which is invertible under acyclicity, the model implies X = B−1N; when the noise has variance σ2 the precision matrix of X is Ω= Σ−1 = B⊤D−1B, where D = σ2I."}
+{"order": 130, "page": 3, "type": "body", "text": "The goal of structure learning is to recover G (equivalently, the support of Λ) from the samples of X."}
+{"order": 131, "page": 3, "type": "heading", "text": "4 GENERALIZED ORDERING-BASED LEARNING VIA CONDITIONAL RISKS"}
+{"order": 132, "page": 3, "type": "body", "text": "The variance-based methods reviewed in Section 2 all rest, in one form or another, on the fact that under the equal-variance assumption, conditional variances reveal the topological order."}
+{"order": 133, "page": 3, "type": "body", "text": "In this section we first recall this fact and then show that neither direction actually depends on the conditional variance."}
+{"order": 134, "page": 3, "type": "body", "text": "Replacing squared error with the objective matched to the (known) noise distribution yields a family of conditional risks that support the same recursive strategies, in both directions, while using the full noise density rather than only second moments."}
+{"order": 135, "page": 3, "type": "heading", "text": "4.1 Conditional Variance and Least Squares"}
+{"order": 136, "page": 3, "type": "body", "text": "For a subset S ⊂[d] and i /∈S, the linear conditional variance of Xi given XS admits the variational form"}
+{"order": 137, "page": 3, "type": "body", "text": "\u00012."}
+{"order": 138, "page": 3, "type": "body", "text": "(2)"}
+{"order": 139, "page": 3, "type": "body", "text": "Varlin(Xi | XS) = min β∈R|S| E"}
+{"order": 140, "page": 3, "type": "equation", "text": "Xi −β⊤XS"}
+{"order": 141, "page": 3, "type": "equation", "text": "\u0000"}
+{"order": 142, "page": 3, "type": "body", "text": "For jointly Gaussian variables this statistic coincides with the conditional variance, but in general is only the linear conditional variance."}
+{"order": 143, "page": 3, "type": "body", "text": "Under equal noise variances, this statistic helps us recognize variable ordering from both ends."}
+{"order": 144, "page": 3, "type": "body", "text": "From the top: if S is an ancestral set, i.e., closed under taking parents, a remaining variable attains Varlin(Xi | XS) = σ2 if all its parents lie in S, and exceeds σ2 otherwise; recursively selecting the minimizer is the top-down method."}
+{"order": 145, "page": 3, "type": "body", "text": "From the bottom, the relevant fact is the following restatement of Proposition 2 from Ghoshal and Honorio (2018)."}
+{"order": 146, "page": 3, "type": "body", "text": "Lemma 1 (Sinks maximize the full-conditional variance)."}
+{"order": 147, "page": 3, "type": "body", "text": "Consider the model (1) with mutually independent noises of common variance σ2."}
+{"order": 148, "page": 3, "type": "body", "text": "For every i ∈[d],"}
+{"order": 149, "page": 3, "type": "equation", "text": "= σ2"}
+{"order": 150, "page": 3, "type": "equation", "text": "= 1 Ωii"}
+{"order": 151, "page": 3, "type": "equation", "text": "\u0000"}
+{"order": 152, "page": 3, "type": "equation", "text": "\u0001"}
+{"order": 153, "page": 3, "type": "equation", "text": "Xi | X−i"}
+{"order": 154, "page": 3, "type": "body", "text": ", (3)"}
+{"order": 155, "page": 3, "type": "body", "text": "Varlin"}
+{"order": 156, "page": 3, "type": "body", "text": "j∈CH(i) Λ2"}
+{"order": 157, "page": 3, "type": "equation", "text": "1 + P"}
+{"order": 158, "page": 3, "type": "equation", "text": "ji"}
+{"order": 159, "page": 3, "type": "body", "text": "so that Varlin(Xi | X−i) = σ2 if i is a sink and Varlin(Xi | X−i) ≤σ2/(1 + b2"}
+{"order": 160, "page": 3, "type": "body", "text": "min) < σ2 otherwise, where bmin = min(i,j)∈E |Λji|."}
+{"order": 161, "page": 3, "type": "body", "text": "For proofs, see Appendix A. This fact uses just two properties of the variance functional:"}
+{"order": 162, "page": 3, "type": "body", "text": "(i) a regression whose covariates are non-descendants, and whose covariate set contains the parents, leaves a pure-noise residual, and no linear predictor can do better; and"}
+{"order": 163, "page": 3, "type": "body", "text": "(ii) when a variable is regressed on a set containing its children, the children carry information about its noise, and the objective registers this by dropping strictly below the pure-noise value."}
+{"order": 164, "page": 3, "type": "body", "text": "Property"}
+{"order": 165, "page": 3, "type": "body", "text": "(i) generalizes to any density with finite entropy, and"}
+{"order": 166, "page": 3, "type": "body", "text": "(ii) generalizes only under a regularity condition."}
+{"order": 167, "page": 3, "type": "heading", "text": "4.2 Conditional Risks"}
+{"order": 168, "page": 3, "type": "body", "text": "Throughout this section, the noise variables N1, . . . , Nd are assumed independent and identically distributed, each with known density f; this equal-distribution assumption is the natural generalization of the equal-variance assumption of Peters and B¨uhlmann (2014), to which it reduces when f is Gaussian."}
+{"order": 169, "page": 3, "type": "body", "text": "Let ρf = −log f denote the associated negative log-likelihood loss."}
+{"order": 170, "page": 3, "type": "body", "text": "This lets us inform the conditional risk objective (4) with our knowledge of the noise density, while the conditional variance objective (2) remains only second-moment informed."}
+{"order": 171, "page": 3, "type": "body", "text": "Definition 2 (Conditional risk)."}
+{"order": 172, "page": 3, "type": "body", "text": "For S ⊂[d] and i /∈"}

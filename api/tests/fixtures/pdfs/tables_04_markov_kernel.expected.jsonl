@@ -1,0 +1,191 @@
+{"order": 0, "page": 0, "type": "heading", "text": "Markov Chain Convergence in Kernel-Induced Geometry"}
+{"order": 1, "page": 0, "type": "heading", "text": "Oleksii Kachaiev1, Luc Brogat-Motte2, Silvia Villa1, Lorenzo Rosasco2,3"}
+{"order": 2, "page": 0, "type": "body", "text": "1MaLGa center, DIMA, Università degli Studi di Genova, Genoa, Italy"}
+{"order": 3, "page": 0, "type": "body", "text": "2SAIL Unit, Istituto Italiano di Tecnologia, Genoa, Italy"}
+{"order": 4, "page": 0, "type": "body", "text": "3MaLGa Center, DIBRIS, Università degli Studi di Genova, Genoa, Italy"}
+{"order": 5, "page": 0, "type": "heading", "text": "Abstract"}
+{"order": 6, "page": 0, "type": "body", "text": "We study the convergence of Markov chains in the geometry induced by Hilbertian embeddings associated with positive definite kernels, also called Maximum Mean Discrepancy (MMD)."}
+{"order": 7, "page": 0, "type": "body", "text": "Under a contraction assumption in the kernel-induced geometry, and a standard spectral gap assumption, we establish non-asymptotic, high-probability bounds for the convergence of the empirical occupation measure to the invariant measure."}
+{"order": 8, "page": 0, "type": "body", "text": "The obtained bounds separate the roles of the two conditions: the spectral gap determines the effective sample size in the leading term, while the kernel contraction enters only through a linear correction."}
+{"order": 9, "page": 0, "type": "body", "text": "As an application, we study one-step prediction of dynamical systems from a single trajectory, deriving fast learning rates for a nonlinear least-squares estimator."}
+{"order": 10, "page": 0, "type": "body", "text": "The rates highlight the interplay between mixing properties in the kernel-induced geometry and the classical source and capacity conditions used in the analysis of least-squares."}
+{"order": 11, "page": 0, "type": "heading", "text": "1 Introduction"}
+{"order": 12, "page": 0, "type": "body", "text": "Let (Xt)t≥0 be a Markov chain on X with transition kernel P. Its empirical occupation measure up to time T is"}
+{"order": 13, "page": 0, "type": "equation", "text": "T −1 X"}
+{"order": 14, "page": 0, "type": "equation", "text": "bµT := 1"}
+{"order": 15, "page": 0, "type": "equation", "text": "δXt."}
+{"order": 16, "page": 0, "type": "equation", "text": "(1)"}
+{"order": 17, "page": 0, "type": "equation", "text": "T"}
+{"order": 18, "page": 0, "type": "equation", "text": "t=0"}
+{"order": 19, "page": 0, "type": "body", "text": "This random probability measure records the proportion of time spent by the trajectory in each measurable set."}
+{"order": 20, "page": 0, "type": "body", "text": "An important question in the analysis of Markov chains (and, more broadly, of dynamical systems) is whether there exists a probability measure π such that bµT →π as T →∞."}
+{"order": 21, "page": 0, "type": "body", "text": "Such a limit, when it exists, describes the statistical behavior of trajectories over long times (Eckmann and Ruelle, 1985; Young, 2002)."}
+{"order": 22, "page": 0, "type": "body", "text": "For example, if (Xt)t≥0 are independent random variables on a separable metric space X with common law π, the empirical law of large numbers gives, almost surely,"}
+{"order": 23, "page": 0, "type": "equation", "text": "T −1 X"}
+{"order": 24, "page": 0, "type": "equation", "text": "f dbµT = 1"}
+{"order": 25, "page": 0, "type": "equation", "text": "Z"}
+{"order": 26, "page": 0, "type": "equation", "text": "Z"}
+{"order": 27, "page": 0, "type": "equation", "text": "f(Xt) →"}
+{"order": 28, "page": 0, "type": "body", "text": "bµT ⇀π, or, equivalently,"}
+{"order": 29, "page": 0, "type": "body", "text": "f dπ (2)"}
+{"order": 30, "page": 0, "type": "equation", "text": "T"}
+{"order": 31, "page": 0, "type": "footnote", "text": "t=0"}
+{"order": 32, "page": 0, "type": "body", "text": "for every bounded continuous test function"}
+{"order": 33, "page": 0, "type": "body", "text": "f. For general Markov chains, however, convergence to a deterministic limiting measure is not automatic."}
+{"order": 34, "page": 0, "type": "body", "text": "For classical conditions ensuring almost-sure convergence of bµT as in (2), see,"}
+{"order": 35, "page": 0, "type": "body", "text": "e.g."}
+{"order": 36, "page": 0, "type": "body", "text": ", Meyn and Tweedie (2012)."}
+{"order": 37, "page": 0, "type": "body", "text": "To quantify the discrepancy between bµT and π, we need to choose a distance on the space of probability measures."}
+{"order": 38, "page": 0, "type": "body", "text": "A flexible framework is provided by integral probability metrics (IPMs),"}
+{"order": 39, "page": 0, "type": "body", "text": ", (3)"}
+{"order": 40, "page": 0, "type": "equation", "text": "Z"}
+{"order": 41, "page": 0, "type": "equation", "text": "Z"}
+{"order": 42, "page": 0, "type": "equation", "text": "f dµ −"}
+{"order": 43, "page": 0, "type": "equation", "text": "f dν"}
+{"order": 44, "page": 0, "type": "footnote", "text": "f∈F"}
+{"order": 45, "page": 0, "type": "body", "text": "dF(µ, ν) := sup where F is a class of measurable test functions integrable with respect to the measures under consideration."}
+{"order": 46, "page": 0, "type": "body", "text": "The choice of F determines which differences between probability measures are detected, and hence the notion of convergence being studied."}
+{"order": 47, "page": 0, "type": "body", "text": "For example, the class of measurable functions satisfying ∥f∥∞≤1 gives the total variation norm, while the class of 1-Lipschitz functions gives the Wasserstein distance W1 on probability measures with finite first moments."}
+{"order": 48, "page": 0, "type": "body", "text": "Further examples and general properties of IPMs can be found in Müller (1997) and Rachev et al. (2013)."}
+{"order": 49, "page": 1, "type": "body", "text": "Our aim is to obtain non-asymptotic bounds on dF(bµT , π), for suitable choices of F, with explicit dependence on the trajectory length T. Such bounds are useful in sampling, where they quantify the error incurred when approximating a target distribution by a finite trajectory of a Markov chain (Roberts and Rosenthal, 2004; Joulin and Ollivier, 2010)."}
+{"order": 50, "page": 1, "type": "body", "text": "Related questions also arise in the analysis of stochastic optimization algorithms through their interpretation as Markov chains (Dieuleveut et al., 2020; Yu et al., 2021)."}
+{"order": 51, "page": 1, "type": "body", "text": "Non-asymptotic bounds have been studied in several probability metrics."}
+{"order": 52, "page": 1, "type": "body", "text": "For uniformly ergodic Markov chains on countable state spaces, bounds in total variation follow from the concentration and moment inequalities of Paulin (2015)."}
+{"order": 53, "page": 1, "type": "body", "text": "Bounds in W1 under suitable contractivity assumptions have been obtained by Boissard (2011); Kloeckner (2020); Riekert (2022)."}
+{"order": 54, "page": 1, "type": "body", "text": "For Wp, Fournier and Guillin (2015) establish moment bounds for empirical measures of independent samples and Markov chains."}
+{"order": 55, "page": 1, "type": "body", "text": "Related bounds for occupation measures of continuous-time ergodic Markov processes are obtained by Schilling et al. (2025) under Wasserstein contractivity or functional inequalities, together with moment assumptions on the limiting measure."}
+{"order": 56, "page": 1, "type": "body", "text": "In this work, we consider IPMs obtained from reproducing kernel Hilbert space (RKHS), known as maximum mean discrepancies (MMD)."}
+{"order": 57, "page": 1, "type": "body", "text": "Let k : X× X →R be a measurable positive-definite kernel with separable RKHS H, and let ϕ(x) := k(x, ·) be its canonical feature map."}
+{"order": 58, "page": 1, "type": "body", "text": "Taking F to be the unit ball of H in (3), Hilbert-space duality gives"}
+{"order": 59, "page": 1, "type": "equation", "text": "Z"}
+{"order": 60, "page": 1, "type": "equation", "text": "Z"}
+{"order": 61, "page": 1, "type": "equation", "text": "ϕ(x) µ(dx) −"}
+{"order": 62, "page": 1, "type": "body", "text": ", (4)"}
+{"order": 63, "page": 1, "type": "equation", "text": "ϕ(x) ν(dx)"}
+{"order": 64, "page": 1, "type": "body", "text": "MMDϕ(µ, ν) ="}
+{"order": 65, "page": 1, "type": "body", "text": "H"}
+{"order": 66, "page": 1, "type": "body", "text": "whenever the two Bochner integrals exist; see, e.g., Smola et al. (2007); Gretton et al. (2012)."}
+{"order": 67, "page": 1, "type": "body", "text": "The same construction applies to any measurable feature map ϕ : X →H into a separable Hilbert space, subject to the same integrability requirement."}
+{"order": 68, "page": 1, "type": "body", "text": "The resulting discrepancy is the MMD associated with the kernel k(x,"}
+{"order": 69, "page": 1, "type": "body", "text": "y) = ⟨ϕ"}
+{"order": 70, "page": 1, "type": "body", "text": "(x), ϕ"}
+{"order": 71, "page": 1, "type": "body", "text": "(y)⟩H."}
+{"order": 72, "page": 1, "type": "body", "text": "We develop this feature-map formulation in Section 3."}
+{"order": 73, "page": 1, "type": "body", "text": "When the feature map is uniformly bounded, that is, supx∈X∥ϕ(x)∥H < ∞, the discrepancy is well defined for all probability measures, including empirical occupation measures."}
+{"order": 74, "page": 1, "type": "body", "text": "For independent observations with common law π, MMDϕ(bµT , π) admits bounds of order T −1/2, both in expectation and at each fixed confidence level (Gretton et al., 2012)."}
+{"order": 75, "page": 1, "type": "body", "text": "For dependent observations, Chérief- Abdellatif and Alquier (2022) obtain high-probability bounds under weak-dependence assumptions in their analysis of minimum-MMD estimators."}
+{"order": 76, "page": 1, "type": "body", "text": "More recently, Wolfer and Alquier (2025) derive such bounds for stationary φ- and β-mixing sequences."}
+{"order": 77, "page": 1, "type": "body", "text": "Contributions."}
+{"order": 78, "page": 1, "type": "body", "text": "Our first contribution is a non-asymptotic high-probability bound for empirical occupation measures of Markov chains on a general state space."}
+{"order": 79, "page": 1, "type": "body", "text": "Assume that the chain is stationary, has an absolute L2(π) spectral gap 1−ρ > 0, and satisfies the following uniform geometric relaxation condition:"}
+{"order": 80, "page": 1, "type": "equation", "text": "MMDϕ(P n(x, ·), π) ≤Cθn, n ≥0, (5)"}
+{"order": 81, "page": 1, "type": "body", "text": "sup x∈X"}
+{"order": 82, "page": 1, "type": "body", "text": "for some C < ∞and θ ∈[0, 1)."}
+{"order": 83, "page": 1, "type": "body", "text": "Then, for every T ≥1 and δ ∈(0, 1), with probability at least 1 −δ,"}
+{"order": 84, "page": 1, "type": "body", "text": "T + τθ√τrel log(4/δ)"}
+{"order": 85, "page": 1, "type": "equation", "text": "r"}
+{"order": 86, "page": 1, "type": "body", "text": "τrel log(4/δ)"}
+{"order": 87, "page": 1, "type": "equation", "text": "MMDϕ(bµT , π) ≲∥ϕ∥π"}
+{"order": 88, "page": 1, "type": "body", "text": "T , (6) where τrel := (1 −ρ)−1, τθ := C/(1 −θ), and ∥ϕ∥2 π := ∥ϕ(x)∥2 R Hπ(dx); the implicit constant is universal."}
+{"order": 89, "page": 2, "type": "body", "text": "The leading term depends on the spectral gap and the second moment of the feature map, while the relaxation constants C and θ enter only through the T −1 term."}
+{"order": 90, "page": 2, "type": "body", "text": "We extend this bound to initial laws ν ≪π with dν/dπ ∈Lp(π) for some p > 1, leaving the leading term unchanged; see Theorems 3.3 and 3.6."}
+{"order": 91, "page": 2, "type": "body", "text": "We also give sufficient conditions for (5)."}
+{"order": 92, "page": 2, "type": "body", "text": "Our second contribution concerns kernel ridge regression (KRR) for learning the one-step prediction function"}
+{"order": 93, "page": 2, "type": "equation", "text": "Z"}
+{"order": 94, "page": 2, "type": "equation", "text": "x′ P(x, dx′) (7)"}
+{"order": 95, "page": 2, "type": "equation", "text": "f⋆(x) :="}
+{"order": 96, "page": 2, "type": "body", "text": "of a real-valued Markov chain from a single trajectory."}
+{"order": 97, "page": 2, "type": "body", "text": "The relevant MMD geometry arises from the covariance fluctuations controlling estimator stability."}
+{"order": 98, "page": 2, "type": "body", "text": "Writing Σ and bΣ for the population and empirical covariance operators, and denoting Σλ := Σ + λI, we have"}
+{"order": 99, "page": 2, "type": "body", "text": "Σ−1/2"}
+{"order": 100, "page": 2, "type": "body", "text": "λ (bΣ −Σ)Σ−1/2"}
+{"order": 101, "page": 2, "type": "body", "text": "L2(H) = MMDΦλ(bµT , π), (8)"}
+{"order": 102, "page": 2, "type": "body", "text": "where Φλ(x) := Σ−1/2 λ λ [ϕ(x) ⊗ϕ(x)]Σ−1/2 λ ."}
+{"order": 103, "page": 2, "type": "body", "text": "We obtain relaxation bounds in this λ-dependent geometry from contraction in a fixed Hilbert scale associated with the covariance-feature kernel K(x, y) = k(x, y)2."}
+{"order": 104, "page": 2, "type": "body", "text": "For stationary trajectories, under the spectral and Hilbert-scale assumptions, and classical source and capacity conditions of Theorem 4.4, we obtain"}
+{"order": 105, "page": 2, "type": "body", "text": "2"}
+{"order": 106, "page": 2, "type": "equation", "text": "π ≲T − 2r 2r+p , λT ≍T − 1 2r+p ."}
+{"order": 107, "page": 2, "type": "equation", "text": "(9)"}
+{"order": 108, "page": 2, "type": "equation", "text": "bfλT −f⋆"}
+{"order": 109, "page": 2, "type": "equation", "text": "E( bfλT , f⋆) ="}
+{"order": 110, "page": 2, "type": "body", "text": "For every δ ∈(0, 1), this bound holds with probability at least 1 −δ for each sufficiently large T, up to logarithmic factors in 1/δ."}
+{"order": 111, "page": 2, "type": "body", "text": "Here, r ∈[1/2, 1] is the source exponent and p = 1/b ∈(0, 1) is the capacity exponent, characterized by N(λ) ≲λ−p."}
+{"order": 112, "page": 2, "type": "body", "text": "The rate matches the classical source–capacity exponent for i.i.d. KRR (Caponnetto and De Vito, 2007), with explicit dependence on the chain in the finite-sample bounds."}
+{"order": 113, "page": 2, "type": "body", "text": "By incorporating source and capacity information, this sharpens the T −1/2"}
+{"order": 114, "page": 2, "type": "body", "text": "excess-risk rate of Kachaiev et al. (2026), however, under different assumptions."}
+{"order": 115, "page": 2, "type": "body", "text": "Our work considers only stationary initialization while relaxing uniform ergodicity in total variation to absolute spectral gap, and the Hilbert-scale contraction described above."}
+{"order": 116, "page": 2, "type": "body", "text": "Structure of the paper."}
+{"order": 117, "page": 2, "type": "body", "text": "Section 2 collects background on Markov operators, martingales, integral probability metrics, and spectral gaps, together with preliminary results used throughout the paper."}
+{"order": 118, "page": 2, "type": "body", "text": "Section 3 introduces uniform MMD relaxation and presents the occupation measure bounds, followed by sufficient conditions and examples based on metric comparison and contraction in kernel-induced Hilbert scales."}
+{"order": 119, "page": 2, "type": "body", "text": "Section 4 applies these results to KRR and derives the learning guarantees."}
+{"order": 120, "page": 2, "type": "body", "text": "The proofs, together with the concentration inequalities they rely on, are collected in Appendix A; Appendix B contains the Fourier computations for the torus examples, including the verification of all assumptions of Theorem 4.4 for a noisy doubling map."}
+{"order": 121, "page": 2, "type": "heading", "text": "2 Background and preliminaries"}
+{"order": 122, "page": 2, "type": "body", "text": "Tools and notation."}
+{"order": 123, "page": 2, "type": "body", "text": "Let (X, d) be a Polish space endowed with Borel σ-algebra B(X)."}
+{"order": 124, "page": 2, "type": "body", "text": "Let P(X) be a space of probability measures on (X, B(X))."}
+{"order": 125, "page": 2, "type": "body", "text": "In the context where X is a normed space, P2(X) denotes the subset of probability measures on X with finite second moment, i.e., R ∥x∥2 µ(dx) < ∞."}
+{"order": 126, "page": 2, "type": "body", "text": "Define diam(X) := supx,y∈Xd(x, y)."}
+{"order": 127, "page": 2, "type": "body", "text": "Let (Xt)t≥0 be a Markov process taking values in (X, B(X)), with associated Markov transition kernel P : X× B(X) →[0, 1]."}
+{"order": 128, "page": 2, "type": "body", "text": "Assume that P admits an invariant probability measure π ∈P(X), that is, πP = π, where, for µ ∈P(X), we write µP for the probability measure"}
+{"order": 129, "page": 3, "type": "equation", "text": "Z"}
+{"order": 130, "page": 3, "type": "body", "text": "P(x, A) µ(dx), A ∈B(X)."}
+{"order": 131, "page": 3, "type": "body", "text": "(10)"}
+{"order": 132, "page": 3, "type": "body", "text": "(µP)(A) :="}
+{"order": 133, "page": 3, "type": "body", "text": "The process (Xt)t≥0 is called stationary if X0 ∼π."}
+{"order": 134, "page": 3, "type": "body", "text": "We also use the notation P n(x, ·) := δxP n for n ≥0."}
+{"order": 135, "page": 3, "type": "body", "text": "Recall that for a fixed T > 0,"}
+{"order": 136, "page": 3, "type": "equation", "text": "T −1 X"}
+{"order": 137, "page": 3, "type": "equation", "text": "bµT := 1"}
+{"order": 138, "page": 3, "type": "body", "text": "δXt (11)"}
+{"order": 139, "page": 3, "type": "equation", "text": "T"}
+{"order": 140, "page": 3, "type": "equation", "text": "t=0"}
+{"order": 141, "page": 3, "type": "body", "text": "denotes empirical occupation measure."}
+{"order": 142, "page": 3, "type": "body", "text": "For a measure µ and a measurable function f : X →R, let µ(f) :="}
+{"order": 143, "page": 3, "type": "equation", "text": "R"}
+{"order": 144, "page": 3, "type": "equation", "text": "f dµ."}
+{"order": 145, "page": 3, "type": "body", "text": "Let L2(π) denote the Hilbert space of square-integrable functions f : X →R, endowed with the inner product ⟨f, g⟩π := π(fg)."}
+{"order": 146, "page": 3, "type": "body", "text": "Denote the subspace of π-centered functions by L2 0(π) := \b f ∈L2(π) : π(f) = 0 ."}
+{"order": 147, "page": 3, "type": "body", "text": "For a separable Hilbert space Y, we let L2(X, B(X), π; Y), abbreviated L2(π; Y), denote the Bochner space of strongly B(X)-measurable and Bochner square-integrable maps f : X →Y with"}
+{"order": 148, "page": 3, "type": "equation", "text": "Z"}
+{"order": 149, "page": 3, "type": "equation", "text": "∥f∥2"}
+{"order": 150, "page": 3, "type": "equation", "text": "π := ∥f∥2"}
+{"order": 151, "page": 3, "type": "equation", "text": "∥f(x)∥2"}
+{"order": 152, "page": 3, "type": "body", "text": "Yπ(dx) < ∞."}
+{"order": 153, "page": 3, "type": "body", "text": "(12)"}
+{"order": 154, "page": 3, "type": "body", "text": "L2(π;Y) ="}
+{"order": 155, "page": 3, "type": "body", "text": "Denote by L(H1, H2) be the space of bounded linear operators between two separable Hilbert spaces H1 and H2, and L(H1) when H1 = H2."}
+{"order": 156, "page": 3, "type": "body", "text": "For A ∈L(H1), denote the operator norm by |||A|||H1 := ∥A∥H1→H1."}
+{"order": 157, "page": 3, "type": "body", "text": "Let L2(H1, H2) be the space of Hilbert–Schmidt operators, and L2(H1) when H1 = H2, equipped with the norm ∥A∥2 L2(H1,H2) = P i ∥Aei∥2 H2, where {ei}i is any orthonormal basis of H1."}
+{"order": 158, "page": 3, "type": "body", "text": "We denote by Id the d × d identity matrix."}
+{"order": 159, "page": 3, "type": "body", "text": "Martingales."}
+{"order": 160, "page": 3, "type": "body", "text": "Let (Ft)t≥0 be a filtration."}
+{"order": 161, "page": 3, "type": "body", "text": "A sequence of H-valued random variables (dt)t≥1 is called a martingale difference sequence with respect to (Ft)t if dt is Ft-measurable and for every t ≥1, E[dt | Ft−1] = 0."}
+{"order": 162, "page": 3, "type": "body", "text": "Setting M0 := 0 and MT := PT"}
+{"order": 163, "page": 3, "type": "body", "text": "t=1 dt define an H-valued martingale."}
+{"order": 164, "page": 3, "type": "body", "text": "Its predictable quadratic variation is"}
+{"order": 165, "page": 3, "type": "equation", "text": "T X"}
+{"order": 166, "page": 3, "type": "body", "text": "Et−1∥dt∥2, (13)"}
+{"order": 167, "page": 3, "type": "equation", "text": "⟨M⟩T :="}
+{"order": 168, "page": 3, "type": "equation", "text": "t=1"}
+{"order": 169, "page": 3, "type": "body", "text": "where Ej[·] := E[· | Fj]."}
+{"order": 170, "page": 3, "type": "body", "text": "For background on martingales and martingale difference sequences, we refer to Hall and Heyde (1980); Williams (1991)."}
+{"order": 171, "page": 3, "type": "body", "text": "Integral probability metrics."}
+{"order": 172, "page": 3, "type": "body", "text": "Let F be a class of measurable real-valued functions on X. For µ, ν ∈P(X) such that the integrals below are well defined, the integral probability metric (IPM) generated by F is"}
+{"order": 173, "page": 3, "type": "body", "text": "|µ(f) −ν(f)| ."}
+{"order": 174, "page": 3, "type": "body", "text": "(14)"}
+{"order": 175, "page": 3, "type": "body", "text": "dF(µ, ν) := sup"}
+{"order": 176, "page": 3, "type": "equation", "text": "f∈F"}
+{"order": 177, "page": 3, "type": "body", "text": "The choice of F determines the geometry on the space of probability measures."}
+{"order": 178, "page": 3, "type": "body", "text": "In particular, for the class"}
+{"order": 179, "page": 3, "type": "body", "text": "FTV := {f : X →[0, 1] : f is measurable} , (15)"}
+{"order": 180, "page": 3, "type": "body", "text": "the corresponding IPM is the total variation distance:"}
+{"order": 181, "page": 3, "type": "equation", "text": "|µ(A) −ν(A)| = ∥µ −ν∥TV."}
+{"order": 182, "page": 3, "type": "equation", "text": "(16)"}
+{"order": 183, "page": 3, "type": "body", "text": "dFTV(µ, ν) = sup A∈B(X)"}
+{"order": 184, "page": 3, "type": "body", "text": "Suppose that (X, d) is a bounded space, i.e., diam(X) < ∞."}
+{"order": 185, "page": 3, "type": "body", "text": "Fix x0 ∈X and consider the anchored Lipschitz class"}
+{"order": 186, "page": 3, "type": "equation", "text": "FLip(d) := {f : X →R : |f"}
+{"order": 187, "page": 3, "type": "equation", "text": "(x) −f"}
+{"order": 188, "page": 3, "type": "equation", "text": "(y)| ≤d(x,"}
+{"order": 189, "page": 3, "type": "equation", "text": "y) ∀x, y ∈X, f(x0) = 0} ."}
+{"order": 190, "page": 3, "type": "equation", "text": "(17)"}

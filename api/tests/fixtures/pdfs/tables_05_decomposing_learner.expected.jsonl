@@ -1,0 +1,120 @@
+{"order": 0, "page": 0, "type": "heading", "text": "Decomposing A Neural Learner"}
+{"order": 1, "page": 0, "type": "body", "text": "Bi, Zelong Department of Mathematics & Statistics"}
+{"order": 2, "page": 0, "type": "body", "text": "University of New South Wales High St Kensington NSW 2052 Australia"}
+{"order": 3, "page": 0, "type": "heading", "text": "Abstract"}
+{"order": 4, "page": 0, "type": "body", "text": "Neural learners for classification and regression are often criticized as black boxes."}
+{"order": 5, "page": 0, "type": "body", "text": "We propose a probabilistic decomposition of neural learners that accounts for heterogeneous predictability across the feature space."}
+{"order": 6, "page": 0, "type": "body", "text": "A training procedure combining the EM algorithm, stochastic gradient descent, and maximum likelihood estimation is developed to jointly learn the predictable component and an inputdependent reliability score."}
+{"order": 7, "page": 0, "type": "body", "text": "We show that the optimal decomposed learner recovers the response distribution within the predictable component, while the reliability score characterizes the predictability of individual observations."}
+{"order": 8, "page": 0, "type": "body", "text": "We further extend the framework to incorporate localized feature transformations."}
+{"order": 9, "page": 0, "type": "body", "text": "Experiments on synthetic and real-world datasets demonstrate the effectiveness of the proposed framework."}
+{"order": 10, "page": 0, "type": "heading", "text": "1 Introduction"}
+{"order": 11, "page": 0, "type": "body", "text": "The success of modern machine learning in fields such as image processing [Krizhevsky et al., 2012] and large language models [Vaswani et al., 2017] can be traced back to developments in neural networks in the 1990s, when neural networks in their simplest form, multilayer perceptrons (MLPs), were first used for supervised learning tasks such as regression and classification Murtagh [1991]."}
+{"order": 12, "page": 0, "type": "body", "text": "From the perspective of the universal approximation theorem [Cybenko, 1989], if the features and response variable x and y are related through an appropriate functional relationship, such that E[y | x] or p(y | x) is some function f(x), then the neural learner can be viewed as learning to approximate the underlying function f."}
+{"order": 13, "page": 0, "type": "body", "text": "(a) Heterogeneous feature space"}
+{"order": 14, "page": 0, "type": "body", "text": "(b) Accuracy by region"}
+{"order": 15, "page": 0, "type": "body", "text": "(c) High reliability instances"}
+{"order": 16, "page": 0, "type": "caption", "text": "Figure 1:"}
+{"order": 17, "page": 0, "type": "caption", "text": "(a) Labeled dataset across the feature space."}
+{"order": 18, "page": 0, "type": "caption", "text": "(b) Accuracy of a neural classifier in different regions."}
+{"order": 19, "page": 0, "type": "caption", "text": "(c) High-reliability instances (in green, with p(z = 1 | x) > 0.5) identified by our model."}
+{"order": 20, "page": 0, "type": "body", "text": "A common criticism of neural learners is that, despite their strong predictive performance, the structure learned is often difficult to interpret or inspect, contributing to their characterization as black-box models [Rudin, 2019]."}
+{"order": 21, "page": 0, "type": "body", "text": "One aspect of the learned information that is particularly important but largely hidden in the standard formulation is where in the feature space the relationship between y and x exists."}
+{"order": 22, "page": 0, "type": "body", "text": "The feature space need not be homogeneous in this respect: in some regions, y may depend strongly on x, whereas in others, they can be independent."}
+{"order": 23, "page": 0, "type": "body", "text": "For example, in Figure 1a, the relationship between x and y appears strong in the central region but absent elsewhere."}
+{"order": 24, "page": 1, "type": "body", "text": "The absence of a relationship is itself informative."}
+{"order": 25, "page": 1, "type": "body", "text": "When x and y are independent in a region, a well-trained neural learner may correctly learn a constant function, but this does not reveal that x provides no predictive information or indicate that the resulting prediction is unsupported by the available features."}
+{"order": 26, "page": 1, "type": "body", "text": "As shown in Figure 1b, an overall accuracy of 74% by a neural classifier can arise from substantially different accuracies across regions, such information is not available in the common way it is trained and used."}
+{"order": 27, "page": 1, "type": "body", "text": "Explicitly modelling such structure can therefore provide a more informative characterization of the data and improve the transparency of neural learners without sacrificing predictive performance, which can be very useful when assessing their deployment in critical applications."}
+{"order": 28, "page": 1, "type": "body", "text": "In this manuscript, we propose a novel framework that improves the interpretability of neural learners by decomposing its predication."}
+{"order": 29, "page": 1, "type": "body", "text": "For each instance, we introduce a latent binary variable z ∈{0, 1} indicating whether a relationship between x and y is present."}
+{"order": 30, "page": 1, "type": "body", "text": "We define the reliability score as w(x) = p(z = 1 | x), which is assumed to be a smooth function of x."}
+{"order": 31, "page": 1, "type": "body", "text": "By interpreting z as an indicator of predictability, the conditional distribution of y can be decomposed as"}
+{"order": 32, "page": 1, "type": "body", "text": "p(y |"}
+{"order": 33, "page": 1, "type": "body", "text": "x) = p(y | x, z = 1)w"}
+{"order": 34, "page": 1, "type": "body", "text": "(x) + prand"}
+{"order": 35, "page": 1, "type": "body", "text": "(y)[1 −w"}
+{"order": 36, "page": 1, "type": "body", "text": "(x)], (1)"}
+{"order": 37, "page": 1, "type": "body", "text": "where prand(y) := p(y | x, z = 0), since y is independent of x when z = 0."}
+{"order": 38, "page": 1, "type": "body", "text": "As illustrated in Figure 1c, the reliability score can be learned by a separate neural network in a principled manner, resulting in the learner network identifying the predictable component p(y | x, z = 1) instead."}
+{"order": 39, "page": 1, "type": "body", "text": "The proposed framework applies to both regression and classification, can be trained efficiently with probabilistic guarantees, and can be extended to incorporate supervised feature transformations that preserve locality."}
+{"order": 40, "page": 1, "type": "body", "text": "Our main contributions are as follows:"}
+{"order": 41, "page": 1, "type": "list", "text": "1. We propose a probabilistic framework that explicitly decomposes the conditional distribution of the response into predictable and unpredictable components through an input-dependent reliability score."}
+{"order": 42, "page": 1, "type": "list", "text": "The reliability score quantifies the local presence of a predictive relationship between the features and response and is learned by a separate neural network."}
+{"order": 43, "page": 1, "type": "list", "text": "The proposed decomposition improves the interpretability of neural learners by explicitly modeling and learning both the reliability structure and the predictive component, while retaining the capability of a naive neural learner."}
+{"order": 44, "page": 1, "type": "list", "text": "2. We develop a principled training procedure that combines the expectation–maximization (EM) algorithm [Dempster et al., 1977] with stochastic gradient descent (SGD; Rumelhart et al. [1986]) and maximum likelihood estimation (MLE) to jointly learn the reliability function and the predictive component."}
+{"order": 45, "page": 1, "type": "list", "text": "Experiments on both synthetic and real-world datasets demonstrate the effectiveness of the proposed model and training procedure in uncovering meaningful structures from the data that can facilitate decision-making and feature selection."}
+{"order": 46, "page": 1, "type": "list", "text": "3. We show that the framework can be naturally extended with supervised feature transformation networks, allowing the learned representation to be optimized jointly with the final supervised task."}
+{"order": 47, "page": 1, "type": "list", "text": "When the feature–response relationship exhibits meaningful local structure, such as under the manifold hypothesis [Meil˘a and Zhang, 2024], the framework can further split the problem into a collection of local models."}
+{"order": 48, "page": 1, "type": "list", "text": "Each local model can nevertheless be trained using the entire dataset, with observations appropriately weighted according to the corresponding probabilistic structure."}
+{"order": 49, "page": 1, "type": "body", "text": "For the remainder of the article, Section 2 introduces related work and relevant background, Section 3 describes the properties, training, and extensions of our model, Section 4 presents the experimental results, and Section 6 concludes the article."}
+{"order": 50, "page": 1, "type": "body", "text": "Additional materials are provided in the appendix."}
+{"order": 51, "page": 1, "type": "heading", "text": "2 Related Work"}
+{"order": 52, "page": 1, "type": "body", "text": "Our proposed framework is related to several existing approaches in statistics and machine learning."}
+{"order": 53, "page": 1, "type": "body", "text": "In particular, similarities arise from the use of latent mixture components, feature-dependent weighting, and iterative optimization."}
+{"order": 54, "page": 1, "type": "body", "text": "We review representative approaches from these areas and clarify how their objectives and interpretations differ from those of our framework."}
+{"order": 55, "page": 2, "type": "heading", "text": "2.1 Noisy Labels"}
+{"order": 56, "page": 2, "type": "body", "text": "Classification with noisy labels considers settings in which observed response labels are contaminated or corrupted."}
+{"order": 57, "page": 2, "type": "body", "text": "Robust estimation in the presence of such contamination has been studied since the development of robust statistics [Copas, 1988], and this line of research has continued with the development of modern machine learning [Natarajan et al., 2013, Scott et al., 2013]."}
+{"order": 58, "page": 2, "type": "body", "text": "In contrast, although heteroscedasticity is well studied in regression, it primarily concerns variation in the conditional variance of the response given x, rather than variation in the predictability of the response itself."}
+{"order": 59, "page": 2, "type": "body", "text": "Our framework adopts a different modeling perspective."}
+{"order": 60, "page": 2, "type": "body", "text": "Rather than interpreting poorly explained responses as corrupted observations, we allow the degree of predictability to vary across the feature space."}
+{"order": 61, "page": 2, "type": "body", "text": "An unpredictable response may therefore be perfectly valid, but simply not be explainable from the available features."}
+{"order": 62, "page": 2, "type": "body", "text": "Moreover, whereas existing approaches to noisy labels often rely on heuristic procedures [Han et al., 2018] or prespecified parametric models of label corruption [Patrini et al., 2017], our framework uses neural networks to flexibly model reliability and incorporates the distinction between predictable and unpredictable components directly into a unified probabilistic model."}
+{"order": 63, "page": 2, "type": "heading", "text": "2.2 Reliability and Feature-dependent Weights"}
+{"order": 64, "page": 2, "type": "body", "text": "The reliability score p(z = 1 | x) in our framework is a natural measure of the trustworthiness of the model prediction."}
+{"order": 65, "page": 2, "type": "body", "text": "Various approaches have been proposed in the past to quantify the predictability or reliability of a learner’s output."}
+{"order": 66, "page": 2, "type": "body", "text": "These include measures such as the Bayes error [Ishida et al., 2022], which characterizes the intrinsic predictability of a task, as well as neural networks trained to produce task-oriented selection or confidence scores, such as the selection function in SelectiveNet [Geifman and El-Yaniv, 2019]."}
+{"order": 67, "page": 2, "type": "body", "text": "In contrast, our framework encodes reliability into the probabilistic model structure, and seeks to learn it directly."}
+{"order": 68, "page": 2, "type": "body", "text": "As we will demonstrate, the (posterior) reliability score also serves as a weight for training the classification or regression network, allowing it to uncover the distribution of the predictable component within the overall distribution of y."}
+{"order": 69, "page": 2, "type": "body", "text": "Although assigning different weights to instances during training is common, such weights are often defined heuristically without probabilistic guarantees."}
+{"order": 70, "page": 2, "type": "body", "text": "The use of input-dependent weights is also superficially related to mixture models [Jacobs et al., 1991, Huang and Yao, 2012, Xue and Yao, 2022], where weights determine the contribution of different local predictive models based on the input."}
+{"order": 71, "page": 2, "type": "body", "text": "In our framework, however, the weights have a different meaning: we have one single model and the input-dependent reliability score represents the local probability that the response is predictable from the available features."}
+{"order": 72, "page": 2, "type": "heading", "text": "2.3 EM-based Training with Neural Networks"}
+{"order": 73, "page": 2, "type": "body", "text": "The training of neural networks embedded within probabilistic models has long been investigated, particularly in the Bayesian literature [MacKay, 1992, Neal, 2012]."}
+{"order": 74, "page": 2, "type": "body", "text": "Since our model involves latent variables, its training should naturally combine the EM algorithm with SGD (with MLE also involved)."}
+{"order": 75, "page": 2, "type": "body", "text": "Similar combinations have appeared in previous work [Ng and McLachlan, 2004, Lathuilière et al., 2018], although the specific procedures vary according to the underlying probabilistic models."}
+{"order": 76, "page": 2, "type": "body", "text": "Details of our training procedure are presented in Sections 3.2."}
+{"order": 77, "page": 2, "type": "heading", "text": "3 Our Framework"}
+{"order": 78, "page": 2, "type": "body", "text": "In this section, we provide details of our framework, including the model specification and properties, training procedure, and its extension to enable localized feature transformations supervised by the target tasks."}
+{"order": 79, "page": 3, "type": "caption", "text": "Figure 2: Overall architecture of our framework."}
+{"order": 80, "page": 3, "type": "heading", "text": "3.1 Basic Structure and Properties"}
+{"order": 81, "page": 3, "type": "body", "text": "Figure 2 illustrates the overall architecture of our framework, which, according to Equation 1, seeks to model variation in predictability across the feature space."}
+{"order": 82, "page": 3, "type": "body", "text": "In addition to the neural network used for classification or regression (the learner), we employ a separate neural network to learn the reliability score w(x) = p(z = 1 | x)."}
+{"order": 83, "page": 3, "type": "body", "text": "Throughout this work, we use MLPs with a single hidden layer of 64 neurons for both networks, leaving the exploration of more complex architectures for future work."}
+{"order": 84, "page": 3, "type": "body", "text": "We also recognize that different regions of the feature space may benefit from more carefully tuned local models, particularly in terms of feature transformation, the extension will be discussed in Section 3.3."}
+{"order": 85, "page": 3, "type": "body", "text": "For a neural classifier, the conditional distributions of the response, p(y | x, z = 1) and prand(y), are simply class probabilities."}
+{"order": 86, "page": 3, "type": "body", "text": "For a neural regressor, we further model these conditional distributions as Gaussian, i.e.,"}
+{"order": 87, "page": 3, "type": "equation", "text": "y; µ0, σ2"}
+{"order": 88, "page": 3, "type": "equation", "text": "y; f(x), σ2"}
+{"order": 89, "page": 3, "type": "body", "text": "0 \u0001"}
+{"order": 90, "page": 3, "type": "body", "text": "1 \u0001"}
+{"order": 91, "page": 3, "type": "equation", "text": "\u0000"}
+{"order": 92, "page": 3, "type": "equation", "text": "\u0000"}
+{"order": 93, "page": 3, "type": "equation", "text": ", y | x, z = 0 ∼N"}
+{"order": 94, "page": 3, "type": "equation", "text": "y | x, z = 1 ∼N"}
+{"order": 95, "page": 3, "type": "body", "text": ", (2)"}
+{"order": 96, "page": 3, "type": "body", "text": "where f, µ0, σ2"}
+{"order": 97, "page": 3, "type": "body", "text": "0 and σ2 1 are unknown functions and parameters."}
+{"order": 98, "page": 3, "type": "body", "text": "In other words, when z = 1, we have E[y | x, z = 1] = f(x), whereas when z = 0, y is independent of x and behaves like white noise."}
+{"order": 99, "page": 3, "type": "body", "text": "Notice that in both cases, we have"}
+{"order": 100, "page": 3, "type": "equation", "text": "p(y, z | x) = p(z | x)p(y | x, z)"}
+{"order": 101, "page": 3, "type": "body", "text": "= p(z = 1 |"}
+{"order": 102, "page": 3, "type": "body", "text": "x)z[1 −p(z = 1 |"}
+{"order": 103, "page": 3, "type": "body", "text": "x)]1−zp(y | x, z = 1)zprand"}
+{"order": 104, "page": 3, "type": "body", "text": "(y)1−z, (3) hence, the joint log-density of y and z can be obtained as"}
+{"order": 105, "page": 3, "type": "body", "text": "log p(y, z | x) = z log p(z = 1 | x) + (1 −z) log[1 −p(z = 1 | x)] | {z } reliability network + z log p(y | x, z = 1) | {z } learner network"}
+{"order": 106, "page": 3, "type": "body", "text": "+ (1 −z) log prand(y) | {z } random-response component"}
+{"order": 107, "page": 3, "type": "body", "text": ", (4)"}
+{"order": 108, "page": 3, "type": "body", "text": "which is naturally decomposed into three components corresponding to the reliability network, the learner network, and the estimation of the distribution of the unpredictable component, respectively."}
+{"order": 109, "page": 3, "type": "body", "text": "Ideally, according to Equation 4, if the latent variable z is known, the learner network should be trained on instances with z = 1, which should lead to it learn the distribution of the predictable component p(y | x, z = 1)."}
+{"order": 110, "page": 3, "type": "body", "text": "However, since z is not observable, as we will demonstrate in Section 3.2, the empirical learner target used in training is actually the log likelihood of the clean component weighted by the posterior reliability"}
+{"order": 111, "page": 3, "type": "equation", "text": "γ(x, y) : = p(z = 1 | x, y)"}
+{"order": 112, "page": 3, "type": "equation", "text": "= p(z = 1 |"}
+{"order": 113, "page": 3, "type": "equation", "text": "x)p(y | x, z = 1) p(z = 1 |"}
+{"order": 114, "page": 3, "type": "equation", "text": "x)p(y | x, z = 1) + prand"}
+{"order": 115, "page": 3, "type": "equation", "text": "(y)[1 −p(z = 1 |"}
+{"order": 116, "page": 3, "type": "equation", "text": "x)]."}
+{"order": 117, "page": 3, "type": "equation", "text": "(5)"}
+{"order": 118, "page": 3, "type": "body", "text": "The good thing is, assuming that training converges to the optimum, this procedure also leads the learner to recover the predictable component of the response, which is precisely the distribution the learner is intended to model."}
+{"order": 119, "page": 3, "type": "body", "text": "See Appendix A for the proofs of the following results."}
