@@ -22,10 +22,13 @@ class Span:
 @dataclass
 class Line:
     spans: list[Span]; bbox: BBox
+    dir: tuple[float, float] = (1.0, 0.0)   # PyMuPDF line "dir"; anything but (1,0) is rotated text
     # property text -> "".join(s.text for s in spans)
 
 BlockType = Literal["heading", "body", "caption", "footnote", "header", "footer",
-                    "table", "equation", "list", "image"]
+                    "table", "equation", "list", "image", "noise"]
+# "noise" (added after ground-truth review): rotated margin stamps (arXiv, NIST DOI), email-only
+# or URL-only lines, "Preprint." footers, cover boilerplate. Never read; dropped by order_page.
 
 @dataclass
 class Block:

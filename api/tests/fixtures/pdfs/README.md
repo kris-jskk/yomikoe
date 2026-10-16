@@ -17,3 +17,12 @@ Only use PDFs you have the right to redistribute (arXiv with a CC license, gover
 - `manifest.json` lists every fixture (name, class, two_column, source, license, pages); `ATTRIBUTION.md` records source URL, license and license evidence for each.
 - `name.expected.jsonl`: one line per expected segment in reading order, fields `order, page, type, text`. Format and scoring are in `_agent/specs/m1-ingestion-interfaces.md`, section "Golden fixture format".
 - The `expected.jsonl` files are generated from the pipeline output and hand-corrected in a later task; they do not exist yet.
+
+## Scanned fixtures: provisional ground truth
+
+Each `scanned_*.expected.jsonl` is derived from its source fixture's hand-corrected file
+(pages 0–1 only, renumbered): scanned_01 ← academic_01, scanned_02 ← academic_03,
+scanned_03 ← report_01, scanned_04 ← tables_03, scanned_05 ← tables_04. They are provisional
+until the OCR fallback lands in M4: OCR text will differ from the born-digital text, so these
+files will need a second hand-correction against OCR output then. The golden test skips the
+scanned class while `ocr_available()` is False.

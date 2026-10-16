@@ -1,0 +1,90 @@
+{"order": 0, "page": 0, "type": "body", "text": "COPULA ACTIVE SUBSPACES II: ERROR DECOMPOSITION, A POSTERIORI ESTIMATION, AND SHARPNESS OF THE BOUNDS∗"}
+{"order": 1, "page": 0, "type": "body", "text": "JOSHUA CHEN† AND PETER JAN VAN LEEUWEN‡"}
+{"order": 2, "page": 0, "type": "body", "text": "Abstract."}
+{"order": 3, "page": 0, "type": "body", "text": "The Copula Active Subspaces (Cas) method of Part I estimates a non-Gaussian observation-noise density πn from residual samples."}
+{"order": 4, "page": 0, "type": "body", "text": "Its KL divergence DKL(πn ∥bπn) admits an exact decomposition into marginal, projection and reduced-density terms and bounds the posterior KL divergence averaged over the true predictive distribution."}
+{"order": 5, "page": 0, "type": "body", "text": "We derive a priori bounds for these terms, together with estimates or bounds from residual samples."}
+{"order": 6, "page": 0, "type": "body", "text": "Weighted nearest-neighbour entropy estimates are used for the marginal and reduced-density terms, with asymptotic standard errors in exact rank coordinates."}
+{"order": 7, "page": 0, "type": "body", "text": "For the projection error, the score is fitted on one subsample, and its mean squared magnitude outside the retained subspace is estimated on the other."}
+{"order": 8, "page": 0, "type": "body", "text": "Corrections for score and rank-transform errors then give a theoretical upper bound with probability at least 1−δ."}
+{"order": 9, "page": 0, "type": "body", "text": "Tests on three known noise laws in dimension d = 20 use the estimated rank transform."}
+{"order": 10, "page": 0, "type": "body", "text": "In 11 of 12 combinations of example and sample size, the sum of the two estimated terms and the trace bound exceeds the reference divergence after averaging over the estimated models."}
+{"order": 11, "page": 0, "type": "body", "text": "In these tests, score-estimation error is the largest contribution to looseness."}
+{"order": 12, "page": 0, "type": "body", "text": "The overestimate from the Gaussian log-Sobolev inequality alone is at most a factor of 1.98."}
+{"order": 13, "page": 0, "type": "body", "text": "Key words."}
+{"order": 14, "page": 0, "type": "body", "text": "copula, active subspace, score matching, dimension reduction, Hermite polynomials, Bayesian inference problems, non-Gaussian observation error"}
+{"order": 15, "page": 0, "type": "body", "text": "MSC codes."}
+{"order": 16, "page": 0, "type": "body", "text": "62G07, 62G20, 62H05, 62B10, 60E15, 62F15"}
+{"order": 17, "page": 0, "type": "list", "text": "1. Introduction."}
+{"order": 18, "page": 0, "type": "list", "text": "Approximating the observation-noise density changes the posterior in a Bayesian inference problem."}
+{"order": 19, "page": 0, "type": "list", "text": "The noise-density KL divergence bounds the resulting posterior KL divergence, averaged over the true predictive distribution."}
+{"order": 20, "page": 0, "type": "list", "text": "Part I [10] estimates a non-Gaussian noise density πn from residual samples, and tests the estimate against known noise laws."}
+{"order": 21, "page": 0, "type": "list", "text": "Such a comparison is unavailable in applications."}
+{"order": 22, "page": 0, "type": "list", "text": "We therefore consider the error"}
+{"order": 23, "page": 0, "type": "body", "text": "(1.1) DKL(πn ∥bπn),"}
+{"order": 24, "page": 0, "type": "body", "text": "of the Cas estimate bπn, estimating its individual contributions from the residual samples."}
+{"order": 25, "page": 0, "type": "body", "text": "The decomposition in Proposition 2.1 assigns one error term to each estimation step of Cas: (1.1) equals Emarg + Eproj + Edens."}
+{"order": 26, "page": 0, "type": "body", "text": "The marginal term Emarg consists of d one-dimensional divergences and two corrections; Edens is a divergence between r-dimensional laws."}
+{"order": 27, "page": 0, "type": "body", "text": "For the projection error Eproj, the rank-r reduction admits a bound in terms of the copula-score variance outside the retained subspace."}
+{"order": 28, "page": 0, "type": "body", "text": "This is the Gaussian-reference bound of certified dimension reduction [36]."}
+{"order": 29, "page": 0, "type": "body", "text": "A direct entropy estimate of (1.1) would involve the differential entropy of πn in dimension d."}
+{"order": 30, "page": 0, "type": "body", "text": "For densities supported on [0, 1]d in Lipschitz balls of smoothness s = 2, the minimax root-mean-square error has order (N log N)−2/(d+2) + N −1/2 [19, Thm. 1]."}
+{"order": 31, "page": 0, "type": "footnote", "text": "∗This is Part II of a two-part work."}
+{"order": 32, "page": 0, "type": "footnote", "text": "The companion paper Copula Active Subspaces I: A Score- Covariance Method for Reduced-Order Non-Gaussian Density Estimation defines the estimator analyzed here."}
+{"order": 33, "page": 0, "type": "footnote", "text": "Funding: This work was supported by the Consortium for Advanced Data Assimilation Research and Education (CADRE), funded by NOAA under grant 2007893."}
+{"order": 34, "page": 0, "type": "footnote", "text": "†Department of Atmospheric Science, Colorado State University, Fort Collins, CO 80523 (Joshua.Chen@colostate.edu)."}
+{"order": 35, "page": 0, "type": "footnote", "text": "‡Department of Atmospheric Science, Colorado State University, Fort Collins, CO 80523 (Peter.vanLeeuwen@colostate.edu)."}
+{"order": 36, "page": 1, "type": "body", "text": "The decomposition reduces the required entropy calculations to dimensions 1 and r."}
+{"order": 37, "page": 1, "type": "body", "text": "No entropy estimate is needed for the bound on Eproj."}
+{"order": 38, "page": 1, "type": "body", "text": "The a priori bounds in Section 3 depend on the rank r, the multi-index sets and the sample size N. Normalizing the fitted joint density introduces a correction in the marginal bound."}
+{"order": 39, "page": 1, "type": "body", "text": "The bound minus this correction tends to zero as N →∞, under the stated assumptions on the marginal estimates and rank-transform error."}
+{"order": 40, "page": 1, "type": "body", "text": "The bounds on Eproj and Edens keep approximation, regularization and constraint terms that do not vanish as N →∞."}
+{"order": 41, "page": 1, "type": "body", "text": "In the examples of Section 6, Eproj is the largest term for N ≥12,500, and the Gaussian log-Sobolev bound overestimates it by a factor between 1.64 and 1.98."}
+{"order": 42, "page": 1, "type": "body", "text": "We also apply gradient descent to the tighter bound of [24]."}
+{"order": 43, "page": 1, "type": "body", "text": "The subspace moves by ∥sin Θ∥F ≤0.0004 from the top-r eigenbasis of C used by Cas."}
+{"order": 44, "page": 1, "type": "body", "text": "Most of the remaining looseness of the a priori bound on these examples is due to the Hermite truncation of the score (Subsection 6.4)."}
+{"order": 45, "page": 1, "type": "body", "text": "For the a posteriori analysis in Section 4, we estimate Emarg and Edens by weighted nearest-neighbour entropy estimators."}
+{"order": 46, "page": 1, "type": "body", "text": "Under the stated assumptions these attain the parametric rate in exact rank-Gaussianized coordinates."}
+{"order": 47, "page": 1, "type": "body", "text": "To bound Eproj, we fit the score and rank transform on half of the sample."}
+{"order": 48, "page": 1, "type": "body", "text": "The other half estimates the mean squared magnitude of the fitted score outside the retained subspace."}
+{"order": 49, "page": 1, "type": "body", "text": "Under the stated assumptions, a theoretical upper bound for this quantity holds with probability at least 1 −δ."}
+{"order": 50, "page": 1, "type": "body", "text": "It becomes a bound on Eproj after adding corrections for errors in the score estimate and rank transform."}
+{"order": 51, "page": 1, "type": "body", "text": "The increment between two nested multi-index sets estimates the Hermite truncation error under a saturation assumption."}
+{"order": 52, "page": 1, "type": "body", "text": "It does not estimate the sampling or regularization errors."}
+{"order": 53, "page": 1, "type": "body", "text": "Section 2 defines the estimator and decomposes its error."}
+{"order": 54, "page": 1, "type": "body", "text": "The three numerical examples are reported in Section 6."}
+{"order": 55, "page": 1, "type": "list", "text": "2. The estimator and its exact error decomposition."}
+{"order": 56, "page": 1, "type": "list", "text": "The two stages of Cas estimate the density πn of the noise n ∈Rd from N residual samples (Part I [10], Algorithm 3.1)."}
+{"order": 57, "page": 1, "type": "list", "text": "For marginal densities πi with CDFs Fi, the componentwise map Z"}
+{"order": 58, "page": 1, "type": "list", "text": "(x)i := Φ−1(Fi"}
+{"order": 59, "page": 1, "type": "list", "text": "(xi)) produces standard Gaussian marginals (2.1), with Φ the standard normal CDF."}
+{"order": 60, "page": 1, "type": "list", "text": "The transformed noise Z := Z(n) has law πZ."}
+{"order": 61, "page": 1, "type": "list", "text": "Replacing Fi by the rank-based bFi of Part I defines b Z. The marginal densities are estimated separately by Gaussian-kernel estimates bπi [31]."}
+{"order": 62, "page": 1, "type": "body", "text": "Let γk denote the standard Gaussian density on Rk."}
+{"order": 63, "page": 1, "type": "body", "text": "The copula density is cZ := πZ/γd."}
+{"order": 64, "page": 1, "type": "body", "text": "Its score S := ∇log cZ has second-moment matrix C := EπZ[SS⊤] (2.2), referred to as the score covariance."}
+{"order": 65, "page": 1, "type": "body", "text": "With eigenvalues ordered as λ1(C) ≥· · · ≥λd(C), a top-r eigenbasis V C"}
+{"order": 66, "page": 1, "type": "body", "text": "r spans the copula active subspace."}
+{"order": 67, "page": 1, "type": "body", "text": "Stage 1 fits the copula score by Hermite score matching [22] in the span of the gradients of multivariate Hermite polynomials Hα."}
+{"order": 68, "page": 1, "type": "body", "text": "The polynomials are orthonormal in L2(γd) and indexed by Λ := ΛK1,q1."}
+{"order": 69, "page": 1, "type": "body", "text": "The set ΛK,q contains indices with 1 ≤ |α|1 ≤K and at most q nonzero entries, except for the linear indices ei (3.2)."}
+{"order": 70, "page": 1, "type": "body", "text": "This fit defines bS := ∇P"}
+{"order": 71, "page": 1, "type": "equation", "text": "α∈Λ bθd"}
+{"order": 72, "page": 1, "type": "body", "text": "αHα (3.3), with coefficient vector bθd := (bθd"}
+{"order": 73, "page": 1, "type": "body", "text": "α)α∈Λ."}
+{"order": 74, "page": 1, "type": "body", "text": "From the empirical second-moment matrix b C of bS (3.5), we choose a top-r eigenbasis bV C"}
+{"order": 75, "page": 1, "type": "body", "text": "r ."}
+{"order": 76, "page": 1, "type": "body", "text": "The superscript distinguishes this basis from a principal-component basis of Z."}
+{"order": 77, "page": 1, "type": "body", "text": "A basis Vr ∈St(r, Rd) and its orthonormal completion V⊥separate the retained coordinates U := V ⊤"}
+{"order": 78, "page": 1, "type": "body", "text": "r Z from the discarded coordinates W := V ⊤"}
+{"order": 79, "page": 1, "type": "body", "text": "⊥Z."}
+{"order": 80, "page": 1, "type": "body", "text": "The conditional law of W given U is denoted by πW |U."}
+{"order": 81, "page": 1, "type": "body", "text": "Define the reduced factor cU"}
+{"order": 82, "page": 1, "type": "body", "text": "r := πU/γr and its logarithm Lr := log cU"}
+{"order": 83, "page": 1, "type": "body", "text": "r ."}
+{"order": 84, "page": 1, "type": "body", "text": "Part I (Subsection 2.1) uses this factor to define the reduced model πn(x; Vr) := cU"}
+{"order": 85, "page": 1, "type": "equation", "text": "r (V ⊤"}
+{"order": 86, "page": 1, "type": "equation", "text": "r Z(x)) Q"}
+{"order": 87, "page": 1, "type": "body", "text": "i πi(xi) (2.4)."}
+{"order": 88, "page": 1, "type": "body", "text": "For the fitted estimator, we use Vr = bV C"}
+{"order": 89, "page": 1, "type": "body", "text": "r in these definitions."}
