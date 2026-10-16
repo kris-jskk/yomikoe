@@ -34,7 +34,7 @@ LIST_RE = re.compile(r"^(?:[•·▪‣◦\-–*]|\d+[.)])\s")
 MATH_CHARS = set("=+−-×÷∑∫√∂∞≤≥≈∝∈∀∃αβγδεθλμπσφω^_{}|")
 MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
 EQ_NUMBER_RE = re.compile(r"^\(\d+[a-z]?\)[.,]?$")
-TEX_SCRIPT_ROMAN_RE = re.compile(r"^CMR[5-8]$")
+SCRIPT_RATIO = 0.8  # text smaller than this share of the block's largest size is a script
 EQ_PROSE_LETTERS: float | None = 0.5
 TABLE_FIRST = True  # a block centred inside a table region is table before heading/caption
 
@@ -127,12 +127,13 @@ def _is_math_font(font: str) -> bool:
 
 def _is_equation(block: Block) -> bool:
     """Display-equation text (ING-3): math glyphs (math font or MATH_CHARS) are the majority;
-    or (tuned 2026-10-16 on pdfplumber) the block holds a math-font glyph and letters set in
-    text fonts are under EQ_PROSE_LETTERS of its non-space characters (operands in CMR, digits,
-    brackets and equation numbers do not count as prose); or it is a bare equation number."""
+    or (tuned 2026-10-16 on pdfplumber) the block holds a math-font glyph and its prose letters
+    (text-font letters at no less than SCRIPT_RATIO of the block's largest size) are under
+    EQ_PROSE_LETTERS of its non-space characters; or it is a bare equation number."""
     text = "".join(block.text.split())
     if EQ_NUMBER_RE.match(text):
         return True
+    top = _max_size(block)
     total = 0
     math_chars = 0
     prose_letters = 0
@@ -147,18 +148,13 @@ def _is_equation(block: Block) -> bool:
                 total += 1
                 if math_font or ch in MATH_CHARS:
                     math_chars += 1
-                elif ch.isalpha() and not s.superscript and not _is_tex_roman(s.font):
+                elif ch.isalpha() and s.size >= SCRIPT_RATIO * top:
                     prose_letters += 1
     if total == 0:
         return False
     if math_chars * 2 > total:
         return True
     return EQ_PROSE_LETTERS is not None and has_math_font and prose_letters < EQ_PROSE_LETTERS * total
-
-
-def _is_tex_roman(font: str) -> bool:
-    """CMR at a script size (5-8 pt designs) sets subscripts and operator names in maths."""
-    return bool(TEX_SCRIPT_ROMAN_RE.match(font))
 
 
 def _starts_with_superscript_digit(block: Block) -> bool:

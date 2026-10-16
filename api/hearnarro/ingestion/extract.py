@@ -38,9 +38,12 @@ BLOCK_SIZE_RATIO = 1.25  # max ratio between line font sizes inside one block
 # MuPDF's text-indent paragraph rule (D13), applied to tagged PDFs only (glyphs carry
 # marked-content ids; Word/Acrobat output): a line starting INDENT_NEW_BLOCK points right of
 # the previous line's start opens a new block (a first-line-indented paragraph, or the next
-# ragged-left cover line). In untagged TeX output the same move is a hanging indent (list
-# item, wrapped heading) and keeps the block; measured in results 130.
+# ragged-left cover line); measured in results 130.
 INDENT_NEW_BLOCK: float | None = 0.5
+# In untagged PDFs only a small move (<= UNTAGGED_INDENT_MAX points: the line before hung into
+# the margin, e.g. an opening "(" or "W" set by microtype) opens a block; larger moves are
+# hanging indents of list items and wrapped headings.
+UNTAGGED_INDENT_MAX: float | None = 2.0
 # MuPDF's "way off the baseline" paragraph rule: a line whose baseline sits more than
 # PARA_BASELINE font sizes below the previous line's opens a new block, even when tall glyphs
 # (display-equation delimiters, stacked limits) make the boxes touch.
@@ -58,7 +61,7 @@ COLUMN_GAP = 1.0  # a glyph gap this many font sizes wide inside a ruled region 
 # under MATH_LINE_PROSE of its glyphs is "math"; a block never mixes math and prose lines.
 MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
 MATH_LINE_PROSE: float | None = 0.3
-_TEX_SCRIPT_ROMAN = re.compile(r"^CMR[5-8]$")
+SCRIPT_RATIO = 0.8  # a glyph this much smaller than its line's dominant size is a script
 SUPERSCRIPT_SIZE_RATIO = 0.75  # a char this much smaller than the line's dominant size ...
 SUPERSCRIPT_RAISE = 0.2  # ... whose bottom sits this many dominant sizes higher is raised
 
@@ -66,7 +69,7 @@ SUPERSCRIPT_RAISE = 0.2  # ... whose bottom sits this many dominant sizes higher
 # ground truth, measured in results 131): CMSY/CMR relations, arrows, minus and ∆, and spacing
 # accents in any font ("B¨ uhlmann"). "|", "×", "·", "′", "†", "Π", "Θ" keep their space.
 _TIGHT_FONT = re.compile(r"^CM(?:SY|R)\d")
-_TIGHT_SYMBOLS = frozenset("∈∉≤≥∼≈≃≡∝−→←↔⇒∥⊤⊂⊆⊃⊇∆7")
+_TIGHT_SYMBOLS = frozenset("∈∉≤≥∼≈≃≡∝−→←↔⇒∥⊤⊥⊂⊆⊃⊇∆∗≫≪7")
 _SPACING_ACCENTS = frozenset("¨ˆ˜´`¯˙˘ˇ˚")
 _SUBSET_PREFIX = re.compile(r"^[A-Z]{6}\+")
 _CID = re.compile(r"\(cid:(\d+)\)")
@@ -308,8 +311,9 @@ def _continues_line(prev: LayoutChar, line_v: tuple[float, float], c: LayoutChar
         return False
     v0, v1 = _vspan(c)
     overlap = min(v1, line_v[1]) - max(v0, line_v[0])
-    if overlap < LINE_OVERLAP * min(v1 - v0, line_v[1] - line_v[0]):
-        return False
+    accent = _is_accent(c) or _is_accent(prev)
+    if not accent and overlap < LINE_OVERLAP * min(v1 - v0, line_v[1] - line_v[0]):
+        return False  # an accent sits above its letter; only the horizontal test applies
     size = max(c.size, prev.size, 1.0)
     gap = _hspan(c)[0] - _hspan(prev)[1]
     return -LINE_BACKSTEP * size <= gap <= LINE_MAX_GAP * size
@@ -317,7 +321,7 @@ def _continues_line(prev: LayoutChar, line_v: tuple[float, float], c: LayoutChar
 
 def _tight_after(c: LayoutChar) -> bool:
     """No word space is inserted after this glyph (see _TIGHT_FONT)."""
-    if c.text in _SPACING_ACCENTS:
+    if _is_accent(c):
         return True
     return bool(_TIGHT_FONT.match(c.font)) and c.text in _TIGHT_SYMBOLS
 
@@ -344,8 +348,9 @@ def group_lines(chars: Sequence[LayoutChar]) -> list[list[LayoutChar]]:
             ):
                 lines[-1].append(LayoutChar(" ", None))
             lines[-1].append(c)
-            v0, v1 = _vspan(c)
-            line_v = (min(line_v[0], v0), max(line_v[1], v1))
+            if not _is_accent(c):
+                v0, v1 = _vspan(c)
+                line_v = (min(line_v[0], v0), max(line_v[1], v1))
         else:
             lines.append([c])
             line_v = _vspan(c)
@@ -397,7 +402,11 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
                 and prev_box is not None
                 and box.y0 >= prev_box.y1 - 0.5 * size
                 and box.x0 > prev_box.x0 + INDENT_NEW_BLOCK
-                and _tagged(prev_line, line)
+                and (
+                    _tagged(prev_line, line)
+                    or (UNTAGGED_INDENT_MAX is not None
+                        and box.x0 <= prev_box.x0 + UNTAGGED_INDENT_MAX)
+                )
             ):
                 join = False
             else:
@@ -425,21 +434,32 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
 
 
 def is_math_line(line: Sequence[LayoutChar]) -> bool:
-    """A display-maths line: it holds a math-font glyph and its letters set in text fonts
-    (script-size CMR excluded) are under MATH_LINE_PROSE of its glyphs."""
+    """A display-maths line: it holds a math-font glyph and its prose letters (letters in
+    text fonts at no less than SCRIPT_RATIO of the line's dominant size; smaller ones are
+    sub/superscripts such as operator names) are under MATH_LINE_PROSE of its glyphs."""
     glyphs = [c for c in line if c.bbox is not None and c.text.strip()]
     if not glyphs or MATH_LINE_PROSE is None:
         return False
-    if not any(any(m in c.font for m in MATH_FONT_MARKERS) for c in glyphs):
+    if not any(is_math_font(c.font) for c in glyphs):
         return False
+    sizes = Counter(round(c.size, 1) for c in glyphs)
+    dominant = max(sizes, key=lambda s: (sizes[s], s))
     prose = sum(
         1
         for c in glyphs
-        if c.text.isalpha()
-        and not any(m in c.font for m in MATH_FONT_MARKERS)
-        and not _TEX_SCRIPT_ROMAN.match(c.font)
+        if c.text.isalpha() and not is_math_font(c.font) and c.size >= SCRIPT_RATIO * dominant
     )
     return prose < MATH_LINE_PROSE * len(glyphs)
+
+
+def is_math_font(font: str) -> bool:
+    """A TeX/Unicode maths font (MATH_FONT_MARKERS)."""
+    return any(m in font for m in MATH_FONT_MARKERS)
+
+
+def _is_accent(c: LayoutChar) -> bool:
+    """A spacing accent, or a CMEX wide hat/tilde (pdfminer maps those to "b".."g")."""
+    return c.text in _SPACING_ACCENTS or (c.font.startswith("CMEX") and c.text in "bcdefg")
 
 
 def _baseline(line: list[LayoutChar]) -> float:
