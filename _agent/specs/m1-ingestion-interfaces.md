@@ -26,7 +26,9 @@ class Line:
     # property text -> "".join(s.text for s in spans)
 
 BlockType = Literal["heading", "body", "caption", "footnote", "header", "footer",
-                    "table", "equation", "list", "image", "noise"]
+                    "table", "equation", "list", "image", "noise", "figure"]
+# "figure" (D12, 2026-10-16): text whose raw blocks lie >=80% inside a figure region (image bbox or
+# union of vector drawings covering 2-80% of the page). Never read; dropped by order_page.
 # "noise" (added after ground-truth review): rotated margin stamps (arXiv, NIST DOI), email-only
 # or URL-only lines, "Preprint." footers, cover boilerplate. Never read; dropped by order_page.
 
@@ -184,3 +186,12 @@ Each `<stem>.pdf` has `<stem>.expected.jsonl`, one line per segment in reading o
 as a sequence: `score = 1 - levenshtein(actual_seq, expected_seq) / len(expected_seq)`;
 assert score >= 0.95 per PDF and mean >= 0.97. Class `scanned` is skipped when
 `ocr_available()` is False (OCR fallback is M4 per PRD milestones).
+
+## Amendment 2026-10-16 (D12): prose-only golden comparison
+
+`test_ing4_reading_order_golden.py` compares only segments whose LogicalBlock type (actual) or
+`type` field (expected) is one of heading, body, list, caption, footnote. It asserts
+`abs(excluded_actual - excluded_expected) <= 0.15 * max(1, excluded_expected)` per fixture.
+`order.py` drops `figure` and `noise`. `merge.py` joins inline-math fragments (see
+`_agent/specs/m1-ground-truth-rules.md`, amendment rule 2) into the host sentence whether or not
+extraction order had split the chain.

@@ -47,3 +47,26 @@ type. Allowed: heading, body, caption, footnote, table, equation, list.
 
 For each fixture, note in the results file: segments in draft, segments in final, lines moved,
 lines dropped, lines joined, and one sentence on the main parser error seen (or "none").
+
+## Amendment 2026-10-16 (decision D12, user-approved): prose-only comparison
+
+Measured on 2026-10-16 (results 55, 56, 70): the remaining gap to the gate was dominated by text
+a listener should never hear, and by inline-math fragments the three reviewers handled
+differently. Three rules change; everything above still holds.
+
+1. **Figure-internal text is dropped**, from the parser (type `figure`, never read) and from the
+   expected files. Definition: a segment whose source raw blocks are all at least 80% inside a
+   figure region (a stage-1 image bbox, or the bbox of a transitive union of overlapping
+   `get_drawings()` rects covering 2%–80% of the page). Captions are never figure-internal. The
+   removal list per fixture is `_agent/results/56_figure_text_removed.jsonl` (0 unmatched).
+2. **Inline-math fragments are joined into their host sentence.** A fragment is a block of at
+   most a few characters or symbols (sub/superscripts, operators, "r )∥2", "∫", "π :=") that
+   vertically overlaps a prose line. Whether the draft emitted it in order or out of order, the
+   expected file has ONE segment for the sentence, with the fragment text placed at its reading
+   position, separated by single spaces. Display equations (their own block, on their own line)
+   stay separate segments typed `equation`.
+3. **The golden comparison is prose-only.** Both sequences keep only segments whose type is
+   heading, body, list, caption or footnote. Table and equation internals are excluded until
+   ING-7 (M4) defines how they are read; the test also asserts that the number of excluded
+   segments on the actual side is within 15% of the expected side, so misclassifying prose as
+   table cannot hide an error.
