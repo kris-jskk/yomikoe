@@ -69,3 +69,7 @@ scratchpad; copy under `docs/guide/` when the milestone closes). Each new milest
    that phase; a phase is not reported as closed until the guide says so.
 3. **Why and not only what.** Each step in the guide says why it is necessary, in one or two
    sentences, and names the requirement ID or design decision it serves.
+4. **A code map per milestone**, `docs/CODE_MAP_<milestone>.md`: the request and data flows end to end
+   (one walkthrough per entry point), then every module and file with its responsibility, public
+   functions, what it reads and writes, and a status (planned / stub / implemented / tested). It is
+   updated in the same phase that lands or changes a module, and linked from the milestone's guide.
