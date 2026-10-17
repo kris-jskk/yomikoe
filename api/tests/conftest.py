@@ -121,16 +121,21 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers", "model: needs a real TTS model; skipped unless HEARNARRO_TEST_MODEL=1"
     )
+    config.addinivalue_line(
+        "markers", "soak: 300-page soak gate (M4); skipped unless HEARNARRO_TEST_SOAK=1"
+    )
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    """Skip every ``@pytest.mark.model`` test unless ``HEARNARRO_TEST_MODEL=1``."""
-    if os.environ.get("HEARNARRO_TEST_MODEL") == "1":
-        return
-    skip = pytest.mark.skip(reason="model test: set HEARNARRO_TEST_MODEL=1")
-    for item in items:
-        if "model" in item.keywords:
-            item.add_marker(skip)
+    """Skip every ``@pytest.mark.model`` test unless ``HEARNARRO_TEST_MODEL=1`` and every
+    ``@pytest.mark.soak`` test unless ``HEARNARRO_TEST_SOAK=1``."""
+    for marker, env in (("model", "HEARNARRO_TEST_MODEL"), ("soak", "HEARNARRO_TEST_SOAK")):
+        if os.environ.get(env) == "1":
+            continue
+        skip = pytest.mark.skip(reason=f"{marker} test: set {env}=1")
+        for item in items:
+            if marker in item.keywords:
+                item.add_marker(skip)
 
 
 class SpyBackend:

@@ -25,6 +25,7 @@ dev = [
     "pytest-asyncio>=0.23",
     "httpx>=0.27",
     "ruff>=0.5",
+    "reportlab==4.4.10",  # BSD-3; soak fixture generator only (M4 gate)
 ]
 # D15: Kokoro-82M on PyTorch CPU without the GPL/LGPL chain. The `kokoro` package itself is
 # NOT a dependency (it declares misaki[en] -> phonemizer/espeak/num2words); its Apache-2.0 model
