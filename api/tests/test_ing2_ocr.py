@@ -165,3 +165,68 @@ def test_ing2_tesseract_reads_scanned_01() -> None:
     words = " ".join(s.text for s in result.segments).lower()
     assert result.ocr_skipped_pages == 0
     assert "audio" in words and "singapore" in words
+
+
+# ---------------------------------------------------------------------------------------
+# Two columns (ING-2, ING-4): tesseract block numbers survive into stage 3
+# ---------------------------------------------------------------------------------------
+
+LEFT = [
+    "Left column opens the page with its first sentence here.",
+    "Left column carries on with a second sentence of prose.",
+    "Left column closes with a third sentence before the gutter.",
+]
+RIGHT = [
+    "Right column starts only after the left column has ended.",
+    "Right column continues with another line of its own text.",
+    "Right column finishes the page with the very last words.",
+]
+TSV_HEADER = (
+    "level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext"
+)
+
+
+def _two_column_tsv() -> str:
+    """Two tesseract blocks side by side: lines with the same line_num share a row."""
+    rows = [TSV_HEADER]
+    for block, x, texts in ((1, 300, LEFT), (2, 1350, RIGHT)):
+        for line_num, text in enumerate(texts, start=1):
+            top = 400 + 60 * line_num
+            left = x
+            for word_num, word in enumerate(text.split(), start=1):
+                width = 8 * len(word)
+                rows.append(
+                    f"5\t1\t{block}\t1\t{line_num}\t{word_num}\t{left}\t{top}\t{width}\t40\t95\t{word}"
+                )
+                left += width + 8
+    return "\n".join(rows) + "\n"
+
+
+def test_ing2_ing4_tsv_lines_keep_their_tesseract_block() -> None:
+    ocr = _ocr()
+    lines = ocr.parse_tsv(_two_column_tsv(), scale=72.0 / 300)
+    assert [ln.text for ln in lines] == LEFT + RIGHT
+    assert {ln.block for ln in lines[:3]} == {(1, 1)}
+    assert {ln.block for ln in lines[3:]} == {(2, 1)}
+    assert max(ln.bbox.x1 for ln in lines[:3]) < min(ln.bbox.x0 for ln in lines[3:])
+
+
+def test_ing2_ing4_side_by_side_tesseract_blocks_stay_separate_blocks() -> None:
+    ocr = _ocr()
+    blocks = ocr.lines_to_blocks(0, ocr.parse_tsv(_two_column_tsv(), scale=72.0 / 300))
+    texts = [[ln.spans[0].text for ln in b.lines] for b in blocks]
+    assert sorted(texts) == sorted([LEFT, RIGHT])
+
+
+def test_ing2_ing4_two_column_ocr_page_reads_in_column_order() -> None:
+    """Fake lines from two tesseract blocks: the left column is read before the right one."""
+    ocr = _ocr()
+    lines = [
+        ocr.OcrLine(text=t, bbox=BBox(x0, 100.0 + 16 * i, x0 + 220.0, 112.0 + 16 * i), block=blk)
+        for blk, x0, texts in (((1, 1), 72.0, LEFT), ((2, 1), 320.0, RIGHT))
+        for i, t in enumerate(texts)
+    ]
+    result = ingest(SCANNED_01, ocr_backend=ocr.FakeOCRBackend(lines))
+    joined = " ".join(s.text for s in result.segments)
+    positions = [joined.index(t) for t in LEFT + RIGHT]
+    assert positions == sorted(positions)
