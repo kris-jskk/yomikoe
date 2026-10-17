@@ -10,6 +10,8 @@ The problem it solves: long documents (papers, reports, textbooks) are easier to
 
 Vision in one line: an open, extensible reading engine where the hard part is text extraction and playback plumbing, and the voice is a pluggable backend.
 
+Focus decided 2026-10-17 (user): HearNarro is a study narrator. It takes a PDF (a paper, a textbook chapter, lecture notes) and narrates it for students and people in academia, so formulas are spoken as a person would read them aloud rather than skipped, and technical vocabulary is pronounced correctly. That work is milestone M5 "Academic reading" (MATH and TERM requirements below); M1 to M4 stay as built.
+
 ## Goals, non-goals and success metrics
 
 v1 ships a working reader for born-digital and scanned PDFs with at least 6 voices and speeds from 0.5x to 3x, running locally on a laptop with no GPU.
@@ -41,16 +43,18 @@ v1 ships a working reader for born-digital and scanned PDFs with at least 6 voic
 | Highlight drift after 10 minutes of playback | < 1 word | Manual check on 5 documents |
 | Crash-free playback of a 300-page PDF | 100% | Soak test |
 
-Evals (EVAL-1 to EVAL-9, decided 2026-10-17; Technical Design D31–D34) produce the trend line for these metrics and for quality the gates do not measure: every run keeps its per-example scores in a committed record so two commits can be compared. The gate tests remain the floor and the only thing that blocks a merge.
+Evals (EVAL-1 to EVAL-9, decided 2026-10-17, and EVAL-10 for M5; Technical Design D31–D34) produce the trend line for these metrics and for quality the gates do not measure: every run keeps its per-example scores in a committed record so two commits can be compared. The gate tests remain the floor and the only thing that blocks a merge.
 
 ## Users and use cases
 
 The first user is you: a technical reader working through long papers and reports who wants to listen while away from the screen. Design for that person first; the other personas below shape the interface but do not gate v1.
 
+From 2026-10-17 (user decision, M5) the primary users are students and academic readers: people studying from papers, textbooks and lecture notes, where equations, symbols, units and domain terms are a large share of the text. The accessibility user and the commuter stay secondary.
+
 | Persona | Core need | What they do in the app |
 | --- | --- | --- |
-| Technical reader (primary) | Get through a 40-page paper on a walk | Upload, pick a voice, play at 1.5–2x, skip the references section |
-| Student | Study a scanned textbook chapter | Upload a photographed PDF, rely on OCR, follow the highlight while listening |
+| Academic reader (primary) | Get through a 40-page paper on a walk, equations included | Upload, pick a voice, play at 1.5–2x, skip the references section, hear each formula read aloud |
+| Student (primary) | Study a textbook chapter or lecture notes, scanned or born-digital | Upload the PDF (OCR for photographed pages), follow the highlight, slow down or repeat an equation, fix a mispronounced term |
 | Accessibility user (dyslexia, low vision) | Read any document comfortably | Larger highlight, slower speed, keyboard-only control |
 | Commuter | Hands-free listening | Resume where they left off, background playback on phone browser |
 
@@ -91,7 +95,7 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | SYN-5 | P0 | Lookahead queue: keep N segments ahead of playback synthesized; N configurable, default 5 |
 | SYN-6 | P1 | Cache synthesized audio keyed by (segment id, voice, speed) so re-listening is instant; the id, not a text hash, so a re-ingested document never reuses stale audio (D7) |
 | SYN-7 | P1 | Second backend (GPU model such as Fish Speech or Qwen3-TTS) selectable per document |
-| SYN-8 | P2 | Content-aware delivery: pause length and pitch differ for headings, captions, body text |
+| SYN-8 | P1 (pause), P2 (pitch) | Content-aware delivery: pause length and pitch differ for headings, captions, body text. Raised 2026-10-17 (M5): pause length for headings, theorem-style openers and list items is P1; pitch stays P2 |
 | SYN-9 | P2 | Voice cloning from a reference clip |
 
 **Playback (PLAY)**
@@ -107,6 +111,8 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | PLAY-7 | P1 | Media Session API so lock-screen controls work on phone browsers |
 | PLAY-8 | P1 | Skip-block toggles: mute footnotes, captions, references section |
 | PLAY-9 | P2 | Export whole document as MP3 or M4B with chapter markers |
+| PLAY-10 | P1 | Skip or repeat the current equation with one action (keyboard and button), independent of sentence skip (added 2026-10-17, M5) |
+| PLAY-11 | P1 | Per-block-type speed: equation segments play at a configurable fraction of the document speed (default 0.8×), captions and footnotes at the document speed (added 2026-10-17, M5) |
 
 **Library (LIB)**
 
@@ -117,6 +123,31 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | LIB-3 | P0 | Per-document voice and speed remembered; a global default for new documents |
 | LIB-4 | P1 | Delete a document and its cached audio |
 | LIB-5 | P2 | Folders or tags |
+
+**Spoken mathematics (MATH)**
+
+Added 2026-10-17 (M5, Technical Design D36–D37). Mathematics is spoken as English words at ingestion; the backend receives words (SYN-4).
+
+| ID | Pri | Requirement |
+| --- | --- | --- |
+| MATH-1 | P0 | A display equation block (ING-3 type equation) is spoken as English in a standard reading convention (ClearSpeak or MathSpeak style): operators, relations, Greek letters, fractions, powers, roots, subscripts, sums, products and integrals with their limits. The one-word cue of ING-7 becomes the fallback, used only when the expression cannot be structured; the fallback then reads "Equation N" (its number if present) followed by the symbols left to right by name, never silence and never symbol soup |
+| MATH-2 | P0 | Inline mathematics inside a sentence (joined by stage 3, D12) is spoken in place with the same rules, so "where x_i is the i-th sample" reads as "where x sub i is the i-th sample" |
+| MATH-3 | P0 | A symbol-to-words table covers Greek letters, mathematical operators and relations (at least ≤ ≥ ≈ ≠ ± × ÷ · ∂ ∇ ∞ ∈ ∉ ⊂ ∑ ∏ ∫ √ → ⇒ ∀ ∃ ¬ ∧ ∨), units and SI prefixes (km, ms, μm, kHz, MPa, mol; °C already handled by ING-6), and chemical formulas (H2O, CO2, CH4 spoken letter by letter with numbers), so no symbol reaches the voice as an unknown word |
+| MATH-4 | P1 | Equation numbers and references: a display equation's "(3)" is spoken as "equation 3" before the equation; "Eq. (3)", "Eqs. 3–5" and "Equation (3)" in prose become "equation 3" and "equations 3 to 5"; "Theorem 2.1", "Lemma 3", "Definition", "Proof" and "Corollary" openers are spoken with a short pause after them |
+| MATH-5 | P1 | While an equation segment plays, the reader highlights the whole segment (sentence-level) and shows the equation as it appears on the page (a rendered crop from the stored block bbox); word-level sync inside mathematics is not required |
+| MATH-6 | P2 | Scanned pages: mathematics recovered from the page image (equation image to structure) behind an interface like `OCRBackend` (D28); until then OCR'd equations use the MATH-1 fallback |
+
+**Technical vocabulary (TERM)**
+
+Added 2026-10-17 (M5). Extends the pronunciation layer the Kokoro backend already has (`api/hearnarro/synthesis/acronyms.py`, `api/hearnarro/synthesis/lexicon_overrides.py`).
+
+| ID | Pri | Requirement |
+| --- | --- | --- |
+| TERM-1 | P0 | A shipped academic pronunciation lexicon (mathematics, statistics, physics, chemistry, biology, computer science, Latin and Greek loanwords, common surnames in citations) consulted before the backend's general lexicon, with EVAL-4 categories for each domain |
+| TERM-2 | P0 | Per-document pronunciation overrides the user sets in the reader (select a word, "pronounce as", type a respelling or pick from suggestions), stored with the document and applied by the backend; plus a global user lexicon that applies to every document. Changing an override invalidates the cached audio of affected segments (SYN-6 keys stay by segment id; the override version joins the key or the cache is purged for those segments) |
+| TERM-3 | P1 | Citations: numeric clusters "[12, 14]" stay dropped (ING-6); author–year citations "(Smith et al., 2019)" are spoken as "Smith et al. 2019" or skipped, by a PLAY-8-style toggle; "et al." is spoken "et al" (already); a surname before "et al." is pronounced through TERM-1 |
+| TERM-4 | P1 | Academic abbreviations spoken by expansion: i.e., e.g., cf., w.r.t., resp., s.t., iff, w.l.o.g., viz., et seq., ibid., op. cit.; the expansion table is configurable |
+| TERM-5 | P2 | Code identifiers and file names in computer-science papers (snake_case, camelCase, dotted.paths) spoken as their words |
 
 **Evals (EVAL)**
 
@@ -133,6 +164,7 @@ Added 2026-10-17 (Technical Design D31–D34). An eval runs the system over a fi
 | EVAL-7 | Speed: how fast is synthesis on this machine? (SYN-5) | 20 bench sentences | `bench.py` time-to-first-audio p50/p95 and real-time factor | 1 |
 | EVAL-8 | OCR: how accurate is the scanned path? (ING-2) | 5 scanned fixtures | Character error rate vs expected text; mean, max | 1 |
 | EVAL-9 | Listening: does it sound good to a person? | 10 sentences × 2 voices | 1–5 rubric (naturalness, pronunciation errors counted, pacing) filled by a human; mean per voice, error count | 2 |
+| EVAL-10 | Spoken mathematics: is an equation read as a person would read it aloud? (MATH-1 to MATH-4) | The M5 fixture `*.spoken.txt` files plus `evals/data/math_speech.jsonl`, raw → spoken pairs (added 2026-10-17) | D14-style word-sequence score over the spoken text (lowercased, punctuation stripped); per-class aggregates: display, inline, symbol table, references | 0 |
 
 ## Architecture and stack
 
@@ -260,9 +292,9 @@ v1 runs on one laptop (8 GB RAM, no GPU) and must feel instant; everything else 
 ## Milestones
 
 ```
-M1 Ingest + skeleton  -->  M2 Synthesis + stream  -->  M3 Reader UI  -->  M4 Library + polish
-Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate: 300-page soak
-parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up
+M1 Ingest + skeleton  -->  M2 Synthesis + stream  -->  M3 Reader UI  -->  M4 Library + polish  -->  M5 Academic reading
+Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate: 300-page soak       Gate: 10 formula pages,
+parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up         spoken-maths score >= 0.90
 ```
 
 M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments. The score is word-level (D14): word-sequence edit distance over the ordered prose, ≥ 0.95 per PDF (scanned fixtures at a 0.85 floor, D35) and ≥ 0.97 mean; the sentence-level score is printed as a diagnostic only.
@@ -277,8 +309,13 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
    Status 2026-10-17 (branch `m3-reader`): PLAY-1 to PLAY-5 built in `web/`; the browser gate passes on Chromium (asserted) and on WebKit and Firefox (reported, D22), 9 of 9 tests each (`_agent/results/436_e2e_chromium_gate.txt`, `437_e2e_webkit.txt`, `438_e2e_firefox.txt`); the decode matrix passes WAV and Ogg Opus on all three Playwright engines; first audio was measured in the browser against Kokoro at 0.5x, 1.0x and 2.0x (`_agent/results/445_first_audio_kokoro.txt`). Decisions taken in M3 (Technical Design D20–D25): Node installed user-local from the official tarball (D20); the Vite dev server proxies the API, no CORS, and FastAPI serves `web/dist` in M4 (D21); the gate is asserted on Chromium only (D22); voice or speed changes made while paused apply at the next Play (D23); pause is `AudioContext.suspend()` (D24); sections are derived in the client from heading segments until the server writes the sections table (ING-8, M4) (D25). Confirmed by the user 2026-10-17: D20–D25 as recorded; D19 clause chunking deferred to M4 (first-audio baselines `_agent/results/445_first_audio_kokoro.txt`, `452_first_audio_after.txt`); D16 default was held at WAV until one play in the user's own Safari; closed 2026-10-17, Ogg Opus is now the default. Hands-on procedure: `docs/M3_TESTING.md`; code map: `docs/CODE_MAP_M3.md`.
 4. M4 Library + polish: LIB-1 to LIB-4, PLAY-6 to PLAY-8, ING-6 and ING-7, OCR fallback (ING-2), Docker Compose, the 300-page soak test. Carried from M3: clause-level chunking of the first sentence at speeds below 1.0 (D19; baselines `_agent/results/445_first_audio_kokoro.txt` and `452_first_audio_after.txt`: 0.5x cold mean 1883 ms, 1.0x 1423 ms, warm under 30 ms; script `web/scripts/measure_first_audio.mjs`); the default audio format (D16) settled 2026-10-17: Ogg Opus.
    Status 2026-10-17 (branch `m4-library`): LIB-1 to LIB-4, PLAY-6 to PLAY-8, ING-2 (OCR fallback), ING-7, ING-8 and Docker Compose built. Gate clause 1, the API soak: a generated 300-page PDF (6030 segments) reached `ready` in 6.89 s with peak RSS 119 MB (process) and 80 MB (children) (`_agent/results/525_soak_api.txt`). Gate clause 2, the browser soak on Chromium: first segment visible at 619 ms, last attached at 677 ms, three highlight probes pass, reload restores with a delta of 0 sentences (`_agent/results/542_soak_browser.txt`); every phase 2 spec passes on Chromium, WebKit and Firefox, 20 each (`_agent/results/543_e2e_chromium_all.txt`, `544_e2e_webkit_all.txt`, `545_e2e_firefox_all.txt`). Gate clause 3, Docker: built and lint-checked, not run, because the dev machine has no container runtime; the user runs `docker compose up --build` (`docs/DOCKER.md`, `_agent/drafts/m4-4-docker.md`). As built: ING-7 reads a table as a cue "Table N, R rows." (R counts the spoken rows; rows with no letters are skipped; adjacent table blocks on one page count as one table) and an equation as "Equation." (inline fragments still join their sentence unchanged); the D14 guard now measures the excluded mass from `LogicalBlock.raw_text` (`_agent/drafts/m4-3-build-rules.md`). ING-4/ING-5 carried fixes: bare-number page-marker lines are dropped except 19xx/20xx years, a heading that is a bare number is dropped, a heading ending in a hyphen joins the next line without a space, U+FB00–U+FB06 ligatures decompose (`_agent/drafts/m4-3-build-rules.md`, `_agent/specs/m4-library-interfaces.md` §3). ING-2: Tesseract behind `OCRBackend`, real engine not run because tesseract is not installed (`_agent/results/547_ocr_wired.txt`). LIB deviations from the spec: `PATCH` also bounds per-document speed to 0.5–3.0; an unset position is `{segment_id: null, offset_ms: 0}`, never null; `hearnarro purge-audio` needs `--data-dir`; `DELETE` returns 409 only while a document is parsing (`_agent/drafts/m4-1-build-lib.md`). Decisions taken in M4 (Technical Design D26–D30, D27 unused), all proposed, confirmed by the user 2026-10-17: position saved through the same `PATCH` with keepalive on `pagehide`, no `sendBeacon` (D26); OCR via a Tesseract subprocess with a fake in tests and `documents.ocr_skipped_pages` when no engine is present (D28); no reader virtualisation, decided by the soak (D29); one `api` Compose service serving `web/dist` (D30). Updated: D22 (WebKit and Firefox now run every phase 2 spec; Chromium still asserts) and D25 (sections written at ingestion; documents ingested earlier keep the client derivation). Not verified: Media Session on a real lock screen (PLAY-7) and the `pagehide` keepalive save (`_agent/drafts/m4-2-build-ui.md`). Code map: `docs/CODE_MAP_M4.md`.
+5. M5 Academic reading (added 2026-10-17, user decision: HearNarro is a study narrator for students and academics). Scope: MATH-1 to MATH-5, TERM-1 to TERM-4, PLAY-10, PLAY-11 and the pause part of SYN-8; MATH-6 and TERM-5 come after M5. What it changes: ING-7's one-word equation cue ("Equation.") becomes the fallback of MATH-1, used only when an expression cannot be structured; equations are otherwise spoken in full (Technical Design D36, D37). Gate:
+   (a) a new fixture set of 10 formula-heavy pages (5 from the existing table/equation fixtures with a text layer, 5 new, at least 2 from textbooks and 1 scanned), each with a `<stem>.spoken.txt` holding the expected spoken text of every equation segment and every sentence with inline maths;
+   (b) a spoken-mathematics score defined like D14 (word-sequence edit distance over the spoken text, lowercased, punctuation stripped) ≥ 0.90 per text-layer fixture, ≥ 0.75 for the scanned one, mean ≥ 0.92;
+   (c) EVAL-4 extended with MATH and TERM categories and no new failures against the M4 baseline;
+   (d) a tier-1 listening sheet (EVAL-9) on 10 formula sentences across 2 voices with pronunciation errors counted.
 
-After v1: SYN-7 second backend, SYN-8 content-aware delivery, PLAY-9 export, ING-9 more formats.
+After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export, ING-9 more formats.
 
 ## Open questions and risks
 
@@ -294,6 +331,8 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 | Scope creep toward summaries and chat | High | Non-goals list; v1 ships the reader only |
 | M1 gate is prose-only (D12): table and equation internals are not order-checked until ING-7 | Medium | Golden test asserts the excluded character mass (table/equation chars ÷ all chars) matches the ground truth within 0.05 absolute (D14), so prose misread as table cannot hide; ING-7 (M4) adds the table/equation reading rules and their comparison |
 | M1 gate is word-level (D14): segment and sentence boundaries are not order-checked by the golden test | Low | Sentence-level score still printed per PDF as a diagnostic; sentence splitting is covered by the stage-5 unit tests |
+| Spoken mathematics from PDF glyphs without LaTeX source (M5, added 2026-10-17) | High | Structure from glyph geometry first (D37); an image-to-LaTeX model behind a flag only if licence-clean; the MATH-1 fallback cue is never silent |
+| Kokoro's G2P mispronounces symbol words and domain terms (M5, added 2026-10-17) | Medium | TERM-1 lexicon written into misaki's gold lexicon as `lexicon_overrides.py` already does; EVAL-4 phoneme match per domain category |
 
 **Open questions**
 
@@ -309,4 +348,6 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 - [ ] PLAY-7 Media Session on a real phone lock screen: built in M4, not verified on a device (`_agent/drafts/m4-2-build-ui.md`)
 - [ ] `DELETE /documents/{id}` does not cancel synthesis lookahead already running for that document, so a job in flight could recreate a file under `audio/{id}/` after the delete; not tested (`_agent/drafts/m4-1-build-lib.md`)
 - [ ] M4 gate clause 3 (Docker): `docker compose up --build`, then `GET /documents` returns 200 and the app loads at `/`, to be run by the user on a machine with a container runtime (`docs/DOCKER.md`)
-- [ ] OCR of mathematics: Tesseract misreads inline and display maths on scanned_04/05; equation detection on OCR blocks or a maths-capable engine is M5+ (D35, `_agent/results/591_golden_scanned_after.txt`)
+- [ ] OCR of mathematics: Tesseract misreads inline and display maths on scanned_04/05; equation detection on OCR blocks or a maths-capable engine is MATH-6, after M5 (D35, `_agent/results/591_golden_scanned_after.txt`)
+- [ ] M5: which maths-to-speech approach, and under what licence? Survey pending in `_agent/research/m5-math-speech-options.md` (D37 decides from it); added 2026-10-17
+- [ ] M5: do equation crops (MATH-5) need word boxes stored? Block bboxes are stored in `blocks` rows (the bbox of the block's first source fragment, `docs/CODE_MAP_M1.md`); word boxes are not; added 2026-10-17
