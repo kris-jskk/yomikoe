@@ -220,3 +220,16 @@ synthesis backend (overrides -> collocations -> document definitions -> lexicon 
 pronounceability heuristic -> fallback G2P). `ingestion/acronyms.py` collects "Expansion (ACR)" /
 "ACR (expansion)" definitions into `IngestResult.acronyms`, stored as `documents.acronyms_json`
 (migration 0003) and passed to the backend as `SynthContext`.
+
+## Amendment 2026-10-17: bullet lists (user finding)
+
+- classify: `list` when the block's first line matches `models.ITEM_RE`: optional whitespace, then a
+  glyph from BULLET_GLYPHS (•·▪▫■□●○◦‣►▶➢➤→⇒✓✔✗✘★☆), or one of `- – *` before a space, or a marker
+  (`\d+` | one lowercase letter | ii–xiii roman) followed by `.` or `)`, or that marker in parentheses,
+  before a space. `—` is not a bullet.
+- merge_blocks: a list block is never joined with a neighbour and yields one LogicalBlock (type list)
+  per item; an item is an item line plus its following continuation lines, joined by merge_lines; a
+  line is also split before each glyph that has whitespace before it and a word, bracket or quote after
+  it (`models.INLINE_ITEM_RE`); every item's source is the list block.
+- normalize: a leading bullet (`models.GLYPH_BULLET_RE`: glyph(s) and surrounding whitespace, or
+  `- – *` plus a space) emits nothing; numbered markers are kept and spoken; char_map invariants hold.
