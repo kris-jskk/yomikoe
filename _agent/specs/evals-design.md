@@ -1,9 +1,8 @@
 # HearNarro evals: what they are, why this project needs them, and the design
 
-Status: proposed design, 2026-10-17. Nothing here is implemented. Facts about the current
+Status: design accepted by the user 2026-10-17 (EVAL-n family, D31–D34, Whisper as a dev-only ASR dependency, run records committed under `evals/runs/`). Implementation starts at E0. Facts about the current
 code come from `_agent/results/531_eval_recon.md` (read-only recon, cited there by file:line).
-Decisions below are numbered D31–D34 and are **proposed**, not decided; they go into
-`docs/TECHNICAL_DESIGN.md` only when the user accepts them.
+Decisions D31–D34 are **decided 2026-10-17** and are recorded in `docs/TECHNICAL_DESIGN.md`.
 
 ## 1. What an eval is (plain words)
 
@@ -52,7 +51,7 @@ Three ideas carry everything:
 
 ## 3. Design
 
-### 3.1 Principle (D31, proposed): an eval is a scored test with the threshold removed and the per-example score kept
+### 3.1 Principle (D31): an eval is a scored test with the threshold removed and the per-example score kept
 
 The existing scorers (`api/tests/golden_util.py`, `api/tests/boundary_util.py`,
 `api/hearnarro/quality.py`, `api/scripts/bench.py`) are reused as-is. The eval layer adds
@@ -98,13 +97,18 @@ Tier 0 runs in seconds with no model and belongs in every eval run. Tier 1 needs
 CPU (minutes) and runs on demand or nightly. Tier 2 is a scheduled human session, recorded
 in the same store so it sits next to the machine scores.
 
-### 3.4 Layout (D32, proposed)
+### 3.4 Layout (D32)
+
+The package lives inside `hearnarro` so it imports like the rest of the app (the venv is an
+editable install of `api/`); run as `python -m hearnarro.evals`.
 
 ```
-api/evals/
+api/hearnarro/evals/
   __init__.py
+  __main__.py        CLI: run <suite...|all> [--tier 0|1] [--baseline <run-id>]; compare <a> <b>
   runner.py          run <suite|all> [--tier 0|1] [--baseline <run-id>] → writes a run record
   suites/            one module per EVAL-n; each exposes dataset(), score(example, output), aggregate(scores)
+  scorers.py         pure scoring functions moved here from api/tests/golden_util.py and boundary_util.py (the test helpers re-export them)
   data/              speech_form.jsonl, listening_rubric.md; PDFs stay in api/tests/fixtures
   store.py           evals/runs/<date>_<shortsha>.json; latest.json symlink; compare(a, b)
   report.py          markdown scorecard (for the terminal and the PR body) and an HTML scorecard
@@ -120,7 +124,7 @@ Record shape (one file per run):
                       "aggregate":{"mean":0.991,"min":0.962,"by_class":{"academic":0.988}}}}}
 ```
 
-### 3.5 Compare and regressions (D33, proposed)
+### 3.5 Compare and regressions (D33)
 
 `compare(baseline, candidate)` reports, per suite, the aggregate deltas and every example whose
 score fell by more than a suite-specific tolerance (0.01 for scores in 0..1, 10 % for timing,
@@ -130,13 +134,13 @@ regression" in a PR description once the suites have a baseline.
 
 ### 3.6 Where evals run
 
-- Developer: `api/.venv/bin/python -m evals run all --tier 0` before and after a parser or
+- Developer: `api/.venv/bin/python -m hearnarro.evals run all --tier 0` before and after a parser or
   normalizer change; `--tier 1` when touching synthesis or swapping a backend.
 - Milestone close: full tier 0 + 1 run recorded and linked from the milestone guide.
 - Backend swap (the TTSBackend promise): EVAL-5/6/7 run once per backend with identical
   sentences, voices mapped by gender/accent; the scorecard is the decision document.
 
-### 3.7 What evals will not do here (D34, proposed)
+### 3.7 What evals will not do here (D34)
 
 No LLM-as-judge in v1: every scorer is deterministic or a human rubric, so a score is
 reproducible and the licence rule stays simple. No per-user telemetry: datasets are the
@@ -152,7 +156,7 @@ fixtures and committed sentence lists, never a user's uploads.
 | E3 Reporting | markdown + HTML scorecard; baseline rule in CLAUDE.md | scorecard linked from a milestone guide |
 | E4 Human + OCR | EVAL-9 rubric and ingestion; EVAL-8 once tesseract is present | one listening session recorded |
 
-## 5. Open questions for the user
+## 5. Decisions taken 2026-10-17 (were open questions)
 
 1. Accept the `EVAL-n` id family and D31–D34 as proposed, or fold evals into the existing
    requirement families?
