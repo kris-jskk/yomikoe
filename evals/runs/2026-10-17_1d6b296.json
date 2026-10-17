@@ -1,0 +1,220 @@
+{
+  "run_id": "2026-10-17_1d6b296",
+  "commit": "1d6b296",
+  "date": "2026-10-17T15:55:41Z",
+  "config": {
+    "backend": "kokoro",
+    "speed": 1.0,
+    "tesseract": true,
+    "python": "3.11.16",
+    "tier": 0,
+    "kokoro_revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+    "asr_model": "Systran/faster-whisper-base",
+    "asr_revision": "ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66",
+    "voices": [
+      "af_heart",
+      "am_michael"
+    ],
+    "speeds": [
+      1.0,
+      2.0,
+      3.0
+    ],
+    "machine": "macOS-26.6.2-arm64-arm-64bit arm64"
+  },
+  "suites": {
+    "EVAL-1": {
+      "title": "Order",
+      "tier": 0,
+      "direction": "higher",
+      "examples": [
+        {
+          "id": "academic_01_seahelm_audio",
+          "class": "academic",
+          "score": 0.9919443427316001,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_02_memduet",
+          "class": "academic",
+          "score": 0.9912376779846659,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_03_pruned_reasoning",
+          "class": "academic",
+          "score": 0.9963269054178145,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_04_legislative_xml",
+          "class": "academic",
+          "score": 0.9839373970345964,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_05_sparse_autoencoders",
+          "class": "academic",
+          "score": 0.9958100558659218,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_01_pfn_bayes",
+          "class": "tables",
+          "score": 0.9787150177374853,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_02_non_gaussian_sem",
+          "class": "tables",
+          "score": 0.9877064925086438,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_03_copula_subspaces",
+          "class": "tables",
+          "score": 0.9710444674250258,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_04_markov_kernel",
+          "class": "tables",
+          "score": 0.9756373937677054,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_05_decomposing_learner",
+          "class": "tables",
+          "score": 0.9989479221462388,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_01_zero_trust",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_02_patch_mgmt",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_03_ssdf",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_04_rmf",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_05_controls",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "scanned_01_seahelm_audio",
+          "class": "scanned",
+          "score": 0.9814937210839392,
+          "char_mass_ok": true
+        },
+        {
+          "id": "scanned_02_pruned_reasoning",
+          "class": "scanned",
+          "score": 0.9518486672398968,
+          "char_mass_ok": true
+        },
+        {
+          "id": "scanned_03_zero_trust",
+          "class": "scanned",
+          "score": 0.96,
+          "char_mass_ok": true
+        },
+        {
+          "id": "scanned_04_copula_subspaces",
+          "class": "scanned",
+          "score": 0.8867595818815331,
+          "char_mass_ok": true
+        },
+        {
+          "id": "scanned_05_markov_kernel",
+          "class": "scanned",
+          "score": 0.8650107991360692,
+          "char_mass_ok": true
+        }
+      ],
+      "skipped": [],
+      "aggregate": {
+        "mean": 0.9758210220980571,
+        "min": 0.8650107991360692,
+        "by_class": {
+          "academic": 0.9918512758069198,
+          "report": 1.0,
+          "scanned": 0.9290225538682876,
+          "tables": 0.9824102587170198
+        }
+      },
+      "seconds": 21.01
+    },
+    "EVAL-8": {
+      "title": "OCR",
+      "tier": 1,
+      "direction": "lower",
+      "examples": [
+        {
+          "id": "scanned_01_seahelm_audio",
+          "class": "scanned",
+          "cer": 0.008040201005025126,
+          "score": 0.008040201005025126,
+          "expected_chars": 10945,
+          "actual_chars": 10951
+        },
+        {
+          "id": "scanned_02_pruned_reasoning",
+          "class": "scanned",
+          "cer": 0.034,
+          "score": 0.034,
+          "expected_chars": 8000,
+          "actual_chars": 8192
+        },
+        {
+          "id": "scanned_03_zero_trust",
+          "class": "scanned",
+          "cer": 0.044226044226044224,
+          "score": 0.044226044226044224,
+          "expected_chars": 407,
+          "actual_chars": 425
+        },
+        {
+          "id": "scanned_04_copula_subspaces",
+          "class": "scanned",
+          "cer": 0.03918881885448068,
+          "score": 0.03918881885448068,
+          "expected_chars": 7298,
+          "actual_chars": 7296
+        },
+        {
+          "id": "scanned_05_markov_kernel",
+          "class": "scanned",
+          "cer": 0.07171831900048678,
+          "score": 0.07171831900048678,
+          "expected_chars": 6163,
+          "actual_chars": 6333
+        }
+      ],
+      "skipped": [],
+      "aggregate": {
+        "mean_cer": 0.039434676617207357,
+        "max_cer": 0.07171831900048678
+      },
+      "seconds": 22.52
+    }
+  },
+  "seconds": 43.54
+}
