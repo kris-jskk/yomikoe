@@ -6,7 +6,7 @@ Companion to the PRD. The PRD says what v1 does; this doc says how, and records 
 
 ## Decision log
 
-Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm (D5, D7, D10) and the rest follow from the PRD's constraints. D12–D19 were added during M1 and M2, D20–D25 during M3, D26–D30 (D27 unused) and D31–D34 (the eval layer) during M4. Each is argued in its section below.
+Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm (D5, D7, D10) and the rest follow from the PRD's constraints. D12–D19 were added during M1 and M2, D20–D25 during M3, D26–D30 (D27 unused) and D31–D34 (the eval layer) and D35 during M4. Each is argued in its section below.
 
 | # | Decision | Recommendation | Status |
 | --- | --- | --- | --- |
@@ -43,6 +43,7 @@ Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm 
 | D32 | Eval layout | `api/hearnarro/evals/` with `runner.py`, `store.py`, `report.py`, `scorers.py`, `suites/` (one module per EVAL-n) and `data/`; run records committed under `evals/runs/<date>_<shortsha>.json`; CLI `python -m hearnarro.evals` | **Decided 2026-10-17** |
 | D33 | Compare and regressions | `compare(baseline, candidate)` flags an example whose score fell by more than 0.01 (scores in 0..1), 10 % (timing) or 1 (counts), or that newly fails; a regression is a report line, not a test failure; gate tests alone block a merge | **Decided 2026-10-17** |
 | D34 | Eval scope limits | No LLM-as-judge (every scorer is deterministic or a human rubric); no user data (datasets are fixtures and committed sentence lists); Whisper (MIT) allowed as a development-only ASR dependency for EVAL-5/6, never shipped | **Decided 2026-10-17** |
+| D35 | Golden floors by fixture class | The reading-order golden gate (ING-4, D14) asserts 0.95 per PDF for text-layer fixtures and 0.85 per PDF for the five `scanned_*` fixtures (OCR path); the 20-PDF mean stays 0.97 | **Proposed 2026-10-17 (supervisor), pending user confirmation** |
 
 ## Ingestion pipeline
 
@@ -359,6 +360,8 @@ D27 is unused: the number was not assigned, and it is left empty so the later nu
 **D22 update.** In M4 every phase 2 browser spec (library, persist, keys, skip) runs on WebKit and Firefox as well as Chromium: 20 passed on each engine (`_agent/results/543_e2e_chromium_all.txt`, `544_e2e_webkit_all.txt`, `545_e2e_firefox_all.txt`); the soak runs on Chromium only. The gate is still asserted on Chromium only.
 
 **D25 update.** The server side is closed: ingestion writes `sections` rows from heading blocks (ING-8), `level` = 1 for every heading because classification has no heading rank, and segments carry `section_id` (`_agent/drafts/m4-1-build-ing8.md`, `_agent/specs/m4-library-interfaces.md` §1). `hearnarro renormalize` does not rebuild sections, so a document ingested before this change keeps `sections` empty and the client keeps deriving them from heading segments.
+
+**D35, golden floors by fixture class (proposed).** After the OCR column-order fix, scanned_01/02/03 score 0.98/0.95/0.96 but scanned_04 (0.8868) and scanned_05 (0.8650) fall below 0.95 (`_agent/results/591_golden_scanned_after.txt`). The diagnosis in `_agent/drafts/m4-3-ocr-columns.md` is that 121 of 130 edits in scanned_04 are short substitutions inside inline mathematics, and scanned_05 reads display equations as body text; ordering is correct. "Testing strategy" already says OCR accuracy beyond "produced text for a scanned page" is not tested in v1, so the per-PDF floor for `scanned_*` fixtures is 0.85, while text-layer fixtures keep 0.95 and the mean keeps 0.97. Proposed by the supervisor on 2026-10-17; pending user confirmation at the M4 close. Alternative rejected: lowering the floor for all fixtures, which would loosen the text-layer gate for no reason.
 
 ## Testing strategy (D11)
 

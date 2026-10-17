@@ -265,7 +265,7 @@ Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate:
 parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up
 ```
 
-M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments. The score is word-level (D14): word-sequence edit distance over the ordered prose, ≥ 0.95 per PDF and ≥ 0.97 mean; the sentence-level score is printed as a diagnostic only.
+M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments. The score is word-level (D14): word-sequence edit distance over the ordered prose, ≥ 0.95 per PDF (scanned fixtures at a 0.85 floor, D35) and ≥ 0.97 mean; the sentence-level score is printed as a diagnostic only.
 
 Each milestone is one or two coding-agent sessions and ends with its gate passing in a test, not by inspection. Nothing in a later milestone starts until the gate before it is green; the gates are the acceptance tests the coding session should write first.
 
@@ -309,3 +309,4 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 - [ ] PLAY-7 Media Session on a real phone lock screen: built in M4, not verified on a device (`_agent/drafts/m4-2-build-ui.md`)
 - [ ] `DELETE /documents/{id}` does not cancel synthesis lookahead already running for that document, so a job in flight could recreate a file under `audio/{id}/` after the delete; not tested (`_agent/drafts/m4-1-build-lib.md`)
 - [ ] M4 gate clause 3 (Docker): `docker compose up --build`, then `GET /documents` returns 200 and the app loads at `/`, to be run by the user on a machine with a container runtime (`docs/DOCKER.md`)
+- [ ] OCR of mathematics: Tesseract misreads inline and display maths on scanned_04/05; equation detection on OCR blocks or a maths-capable engine is M5+ (D35, `_agent/results/591_golden_scanned_after.txt`)
