@@ -45,9 +45,17 @@ do), `brief-template.md`, `report-template.md`, and `supervisor-log.md`.
    `gh issue` under `permissions.ask` so they prompt regardless of who calls them.
 6. **Record the cost from the transcripts, not the notification.** A SubagentStop hook runs
    a script that reads each subagent transcript and regenerates `_agent/token-ledger.md`:
-   the model that actually answered, final prompt size, new tokens, cache reads, and output.
-   The figure the harness reports at completion is the final prompt size, a context measure;
-   never quote it as consumption.
+   the model that actually answered, final prompt size, new tokens, cache reads, output, and
+   an estimated cost in dollars from a rates table in the script (per model: input, output,
+   cache write, cache read; source URL and date recorded next to the table). The ledger also
+   carries the supervisor's own session usage, per-task and per-session totals, and a running
+   total for the project. The figure the harness reports at completion is the final prompt
+   size, a context measure; never quote it as consumption.
+   **Review cadence:** at every milestone close, and whenever the user asks, the supervisor
+   writes a "Cost review" section in the ledger: the ten most expensive tasks, what drove
+   them (budget, re-runs, model, prompt size), and concrete changes for the next milestone
+   (smaller briefs, Sonnet where adequate, fewer verification re-runs, shorter evidence
+   files, tighter budgets). The review's actions become rules here when they prove out.
 7. **Corrections are logged.** When the session tells the user something that later turns
    out wrong, the correction goes in `_agent/supervisor-log.md` with what was assumed, what
    was true, and what would have caught it earlier.

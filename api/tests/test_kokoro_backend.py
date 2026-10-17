@@ -220,3 +220,47 @@ def test_syn4_kokoro_lexicon_override_uber(caplog: pytest.LogCaptureFixture) -> 
     logged = [r.getMessage() for r in caplog.records if "override" in r.getMessage()]
     assert logged == ["pronunciation override document=4242 entry='uber'"]  # once per document
     _check_invariants(UBER_SENTENCE, b.synthesize(UBER_SENTENCE, "af_heart", 1.0))
+
+
+@pytest.mark.model
+def test_syn4_kokoro_caps_heading_read_as_words() -> None:
+    """ERIC'S NOTE (the Almanack heading) was spelled "E R I C S" by misaki's get_NNP."""
+    from pathlib import Path
+
+    b = _backend()
+    tokens = b._tokens("ERIC'S NOTE", british=False)
+    assert [t.text for t in tokens] == ["ERIC'S", "NOTE"]  # two word tokens, original text
+    lex = b._g2p_for(british=False).lexicon
+    eric = tokens[0].phonemes.lstrip("ˈˌ")
+    assert eric.startswith("ɛ"), tokens[0].phonemes  # the vowel of "Eric", not "E R I C"
+    assert not tokens[0].phonemes.startswith(lex.get_NNP("ERIC")[0])
+    part = [t.text for t in b._tokens("PART I: WEALTH", british=False)]
+    assert part == ["PART", "I", ":", "WEALTH"]  # never "P A R T"
+    mixed = [t.text for t in b._tokens("The CEO read ERIC'S NOTE", british=False)]
+    assert mixed == ["The", "C", "E", "O", "read", "ERIC'S", "NOTE"]
+    result = b.synthesize("ERIC'S NOTE", "af_heart", 1.0)
+    _check_invariants("ERIC'S NOTE", result)
+    assert [t.word for t in result.timestamps] == ["ERIC'S", "NOTE"]
+    out = Path.home() / "hearnarro-m1" / "audio_samples" / "erics_note_1.0x.wav"
+    if out.parent.is_dir():
+        import wave
+
+        with wave.open(str(out), "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(result.sample_rate)
+            w.writeframes(result.audio)
+
+
+@pytest.mark.model
+def test_syn4_kokoro_acronym_possessive_and_plural_spelled() -> None:
+    b = _backend()
+    text = "The CEO's PDFs."
+    tokens = b._tokens(text, british=False)
+    texts = [t.text for t in tokens]
+    assert texts == ["The", "C", "E", "O's", "P", "D", "Fs", "."]
+    by = {t.text: t.phonemes for t in tokens}
+    assert by["O's"].endswith("z") and by["Fs"].endswith("s")
+    result = b.synthesize(text, "af_heart", 1.0)
+    _check_invariants(text, result)
+    assert [t.word for t in result.timestamps] == ["The", "CEO's", "PDFs."]
