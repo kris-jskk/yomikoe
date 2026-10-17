@@ -92,11 +92,13 @@ async def test_syn5_seek_clears_queue_and_refills_from_new_position() -> None:
         await wait_for(lambda: service.queue_depth(DOC) == 0)
     finally:
         await service.shutdown()
-    synthesized = set(spy.texts)
+    # Assert by segment id (cache.ready_ids), not text: report_01 repeats its cover line
+    # (orders 0/4 and 1/5 share normalized_text), so a text comparison hits the wrong segment.
+    synthesized = cache.ready_ids()
     # at most the job in flight at the seek ran; the tail of the old window was dropped
-    assert at(4).normalized_text not in synthesized
-    assert at(5).normalized_text not in synthesized
-    assert at(30).normalized_text in synthesized
+    assert at(4).id not in synthesized
+    assert at(5).id not in synthesized
+    assert at(30).id in synthesized
 
 
 async def test_syn5_voice_change_prefetch_uses_new_voice() -> None:
@@ -145,7 +147,7 @@ async def test_syn6_cache_hit_returns_without_backend_call() -> None:
 async def test_syn5_first_request_jumps_the_queue() -> None:
     delay = 0.2
     spy = SpyBackend(delay_s=delay)
-    service, _, _cache = make_service(spy, lookahead=5)
+    service, _, cache = make_service(spy, lookahead=5)
     try:
         await service.prefetch(DOC, 0, VOICE, SPEED)  # five jobs ahead of us
         await asyncio.sleep(0.02)  # let the first one start
@@ -157,9 +159,15 @@ async def test_syn5_first_request_jumps_the_queue() -> None:
     assert entry.segment_id == at(40).id
     # in-flight job + this one, not the five queued before it
     assert elapsed < 3 * delay, elapsed
+    # By id, not text: orders 0 and 4 share normalized_text in report_01, so the first
+    # occurrence of that text is order 0. Order 4 (if it ran) is the second occurrence.
     texts = spy.texts
-    if at(4).normalized_text in texts:
-        assert texts.index(at(40).normalized_text) < texts.index(at(4).normalized_text)
+    cover = at(4).normalized_text
+    assert cover == at(0).normalized_text  # documents the collision this test works around
+    if at(4).id in cache.ready_ids():
+        occurrences = [i for i, t in enumerate(texts) if t == cover]
+        assert len(occurrences) >= 2
+        assert texts.index(at(40).normalized_text) < occurrences[1]
 
 
 async def test_syn5_failed_segment_raises_marks_failed_and_queue_moves_on() -> None:
