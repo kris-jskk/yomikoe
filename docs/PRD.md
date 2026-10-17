@@ -72,7 +72,7 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | ING-2 | P0 | Detect per page whether a text layer exists; run OCR only on pages without one |
 | ING-3 | P0 | Extract text as structured blocks with type: heading, body, caption, footnote, header/footer, table, equation, list item; figure-internal text is typed figure and never read (D12) |
 | ING-4 | P0 | Produce a linear reading order that handles two-column layouts and excludes header/footer/page-number blocks |
-| ING-5 | P0 | Join hyphenated line breaks and merge lines into sentences; split into sentence-level segments with character offsets back to the source block |
+| ING-5 | P0 | Join hyphenated line breaks and merge lines into sentences; split into sentence-level segments with character offsets back to the source block. A bulleted or numbered list item (any common bullet glyph, arrows included) is its own segment, never joined with the next item into one sentence; a glyph bullet is shown but not spoken |
 | ING-6 | P1 | Normalize text for speech: numbers, currency, dates, URLs → domain spoken with dot ("shopping dot com", e-mail "name at host dot com"), citations like \[12\], common abbreviations; acronym pronunciation decided in the backend with a lexicon and overrides, in context: a collocation ("TED talk") or the document's own definition ("Transferable Erosion Deposit (TED)", stored per document at ingestion) changes the reading |
 | ING-7 | P1 | Tables read as row-by-row prose with a spoken cue ("Table 2, 3 rows"); equations read as a cue ("equation") not symbol soup |
 | ING-8 | P1 | Build a table of contents from headings for navigation |

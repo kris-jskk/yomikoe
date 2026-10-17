@@ -189,3 +189,27 @@ def test_ing6_email_spoken_with_at_and_dot() -> None:
 )
 def test_ing6_non_domains_untouched(text: str) -> None:
     assert normalize(text) == (text, list(range(len(text))))
+
+
+GLYPH_ITEMS = [f"{g} Item text here" for g in "•·▪▫■□●○◦‣►▶➢➤→⇒✓✔✗✘★☆-–*"]
+
+
+@pytest.mark.parametrize("text", [*GLYPH_ITEMS, "→Tight item", "  →  Spaced item", "→"])
+def test_ing6_leading_bullet_glyph_is_silent(text: str) -> None:
+    out, cmap = normalize(text)
+    body = text.lstrip().lstrip("•·▪▫■□●○◦‣►▶➢➤→⇒✓✔✗✘★☆-–*").lstrip()
+    assert out == body
+    assert len(cmap) == len(out)
+    assert all(0 <= i < len(text) for i in cmap)
+    assert all(a <= b for a, b in pairwise(cmap))
+    assert all(text[i] == ch for i, ch in zip(cmap, out, strict=True))
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["1. First step", "a) Second", "(3) Third", "-based storage", "A → B", "*emphasis*", "— Wired"],
+)
+def test_ing6_numbered_markers_and_non_bullets_are_spoken(text: str) -> None:
+    out, cmap = normalize(text)
+    assert out == text
+    assert cmap == list(range(len(text)))

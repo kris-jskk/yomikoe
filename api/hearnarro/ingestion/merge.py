@@ -5,7 +5,13 @@ from __future__ import annotations
 import re
 
 from hearnarro.ingestion.classify import BOILERPLATE_RE, EMAIL
-from hearnarro.ingestion.models import Block, LogicalBlock
+from hearnarro.ingestion.models import (
+    BULLET_GLYPHS,
+    INLINE_ITEM_RE,
+    ITEM_RE,
+    Block,
+    LogicalBlock,
+)
 from hearnarro.ingestion.segment import _segmenter
 
 TERMINAL_PUNCT = '.!?:;"”’'
@@ -51,6 +57,27 @@ def merge_lines(lines: list[str]) -> str:
         else:
             out = part
     return out
+
+
+_GLYPHS = frozenset(BULLET_GLYPHS)
+
+
+def split_items(lines: list[str]) -> list[str]:
+    """A list block's items (ING-5): each item line (``ITEM_RE``) plus the continuation
+    lines after it, joined by ``merge_lines``. A line holding several glyph items
+    ("→ a → b") is split before each glyph preceded by whitespace; a glyph alone on its
+    line takes the next line as its text."""
+    items: list[list[str]] = []
+    for line in lines:
+        for k, piece in enumerate(INLINE_ITEM_RE.split(line)):
+            if not piece.strip():
+                continue
+            glyph_only = bool(items) and len(items[-1]) == 1 and items[-1][0].strip() in _GLYPHS
+            if items and (glyph_only or (k == 0 and not ITEM_RE.match(piece))):
+                items[-1].append(piece)
+            else:
+                items.append([piece])
+    return [text for text in (merge_lines(item) for item in items) if text]
 
 
 def is_noise_line(text: str) -> bool:
@@ -147,7 +174,8 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
     (stage 1 split a paragraph), in documents where that happens systematically
     (``_paragraph_joins_on``). When
     floats lie between A and B only B's first sentence moves up into A; the rest of B stays
-    after the floats. Email-only and boilerplate lines (``is_noise_line``) are dropped, and
+    after the floats. A list block becomes one LogicalBlock per item (``split_items``).
+    Email-only and boilerplate lines (``is_noise_line``) are dropped, and
     on page 0 before the "Abstract" heading (the author block) email tokens are stripped
     from every line ("AI Singapore, Singapore a,b@x.org" -> "AI Singapore, Singapore").
     """
@@ -208,6 +236,10 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
             continue
         if block.type in JOIN_BLOCKERS:
             candidate = None
+        if block.type == "list":
+            for item in split_items(lines):
+                out.append(_logical(len(out), block, item))
+            continue
         out.append(_logical(len(out), block, text))
     for lb in out:
         lb.text = lb.text.rstrip(SOFT_HYPHEN)  # a soft hyphen no later block joined onto

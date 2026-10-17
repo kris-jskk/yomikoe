@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import re
 
+from hearnarro.ingestion.models import GLYPH_BULLET_RE
+
 _LABEL = r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
 # Lowercase only, so a missing space after a sentence end ("the end.So we") is not a domain.
 _TLDS = r"com|org|net|io|ai|co|edu|gov|dev|app|me|us|uk|de|fr|ca|info|biz|tv|ly|so|xyz"
@@ -51,6 +53,10 @@ def normalize(text: str) -> tuple[str, list[int]]:
     with every output char mapped onto that one source char, letters map to themselves, and
     a path longer than 3 segments or 30 chars (or with non-plain segments) is dropped.
     Trailing sentence punctuation after the address stays as text.
+
+    A leading bullet (``GLYPH_BULLET_RE``: a glyph such as "•" or "→", or "-" "–" "—" "*"
+    before a space) and the whitespace around it emit nothing, so a list item is spoken from
+    its first word; numbered markers ("1." "a)") are kept and spoken.
     """
     out: list[str] = []
     cmap: list[int] = []
@@ -91,8 +97,9 @@ def normalize(text: str) -> tuple[str, list[int]]:
         for k in range(host_end, host_end + len(path.rstrip("/"))):
             emit_char(k)
 
-    pos = 0
-    for m in _PATTERN.finditer(text):
+    bullet = GLYPH_BULLET_RE.match(text)
+    pos = bullet.end() if bullet else 0
+    for m in _PATTERN.finditer(text, pos):
         for i in range(pos, m.start()):
             out.append(text[i])
             cmap.append(i)

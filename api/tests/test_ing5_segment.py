@@ -234,3 +234,41 @@ def test_ing5_split_inside_a_token_is_kept_split_before_punctuation_is_undone() 
 def test_ing5_domain_dot_is_not_a_sentence_end(text: str, expected: list[str]) -> None:
     segments = split_sentences(_block(text), document_id=3, order_start=0, id_start=0)
     assert [s.text for s in segments] == expected
+
+
+def _item(text: str) -> LogicalBlock:
+    return LogicalBlock(id=3, page=0, type="list", text=text, source=[(0, 0)])
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "→ Questions nearly everything",
+        "→ And…doesn’t take himself too goddamn seriously.",
+        "• Text accuracy (Scoretext): The accuracy of the target LLM.",
+        "→ 1974 - Born in Delhi, India",
+    ],
+)
+def test_ing5_list_item_is_one_segment_glyph_silent(text: str) -> None:
+    (seg,) = split_sentences(_item(text), document_id=1, order_start=0, id_start=0)
+    assert seg.text == text
+    assert (seg.char_start, seg.char_end) == (0, len(text))
+    assert seg.normalized_text == text[2:]
+    assert seg.char_map[0] == 2
+
+
+def test_ing5_list_item_with_inner_sentence_end_splits() -> None:
+    text = "→ Total honesty at all times. It’s almost always possible to be honest."
+    segs = split_sentences(_item(text), document_id=1, order_start=0, id_start=0)
+    assert [s.text for s in segs] == [
+        "→ Total honesty at all times.",
+        "It’s almost always possible to be honest.",
+    ]
+    assert segs[0].normalized_text == "Total honesty at all times."
+    for s in segs:
+        assert text[s.char_start : s.char_end] == s.text
+
+
+def test_ing5_numbered_item_keeps_marker_spoken() -> None:
+    (seg,) = split_sentences(_item("1. First step"), document_id=1, order_start=0, id_start=0)
+    assert seg.normalized_text == "1. First step"

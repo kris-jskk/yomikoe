@@ -5,8 +5,26 @@ See _agent/specs/m1-ingestion-interfaces.md and docs/TECHNICAL_DESIGN.md, "Segme
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Literal
+
+# List items (ING-3 classify, ING-5 merge, ING-6 normalize share these). Glyph bullets are
+# silent when spoken; the hyphen, en dash and asterisk count only before a space, so
+# "-based" (a hyphenated word wrapped to a line start) is not an item.
+BULLET_GLYPHS = "•·▪▫■□●○◦‣►▶➢➤→⇒✓✔✗✘★☆"
+DASH_BULLETS = "-–*"  # not "—": "— Wired" is an attribution line, not an item
+# A line starting with a glyph, a dash/asterisk and a space, or a number, a letter or a
+# lowercase roman numeral marker ("1." "1)" "(1)" "a." "a)" "(a)" "iv.") and a space.
+_ENUM = r"(?:\d+|[a-z]|ii|iii|iv|vi{1,3}|ix|xi{1,3})"
+ITEM_RE = re.compile(
+    rf"^\s*(?:[{BULLET_GLYPHS}]|[{DASH_BULLETS}](?=\s)|{_ENUM}[.)](?=\s)|\({_ENUM}\)(?=\s))"
+)
+# The silent part of a glyph-bulleted item: leading space, the glyph(s), the space after.
+GLYPH_BULLET_RE = re.compile(rf"^\s*(?:[{BULLET_GLYPHS}]+\s*|[{DASH_BULLETS}]\s+)")
+# "→ a → b" on one line: a glyph between whitespace, then a word or an opening bracket or
+# quote, starts another item ("≥· · · ≥λd", a dot-leader ellipsis in maths, does not).
+INLINE_ITEM_RE = re.compile(rf"\s+(?=[{BULLET_GLYPHS}]\s+[\w(\[“‘\"'])")
 
 
 @dataclass(frozen=True)

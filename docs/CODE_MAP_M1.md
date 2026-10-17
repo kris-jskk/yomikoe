@@ -887,7 +887,7 @@ and `repeated = repeated_band_texts(pages)` (normalized texts of top/bottom-band
 | 9 | footnote | Largest span ≤ `FOOTNOTE_SIZE_RATIO = 0.85` × median, top at ≥ `FOOTNOTE_TOP_FRAC = 0.75` of the height, more than `FOOTNOTE_MIN_CHARS = 3` non-space characters; or opens with a superscript digit and its top is at ≥ `SUPERSCRIPT_FOOTNOTE_TOP_FRAC = 0.5` (above that it is an affiliation mark) | `test_ing3_footnote_by_small_size_low_on_page`, `test_ing3_footnote_by_leading_superscript_digit`, `test_ing3_tiny_small_print_block_low_on_page_is_not_a_footnote` |
 | 10 | table (overlap) | bbox overlaps a table region | `test_ing3_table_by_table_bbox_overlap` |
 | 11 | equation | A bare equation number `(\d+[a-z]?)`; or maths characters (maths font or `MATH_CHARS`) are more than half; or a maths-font glyph and prose letters (≥ 0.8 × largest size) under `EQ_PROSE_LETTERS = 0.5` of non-space characters | `test_ing3_equation_by_math_font_or_symbols`, `test_ing3_equation_by_low_prose_share`, `test_ing3_bare_equation_number_is_equation` |
-| 12 | list | First line matches `^(?:[•·▪‣◦\-–*]\|\d+[.)])\s` | `test_ing3_list_items` |
+| 12 | list | First line matches `ITEM_RE` (`models.py`, shared with merge): a glyph from `BULLET_GLYPHS` (`•·▪▫■□●○◦‣►▶➢➤→⇒✓✔✗✘★☆`), or `-` `–` `*` before a space, or `\d+` / one lowercase letter / `ii`–`xiii` roman then `.` or `)` (or in parentheses) before a space; `—` is excluded (`— Wired` stays body) | `test_ing3_list_items`, `test_ing3_list_arrow_items_and_wrapped_items`, `test_ing3_every_bullet_glyph_starts_an_item`, `test_ing3_not_an_item_line`, `test_ing3_hyphenated_word_at_line_start_is_body` |
 | 13 | body | Everything else | `test_ing3_plain_text_is_body` |
 
 **Figure override (D12).** After the cascade, any block not typed caption whose bbox lies at
@@ -1047,6 +1047,18 @@ one ending a block's last line is left for a cross-block join, then stripped at 
 7. **Blockers.** A heading, list or equation (`JOIN_BLOCKERS`) closes the candidate; any other
    non-body type (caption, table, footnote, image) is a float and leaves it open. Pinned by
    `test_ing5_merge_blocks_does_not_join_non_body`.
+8. **List items (`split_items`).** A list block is split: each item line (`ITEM_RE`) plus the
+   continuation lines after it is one `LogicalBlock` of type list (ids renumbered in order,
+   every item's `source` is the list block), joined by `merge_lines`. `INLINE_ITEM_RE` splits a
+   line before each `BULLET_GLYPHS` glyph with whitespace before it and a word, bracket or
+   quote after it (`→ Education → The Story of AngelList` is two; `≥· · · ≥λd` is not split);
+   a glyph alone on a line takes the next line. Pinned by
+   `test_ing5_list_block_split_into_one_logical_block_per_item`,
+   `test_ing5_list_items_split_across_page_break_are_not_joined`,
+   `test_ing5_list_item_continuation_lines_join_their_item`, `test_ing5_inline_glyph_items_split`,
+   `test_ing5_dash_star_and_numbered_items_split`,
+   `test_ing5_glyph_alone_on_its_line_joins_the_next_line`,
+   `test_ing5_dot_leader_ellipsis_in_a_list_item_is_not_split`.
 
 Every raw block that is not joined becomes one `LogicalBlock`
 (`test_ing5_merge_blocks_one_per_block_with_merged_lines`).
@@ -1055,6 +1067,7 @@ Every raw block that is not joined becomes one `LogicalBlock`
 
 | Rule | Pinned by |
 | --- | --- |
+| A list item (its own logical block, stage 4) is one segment unless it holds a sentence end mid-item; the glyph stays in `text`, `normalized_text` starts at the first word | `test_ing5_list_item_is_one_segment_glyph_silent`, `test_ing5_list_item_with_inner_sentence_end_splits`, `test_ing5_numbered_item_keeps_marker_spoken` |
 | A block whose text is blank yields no segments | `test_ing5_split_sentences_empty_block` |
 | pysbd `Segmenter(language="en", clean=False, char_span=True)`, one instance per process | `test_ing5_split_sentences_three_sentences_with_abbreviations` |
 | Each span stripped; empty spans skipped; offset from pysbd when it round-trips, else `find` from the cursor; `ValueError` if `text[start:end] != sent` | `test_ing5_split_sentences_offsets_round_trip`, `..._offsets_round_trip_with_messy_whitespace` |
@@ -1066,7 +1079,13 @@ word-level (D14, results 70 and 146) and why the splitter is being rewritten in 
 
 ### Normalization (`normalize.py`)
 
-One pass over `_PATTERN` matches, alternatives tried in this order:
+First a leading bullet (`GLYPH_BULLET_RE` in `models.py`: whitespace, one or more
+`BULLET_GLYPHS`, whitespace; or `-` `–` `*` and a space) emits nothing, so `→ Laughs a lot`
+is spoken `Laughs a lot` with `char_map[0] == 2`; numbered markers (`1.`, `a)`, `(3)`) and a
+mid-text glyph (`A → B`) are kept. Pinned by `test_ing6_leading_bullet_glyph_is_silent`,
+`test_ing6_numbered_markers_and_non_bullets_are_spoken`.
+
+Then one pass over `_PATTERN` matches, alternatives tried in this order:
 
 | Match | Output | Example |
 | --- | --- | --- |

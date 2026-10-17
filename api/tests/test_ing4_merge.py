@@ -327,3 +327,85 @@ def test_ing5_same_page_joins_only_when_systematic_in_the_document() -> None:
             _para(2 * i + 1, "and ends on the next line.", 115 + 40 * i),
         ]
     assert len(merge_blocks(many)) == 12
+
+
+ARROW_ITEMS = [
+    "→ Questions nearly everything",
+    "→ Can think from first principles",
+    "→ Tests things well",
+    "→ Is good at not fooling himself",
+    "→ Changes his mind regularly",
+    "→ Laughs a lot",
+    "→ Thinks holistically",
+    "→ Thinks long-term",
+    "→ And…doesn’t take himself too goddamn seriously.",
+]
+
+
+def test_ing5_list_block_split_into_one_logical_block_per_item() -> None:
+    blocks = [
+        make_block(0, 0, ["I take Naval seriously because he:"], y0=60),
+        make_block(0, 1, ARROW_ITEMS, y0=100, type="list"),
+        make_block(0, 2, ["That is why."], y0=300),
+    ]
+    logical = merge_blocks(blocks)
+    assert [lb.text for lb in logical] == [
+        "I take Naval seriously because he:",
+        *ARROW_ITEMS,
+        "That is why.",
+    ]
+    assert [lb.id for lb in logical] == list(range(11))
+    assert [lb.type for lb in logical[1:10]] == ["list"] * 9
+    assert all(lb.source == [(0, 1)] for lb in logical[1:10])
+
+
+def test_ing5_list_items_split_across_page_break_are_not_joined() -> None:
+    blocks = [
+        make_block(0, 0, ARROW_ITEMS[:3], y0=600, type="list"),
+        make_block(1, 0, ARROW_ITEMS[3:], y0=60, type="list"),
+    ]
+    assert [lb.text for lb in merge_blocks(blocks)] == ARROW_ITEMS
+
+
+def test_ing5_list_item_continuation_lines_join_their_item() -> None:
+    lines = [
+        "→ The transcripts have been edited for clarity and brevity",
+        "(multiple times).",
+        "→ 2003 - Founder of Vast.com, a classified ad mar-",
+        "ketplace",
+        "→ Uses cloud",
+        "-based storage",
+    ]
+    assert [lb.text for lb in merge_blocks([make_block(0, 0, lines, type="list")])] == [
+        "→ The transcripts have been edited for clarity and brevity (multiple times).",
+        "→ 2003 - Founder of Vast.com, a classified ad marketplace",
+        "→ Uses cloud -based storage",
+    ]
+
+
+def test_ing5_inline_glyph_items_split() -> None:
+    blocks = [make_block(0, 0, ["→ Education → The Story of AngelList"], type="list")]
+    assert [lb.text for lb in merge_blocks(blocks)] == ["→ Education", "→ The Story of AngelList"]
+
+
+def test_ing5_dash_star_and_numbered_items_split() -> None:
+    lines = [
+        "- Dash item",
+        "* Star item",
+        "1. First step",
+        "2) Second step",
+        "(3) Third",
+        "a. Four",
+    ]
+    blocks = [make_block(0, 0, lines, type="list")]
+    assert [lb.text for lb in merge_blocks(blocks)] == lines
+
+
+def test_ing5_glyph_alone_on_its_line_joins_the_next_line() -> None:
+    blocks = [make_block(0, 0, ["•", "Item text", "•", "Other item"], type="list")]
+    assert [lb.text for lb in merge_blocks(blocks)] == ["• Item text", "• Other item"]
+
+
+def test_ing5_dot_leader_ellipsis_in_a_list_item_is_not_split() -> None:
+    line = "2. With eigenvalues ordered as λ1(C) ≥· · · ≥λd(C), a top-r basis."
+    assert [lb.text for lb in merge_blocks([make_block(0, 0, [line], type="list")])] == [line]

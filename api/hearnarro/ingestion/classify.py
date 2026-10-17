@@ -19,7 +19,7 @@ from dataclasses import replace
 from itertools import pairwise
 from statistics import median as _median
 
-from hearnarro.ingestion.models import BBox, Block, BlockType, Line, Page
+from hearnarro.ingestion.models import ITEM_RE, BBox, Block, BlockType, Line, Page
 
 PAGE_NUMBER_RE = re.compile(
     r"^(?:\d+|[ivxlc]+|page\s+(?:\d+|[ivxlc]+)\b.*|\d+\s+of\s+\d+)$", re.IGNORECASE
@@ -37,7 +37,6 @@ BOILERPLATE_RE = re.compile(
 SIGNATURE_RE = re.compile(r"Department of Commerce|\bSecretary\b|\bDirector\b")
 RULE_RE = re.compile(r"^[_\-–—=\s]{5,}$")
 CAPTION_RE = re.compile(r"^(?:Figure|Fig\.|Table|Listing)\s*\d")
-LIST_RE = re.compile(r"^(?:[•·▪‣◦\-–*]|\d+[.)])\s")
 MATH_CHARS = set("=+−-×÷∑∫√∂∞≤≥≈∝∈∀∃αβγδεθλμπσφω^_{}|")
 MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
 EQ_NUMBER_RE = re.compile(r"^\(\d+[a-z]?\)[.,]?$")
@@ -370,7 +369,7 @@ def _classify(
         return "table"
     if _is_equation(block):
         return "equation"
-    if LIST_RE.match(block.lines[0].text.strip()):
+    if ITEM_RE.match(block.lines[0].text):
         return "list"
     return "body"
 

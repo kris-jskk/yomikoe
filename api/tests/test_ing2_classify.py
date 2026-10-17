@@ -645,3 +645,55 @@ def test_ing3_body_typed_contents_with_page_number_blocks_is_toc() -> None:
     assert _types(pages[1]) == ["toc"] * 8
     assert _types(pages[2]) == ["toc", "toc"]
     assert _types(pages[3]) == ["body", "body"]
+
+
+ARROW_ITEMS = [
+    "→ Questions nearly everything",
+    "→ Can think from first principles",
+    "→ Tests things well",
+    "→ Is good at not fooling himself",
+    "→ Changes his mind regularly",
+    "→ Laughs a lot",
+    "→ Thinks holistically",
+    "→ Thinks long-term",
+    "→ And…doesn’t take himself too goddamn seriously.",
+]
+
+
+def test_ing3_list_arrow_items_and_wrapped_items() -> None:
+    wrapped = [
+        "→ The transcripts have been edited for clarity and brevity",
+        "(multiple times).",
+        "→ Please interpret generously.",
+    ]
+    pages = classify_pages(
+        _doc(
+            make_block(0, 0, ARROW_ITEMS, y0=60),
+            make_block(0, 1, wrapped, y0=200),
+            make_block(0, 2, ["- Dash item", "* Star item"], y0=260),
+            make_block(0, 3, ["(1) First", "a) Second", "i. Third"], y0=300),
+        )
+    )
+    assert [_type_of(pages, i) for i in range(4)] == ["list", "list", "list", "list"]
+
+
+@pytest.mark.parametrize("glyph", list("•·▪▫■□●○◦‣►▶➢➤→⇒✓✔✗✘★☆"))
+def test_ing3_every_bullet_glyph_starts_an_item(glyph: str) -> None:
+    from hearnarro.ingestion.models import ITEM_RE
+
+    assert ITEM_RE.match(f"{glyph} Item text")
+    assert ITEM_RE.match(f"  {glyph} Item text")
+
+
+@pytest.mark.parametrize("text", ["-based services in the cloud", "*emphasis", "2003was", "A word"])
+def test_ing3_not_an_item_line(text: str) -> None:
+    from hearnarro.ingestion.models import ITEM_RE
+
+    assert not ITEM_RE.match(text)
+
+
+def test_ing3_hyphenated_word_at_line_start_is_body() -> None:
+    pages = classify_pages(
+        _doc(make_block(0, 0, ["-based services run in the cloud today."], y0=100))
+    )
+    assert _type_of(pages, 0) == "body"
