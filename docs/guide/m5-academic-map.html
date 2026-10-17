@@ -75,11 +75,11 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
   <header>
     <h1>HearNarro M5: formulas read aloud, terms said right</h1>
     <p class="lede">Milestone 5 makes HearNarro a study narrator. A paper, a textbook chapter or lecture notes go in; display and inline formulas come out spoken as a person would read them, technical words are pronounced from an academic lexicon and the user's own overrides, code listings are cued, and playback gains an equation repeat, slower equations and pauses after theorems. A document profile decides which rules apply, so "[12]" stays a dropped citation in an essay while "[0, 1]" is read as an interval in a maths text. This page is the live status: one diagram per new mechanism and the phase ledger with evidence.</p>
-    <div class="stamp"><span class="dot next"></span> Updated 2026-10-17 · phase 0 Scope done · phase 1 Fixtures and red gate next · D36–D40 confirmed · branch m5-academic</div>
+    <div class="stamp"><span class="dot next"></span> Updated 2026-10-17 (later) · phases 0–1 done · phase 2 Document profile next · gate red by design: spoken-maths scores 0.00–0.03 · branch m5-academic</div>
     <div class="phases" aria-label="Phase status">
       <span class="pill done">0 Scope <b>done</b></span>
-      <span class="pill next">1 Fixtures and red gate <b>next</b></span>
-      <span class="pill plan">2 Document profile <b>planned</b></span>
+      <span class="pill done">1 Fixtures and red gate <b>done</b></span>
+      <span class="pill next">2 Document profile <b>next</b></span>
       <span class="pill plan">3 Mathspeak and code listings <b>planned</b></span>
       <span class="pill plan">4 Vocabulary <b>planned</b></span>
       <span class="pill plan">5 Playback <b>planned</b></span>
@@ -110,14 +110,14 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
           <ul class="ev"><li>PRD commits <code>4d1bbfc</code> (M5 milestone, MATH, TERM, D36–D37), <code>9a197c2</code> (Sources milestone, maths-to-speech survey in D37), <code>76b7332</code> (Classroom view proposed), <code>afb4f00</code> (three usage modes, ING-10), <code>f853fc7</code> (D36–D39 confirmed, ING-11 and D40).</li><li>Licence survey: <code>_agent/research/m5-math-speech-options.md</code>, evidence <code>_agent/results/607_math_speech_licences.md</code>.</li></ul></div>
       </div>
       <div class="phase">
-        <div class="who"><span class="pill next">next</span><span>phase 1</span></div>
+        <div class="who"><span class="pill done">done</span><span>phase 1</span><span>2026-10-17</span></div>
         <div class="what"><b>Fixtures and red gate</b><span class="why-line">The gate is a score over expected spoken text, so the ten formula pages and their <code>*.spoken.txt</code> files have to exist, and the gate test has to fail, before mathspeak is written.</span>
           <span class="ids">gate clauses (a), (b), (e) · EVAL-10 · MATH-1..4</span>
-          <ul><li>Ten formula-heavy pages: five from the existing table and equation fixtures, five new (two or more from textbooks, one scanned, two from a technical book with code listings).</li><li>A <code>&lt;stem&gt;.spoken.txt</code> per page; a <code>profile</code> field in each fixture's expected file.</li><li>EVAL-10 suite and <code>evals/data/math_speech.jsonl</code>; gate test in <code>api/tests/</code>, run red.</li></ul>
-          <h3>Evidence</h3><ul class="ev"><li class="empty">none yet</li></ul></div>
+          <ul><li>Ten formula pages: <code>formula_01..05</code> cut from the tables and academic fixtures with <code>api/scripts/cut_fixture_page.py</code>; <code>06</code>, <code>07</code> from OpenStax Introductory Statistics and <code>08</code>, <code>09</code> from Scientific Python Lectures (both CC BY 4.0, quoted in <code>ATTRIBUTION.md</code>); <code>10</code> rasterized, image-only. Each has <code>expected.jsonl</code> and a hand-written <code>spoken.txt</code>; <code>profile</code> lives in <code>manifest.json</code> for all 30 entries.</li><li>EVAL-10 registered (158 pairs plus 10 fixtures); EVAL-4 gains 14 MATH and TERM categories (280 pairs); <code>mathspeak_score</code> in <code>scorers.py</code>.</li><li>One reading convention for spoken maths (spec §3c, <code>api/scripts/math_convention.json</code>, checker reports 0 violations over 342 lines); EVAL-2 and EVAL-3 filter to the M1 classes, EVAL-1 scores the formula pages too.</li><li>Rejected sources: OpenStax Python and University Physics (CC BY-NC-SA), one Physics page with no maths text layer.</li></ul>
+          <h3>Evidence</h3><ul class="ev"><li>Gate red: 12 failed, 1 passed; clause (a) green, (b) scores 0.012, 0.010, 0.017, 0.022, 0.026 for 01–05 and 0.000 for 06–10, (e) fails on the absent <code>compute_profile</code> (<code>_agent/results/667_gate.txt</code>).</li><li>Suite green without the gate file: 1008 passed, 29 skipped (<code>664_suite.txt</code>); ruff clean (<code>668</code>, <code>671</code>).</li><li>Tier 0: EVAL-10 mean 0.3157 (display 0.00, inline 0.65, symbol 0.21, reference 0.85, fixture 0.01); 0 regressions vs 9ec85bb (<code>665</code>, <code>666</code>, <code>672</code>; record <code>evals/runs/2026-10-17_8f1cee1.json</code>).</li><li>Fixtures and profiles: <code>650</code>, <code>651</code>, <code>652</code> (golden 34 passed); convention changes <code>670</code>.</li><li>Commits <code>a943c03</code>, <code>8f1cee1</code> (fixtures), <code>0849580</code> (EVAL-10, gate), <code>5c3009f</code> (manifest readers), <code>1a64611</code> (convention), spec <code>c1f8eba</code>, <code>9ec85bb</code>.</li></ul></div>
       </div>
       <div class="phase">
-        <div class="who"><span class="pill plan">planned</span><span>phase 2</span></div>
+        <div class="who"><span class="pill next">next</span><span>phase 2</span></div>
         <div class="what"><b>Document profile</b><span class="why-line">Mathspeak and citation handling read the class as a parameter, so the profile lands before either of them.</span>
           <span class="ids">ING-11 · D40 · gate clause (e)</span>
           <ul><li>Stage-6 pass, <code>documents.profile_json</code> through an Alembic migration, class thresholds, LIB-1 badge, per-document override through <code>hearnarro renormalize</code>.</li></ul>
@@ -464,7 +464,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
 
   <section id="links">
     <h2><span class="k">10</span>Links and status</h2>
-    <p>As of 2026-10-17: phase 0 Scope is done (PRD and Technical Design carry M5, D36–D40 confirmed). Phase 1 Fixtures and red gate is next; phases 2–6 are planned.</p>
+    <p>As of 2026-10-17 (later): phases 0 and 1 are done. The ten formula fixtures, EVAL-10, the reading convention and the red gate exist; the gate's spoken-maths scores sit between 0.00 and 0.03 because the pipeline still speaks the ING-7 cue. Phase 2 Document profile is next; phases 3–6 are planned. Spec: <code>_agent/specs/m5-academic-reading.md</code>.</p>
     <div class="note"><ul>
       <li>Previous milestone: <a href="m4-library-map.html">HearNarro M4 Library Map</a> (repo copy).</li>
       <li>Eval layer: <a href="evals-primer.html">evals primer</a> (EVAL-1..9; EVAL-10 joins in phase 1).</li>
