@@ -81,8 +81,8 @@ run.
   reading, state the assumption in the report, continue.
 - You would need far more time or more files than the brief names: finish what you can and
   report the rest as not done. Partial work with an honest report beats a guess.
-- You reach the brief's BUDGET (tool calls; 40 if the brief gives none): stop, write the
-  report with STATUS partial, and list what is left. Every extra call re-reads the whole
+- You reach the brief's BUDGET (tool calls; 40 if the brief gives none; never above 50 unless the
+  brief says why): stop, write the report with STATUS partial, and list what is left. Every extra call re-reads the whole
   prefix; the budget is where the tokens go.
 
 ## 5. What you send back

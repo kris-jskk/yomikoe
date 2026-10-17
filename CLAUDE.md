@@ -60,11 +60,21 @@ do), `brief-template.md`, `report-template.md`, and `supervisor-log.md`.
 7. **Corrections are logged.** When the session tells the user something that later turns
    out wrong, the correction goes in `_agent/supervisor-log.md` with what was assumed, what
    was true, and what would have caught it earlier.
-8. **Each milestone starts in a fresh session.** Cost review 1 (2026-10-17) found two thirds of
-   all spend was the supervisor re-reading a ~900k-token prefix on every tool call. The handoff is
-   on disk: this file, `docs/guide/`, `docs/CODE_MAP_*.md`, the memory directory, the ledger and
-   `_agent/cost-reviews.md`. The supervisor republishes a guide once per phase, batches independent
-   tool calls, and does not re-run a worker's saved verification unless its evidence is missing.
+8. **Cost rules from review 1 (2026-10-17; two thirds of all spend was the supervisor re-reading a
+   ~900k-token prefix on every tool call).**
+   a. **Each milestone starts in a fresh session.** The handoff is on disk: this file, `docs/guide/`,
+      `docs/CODE_MAP_*.md`, the memory directory, `_agent/token-ledger.md`, `_agent/cost-reviews.md`.
+      When a milestone closes, the supervisor's closing message tells the user to start the next one
+      in a new session and lists those handoff files. If the session prefix passes ~300k tokens
+      mid-milestone, the supervisor says so at the next phase boundary and offers a fresh session.
+   b. **Fewer supervisor tool calls.** One guide republish per phase, not per message; independent
+      calls batched in one turn; a worker's saved verification is not re-run unless its evidence file
+      is missing. Target: under 150 supervisor tool calls per milestone.
+   c. **Worker budgets:** default 40 tool calls, cap 50 unless the brief says why more is needed;
+      the two tasks that ran past 100 turns were the two most expensive worker tasks.
+   d. **Sonnet for small tasks:** any task expected to take under ~15 tool calls (lookups, re-runs,
+      tallies, test fixes with a known cause, doc tweaks) goes to Sonnet; Opus only for new code,
+      reviews, and anything the user reads.
 
 ## Rule: every stage is visualized; the architectural guide tracks the phases
 
