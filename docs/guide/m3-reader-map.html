@@ -1,0 +1,369 @@
+<title>HearNarro M3 Reader Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 920px) of numbered guide sections; figures in their own overflow containers; same tokens as the M1 and M2 guides so the three read as one set. */
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --fg: #1d2129; --muted: #5d6470; --line: #d9d6cd;
+  --accent: #8b4a1f; --accent-soft: #f3e8df; --hl: #ffe08a; --hl-seg: #f3ecd6;
+  --done: #2f7d4f; --done-soft: #e1f0e6; --run: #b36b00; --run-soft: #fbeedb; --next: #6b6f78; --next-soft: #ebebe8;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --hl: #7a5a12; --hl-seg: #2b2a22; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --hl: #7a5a12; --hl-seg: #2b2a22; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; }
+main { max-width: 920px; margin: 0 auto; display: grid; gap: 48px; }
+h1 { font-size: 28px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+h2 .k { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-right: 10px; font-weight: 500; }
+h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 18px 0 8px; }
+p { margin: 0 0 10px; max-width: 70ch; }
+.lede { font-size: 17px; color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--accent-soft); padding: 1px 5px; border-radius: 3px; }
+.gate { border-left: 3px solid var(--accent); padding: 8px 14px; background: var(--surface); display: grid; gap: 4px; margin-top: 16px; }
+.gate b { font-weight: 600; }
+.stamp { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 14px; font-family: var(--font-mono); }
+.stamp .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--run); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; margin-top: 14px; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { text-decoration: underline; outline: none; }
+figure { margin: 18px 0 6px; background: var(--surface); border: 1px solid var(--line); padding: 14px; overflow-x: auto; }
+figure svg { display: block; max-width: 100%; height: auto; font-family: var(--font-body); }
+figure svg .mono { font-family: var(--font-mono); }
+figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 80ch; }
+.why { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.why > div { background: var(--surface); border: 1px solid var(--line); padding: 12px 14px; min-width: 0; }
+.why b { display: block; font-weight: 600; margin-bottom: 4px; }
+.why p { font-size: 14px; color: var(--muted); margin: 0; }
+@media (max-width: 640px) { .why { grid-template-columns: 1fr; } }
+table.rules { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+table.rules th, table.rules td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.rules th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+.ledger { display: grid; border-top: 1px solid var(--line); margin-top: 14px; }
+.phase { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.phase .who { font-size: 13px; color: var(--muted); display: grid; gap: 4px; align-content: start; }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; width: fit-content; }
+.pill.done { background: var(--done-soft); color: var(--done); } .pill.run { background: var(--run-soft); color: var(--run); } .pill.next { background: var(--next-soft); color: var(--next); }
+.phase .what { min-width: 0; display: grid; gap: 6px; }
+.phase .what b { font-weight: 600; }
+.phase .what .why-line { font-size: 14px; color: var(--accent); }
+.phase ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+.phase li { margin: 2px 0; }
+@media (max-width: 520px) { .phase { grid-template-columns: 1fr; gap: 6px; } }
+.note ul { margin: 0; padding-left: 18px; } .note li { margin: 5px 0; }
+.sample { font-family: var(--font-body); background: var(--surface); border: 1px solid var(--line); padding: 10px 14px; max-width: 70ch; margin-top: 10px; }
+.sample .seg { background: var(--hl-seg); padding: 2px 4px; }
+.sample .w { background: var(--hl); padding: 0 2px; border-radius: 2px; }
+</style>
+
+<main>
+  <header>
+    <h1>HearNarro M3: the reader that keeps the page in step with the voice</h1>
+    <p class="lede">Milestone 3 builds the browser side: one HTTP fetch per sentence, Web Audio buffers scheduled back to back, and a highlight that asks the audio clock where it is on every frame. This page is the live status of that work, one diagram per mechanism, and the phase ledger with evidence.</p>
+    <div class="stamp"><span class="dot"></span> Updated 2026-10-17 · M3 closed and merged into main · repo copy docs/guide/m3-reader-map.html · branch m3-reader · spec _agent/specs/m3-reader-interfaces.md</div>
+    <nav class="toc">
+      <a href="#s1">1 What the milestone must prove</a>
+      <a href="#s2">2 The delivery loop</a>
+      <a href="#s3">3 The player state machine</a>
+      <a href="#s4">4 Clock to word</a>
+      <a href="#s5">5 Tokens and timestamps</a>
+      <a href="#s6">6 Phase ledger</a>
+      <a href="#s7">7 Carried in from M2</a>
+      <a href="#s8">8 Decisions proposed</a>
+      <a href="#s9">9 Status</a>
+    </nav>
+  </header>
+
+  <section id="s1">
+    <h2><span class="k">1</span>What the milestone must prove</h2>
+    <p>PLAY-1 to PLAY-5: play, pause, skip by sentence and by section; the current word and sentence highlighted in sync; click any sentence to seek; a voice or speed change mid-play that resumes at the current sentence and flushes the lookahead; gapless stitching with no click at boundaries. The pickers for voice and speed ship with it. The library view, remembered positions, keyboard shortcuts and lock-screen controls are M4.</p>
+    <div class="gate">
+      <b>Gate (Technical Design, testing row "Playback (browser)")</b>
+      <span>Playwright loads a 30-segment document served by the API with the FakeBackend, plays for 20 s, and at three probe times the highlighted word is the expected word. A click on a sentence seeks there. A speed change mid-play restarts the sentence at the new speed. Asserted on Chromium; WebKit and Firefox reported.</span>
+    </div>
+    <div class="why">
+      <div><b>Why the FakeBackend makes the gate exact</b><p>It emits 80 ms of silence per word, words back to back, timestamps evenly spaced. The expected word at any second of playback is arithmetic, so the test can assert sync to within one word without listening.</p></div>
+      <div><b>Why no Node toolchain was a phase of its own</b><p>The machine has no Node, no npm and no Homebrew. Phase 0 installs Node LTS user-locally from the official tarball with its checksum verified, then scaffolds <code>web/</code>. Nothing in M3 runs until that is green.</p></div>
+    </div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="k">2</span>The delivery loop (D5)</h2>
+    <p>The browser asks for one sentence at a time. The API answers with encoded audio and the word timestamps in a header. The player decodes it, schedules it to start exactly when the previous buffer ends, and keeps two sentences fetched ahead while the server keeps five synthesized ahead. A seek or a settings change stops every scheduled source, bumps a generation counter so late arrivals are ignored, and starts a fresh schedule from the target.</p>
+    <figure>
+      <svg viewBox="0 0 880 300" role="img" aria-label="Per-segment HTTP fetch, decode, schedule chain; seek rebuilds the schedule under a new generation">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="30" width="200" height="54" rx="4"/>
+          <rect x="340" y="30" width="200" height="54" rx="4"/>
+          <rect x="660" y="30" width="200" height="54" rx="4"/>
+          <rect x="20" y="150" width="200" height="54" rx="4"/>
+          <rect x="340" y="150" width="200" height="54" rx="4"/>
+          <rect x="660" y="150" width="200" height="54" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor" text-anchor="middle">
+          <text x="120" y="52" font-weight="600">PlayerBar / Reader</text><text x="120" y="70" fill="var(--muted)">dispatch PLAY, SEEK, SET_SPEED</text>
+          <text x="440" y="52" font-weight="600">usePlayer (reducer + effects)</text><text x="440" y="70" fill="var(--muted)">one AudioContext, generation n</text>
+          <text x="760" y="52" font-weight="600">API GET /audio/k?voice&amp;speed</text><text x="760" y="70" fill="var(--muted)">wav|ogg + X-Timestamps</text>
+          <text x="120" y="172" font-weight="600">decodeAudioData</text><text x="120" y="190" fill="var(--muted)">AudioBuffer, duration d(k)</text>
+          <text x="440" y="172" font-weight="600">schedule</text><text x="440" y="190" fill="var(--muted)">source(k).start(t0 + Σ d(&lt;k))</text>
+          <text x="760" y="172" font-weight="600">server lookahead</text><text x="760" y="190" fill="var(--muted)">k+1 .. k+5 synthesized ahead</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M220 57 H338"/>
+          <path d="M540 57 H658"/>
+          <path d="M760 84 V148"/>
+          <path d="M660 177 H542"/>
+          <path d="M340 177 H222"/>
+          <path d="M120 150 V86"/>
+          <path d="M440 150 V86" stroke-dasharray="4 3"/>
+        </g>
+        <g font-size="11" fill="var(--muted)">
+          <text x="279" y="50" text-anchor="middle">events</text>
+          <text x="599" y="50" text-anchor="middle">fetch k, prefetch k+1, k+2</text>
+          <text x="770" y="120">same voice/speed</text>
+          <text x="601" y="170" text-anchor="middle">bytes + timestamps</text>
+          <text x="281" y="170" text-anchor="middle">buffer</text>
+          <text x="128" y="120">AUDIO_READY (if gen = n)</text>
+          <text x="448" y="120">seek: stop all, n+1, refetch</text>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="20" y="250" font-weight="600">Timeline on the audio thread</text>
+          <rect x="20" y="262" width="180" height="22" fill="var(--accent-soft)" stroke="currentColor" stroke-width="1"/>
+          <rect x="200" y="262" width="240" height="22" fill="var(--accent-soft)" stroke="currentColor" stroke-width="1"/>
+          <rect x="440" y="262" width="150" height="22" fill="var(--accent-soft)" stroke="currentColor" stroke-width="1"/>
+          <rect x="590" y="262" width="120" height="22" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="110" y="277" text-anchor="middle" class="mono" font-size="11">k   startAt t0</text>
+          <text x="320" y="277" text-anchor="middle" class="mono" font-size="11">k+1   t0 + d(k)</text>
+          <text x="515" y="277" text-anchor="middle" class="mono" font-size="11">k+2</text>
+          <text x="650" y="277" text-anchor="middle" class="mono" font-size="11" fill="var(--muted)">k+3 fetching</text>
+          <text x="730" y="277" font-size="11" fill="var(--muted)">no gap: the audio thread splices</text>
+        </g>
+      </svg>
+      <figcaption>One request per sentence; each decoded buffer is scheduled to start exactly where the previous one ends, so PLAY-5 holds by construction and the server's lookahead means the prefetch almost always hits the cache. A seek bumps the generation so a late response for the old schedule is dropped (PLAY-4).</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why not a stream</b><p>Media Source Extensions want one continuous stream; per-sentence Opus files would mean append windows and timestamp offsets, and iOS Safari only supports MSE as ManagedMediaSource. Sentence-sized GETs need none of that (D5).</p></div>
+      <div><b>Why pause is <code>suspend()</code></b><p>Buffer sources cannot pause. Suspending the context freezes the hardware clock and every scheduled source together, so resume is sample-exact and the schedule is never rebuilt for a pause (D24, proposed).</p></div>
+    </div>
+  </section>
+
+  <section id="s3">
+    <h2><span class="k">3</span>The player state machine (D10)</h2>
+    <p>Five states, one pure reducer, side effects in one hook. Components dispatch events and never touch the audio API. Seek and settings changes pass through <code>loading</code> so the schedule is rebuilt exactly once; a generation number carried in the context makes every audio event self-identifying, so a response for a schedule that no longer exists cannot move the machine.</p>
+    <figure>
+      <svg viewBox="0 0 880 330" role="img" aria-label="State machine: idle, loading, playing, paused, error with the events that move between them">
+        <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="var(--surface)" stroke="currentColor" stroke-width="1.3">
+          <rect x="40" y="130" width="120" height="44" rx="22"/>
+          <rect x="300" y="130" width="120" height="44" rx="22"/>
+          <rect x="560" y="130" width="120" height="44" rx="22"/>
+          <rect x="560" y="250" width="120" height="44" rx="22"/>
+          <rect x="300" y="250" width="120" height="44" rx="22"/>
+        </g>
+        <g font-size="13" font-weight="600" fill="currentColor" text-anchor="middle">
+          <text x="100" y="157">idle</text><text x="360" y="157">loading</text><text x="620" y="157">playing</text><text x="620" y="277">paused</text><text x="360" y="277">error</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar2)">
+          <path d="M160 152 H298"/>
+          <path d="M420 152 H558"/>
+          <path d="M620 174 V248"/>
+          <path d="M600 250 V176" stroke-dasharray="1 0"/>
+          <path d="M560 272 C 500 272, 500 152, 422 152"/>
+          <path d="M580 130 C 560 60, 400 60, 362 128" stroke-dasharray="5 3"/>
+          <path d="M620 130 C 640 40, 740 40, 760 40 C 800 40, 820 100, 700 150" stroke-dasharray="5 3" opacity="0"/>
+          <path d="M360 174 V248"/>
+          <path d="M560 160 C 520 220, 440 240, 422 262"/>
+          <path d="M300 272 C 200 272, 200 174, 160 160"/>
+          <path d="M320 250 C 320 215, 335 190, 345 176" />
+        </g>
+        <g font-size="11" fill="var(--muted)">
+          <text x="229" y="145" text-anchor="middle">PLAY</text>
+          <text x="489" y="145" text-anchor="middle">AUDIO_READY (gen matches)</text>
+          <text x="632" y="215">PAUSE</text>
+          <text x="548" y="215" text-anchor="end">RESUME</text>
+          <text x="470" y="238" text-anchor="middle">PLAY / SEEK / SKIP</text>
+          <text x="470" y="78" text-anchor="middle">SEEK · SKIP · SET_VOICE · SET_SPEED · BUFFERING  (gen+1)</text>
+          <text x="368" y="215">FETCH_FAILED</text>
+          <text x="500" y="196" text-anchor="middle">FETCH_FAILED</text>
+          <text x="230" y="300" text-anchor="middle">DISMISS</text>
+          <text x="258" y="226">RETRY (gen+1)</text>
+        </g>
+        <g font-size="11" fill="var(--muted)">
+          <text x="40" y="320">Self loops on playing: SEGMENT_STARTED, POSITION. ENDED moves playing to paused at the last segment. Events not listed for a state leave it unchanged.</text>
+        </g>
+      </svg>
+      <figcaption>Every user action and every audio event is one of 17 named events; the reducer is total, and the generation guard is tested as its own unit test. The hook maps state to effects: build, chain, suspend, resume, teardown.</figcaption>
+    </figure>
+  </section>
+
+  <section id="s4">
+    <h2><span class="k">4</span>Clock to word (D8)</h2>
+    <p>The highlight never runs on a timer. Each animation frame reads <code>AudioContext.currentTime</code>, finds the scheduled entry whose window contains it, subtracts that entry's start time to get the elapsed milliseconds into the sentence, and binary-searches the sentence's timestamps for the active word. Two class toggles follow; React is not involved on that path.</p>
+    <figure>
+      <svg viewBox="0 0 880 250" role="img" aria-label="From the audio clock through the schedule map and a binary search to one highlighted word">
+        <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g font-size="12" fill="currentColor">
+          <text x="20" y="30" font-weight="600">1. clock</text>
+          <text x="20" y="50" class="mono" font-size="11">currentTime = 12.37 s</text>
+          <text x="20" y="95" font-weight="600">2. locate(entries, t)</text>
+          <rect x="20" y="105" width="120" height="22" fill="var(--accent-soft)" stroke="currentColor"/>
+          <rect x="140" y="105" width="160" height="22" fill="var(--hl)" stroke="currentColor"/>
+          <rect x="300" y="105" width="100" height="22" fill="var(--accent-soft)" stroke="currentColor"/>
+          <text x="80" y="120" text-anchor="middle" class="mono" font-size="11" fill="#1d2129">41  9.80</text>
+          <text x="220" y="120" text-anchor="middle" class="mono" font-size="11" fill="#1d2129">42  startAt 11.42</text>
+          <text x="350" y="120" text-anchor="middle" class="mono" font-size="11" fill="#1d2129">43  14.02</text>
+          <line x1="245" y1="100" x2="245" y2="132" stroke="currentColor" stroke-width="1.5"/>
+          <text x="250" y="145" class="mono" font-size="11">elapsed = 12.37 − 11.42 = 950 ms</text>
+          <text x="20" y="185" font-weight="600">3. findActiveWord(timestamps[42], 950)</text>
+          <text x="20" y="205" class="mono" font-size="11">start_ms: 0  210  430  640  <tspan font-weight="600" fill="var(--accent)">880</tspan>  1120  1350 …   binary search: last start ≤ 950 → index 4</text>
+          <text x="20" y="240" font-weight="600">4. DOM</text>
+          <text x="80" y="240" class="mono" font-size="11">.seg[data-id=42] .w[data-i=4] += active;  previous pair −= active</text>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <rect x="520" y="20" width="340" height="120" rx="4" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+          <text x="540" y="45" font-weight="600">Drift budget, all bounded, none accumulate</text>
+          <text x="540" y="68" font-size="11" fill="var(--muted)">duration predictor: tens of ms, within a word</text>
+          <text x="540" y="86" font-size="11" fill="var(--muted)">Opus pre-skip: 6.5 ms, corrected by the decoder</text>
+          <text x="540" y="104" font-size="11" fill="var(--muted)">stretch rounding above 2.0x: under 1 ms</text>
+          <text x="540" y="128" font-size="11" fill="var(--muted)">each sentence restarts the clock at its own startAt</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar3)">
+          <path d="M40 56 V92"/><path d="M40 150 V180"/><path d="M40 211 V232"/>
+        </g>
+      </svg>
+      <figcaption>Position is derived from the hardware clock on every frame, so the sync gate (under one word after ten minutes) holds by construction; the Playwright probes guard the timestamp join in the backend, not the loop.</figcaption>
+    </figure>
+  </section>
+
+  <section id="s5">
+    <h2><span class="k">5</span>Tokens and timestamps</h2>
+    <p>The reader renders every sentence before any audio exists, so it cannot build word spans from timestamps. It splits the text on whitespace into tokens with character offsets. When a clip arrives, each timestamp (whose offsets already point into the same text, translated by the API through the normalizer's char map) is assigned to the first token whose span overlaps it. The highlight unit is the token; the mapping is computed once per sentence.</p>
+    <figure>
+      <svg viewBox="0 0 880 170" role="img" aria-label="Whitespace tokens with character offsets aligned to timestamp character spans">
+        <g font-size="12" fill="currentColor">
+          <text x="20" y="28" font-weight="600">text</text>
+          <text x="80" y="28" class="mono" font-size="12">The  mitochondria  (Fig.  2)  divide.</text>
+          <text x="20" y="62" font-weight="600">tokens</text>
+          <g class="mono" font-size="11">
+            <rect x="80" y="48" width="36" height="20" fill="var(--accent-soft)" stroke="currentColor"/><text x="98" y="62" text-anchor="middle">0–3</text>
+            <rect x="124" y="48" width="98" height="20" fill="var(--accent-soft)" stroke="currentColor"/><text x="173" y="62" text-anchor="middle">4–16</text>
+            <rect x="230" y="48" width="48" height="20" fill="var(--accent-soft)" stroke="currentColor"/><text x="254" y="62" text-anchor="middle">17–22</text>
+            <rect x="286" y="48" width="30" height="20" fill="var(--accent-soft)" stroke="currentColor"/><text x="301" y="62" text-anchor="middle">23–25</text>
+            <rect x="324" y="48" width="60" height="20" fill="var(--accent-soft)" stroke="currentColor"/><text x="354" y="62" text-anchor="middle">26–33</text>
+          </g>
+          <text x="20" y="104" font-weight="600">timestamps</text>
+          <g class="mono" font-size="11">
+            <rect x="80" y="90" width="36" height="20" fill="var(--hl)" stroke="currentColor"/><text x="98" y="104" text-anchor="middle" fill="#1d2129">0–3</text>
+            <rect x="124" y="90" width="98" height="20" fill="var(--hl)" stroke="currentColor"/><text x="173" y="104" text-anchor="middle" fill="#1d2129">4–16</text>
+            <rect x="230" y="90" width="86" height="20" fill="var(--hl)" stroke="currentColor"/><text x="273" y="104" text-anchor="middle" fill="#1d2129">18–24 "figure two"</text>
+            <rect x="324" y="90" width="60" height="20" fill="var(--hl)" stroke="currentColor"/><text x="354" y="104" text-anchor="middle" fill="#1d2129">26–32</text>
+          </g>
+          <g stroke="currentColor" stroke-width="1" fill="none">
+            <path d="M98 88 V70"/><path d="M173 88 V70"/><path d="M254 88 V70"/><path d="M354 88 V70"/>
+          </g>
+          <text x="20" y="145" font-size="11" fill="var(--muted)">A timestamp that spans two tokens ("figure two" covers "(Fig." and "2)") lights the first token it overlaps; a timestamp with no overlapping token is dropped. Between words the previous token stays lit.</text>
+          <text x="20" y="162" font-size="11" fill="var(--muted)">FakeBackend timestamps are exactly the whitespace spans, so in the gate test the map is the identity and the expected word is arithmetic.</text>
+        </g>
+      </svg>
+      <figcaption>Timestamps live in text offsets (the API translated them from the normalized text in M2); the reader only has to intersect spans, never re-tokenize the way the model did.</figcaption>
+    </figure>
+    <div class="sample"><span class="seg">The <span class="w">mitochondria</span> (Fig. 2) divide.</span> Spores form in the cortex.</div>
+    <p style="font-size:13px;color:var(--muted);margin-top:6px">How the highlight will read: sentence tint, word tint, both chosen for 4.5:1 contrast in light and dark themes.</p>
+  </section>
+
+  <section id="s6">
+    <h2><span class="k">6</span>Phase ledger</h2>
+    <p>Each phase ends with evidence under <code>_agent/results/</code> and a commit on <code>m3-reader</code>. Workers run on the cheapest adequate model with a 40-call budget (cap 50); the supervisor republishes this page once per phase.</p>
+    <div class="ledger">
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 0</span><span>Sonnet ×1 (5 calls), Opus ×1 (15 calls)</span><span>commits e8e519e, 48544ec</span></div>
+        <div class="what"><b>Toolchain and scaffold</b><span class="why-line">Nothing runs without Node; the scaffold fixes the commands every later phase cites (D20, D21).</span>
+          <ul><li>Node v24.22.0 LTS under <code>~/.local/node</code>, tarball SHA-256 verified against the release's SHASUMS256.txt (results 403, 404).</li><li><code>web/</code>: React 19.3.1, Vite 8.3.4, TypeScript 6.0.3, vitest 5.0.5, Playwright 1.64.1 with Chromium 156, WebKit 27.2, Firefox 157 (binaries under <code>~/.local/ms-playwright</code>, 1.1 GB); exact versions, lockfile committed; typecheck, lint, unit, build and e2e on all three engines exit 0 (results 408–414).</li><li>Dev proxy to the API verified against a stub server (415); the user's API on 8765 was down at the time, so the real-API check is still open.</li><li>Licences over 179 packages: 0 copyleft. One package outside the strict list, <code>caniuse-lite</code> (CC-BY-4.0, browser-support data, dev-only via eslint's babel chain, not in the shipped bundle). Provisional ruling: allowed as dev-only data; the user confirms at the phase 3 licence-check extension (416).</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 1</span><span>Opus ×2 in parallel (16 + 20 calls)</span><span>commits 7cac533, 618b6ce</span></div>
+        <div class="what"><b>Red tests against the spec</b><span class="why-line">The gate is written before the feature; a test that fails for the right reason is the acceptance criterion (D11).</span>
+          <ul><li>Unit: 47 cases (31 reducer transitions incl. the generation guard and the identity rule; 16 for tokenize, timestamp map, locate, binary search), all failing on NotImplemented from signature stubs, typecheck clean (417, 418).</li><li>E2E: the harness starts the API on the FakeBackend on a free port, uploads the seahelm fixture (198 segments, 39 headings), reaches ready in 0.5 s and stops the API by PID; the five PLAY tests fail on the missing reader DOM, the harness tests pass (420, 421).</li><li>Three spec gaps found by the test writers and fixed in the event table: section data for section skips, the end event's offset, generation bumps on skips and settings changes (commit 931f8ce).</li><li>Finding: the API never writes the sections table, so the reader derives sections from heading segments client-side; the server-side table of contents stays an M4 item (ING-8). Spec §7 amended.</li></ul>
+          <h3>Decode matrix (D16), Playwright engines, 1 s 440 Hz tone, results 421–423</h3>
+          <div class="tablewrap"><table class="rules">
+            <tr><th>engine</th><th>WAV</th><th>Ogg Opus</th><th>clock advanced headless</th></tr>
+            <tr><td>Chromium 156</td><td>pass, 1.000 s</td><td>pass, 1.000 s</td><td>0.699 s in 0.700 s (autoplay flag only)</td></tr>
+            <tr><td>WebKit 27.2</td><td>pass, 1.000 s</td><td>pass, 1.000 s</td><td>0.696 s in 0.700 s (no flags)</td></tr>
+            <tr><td>Firefox 157</td><td>pass, 1.000 s</td><td>pass, 1.000 s</td><td>0.704 s in 0.700 s (no flags)</td></tr>
+          </table></div>
+          <p style="font-size:13px;color:var(--muted);margin-top:6px">Playwright's WebKit is not Safari itself; the D16 default-format decision waits for one decode in the user's own Safari in phase 4. Until then WAV stays the default.</p></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 2</span><span>Opus ×2 in parallel (18 + 30 calls)</span><span>commits 68c28c2, 11e4767</span></div>
+        <div class="what"><b>Build</b><span class="why-line">Pure modules first (machine, schedule), then the hook, then components; unit tests green before the browser is opened.</span>
+          <ul><li>Core: reducer, timing helpers, API client; 58 unit cases green, typecheck and lint clean on the whole tree (432–434).</li><li>UI: usePlayer hook, Reader, PlayerBar, Toc, Picker, styles; shipped bundle imports only react and react-dom, one 240 kB chunk; highlight contrast 6.14:1 or better in both themes (428–430).</li><li>First Chromium gate run: 8 of 9 pass, including the three clock probes at 3, 8 and 15 s, click-to-seek in 394 ms, section skips, and zero-gap splicing over cached clips (431c). Two app defects found and fixed on the way: a null saved position taken as a start position, and no highlighted word during the 50 ms start lead (431, 431b).</li><li>The one red test, PLAY-4, is a probe-timing fault in the test: it changes speed at 2.0 s, which lands on a one-word heading lasting 80 ms, and expects that heading to restart; the app had already moved on and correctly restarted the next sentence (431d). Fixed in phase 3 by probing inside a long sentence.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 3</span><span>Opus ×4, Sonnet ×3</span><span>commits b373592, 4d00971, 25c3fa3, 67119ab, 07092a7, 7a39e94</span></div>
+        <div class="what"><b>Gate, matrix, measurement</b><span class="why-line">PLAY-1..5 asserted on Chromium; the two carried decisions (D16 format, D19 chunking) get their numbers here.</span>
+          <ul><li><b>Gate green on all three engines, 9 of 9 each</b> (436–438): word highlight matches the clock at 3, 8 and 15 s; click-to-seek lands within 500 ms; a speed change mid-sentence restarts that sentence at the new speed and the lookahead is re-requested at it; pause/resume and sentence and section skips; zero gap over cached boundaries. PLAY tests run on WebKit and Firefox with <code>HEARNARRO_E2E_ALL_ENGINES=1</code>; Chromium is the asserted engine (D22).</li><li>Licence check has an npm mode: 179 packages, production closure react, react-dom, scheduler (all MIT), 0 violations; the CC-BY-4.0 dev-only data allowance is recorded in the script (440).</li><li>First-audio measured in the real browser against Kokoro on documents 16–19, cold cache per row (445); the table below. The first run exposed a client defect: on a cold play the reader fetched the target and its two prefetch sentences at the same millisecond, and the single synthesis thread serves GETs in arrival order (453). Fixed: prefetch now starts when the target's response lands (67119ab); unit 58 and gate 9 green after it (449, 451).</li><li>Docs: <code>docs/CODE_MAP_M3.md</code> (ten flows traced file to function, every module with status, nine spec deviations listed), <code>docs/M3_TESTING.md</code>, PRD and design log carry D20–D25; no stale Kokoro ONNX mention remains (446, 447).</li></ul>
+          <h3>First audio in the browser, cold cache, Kokoro, 100–200 character sentences (445 before the prefetch fix, 452 after; different segments, three per speed, so indicative)</h3>
+          <div class="tablewrap"><table class="rules">
+            <tr><th>speed</th><th>before: three cold rows</th><th>before mean</th><th>after: three cold rows</th><th>after mean</th><th>warm (cached)</th><th>M2 API benchmark mean</th></tr>
+            <tr><td>0.5x</td><td>6008 / 2105 / 7162 ms</td><td>5092 ms</td><td>1968 / 2009 / 1672 ms</td><td>1883 ms</td><td>29 ms</td><td>1883 ms</td></tr>
+            <tr><td>1.0x</td><td>1101 / 543 / 1411 ms</td><td>1018 ms</td><td>1057 / 2430 / 781 ms</td><td>1423 ms</td><td>21 ms</td><td>862 ms</td></tr>
+            <tr><td>2.0x</td><td>1216 / 428 / 605 ms</td><td>750 ms</td><td>not re-run</td><td></td><td>18 ms</td><td>458 ms</td></tr>
+          </table></div>
+          <p style="font-size:13px;color:var(--muted);margin-top:6px">The 6.0 and 7.2 s outliers are not fully explained by the prefetch order: a before-run on the old code gave 1.7 s at 0.5x, and the 6.0 s row was the server's first synthesis after start. The 2430 ms row at 1.0x is a 181-character sentence that produces 19 s of audio, about twice the usual length for its size; the log shows it ran alone, so that is synthesis time. Logged in <code>_agent/supervisor-log.md</code>.</p>
+          <p style="font-size:14px;margin-top:8px"><b>D19 recommendation:</b> defer clause-level chunking to M4. After the fix the 0.5x cold wait sits at the gate (1.7–2.0 s on 100–200 character sentences, the M2 benchmark's own mean), 1.0x and 2.0x clear it except for unusually long sentences, and the warm path is under 30 ms. The measurement script is committed (<code>web/scripts/measure_first_audio.mjs</code>) so the number can be re-checked after any backend change. Chunking stays on the M4 list with these numbers as its baseline.</p></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 4</span><span>user + Opus ×1, Sonnet ×1</span><span>commits 62cb2a8, 0d1f23b, 61a416b</span></div>
+        <div class="what"><b>Close</b><span class="why-line">The user decides; the docs are tested cold; the cost review sets the M4 rules.</span>
+          <ul><li><b>User decisions (2026-10-17):</b> D19 clause chunking deferred to M4 with the phase 3 numbers as baseline; D20–D25 confirmed; the CC-BY-4.0 dev-only allowance confirmed; D16 stays WAV until one play in the user's own Safari (carried to M4). Recorded in the PRD and the design log (459).</li><li><b>Documentation tested cold:</b> a worker followed <code>docs/M3_TESTING.md</code> command by command against the live server. Nine mismatches found and fixed (the install script's refusal when Node exists, a wrong <code>cd api</code>, bundle sizes, an undefined variable, missing env options, port notes). Every changed command re-run in its final wording (457).</li><li><b>Reader on the user's documents 16–19, live Kokoro:</b> Play reaches playing with a highlighted word in 0.5–0.9 s; a seek to a later word lands in 0.02–0.8 s; a speed change to 1.50x restarts the sentence and the next request carries the new speed; Next section lands on a heading; pause and resume keep the same word (458). Four of four pass.</li><li><b>Not done by a machine:</b> listening for voice quality, unknown-word fallback and the stretch above 2.0x; the auto-scroll feel; the Safari play. These stay on the user's list and are carried into M4's hands-on round.</li><li>One thing seen on the way: document 16 begins its reading at "ISBN:", so front matter is read aloud first (PLAY-8 skip-block toggles, M4).</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="k">7</span>Carried in from M2</h2>
+    <div class="note"><ul>
+      <li><b>Clause-level chunking at speeds below 1.0 (D19).</b> Measured in phase 3 (table above): after the prefetch fix the 0.5x cold wait is 1.7–2.0 s. Recommendation: defer to M4 with these numbers as the baseline.</li>
+      <li><b>Ogg Opus decode matrix (D16).</b> Passes on Chromium, WebKit and Firefox under Playwright. The default switches to Opus only after one play in the user's own Safari (phase 4).</li>
+      <li><b>Listening checks</b> that no automated test covers (voice quality, fallback pronunciation, the stretch above 2.0x) happen in phase 4 with the user.</li>
+      <li><b>Pronunciation corrections</b> entered by the listener, remembered per document or globally: M4 (LIB).</li>
+      <li><b>Page parameter and table of contents (ING-8).</b> The sections endpoint already returns titles and first segment ids; the Toc component uses them. A page parameter stays an M4 item.</li>
+      <li><b>Cost.</b> M1+M2 together $141.10, two thirds of it supervisor prefix re-reads. M3 runs in this fresh session with batched calls and one republish per phase; checked at the close.</li>
+      <li><b>Cosmetic:</b> two stale "Kokoro ONNX" mentions in the PRD; fixed in the phase 3 PRD sync.</li>
+    </ul></div>
+  </section>
+
+  <section id="s8">
+    <h2><span class="k">8</span>Decisions proposed in the spec</h2>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>id</th><th>decision</th><th>why</th><th>status</th></tr>
+      <tr><td>D20</td><td>Node LTS user-local from the official tarball, checksum verified; npm with a committed lockfile; exact versions</td><td>No Homebrew or sudo on the machine; reproducible without a system package manager</td><td>built; user confirms</td></tr>
+      <tr><td>D21</td><td>Vite dev proxy to the API; no CORS; FastAPI serves <code>web/dist</code> in M4</td><td>Keeps the API unchanged and the browser on one origin</td><td>built; user confirms</td></tr>
+      <tr><td>D22</td><td>Gate asserted on Chromium; WebKit and Firefox reported</td><td>One asserted engine keeps the gate deterministic; the matrix still informs D16</td><td>built (all three happen to pass); user confirms</td></tr>
+      <tr><td>D23</td><td>Voice/speed changes while paused apply at the next Play</td><td>Nothing to rebuild while nothing is scheduled</td><td>built; user confirms</td></tr>
+      <tr><td>D24</td><td>Pause is <code>AudioContext.suspend()</code>; the schedule is never rebuilt for pause/resume</td><td>Sample-exact resume, no refetch, no click</td><td>built; user confirms</td></tr>
+      <tr><td>D25</td><td>Sections derived client-side from heading segments until the server writes the sections table (ING-8, M4)</td><td>The API never writes sections today; headings give a usable table of contents and section skips now</td><td>built; user confirms</td></tr>
+    </table></div>
+  </section>
+
+  <section id="s9">
+    <h2><span class="k">9</span>Status</h2>
+    <p>As of 2026-10-17: M3 is closed and merged into main. The reader plays, highlights, seeks, skips and changes speed with the gate green on Chromium, WebKit and Firefox and a functional pass on the user's own documents against Kokoro; the docs were tested cold and corrected; the PRD and the design log carry D20–D25 and the D19 deferral. The API is still up on port 8765 for listening. M4 (library, position persistence, keyboard and Media Session, skip-block toggles, OCR fallback, Docker Compose, the soak test, plus the carried Safari check and D19 baseline) starts in a fresh session from the handoff files.</p>
+    <h3>Cost review 2 (details in <code>_agent/cost-reviews.md</code>)</h3>
+    <p>Workers for M3 phases 0–3: eleven rows, $6.36 (M2 workers were $19.58). Supervisor: $9.34 at a 215k prefix when the ledger last captured it, final figure written in at the close. No worker passed 33 calls; Sonnet tasks cost a tenth of Opus ones. Actions for M4: pointer briefs start with a <code>TASK slug</code> line so the ledger keys them (six M3 rows lost their names), small follow-ups go to a fresh Sonnet worker rather than a resumed one, the docs task is split in two, and A/B measurements use the same segments.</p>
+    <h3>Things to know now</h3>
+    <div class="note"><ul>
+      <li>No Node, npm or Homebrew on this machine at the start of M3; Node now lives under <code>~/.local/node</code> and Playwright's browsers under <code>~/.local/ms-playwright</code>; nothing else outside the repo was touched. Every command in <code>web/</code> starts with <code>source web/scripts/env.sh</code>.</li>
+      <li>The API has no position endpoint yet; the reader keeps position in memory until M4 (LIB-2).</li>
+      <li>The M2 guide stays the reference for synthesis and the audio protocol: <a href="https://claude.ai/artifact/J7wJUWammFqBxc22s121Pr">HearNarro M2 Synthesis Map</a>; M1 for ingestion: <a href="https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n">HearNarro M1 Ingest Map</a>.</li>
+    </ul></div>
+  </section>
+</main>
