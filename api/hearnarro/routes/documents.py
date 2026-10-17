@@ -11,13 +11,15 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
+import shutil
 from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Annotated, Any
 
 import aiosqlite
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 from hearnarro.storage import repo
 from hearnarro.storage.db import db_path, pdf_dir
@@ -40,7 +42,16 @@ async def get_conn(request: Request) -> AsyncIterator[aiosqlite.Connection]:
 Conn = Annotated[aiosqlite.Connection, Depends(get_conn)]
 
 
+SPEED_MIN = 0.5  # LIB-3: the same bounds as PUT /settings
+SPEED_MAX = 3.0
+
+
 def _document_summary(doc: dict[str, Any]) -> dict[str, Any]:
+    """The one summary shape (LIB-1) for GET /documents, GET /documents/{id} and PATCH.
+
+    ``doc`` is a row from ``repo.list_document_summaries``/``get_document_summary``.
+    ``progress`` = the position segment's ``order`` / ``segment_count``, 0 without a position.
+    """
     keys = (
         "id",
         "title",
@@ -51,11 +62,46 @@ def _document_summary(doc: dict[str, Any]) -> dict[str, Any]:
         "parse_ms",
         "status",
         "fail_reason",
+        "created_at",
+        "last_opened_at",
+        "segment_count",
     )
+    count = int(doc["segment_count"] or 0)
+    order = doc["position_order"]
+    has_position = doc["position_segment_id"] is not None and order is not None
     return {k: doc[k] for k in keys} | {
-        "created_at": doc["created_at"],
-        "last_opened_at": doc["last_opened_at"],
+        "position": {
+            "segment_id": doc["position_segment_id"] if has_position else None,
+            "offset_ms": int(doc["position_offset_ms"] or 0) if has_position else 0,
+        },
+        "progress": order / count if has_position and count else 0,
+        "settings": {"voice_id": doc["voice_id"], "speed": doc["speed"]},
     }
+
+
+class PositionIn(BaseModel):
+    segment_id: int
+    offset_ms: int = Field(default=0, ge=0)
+
+
+class DocSettingsIn(BaseModel):
+    voice_id: str | None = None
+    speed: float | None = Field(default=None, ge=SPEED_MIN, le=SPEED_MAX)
+
+
+class DocumentPatch(BaseModel):
+    """Every key optional (LIB-2, LIB-3, D26); ``position: null`` clears the position."""
+
+    position: PositionIn | None = None
+    settings: DocSettingsIn | None = None
+    opened: bool | None = None
+
+
+async def _summary_or_404(conn: aiosqlite.Connection, document_id: int) -> dict[str, Any]:
+    doc = await repo.get_document_summary(conn, document_id)
+    if doc is None:
+        raise HTTPException(404, "document not found")
+    return doc
 
 
 async def _read_capped(file: UploadFile, max_bytes: int) -> bytes:
@@ -126,23 +172,66 @@ async def upload_document(request: Request, file: UploadFile, conn: Conn) -> Any
 
 @router.get("/documents")
 async def list_documents(conn: Conn) -> list[dict[str, Any]]:
-    return [_document_summary(d) for d in await repo.list_documents(conn)]
+    return [_document_summary(d) for d in await repo.list_document_summaries(conn)]
 
 
 @router.get("/documents/{document_id}")
 async def get_document(document_id: int, conn: Conn) -> dict[str, Any]:
-    doc = await repo.get_document(conn, document_id)
-    if doc is None:
-        raise HTTPException(404, "document not found")
+    doc = await _summary_or_404(conn, document_id)
     return _document_summary(doc) | {
         "sections": await repo.list_sections(conn, document_id),
         "acronyms": repo.document_acronyms(doc),
-        "settings": {"voice_id": doc["voice_id"], "speed": doc["speed"]},
-        "position": {
-            "segment_id": doc["position_segment_id"],
-            "offset_ms": doc["position_offset_ms"],
-        },
     }
+
+
+@router.patch("/documents/{document_id}")
+async def patch_document(document_id: int, body: DocumentPatch, conn: Conn) -> dict[str, Any]:
+    """LIB-2/LIB-3: position, per-document settings, ``opened``; returns the summary.
+    404 unknown document; 422 if the position segment is not one of the document's."""
+    await _summary_or_404(conn, document_id)
+    sent = body.model_fields_set
+    fields: dict[str, Any] = {}
+    if "position" in sent:
+        pos = body.position
+        if pos is None:
+            fields |= {"position_segment_id": None, "position_offset_ms": 0}
+        else:
+            if not await repo.segment_belongs(conn, document_id, pos.segment_id):
+                raise HTTPException(422, "segment_id is not a segment of this document")
+            fields |= {"position_segment_id": pos.segment_id, "position_offset_ms": pos.offset_ms}
+    if "settings" in sent:
+        st = body.settings
+        if st is None:
+            fields |= {"voice_id": None, "speed": None}
+        else:
+            if "voice_id" in st.model_fields_set:
+                fields["voice_id"] = st.voice_id
+            if "speed" in st.model_fields_set:
+                fields["speed"] = st.speed
+    if body.opened:
+        fields["last_opened_at"] = repo.now_iso_ms()
+    await repo.update_document_fields(conn, document_id, fields)
+    return _document_summary(await _summary_or_404(conn, document_id))
+
+
+@router.delete("/documents/{document_id}", status_code=204)
+async def delete_document(document_id: int, request: Request, conn: Conn) -> Response:
+    """LIB-4: rows, ``pdfs/{sha256}.pdf`` and ``audio/{id}/``; 404 unknown; 409 while parsing
+    (status read from the documents row)."""
+    doc = await _summary_or_404(conn, document_id)
+    if doc["status"] == "parsing":
+        raise HTTPException(409, "document is still parsing")
+    await repo.delete_document(conn, document_id)
+    data_dir: Path = request.app.state.data_dir
+    pdf_path = pdf_dir(data_dir) / f"{doc['sha256']}.pdf"
+    audio_dir = data_dir / "audio" / str(document_id)
+
+    def remove_files() -> None:
+        pdf_path.unlink(missing_ok=True)
+        shutil.rmtree(audio_dir, ignore_errors=True)
+
+    await asyncio.to_thread(remove_files)
+    return Response(status_code=204)
 
 
 @router.get("/documents/{document_id}/segments")

@@ -18,6 +18,8 @@ KOKORO_REVISION_ENV = "HEARNARRO_KOKORO_REVISION"
 LOOKAHEAD_ENV = "HEARNARRO_LOOKAHEAD"
 DATA_DIR_ENV = "HEARNARRO_DATA_DIR"
 AUDIO_FORMAT_ENV = "HEARNARRO_AUDIO_FORMAT"
+WEB_DIST_ENV = "HEARNARRO_WEB_DIST"  # D21: built web app served at /
+REPO_ROOT = Path(__file__).resolve().parents[2]
 TRIM_LEAD_ENV = "HEARNARRO_TRIM_LEAD_MS"  # SYN-1: silence kept before a clip's first sound
 TRIM_TAIL_ENV = "HEARNARRO_TRIM_TAIL_MS"  # SYN-1: silence kept after its last sound
 DEFAULT_TRIM_LEAD_MS = 60
@@ -134,3 +136,12 @@ def load_settings(
         trim_lead_ms=trim_lead_ms,
         trim_tail_ms=trim_tail_ms,
     )
+
+
+def web_dist_dir(env: Mapping[str, str] | None = None) -> Path | None:
+    """D21: the built web app to serve at ``/``: ``$HEARNARRO_WEB_DIST``, else
+    ``<repo>/web/dist``; None when that directory does not exist."""
+    env = os.environ if env is None else env
+    raw = (env.get(WEB_DIST_ENV) or "").strip()
+    path = Path(raw).expanduser() if raw else REPO_ROOT / "web" / "dist"
+    return path if path.is_dir() else None

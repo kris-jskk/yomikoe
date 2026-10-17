@@ -131,3 +131,86 @@ async def segment_rows_from(
         'ORDER BY "order" LIMIT ?',
         (document_id, from_order, limit),
     )
+
+
+# --- LIB-1..4: library summaries, PATCH, DELETE, global settings ---------------------------
+
+SUMMARY_SELECT = (
+    f"SELECT {DOCUMENT_COLUMNS}, "
+    "(SELECT count(*) FROM segments c WHERE c.document_id = documents.id) AS segment_count, "
+    '(SELECT p."order" FROM segments p WHERE p.id = documents.position_segment_id '
+    "AND p.document_id = documents.id) AS position_order "
+    "FROM documents"
+)
+
+
+async def list_document_summaries(conn: aiosqlite.Connection) -> list[dict[str, Any]]:
+    """Document rows plus ``segment_count`` and ``position_order`` (LIB-1)."""
+    return await _all(conn, f"{SUMMARY_SELECT} ORDER BY id", ())
+
+
+async def get_document_summary(
+    conn: aiosqlite.Connection, document_id: int
+) -> dict[str, Any] | None:
+    return await _one(conn, f"{SUMMARY_SELECT} WHERE id = ?", (document_id,))
+
+
+async def segment_belongs(conn: aiosqlite.Connection, document_id: int, segment_id: int) -> bool:
+    row = await _one(
+        conn,
+        "SELECT 1 AS ok FROM segments WHERE id = ? AND document_id = ?",
+        (segment_id, document_id),
+    )
+    return row is not None
+
+
+async def update_document_fields(
+    conn: aiosqlite.Connection, document_id: int, fields: dict[str, Any]
+) -> None:
+    """``UPDATE documents SET <fields>`` and commit; keys are trusted column names."""
+    if not fields:
+        return
+    assignments = ", ".join(f"{k} = ?" for k in fields)
+    await conn.execute(
+        f"UPDATE documents SET {assignments} WHERE id = ?", (*fields.values(), document_id)
+    )
+    await conn.commit()
+
+
+async def delete_document(conn: aiosqlite.Connection, document_id: int) -> None:
+    """Delete a document's rows in one transaction, children first (LIB-4)."""
+    params = (document_id,)
+    await conn.execute(
+        "DELETE FROM audio_cache WHERE segment_id IN "
+        "(SELECT id FROM segments WHERE document_id = ?)",
+        params,
+    )
+    await conn.execute("DELETE FROM segments WHERE document_id = ?", params)
+    await conn.execute("DELETE FROM sections WHERE document_id = ?", params)
+    await conn.execute("DELETE FROM blocks WHERE document_id = ?", params)
+    await conn.execute("DELETE FROM documents WHERE id = ?", params)
+    await conn.commit()
+
+
+async def get_settings(conn: aiosqlite.Connection) -> dict[str, str]:
+    """The key/value ``settings`` table as a dict."""
+    return {r["key"]: r["value"] for r in await _all(conn, "SELECT key, value FROM settings", ())}
+
+
+async def put_settings(conn: aiosqlite.Connection, values: dict[str, str | None]) -> None:
+    """Upsert each key; a None value deletes the key (unset)."""
+    for key, value in values.items():
+        if value is None:
+            await conn.execute("DELETE FROM settings WHERE key = ?", (key,))
+        else:
+            await conn.execute(
+                "INSERT INTO settings (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (key, value),
+            )
+    await conn.commit()
+
+
+def now_iso_ms() -> str:
+    """UTC ISO timestamp with milliseconds (``last_opened_at``: repeated opens stay ordered)."""
+    return datetime.now(UTC).isoformat(timespec="milliseconds")

@@ -10,9 +10,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from hearnarro.routes import audio, documents, voices
-from hearnarro.settings import Settings, load_settings
+from hearnarro.routes import settings as settings_routes
+from hearnarro.settings import Settings, load_settings, web_dist_dir
 from hearnarro.storage.db import engine, pdf_dir, resolve_data_dir, run_migrations
 from hearnarro.synthesis.backend import TTSBackend
 from hearnarro.synthesis.cache import AudioCache
@@ -108,4 +110,8 @@ def create_app(
     app.include_router(documents.router)
     app.include_router(audio.router)
     app.include_router(voices.router)
+    app.include_router(settings_routes.router)
+    dist = web_dist_dir()
+    if dist is not None:  # D21: after the routers, so the API paths keep winning
+        app.mount("/", StaticFiles(directory=dist, html=True), name="web")
     return app

@@ -4,7 +4,9 @@
 ``hearnarro check <pdf> [--json] [--no-ocr]`` runs the document quality checklist;
 ``hearnarro serve [--data-dir DIR] [--host H] [--port N]`` runs the API (ING-1);
 ``hearnarro renormalize --data-dir DIR (--document-id N | --all)`` re-runs speech
-normalization on stored segments and drops the audio cache of the ones that changed (SYN-1).
+normalization on stored segments and drops the audio cache of the ones that changed (SYN-1);
+``hearnarro purge-audio --data-dir DIR --document-id N [--segment-id S] [--voice V]
+[--speed X]`` deletes matching ``audio_cache`` rows and their files, printing the count (D19).
 """
 
 from __future__ import annotations
@@ -113,6 +115,64 @@ def _renormalize(data_dir: str | None, document_id: int | None) -> int:
     return 0
 
 
+SPEED_EPSILON = 1e-6  # speeds are REAL; match within float noise
+
+
+def purge_audio(
+    conn: sqlite3.Connection,
+    data_dir: Path,
+    document_id: int,
+    *,
+    segment_id: int | None = None,
+    voice: str | None = None,
+    speed: float | None = None,
+) -> int:
+    """Delete the matching ``audio_cache`` rows of one document and their files (D19).
+
+    Returns the number of rows removed. Files are removed after the rows are committed.
+    """
+    where = ["segment_id IN (SELECT id FROM segments WHERE document_id = ?)"]
+    params: list[object] = [document_id]
+    if segment_id is not None:
+        where.append("segment_id = ?")
+        params.append(segment_id)
+    if voice is not None:
+        where.append("voice_id = ?")
+        params.append(voice)
+    if speed is not None:
+        where.append("abs(speed - ?) < ?")
+        params += [speed, SPEED_EPSILON]
+    clause = " AND ".join(where)
+    with conn:
+        paths = [r[0] for r in conn.execute(f"SELECT path FROM audio_cache WHERE {clause}", params)]
+        removed = conn.execute(f"DELETE FROM audio_cache WHERE {clause}", params).rowcount
+    for rel in paths:
+        if rel:
+            (data_dir / rel).unlink(missing_ok=True)
+    return removed
+
+
+def _purge_audio(
+    data_dir: str | None,
+    document_id: int,
+    segment_id: int | None,
+    voice: str | None,
+    speed: float | None,
+) -> int:
+    from hearnarro.storage.db import connect_sync, db_path, resolve_data_dir
+
+    root = resolve_data_dir(data_dir)
+    conn = connect_sync(db_path(root))
+    try:
+        removed = purge_audio(
+            conn, root, document_id, segment_id=segment_id, voice=voice, speed=speed
+        )
+    finally:
+        conn.close()
+    print(f"audio cache entries removed: {removed}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="hearnarro")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -133,6 +193,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     which = renorm.add_mutually_exclusive_group(required=True)
     which.add_argument("--document-id", type=int)
     which.add_argument("--all", action="store_true", help="every document")
+    purge = sub.add_parser("purge-audio", help="delete cached audio rows and files (D19)")
+    purge.add_argument("--data-dir", default=None, help="default: $HEARNARRO_DATA_DIR or ./data")
+    purge.add_argument("--document-id", type=int, required=True)
+    purge.add_argument("--segment-id", type=int, default=None)
+    purge.add_argument("--voice", default=None)
+    purge.add_argument("--speed", type=float, default=None)
     args = parser.parse_args(argv)
     if args.command == "dump":
         return _dump(args.pdf, jsonl=args.jsonl, ocr=not args.no_ocr)
@@ -142,6 +208,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _serve(args.data_dir, args.host, args.port)
     if args.command == "renormalize":
         return _renormalize(args.data_dir, args.document_id)
+    if args.command == "purge-audio":
+        return _purge_audio(
+            args.data_dir, args.document_id, args.segment_id, args.voice, args.speed
+        )
     parser.error(f"unknown command {args.command}")
     return 2
 
