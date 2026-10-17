@@ -9,7 +9,9 @@
 // Usage: API on 8765, Vite on 5180, then
 //   node web/scripts/measure_first_audio.mjs
 // Env: HN_API (default http://127.0.0.1:8765), HN_WEB (default http://localhost:5180),
-//      HN_DOCS (default 16,17,18,19), HN_VOICE (default af_heart).
+//      HN_DOCS (default 16,17,18,19), HN_VOICE (default af_heart), HN_SPEEDS (default 0.5,1,2),
+//      HN_PER_SPEED (default 3), HN_WARM (default 1; 0 skips the warm rows),
+//      HN_REQLOG (default 0; 1 prints each /audio request's start and end, ms after the click).
 
 import { chromium } from 'playwright'
 
@@ -17,8 +19,10 @@ const API = process.env.HN_API ?? 'http://127.0.0.1:8765'
 const WEB = process.env.HN_WEB ?? 'http://localhost:5180'
 const DOCS = (process.env.HN_DOCS ?? '16,17,18,19').split(',').map(Number)
 const VOICE = process.env.HN_VOICE ?? 'af_heart'
-const SPEEDS = [0.5, 1.0, 2.0]
-const PER_SPEED = 3
+const SPEEDS = (process.env.HN_SPEEDS ?? '0.5,1,2').split(',').map(Number)
+const PER_SPEED = Number(process.env.HN_PER_SPEED ?? 3)
+const WARM = process.env.HN_WARM !== '0'
+const REQLOG = process.env.HN_REQLOG === '1'
 const LOOKAHEAD = 6 // server lookahead (5) plus the segment itself
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -51,6 +55,21 @@ async function measure(browser, docId, seg, speed) {
     const args = msg.args()
     if (args.length > 1) log = await args[1].jsonValue()
   })
+  const reqs = []
+  let t0 = null
+  const rel = () => (t0 === null ? 'pre' : `${Date.now() - t0}`)
+  if (REQLOG) {
+    const tag = (req) => req.url().replace(/^.*\/audio\//, '/audio/')
+    page.on('request', (req) => {
+      if (req.url().includes('/audio/')) reqs.push(`  +${rel()} ms start ${tag(req)}`)
+    })
+    page.on('requestfinished', (req) => {
+      if (req.url().includes('/audio/')) reqs.push(`  +${rel()} ms end   ${tag(req)}`)
+    })
+    page.on('requestfailed', (req) => {
+      if (req.url().includes('/audio/')) reqs.push(`  +${rel()} ms fail  ${tag(req)}`)
+    })
+  }
   await page.goto(`${WEB}/#/doc/${docId}`)
   const token = page.locator(`.seg[data-id="${seg.id}"] .w`).first()
   await token.waitFor({ state: 'attached', timeout: 30000 })
@@ -62,11 +81,14 @@ async function measure(browser, docId, seg, speed) {
   }, speed)
   const shown = await page.locator('#speed-value').textContent()
   await token.scrollIntoViewIfNeeded()
+  t0 = Date.now()
   await token.click()
   const deadline = Date.now() + 60000
   while (log === null && Date.now() < deadline) await sleep(50)
   const status = await page.locator('[role=status]').getAttribute('data-status')
+  if (REQLOG) await sleep(500)
   await page.close()
+  if (REQLOG) console.error(`requests after click (seg ${seg.id}):\n${reqs.join('\n')}`)
   return { log, shown, status }
 }
 
@@ -100,7 +122,7 @@ async function main() {
       taken++
       await waitLookahead(docs.get(docId), seg, speed)
     }
-    if (warmTarget) {
+    if (WARM && warmTarget) {
       const r = await measure(browser, warmTarget.docId, warmTarget.seg, speed)
       rows.push({
         speed,

@@ -37,6 +37,8 @@ interface Pending {
   key: string
   ctrl: AbortController
   clip: AudioClip | null
+  /** Settles once the response has been handled (clip stored or failure dispatched). */
+  done?: Promise<void>
 }
 
 export interface ClipStats {
@@ -177,7 +179,8 @@ export class PlayerEngine {
     const ids = s.orderedIds
     const i = ids.indexOf(fromId)
     if (i < 0) return
-    const want = new Set(ids.slice(i, i + PREFETCH_DEPTH + 1))
+    const span = ids.slice(i, i + PREFETCH_DEPTH + 1)
+    const want = new Set(span)
     for (const [id, p] of this.pending) {
       if (!want.has(id)) {
         p.ctrl.abort()
@@ -185,30 +188,52 @@ export class PlayerEngine {
       }
     }
     const k = settingsKey(s.voice, s.speed)
-    for (const id of want) {
-      if (this.entries.has(id)) continue
-      const have = this.pending.get(id)
-      if (have && have.key === k) continue
-      have?.ctrl.abort()
-      const p: Pending = { key: k, ctrl: new AbortController(), clip: null }
-      this.pending.set(id, p)
-      fetchAudio(ctx, id, s.voice, s.speed, p.ctrl.signal).then(
-        (clip) => {
-          if (this.pending.get(id) !== p) return
-          p.clip = clip
-          this.onClip({ fetchMs: clip.fetchMs, decodeMs: clip.decodeMs, mediaType: clip.mediaType })
-          // a clip kept across a rebuild (same id, voice, speed) serves the new generation too;
-          // scheduleReady itself checks the generation against the reducer's
-          this.scheduleReady()
-        },
-        (err: unknown) => {
-          if (this.pending.get(id) !== p || p.ctrl.signal.aborted) return
-          this.pending.delete(id)
-          const message = err instanceof Error ? err.message : String(err)
-          this.dispatch({ type: 'FETCH_FAILED', message, generation: this.builtGen })
-        },
-      )
+    const [target, ...rest] = span
+    this.fetchClip(target, k)
+    const head = this.pending.get(target)
+    if (!head || head.clip !== null || head.done === undefined) {
+      this.prefetch(rest, k) // target decoded or its response already in: prefetch now
+      return
     }
+    // The server runs GETs on one synthesis thread in arrival order, so a target still in flight is
+    // fetched alone and its prefetch starts once its response has arrived (success or failure).
+    void head.done.then(() => {
+      if (head.ctrl.signal.aborted) return
+      if (settingsKey(this.state.voice, this.state.speed) !== k) return
+      this.prefetch(rest, k)
+    })
+  }
+
+  private prefetch(ids: number[], k: string) {
+    for (const id of ids) this.fetchClip(id, k)
+  }
+
+  /** Start fetching `id` for settings `k` unless it is decoded or already in flight with `k`. */
+  private fetchClip(id: number, k: string) {
+    const ctx = this.ctx
+    const s = this.state
+    if (!ctx || this.entries.has(id)) return
+    const have = this.pending.get(id)
+    if (have && have.key === k) return
+    have?.ctrl.abort()
+    const p: Pending = { key: k, ctrl: new AbortController(), clip: null }
+    this.pending.set(id, p)
+    p.done = fetchAudio(ctx, id, s.voice, s.speed, p.ctrl.signal).then(
+      (clip) => {
+        if (this.pending.get(id) !== p) return
+        p.clip = clip
+        this.onClip({ fetchMs: clip.fetchMs, decodeMs: clip.decodeMs, mediaType: clip.mediaType })
+        // a clip kept across a rebuild (same id, voice, speed) serves the new generation too;
+        // scheduleReady itself checks the generation against the reducer's
+        this.scheduleReady()
+      },
+      (err: unknown) => {
+        if (this.pending.get(id) !== p || p.ctrl.signal.aborted) return
+        this.pending.delete(id)
+        const message = err instanceof Error ? err.message : String(err)
+        this.dispatch({ type: 'FETCH_FAILED', message, generation: this.builtGen })
+      },
+    )
   }
 
   /** Start one clip at context time `when`, `offsetSec` into it, and record its entry. */
