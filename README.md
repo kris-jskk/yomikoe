@@ -60,4 +60,5 @@ Models download from the Hugging Face Hub on first run into `$HF_HOME`; set it t
 - [docs/TECHNICAL_DESIGN.md](docs/TECHNICAL_DESIGN.md): algorithms, schema, protocol, decision log
 - [docs/M1_TESTING.md](docs/M1_TESTING.md): M1 hand-testing procedure
 - [docs/guide/](docs/guide/): milestone guides
+- [docs/CODE_MAP_M1.md](docs/CODE_MAP_M1.md): M1 code map (flows, stage rules, golden and quality gates, modules, data structures)
 - [docs/CODE_MAP_M2.md](docs/CODE_MAP_M2.md): M2 code map (flows, modules, data structures, concurrency, licences)
