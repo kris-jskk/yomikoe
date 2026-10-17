@@ -114,9 +114,9 @@ def test_eval8_cer_scorer() -> None:
 
 def test_eval8_skips_without_tesseract(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Forces ``ocr_available()`` false, so it runs the same with or without tesseract."""
-    import hearnarro.ingestion.extract as extract
     from hearnarro.evals.runner import run
     from hearnarro.evals.suites import SUITES, select
+    from hearnarro.ingestion import extract
 
     monkeypatch.setattr(extract, "ocr_available", lambda: False)
     e8 = SUITES["EVAL-8"]

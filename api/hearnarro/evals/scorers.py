@@ -215,3 +215,13 @@ def percentile(values: list[float], q: float) -> float:
     ordered = sorted(values)
     rank = max(1, -(-len(ordered) * q // 100))
     return ordered[int(rank) - 1]
+
+
+def char_error_rate(actual: str, expected: str) -> float:
+    """CER (EVAL-8): character edit distance / expected characters; lower is better.
+
+    An empty ``expected`` scores 0.0 when ``actual`` is empty too and 1.0 otherwise.
+    """
+    if not expected:
+        return 0.0 if not actual else 1.0
+    return seq_levenshtein(list(actual), list(expected)) / len(expected)

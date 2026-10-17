@@ -20,6 +20,8 @@ from hearnarro.evals.suites import (
     eval5_intelligibility,
     eval6_sync,
     eval7_speed,
+    eval8_ocr,
+    eval9_listening,
 )
 
 SUITES: dict[str, ModuleType] = {
@@ -32,6 +34,8 @@ SUITES: dict[str, ModuleType] = {
         eval5_intelligibility,
         eval6_sync,
         eval7_speed,
+        eval8_ocr,
+        eval9_listening,
     )
 }
 

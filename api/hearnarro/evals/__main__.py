@@ -69,5 +69,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
+# --- E4 (EVAL-9): `listening prepare|ingest` verbs, owned by hearnarro.evals.listening ---
+from hearnarro.evals.listening import with_listening
+
+main = with_listening(main)
+# --- end E4 block ---
+
+
 if __name__ == "__main__":
     sys.exit(main())

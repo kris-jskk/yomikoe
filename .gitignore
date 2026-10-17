@@ -27,3 +27,6 @@ api/tests/user_docs/*.pdf
 
 # Local compose port override (m4-4; see docs/DOCKER.md)
 docker-compose.override.yml
+
+# EVAL-9 pending listening clips (sheet.md is committed, audio is not)
+evals/listening/pending_*/*.wav
