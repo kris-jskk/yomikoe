@@ -25,8 +25,19 @@ User documents: ``--user-docs [DIR]`` (default ``tests/user_docs/``, git-ignored
 every PDF in DIR after the gate and prints pages / parse_ms / pg/s / segs / checks. No score
 (user documents have no expected file).
 
+Audio pass (M2): ``--audio`` runs after the gate (and ``--user-docs``) over every ``ready``
+document the server holds (SYN-1, SYN-2, SYN-3, SYN-6). It checks ``GET /voices`` (>= 6
+voices, both genders), then for the first 3 segments with words of each document fetches
+``GET /audio`` at speeds 1.0 and 2.5 with the first voice and checks: HTTP 200, an audio
+content type, ``X-Duration-Ms`` > 0, ``X-Timestamps`` sorted, non-overlapping and within the
+duration, char spans inside the segment text, and ``HEAD`` 200 afterwards. A ``HEAD`` before
+the GET shows whether the entry was already cached (lookahead, SYN-5), so TTFA reads as a
+cold or warm figure. It does not care which backend the server runs (fake or Kokoro). Any
+audio failure makes the exit code 1.
+
     cd api
     .venv/bin/python scripts/m1_smoke.py --base-url http://127.0.0.1:8765
+    .venv/bin/python scripts/m1_smoke.py --audio
     .venv/bin/python scripts/m1_smoke.py --user-docs
     .venv/bin/python scripts/m1_smoke.py --one ~/Downloads/paper.pdf
 """
@@ -61,6 +72,10 @@ DEFAULT_CLASSES = "academic,report,tables"  # "scanned" needs OCR (Tesseract), d
 PER_PDF_MIN = 0.95
 MEAN_MIN = 0.97
 PAGE_LIMIT = 500  # the API's documented maximum
+AUDIO_SPEEDS = (1.0, 2.5)
+AUDIO_SEGMENTS = 3
+MIN_VOICES = 6
+AUDIO_TYPES = ("audio/wav", "audio/ogg", "audio/webm")
 
 
 def upload(client: httpx.Client, pdf: Path) -> tuple[int, int]:
@@ -280,6 +295,116 @@ def run_one(client: httpx.Client, pdf: Path, timeout: float) -> int:
     return 0
 
 
+def check_timestamps(ts: Any, duration_ms: int, text: str) -> list[str]:
+    """Problems with one X-Timestamps list (empty list = valid)."""
+    if not isinstance(ts, list) or not ts:
+        return ["timestamps empty or not a list"]
+    problems: list[str] = []
+    prev_end = 0
+    prev_char = 0
+    for i, t in enumerate(ts):
+        s_ms, e_ms, cs, ce = t["start_ms"], t["end_ms"], t["char_start"], t["char_end"]
+        if not 0 <= s_ms <= e_ms:
+            problems.append(f"word {i}: start {s_ms} > end {e_ms}")
+        if s_ms < prev_end:
+            problems.append(f"word {i}: starts at {s_ms} before previous end {prev_end}")
+        if e_ms > duration_ms:
+            problems.append(f"word {i}: end {e_ms} past duration {duration_ms}")
+        if not 0 <= cs < ce <= len(text) or cs < prev_char:
+            problems.append(f"word {i}: char span {cs}..{ce} outside text (len {len(text)})")
+        elif not text[cs:ce].strip():
+            problems.append(f"word {i}: char span {cs}..{ce} is blank")
+        prev_end, prev_char = max(prev_end, e_ms), max(prev_char, ce)
+    return problems
+
+
+def check_voices(client: httpx.Client) -> tuple[str | None, list[str]]:
+    """(first voice id, problems) from GET /voices."""
+    resp = client.get("/voices")
+    if resp.status_code != 200:
+        return None, [f"/voices: HTTP {resp.status_code}"]
+    voices = resp.json()
+    genders = {v.get("gender") for v in voices}
+    problems = []
+    if len(voices) < MIN_VOICES:
+        problems.append(f"/voices: {len(voices)} voices (< {MIN_VOICES})")
+    if not {"female", "male"} <= genders:
+        problems.append(f"/voices: genders {sorted(map(str, genders))} (need female and male)")
+    backends = sorted({v.get("backend") for v in voices})
+    print(f"voices: {len(voices)} from {backends}; genders {sorted(map(str, genders))}")
+    return (voices[0]["id"] if voices else None), problems
+
+
+def run_audio(client: httpx.Client, timeout: float) -> int:
+    """Audio pass over every ready document; return the number of failures."""
+    print()
+    print("audio pass")
+    voice, problems = check_voices(client)
+    failures = len(problems)
+    for p in problems:
+        print(f"  FAIL {p}")
+    if voice is None:
+        print("audio: 0 requests, 1 failures (no voices)")
+        return failures or 1
+    docs = [d for d in client.get("/documents").raise_for_status().json() if d["status"] == "ready"]
+    header = (
+        f"{'document':34} {'seg':>6} {'speed':>5} {'pre':>4} {'code':>4} {'type':10} "
+        f"{'dur_ms':>7} {'words':>5} {'bytes':>8} {'ttfa_ms':>8} {'head':>4}  result"
+    )
+    print(f"first voice: {voice}; {len(docs)} ready documents")
+    print(header)
+    print("-" * len(header))
+    ttfas: list[float] = []
+    n_req = 0
+    for doc in docs:
+        name = str(doc.get("filename") or doc.get("title") or doc["id"])[:34]
+        segs = [s for s in all_segments(client, doc["id"]) if s["normalized_text"].split()]
+        for seg in segs[:AUDIO_SEGMENTS]:
+            for speed in AUDIO_SPEEDS:
+                n_req += 1
+                url, params = f"/audio/{seg['id']}", {"voice": voice, "speed": speed}
+                pre = client.head(url, params=params).status_code
+                t0 = time.perf_counter()
+                resp = client.get(url, params=params, timeout=timeout)
+                ttfa = (time.perf_counter() - t0) * 1000
+                ttfas.append(ttfa)
+                errs: list[str] = []
+                ctype = resp.headers.get("content-type", "").split(";")[0]
+                dur = int(resp.headers.get("x-duration-ms") or 0)
+                words = "-"
+                if resp.status_code != 200:
+                    errs.append(f"HTTP {resp.status_code}: {resp.text[:120]}")
+                else:
+                    if ctype not in AUDIO_TYPES:
+                        errs.append(f"content-type {ctype!r}")
+                    if dur <= 0:
+                        errs.append(f"X-Duration-Ms {dur}")
+                    try:
+                        ts = json.loads(resp.headers.get("x-timestamps", ""))
+                    except json.JSONDecodeError:
+                        ts = None
+                    words = str(len(ts)) if isinstance(ts, list) else "-"
+                    errs += check_timestamps(ts, dur, seg["text"])
+                head = client.head(url, params=params).status_code
+                if head != 200:
+                    errs.append(f"HEAD after GET: {head}")
+                failures += bool(errs)
+                print(
+                    f"{name:34} {seg['id']:6d} {speed:5.1f} {pre:4d} {resp.status_code:4d} "
+                    f"{ctype[:10]:10} {dur:7d} {words:>5} {len(resp.content):8d} {ttfa:8.0f} "
+                    f"{head:4d}  {'ok' if not errs else 'FAIL'}"
+                )
+                for e in errs[:MAX_SHOWN_EXAMPLES]:
+                    print(f"    {e}")
+    print("-" * len(header))
+    mean = sum(ttfas) / len(ttfas) if ttfas else 0.0
+    print(
+        f"audio: {n_req} requests, {failures} failures, "
+        f"TTFA mean {mean:.0f} ms / max {max(ttfas, default=0.0):.0f} ms"
+    )
+    return failures
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument("--base-url", default="http://127.0.0.1:8765")
@@ -295,6 +420,11 @@ def main(argv: list[str] | None = None) -> int:
         metavar="DIR",
         help=f"after the gate, upload every PDF in DIR (default {DEFAULT_USER_DOCS})",
     )
+    ap.add_argument(
+        "--audio",
+        action="store_true",
+        help="after the gate, fetch audio for the first 3 segments of each ready document",
+    )
     args = ap.parse_args(argv)
     with httpx.Client(base_url=args.base_url, timeout=30.0) as client:
         try:
@@ -308,6 +438,8 @@ def main(argv: list[str] | None = None) -> int:
         code = run_gate(client, args.fixtures_dir, classes, args.timeout)
         if args.user_docs is not None:
             run_user_docs(client, args.user_docs, args.timeout)
+        if args.audio and run_audio(client, max(args.timeout, 120.0)):
+            code = 1
         return code
 
 

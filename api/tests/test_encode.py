@@ -52,3 +52,27 @@ def test_syn1_default_encoder_is_wav_d16() -> None:
 def test_syn1_default_encoder_opus_requested_is_ogg_or_wav_fallback() -> None:
     enc = default_encoder("opus")
     assert (enc.media_type, enc.ext) in {("audio/ogg", "ogg"), ("audio/wav", "wav")}
+
+
+def test_syn1_opus_encoder_ogg_container_and_size_d16() -> None:
+    pytest.importorskip("opuscodec")
+    from hearnarro.synthesis.encode import OpusEncoder
+
+    enc = OpusEncoder()
+    assert (enc.media_type, enc.ext) == ("audio/ogg", "ogg")
+    pcm = one_second_tone()
+    out = enc.encode(pcm, SR)
+    assert out[:4] == b"OggS"
+    assert b"OpusHead" in out[:200]
+    wav_size = len(WavEncoder().encode(pcm, SR))
+    assert len(out) < 0.2 * wav_size, (len(out), wav_size)
+    with pytest.raises(ValueError):
+        enc.encode(b"\x00", SR)
+    assert enc.encode(b"", SR)[:4] == b"OggS"  # empty segment still yields a valid stream
+
+
+def test_syn1_default_encoder_opus_when_installed_d16() -> None:
+    pytest.importorskip("opuscodec")
+    from hearnarro.synthesis.encode import OpusEncoder
+
+    assert isinstance(default_encoder("opus"), OpusEncoder)

@@ -39,6 +39,11 @@ tts = [
     "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
     "inflect>=7",
 ]
+# D16: optional Ogg Opus encoder (HEARNARRO_AUDIO_FORMAT=opus). opuscodec is Apache-2.0 and
+# bundles libopus (BSD-3-Clause); WAV stays the default so the base install needs nothing extra.
+opus = [
+    "opuscodec==0.1.3",
+]
 ocr = [
     "pytesseract>=0.3",
     "pillow>=10",

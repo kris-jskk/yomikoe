@@ -4,7 +4,7 @@ This document explains how the M2 synthesis code works end to end and what every
 file does. It is written for an engineer joining the project who has read `docs/PRD.md` (what)
 and `docs/TECHNICAL_DESIGN.md` (how) once and now needs to find their way around the code.
 
-M2 is being built while this is written. Much of it is still interface and stubs. Every module
+M2 was being built while this was first written; the phase updates below bring it to the M2 close. Every module
 below carries a status, and every flow step says whether the code for that step exists yet.
 Where the code does not exist, the step describes the designed behaviour from the interface
 spec (`_agent/specs/m2-synthesis-interfaces.md`) and the Technical Design, and says so.
@@ -22,6 +22,8 @@ committed. The per-file inventory, with how each status was decided, is in
 **Update, phase 2 (service, cache, queue, stretch, audio API; commit "SYN-1 SYN-3 SYN-5 SYN-6: synthesis service ...").** `stretch.py`, `cache.py`, `service.py`, `routes/audio.py`, `routes/voices.py` and the `app.py` lifespan are now real code, tested on the FakeBackend: `_agent/results/297_syn_tests_green.txt` (58 passed, 2 failed, 2 `@model` skipped; the two failures are a test defect, see "Open items"), full suite `_agent/results/300_full_suite.txt`, manual run `_agent/results/302_manual_audio.txt`. Where the code differs from the designed walkthrough below, the step now says what the code does. `KokoroBackend` and `OpusEncoder` remain stubs here (another worker owns them).
 
 **Update, phase 3 (Kokoro backend; commit "SYN-2 SYN-4: Kokoro backend (D15, ...)").** `kokoro_backend.py` is real code: Kokoro-82M on PyTorch CPU at the pinned revision, its own pipeline over the vendored `KModel` (`hearnarro/synthesis/kokoro_model/`, Apache-2.0, 972 lines from `kokoro` 0.9.4, so the `kokoro` package is not a dependency) and base `misaki.en.G2P`, the `num2words` shim (`hearnarro/synthesis/compat/`), and an OOV fallback (misaki lexicon for camel-case pieces, else the vendored g2p_en predictor in `hearnarro/synthesis/g2p_oov/`, else letter spelling). Model tests: `_agent/results/311_model_tests.txt` (30 passed with `HEARNARRO_TEST_MODEL=1`, including the Kokoro gate: TTFA 1842/997/472/483 ms at 0.5/1.0/2.0/3.0 on the 150-character sentence). `scripts/bench.py` is real: `_agent/results/314_bench.txt`, `bench/2026-10-16.json`. OOV demo `_agent/results/315_oov.txt`; cold start 2.34 s `_agent/results/316_cold_start.txt`; licence check 0 violations `_agent/results/310_install_licences.txt`.
+
+**Update, phase 4 (M2 close; commit "SYN-1..SYN-6: Opus encoder (D16), smoke audio pass, M2 testing doc ...").** `OpusEncoder` is real code: Ogg Opus through `opuscodec` 0.1.3 (Apache-2.0, `opus` extra), 48 kbps mono, 24 kHz input taken as is, QEXT off; `HEARNARRO_AUDIO_FORMAT=opus` serves `audio/ogg` with the same `X-Timestamps` as WAV (`_agent/results/333_opus_green.txt`). `scripts/m1_smoke.py --audio` adds an audio pass over the API (335 fake, 336 Kokoro). The hands-on procedure is `docs/M2_TESTING.md`. No module is a stub any more.
 
 ### What M2 adds
 
@@ -43,7 +45,7 @@ browser can play, with word timestamps the reader can highlight against:
 ### The gate
 
 PRD M2: first audio within 2 s at 0.5x to 3x on CPU. In test form (`test_syn_gate.py`,
-planned): a FakeBackend contract version that always runs, and a Kokoro version marked
+tested): a FakeBackend contract version that always runs, and a Kokoro version marked
 `@pytest.mark.model` asserting TTFA ≤ 2000 ms at 0.5/1.0/2.0/3.0 on a 150-character sentence.
 No RTF or TTFA number has been measured yet: `_agent/results/276_spike_rtf.txt` did not exist
 at read time. Both are **to be measured in phase 3**.
@@ -65,20 +67,21 @@ at read time. Both are **to be measured in phase 3**.
 | `TTSBackend`, `Voice`, `WordTimestamp`, `SynthResult` (`backend.py`) | tested |
 | `FakeBackend` (`fake.py`) | tested |
 | `WavEncoder`, `default_encoder` (`encode.py`) | tested |
-| `OpusEncoder` (`encode.py`) | stub |
+| `OpusEncoder` (`encode.py`) | tested (333; skipped without the `opus` extra) |
 | `stretch_pcm`, `scale_timestamps` (`stretch.py`) | tested (numpy WSOLA, D17) |
 | `AudioCache` (`cache.py`) | tested |
-| `SynthesisService`, `DbSegmentRepo` (`service.py`) | tested (two queue tests fail on a test defect; Open items) |
+| `SynthesisService`, `DbSegmentRepo` (`service.py`) | tested |
 | `KokoroBackend` (`kokoro_backend.py`) | tested (`@model`, 311) |
 | `GET`/`HEAD /audio`, `GET /voices` (`routes/`) | tested |
 | App wiring (`app.py` lifespan, `build_backend`) | tested (through `test_api_audio.py`) |
 | `settings.py` | tested |
-| Test doubles in `conftest.py` | implemented, uncommitted |
-| `boundary_util.py`, `test_syn_boundaries.py` | tested (measurement, no thresholds) |
+| Test doubles in `conftest.py` | tested (committed) |
+| `boundary_util.py`, `test_syn_boundaries.py` | tested (D18 thresholds asserted) |
 | `test_syn1_timestamps.py`, `test_syn3_speed.py`, `test_api_audio.py`, `test_syn_gate.py` (FakeBackend part), `test_stretch.py` | green (297) |
-| `test_syn5_queue.py` | 8 of 10 green; 2 fail on a fixture text collision (`_agent/results/299_queue_test_text_collision.txt`) |
+| `test_syn5_queue.py` | green (compares by segment id since commit 5350b46; full suite 338) |
 | `test_stretch.py` | WSOLA length within 2 % and pitch kept at 1.05–1.5; short/empty input; `scale_timestamps` order | SYN-3 | green (297) |
 | `scripts/bench.py` | tested (314) |
+| `scripts/m1_smoke.py --audio` | run (335 fake, 336 Kokoro) |
 | `compat/num2words.py`, `g2p_oov/`, vendored `kokoro_model/` | tested (311; `test_compat_num2words.py`) |
 
 ## Code flows
@@ -144,7 +147,7 @@ has never been synthesized with this voice and speed.
    `await loop.run_in_executor(self._executor, job)` where `job` calls
    `self.backend.synthesize(segment.normalized_text, voice_id, native_speed)` →
    `backend.py` `TTSBackend.synthesize(self, text: str, voice_id: str, speed: float) -> SynthResult`
-   (`fake.py` `FakeBackend.synthesize` [tested] or `kokoro_backend.py` `KokoroBackend.synthesize` [stub]).
+   (`fake.py` `FakeBackend.synthesize` [tested] or `kokoro_backend.py` `KokoroBackend.synthesize` [tested]).
    Crosses into the thread: a `str` and two scalars. Crosses back: `SynthResult(audio: bytes, sample_rate: int, timestamps: list[WordTimestamp])`;
    `audio` is PCM 16-bit mono little-endian, `timestamps` carry offsets into **`normalized_text`**.
    The event loop is free while this runs.
@@ -162,10 +165,10 @@ has never been synthesized with this voice and speed.
     **the one place** in the system where offsets change space; see "Data structures" for the rule.
     Crosses: `list[WordTimestamp]` (normalized offsets) → `list[WordTimestamp]` (text offsets).
 12. **Encode for the browser.** Same job on the synthesis thread (no ffmpeg anywhere, D16) → `encode.py` → `self.encoder.encode(pcm, sample_rate)` →
-    `AudioEncoder.encode(self, pcm: bytes, sample_rate: int) -> bytes`. Today
-    `default_encoder()` returns `WavEncoder` [tested] because `OpusEncoder` [stub] reports
-    itself unavailable. Crosses: PCM bytes → container bytes (`audio/wav` by default; Ogg Opus
-    behind `HEARNARRO_AUDIO_FORMAT=opus` once `OpusEncoder` lands, D16).
+    `AudioEncoder.encode(self, pcm: bytes, sample_rate: int) -> bytes`.
+    `default_encoder()` returns `WavEncoder` [tested] by default, or `OpusEncoder` [tested] with
+    `HEARNARRO_AUDIO_FORMAT=opus` when `opuscodec` is installed (else WAV with a warning).
+    Crosses: PCM bytes → container bytes (`audio/wav`, or Ogg Opus `audio/ogg`, D16).
 13. **Write through the cache.** `service.py` → `await self.cache.put(entry, audio_bytes)` →
     `cache.py` → `AudioCache.put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry` [tested].
     Designed order: write `data_dir/audio/{document_id}/{segment_id}/{voice_id}_{speed:.1f}.{ext}.tmp`,
@@ -231,7 +234,7 @@ Browser            routes/audio.py        service.py              cache.py / SQL
    hits while playback moves on, and the server must keep five ahead [tested].
 5. `routes/audio.py` reads the file at `entry.path` (designed: off the event loop, e.g.
    `asyncio.to_thread(path.read_bytes)`, or a `FileResponse`) and returns the same headers as (a)
-   [tested]. The test contract (`test_api_audio.py`, planned) asserts the second call is faster than
+   [tested]. The test contract (`test_api_audio.py`, tested) asserts the second call is faster than
    the first and that `HEAD` then answers 200.
 
 ### c. `HEAD /audio/{segment_id}?voice=&speed=`
@@ -250,7 +253,7 @@ Browser            routes/audio.py        service.py              cache.py / SQL
    `{id, name, backend, language, gender}` (the `Voice` dataclass fields). The PRD says "all
    voices across backends"; v1 registers one backend, so the list is that backend's.
 3. With `FakeBackend`: six voices, `fake_f1..fake_f3` (female) and `fake_m1..fake_m3` (male), all
-   `en-US`. SYN-2 is checked against this list (`test_api_audio.py`, planned: ≥ 6 voices across
+   `en-US`. SYN-2 is checked against this list (`test_api_audio.py`, tested: ≥ 6 voices across
    both genders).
 
 ### e. Prefetch and seek: what clears the queue and what refills it
@@ -384,21 +387,21 @@ this script in phase 3.
   stand-ins for `AudioCache` and `SegmentRepo`. Segments come from
   `synth_fixture_segments()` (all segments of `report_01_zero_trust` as document 1 and
   `academic_01_seahelm_audio` as document 2, ids `document_id * 10_000 + order`) and
-  `fifty_fixture_sentences()` (25 non-empty segments from each). `test_syn1_timestamps.py` (red)
+  `fifty_fixture_sentences()` (25 non-empty segments from each). `test_syn1_timestamps.py` (tested)
   checks the timestamp invariants at speeds 1.0, 2.0 (native) and 2.5, 3.0 (stretched), and the
-  `char_map` translation. `test_syn3_speed.py` (red) checks the native vs stretched paths through
-  the spy's recorded calls. `test_syn5_queue.py` (planned) checks the queue.
+  `char_map` translation. `test_syn3_speed.py` (tested) checks the native vs stretched paths through
+  the spy's recorded calls. `test_syn5_queue.py` (tested) checks the queue.
 - *API contract tests*: `create_app(tmp_path, tts_backend=SpyBackend(), encoder=WavEncoder(), lookahead=N)`,
   enter `app.router.lifespan_context(app)` explicitly (because `httpx.ASGITransport` does not
   send lifespan events; the same pattern as M1's `test_api_documents.py`), then drive it with
   `httpx.AsyncClient(transport=httpx.ASGITransport(app=app))`. Real SQLite and real files under
-  the temp data dir. `test_api_audio.py` (planned) and the API part of `test_syn3_speed.py` (red).
+  the temp data dir. `test_api_audio.py` (tested) and the API part of `test_syn3_speed.py` (tested).
 
 **Model tests (opt-in).** `conftest.py` registers the marker
 `model: needs a real TTS model; skipped unless HEARNARRO_TEST_MODEL=1`. The Kokoro smoke test
 (synthesize one sentence; audio > 0.3 s; timestamps non-empty) and the Kokoro gate test
-(TTFA ≤ 2000 ms at four speeds on a 150-character sentence) carry it. Both are planned; the
-skip logic for the marker is not in `conftest.py` yet (only the marker registration is).
+(TTFA ≤ 2000 ms at four speeds on a 150-character sentence) carry it. Both are tested (311,
+339); `conftest.py` skips them unless `HEARNARRO_TEST_MODEL=1`.
 
 ## Modules and files
 
@@ -411,7 +414,7 @@ Signatures are copied from the files as read, or from the spec where the file do
 | `__init__.py` | Package marker | none | none | none | implemented (empty) |
 | `backend.py` | The backend interface and its value types (SYN-4) | `class Voice` (`id: str`, `name: str`, `backend: str`, `language: str`, `gender: str`); `class WordTimestamp` (`word: str`, `start_ms: int`, `end_ms: int`, `char_start: int`, `char_end: int`); `class SynthResult` (`audio: bytes`, `sample_rate: int`, `timestamps: list[WordTimestamp]`, property `duration_ms -> int`); `class TTSBackend(Protocol)`: `name: str`, `def voices(self) -> list[Voice]`, `def speed_range(self) -> tuple[float, float]`, `def synthesize(self, text: str, voice_id: str, speed: float) -> SynthResult` | none | none | tested |
 | `fake.py` | Deterministic backend for tests and model-free runs | `SAMPLE_RATE = 24_000`, `WORD_MS = 80`; `def frames_per_word(speed: float) -> int`; `class FakeBackend` (`name = "fake"`, `voices`, `speed_range` → `(0.5, 2.0)`, `synthesize`) | none | none | tested |
-| `encode.py` | PCM16 → browser container (D7) | `class EncoderUnavailable(RuntimeError)`; `class AudioEncoder(Protocol)`: `media_type: str`, `ext: str`, `def encode(self, pcm: bytes, sample_rate: int) -> bytes`; `class WavEncoder` (`"audio/wav"`, `"wav"`); `class OpusEncoder` (`"audio/ogg"`, `"ogg"`; D16); `def default_encoder(audio_format: str = "wav") -> AudioEncoder` | none | log line (once per process) | tested (`WavEncoder`, `default_encoder`); stub (`OpusEncoder`) |
+| `encode.py` | PCM16 → browser container (D7) | `class EncoderUnavailable(RuntimeError)`; `class AudioEncoder(Protocol)`: `media_type: str`, `ext: str`, `def encode(self, pcm: bytes, sample_rate: int) -> bytes`; `class WavEncoder` (`"audio/wav"`, `"wav"`); `class OpusEncoder` (`"audio/ogg"`, `"ogg"`; D16); `def default_encoder(audio_format: str = "wav") -> AudioEncoder` | none | log line (once per process) | tested (`WavEncoder`, `default_encoder`, `OpusEncoder`; 333) |
 | `stretch.py` | Speeds above native max (D6, SYN-3) | `MAX_RATIO = 1.5`; `def stretch_pcm(pcm: bytes, sample_rate: int, ratio: float) -> bytes`; `def scale_timestamps(ts: list[WordTimestamp], ratio: float) -> list[WordTimestamp]` | none | none | tested (numpy WSOLA, D17; `test_syn3_speed.py`, `test_stretch.py`) |
 | `cache.py` | Write-through audio cache (D7, SYN-6) | `class AudioEntry` (dataclass, see "Data structures"); `class AudioCache`: `def __init__(self, data_dir: Path, db: Engine) -> None`, `async def get(self, segment_id: int, voice_id: str, speed: float, backend: str) -> AudioEntry \| None`, `async def put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry`, `async def mark_failed(self, segment_id: int, voice_id: str, speed: float, backend: str, reason: str) -> None` | `audio_cache` rows; files under `data_dir/audio/` | `audio_cache` rows; audio files (`.tmp` then rename) | tested (`test_api_audio.py`) |
 | `service.py` | Orchestration: cache, queue, thread, stretch, translate, encode (SYN-1/3/5/6) | `DEFAULT_LOOKAHEAD = 5`, `QUEUE_BOUND = 16`, `SHUTDOWN_WAIT_S = 5.0`; `class SegmentSynthesisFailed(Exception)`; `class SegmentRepo(Protocol)`: `async def get_segment(self, segment_id: int) -> Segment \| None`, `async def segments_from(self, document_id: int, from_order: int, limit: int) -> list[Segment]`; `class DbSegmentRepo` (`def __init__(self, db: Engine) -> None` + the two methods); `class SynthesisService`: `def __init__(self, backend: TTSBackend, encoder: AudioEncoder, cache: AudioCache, repo: SegmentRepo, *, lookahead: int = DEFAULT_LOOKAHEAD, executor: ThreadPoolExecutor \| None = None) -> None`, `async def get_audio(self, segment_id: int, voice_id: str, speed: float) -> AudioEntry`, `async def prefetch(self, document_id: int, from_order: int, voice_id: str, speed: float) -> None`, `def queue_depth(self, document_id: int) -> int`, `async def shutdown(self) -> None` | `segments` rows (via repo); cache | cache (via `AudioCache`); log | tested (`test_syn1`, `test_syn3`, `test_syn5`; see Open items) |
@@ -463,12 +466,16 @@ one module and one `media_type`, not the service or the route. `WavEncoder` uses
 `wave` module, rejects a PCM buffer with an odd byte count (`ValueError`), and is always
 available, so tests and a fresh checkout work with no native dependency.
 
-`OpusEncoder` is a stub whose constructor raises `EncoderUnavailable`; `default_encoder()` tries
-it, falls back to `WavEncoder`, and logs the choice once per process (a module global `_logged`).
-So today every response is `audio/wav`. Once the Opus option is chosen, `OpusEncoder.__init__`
-checks its dependency (a library import or an ffmpeg binary) and raises `EncoderUnavailable` if it
-is missing, keeping the same fallback. Tested by `test_encode.py` (header: 24 kHz, mono, 16-bit,
-data length; media type and empty input; `default_encoder` returns an `AudioEncoder`).
+`OpusEncoder` writes Ogg Opus through `opuscodec` (Apache-2.0; the `opus` extra): 48 kbps,
+mono, QEXT off, the 24 kHz PCM passed as is (libopus accepts 8/12/16/24/48 kHz input; decoders
+play at 48 kHz). Its constructor imports `opuscodec` and raises `EncoderUnavailable` if it is
+missing; `default_encoder("opus")` then falls back to `WavEncoder` with a warning, and logs the
+choice once per process (a module global `_logged`). An empty PCM buffer becomes one 20 ms
+silent frame because `opuscodec` refuses to flush an empty stream. Tested by `test_encode.py`
+(WAV header: 24 kHz, mono, 16-bit, data length; media type and empty input; Opus: `OggS` and
+`OpusHead`, under 20 % of the WAV size for 1 s, empty input) and by
+`test_api_audio.py::test_syn1_audio_format_opus_serves_ogg_same_timestamps_d16`; the Opus tests
+skip when `opuscodec` is not installed.
 
 #### `stretch.py`
 
@@ -519,8 +526,8 @@ production `DbSegmentRepo` reads the `segments` table through the M1 `Engine` an
 route maps to 502. Invariants: synthesis only ever runs on the executor (the spy records the
 thread name, so tests can assert it ran on a `synth*` thread); one key is never synthesized twice
 concurrently; the queue for a document is bounded at 16; a seek drops queued, not-started jobs.
-Failure: see flow (f). Tests: `test_syn1_timestamps.py`, `test_syn3_speed.py` (red),
-`test_syn5_queue.py` (planned).
+Failure: see flow (f). Tests: `test_syn1_timestamps.py`, `test_syn3_speed.py` (tested),
+`test_syn5_queue.py` (tested).
 
 #### `kokoro_backend.py`
 
@@ -717,7 +724,7 @@ Grouping by document makes LIB-4 (delete a document and its audio) one directory
 `GET /audio` returns:
 
 ```
-Content-Type: audio/wav            (audio/webm or audio/ogg once Opus lands)
+Content-Type: audio/wav            (audio/ogg with HEARNARRO_AUDIO_FORMAT=opus)
 X-Duration-Ms: 2480
 X-Timestamps: [{"word":"Zero","start_ms":0,"end_ms":80,"char_start":0,"char_end":4}, ...]
 ```
@@ -737,7 +744,7 @@ FakeBackend's 80 ms per word.
 | `HEARNARRO_KOKORO_REVISION` | none | Hugging Face revision hash; required when the backend is `kokoro` |
 | `HEARNARRO_LOOKAHEAD` | `5` | Segments kept ahead (SYN-5); integer ≥ 0 |
 | `HEARNARRO_DATA_DIR` | `./data` | Root for the database, PDFs and audio (shared with M1) |
-| `HEARNARRO_AUDIO_FORMAT` | `wav` (D16; not yet read by `settings.py`) | `opus` selects `OpusEncoder` |
+| `HEARNARRO_AUDIO_FORMAT` | `wav` (D16) | `opus` selects `OpusEncoder` (needs the `opus` extra) |
 | `HEARNARRO_TEST_MODEL` | unset | `1` enables `@pytest.mark.model` tests |
 | `HF_HOME` | Hub default | Where model weights are cached |
 
@@ -766,7 +773,7 @@ Translation rule (the spec says only "translate through `Segment.char_map`"; thi
 ordered and inside `text`; an expanded token ("percent" from "%") collapses onto its source
 character. Words that come entirely from inserted text map onto their source token; neighbouring
 words can map to the same text span, which the highlighter tolerates. `test_syn1_timestamps.py`
-(red) asserts the translated spans map into `text`.
+(tested) asserts the translated spans map into `text`.
 
 ## Concurrency model
 
@@ -831,7 +838,7 @@ clamped to the stretched `duration_ms` by the service; char offsets
 are not touched (stretching changes time, not text). Since `1/ratio < 1`, order and
 non-overlap are preserved; the test requires each value within 1 ms of the exact product.
 The invariant "last `end_ms ≤ duration_ms`" after stretch depends on `stretch_pcm` returning
-close to `len/ratio`; `test_syn1_timestamp_invariants_stretched_50_sentences` (red) checks it at
+close to `len/ratio`; `test_syn1_timestamp_invariants_stretched_50_sentences` (tested) checks it at
 2.5x and 3.0x (green, 297).
 
 **Which tests pin it.** `test_syn3_speed.py` (green, 297): native path passes the speed straight to the
@@ -880,10 +887,11 @@ reading of package pages, no installs) and the Kokoro install spike
   thread. The amendment also reports spike timings from results 273–279; this document has not
   opened those files and does not repeat the numbers.
 - **D16, container.** `WavEncoder` is the M2 default. `OpusEncoder` via `opuscodec` (Apache-2.0,
-  Ogg Opus) is optional behind `HEARNARRO_AUDIO_FORMAT=opus` (not yet read by `settings.py`).
+  Ogg Opus) is optional behind `HEARNARRO_AUDIO_FORMAT=opus` and the `opus` extra (implemented, 333).
   No ffmpeg anywhere; Safari decode of Ogg Opus is checked in M3.
-- **D17, stretch.** `audiotsm` (MIT, numpy) WSOLA in-process, ratio ≤ 1.5; D6's ffmpeg `atempo`
-  is replaced.
+- **D17, stretch.** WSOLA in-process, ratio ≤ 1.5; D6's ffmpeg `atempo` is replaced. The spike
+  used `audiotsm` (MIT); the shipped `stretch.py` is an own numpy WSOLA, so `audiotsm` is not a
+  dependency.
 - **Licence policy.** Non-copyleft OSI licences (PSF-2.0, ISC, MPL-2.0 at file level, BSL-1.0,
   Zlib, CC0, Unlicense) are acceptable for transitive components; copyleft and non-commercial
   terms stay excluded. A licence-check script is to move into `api/scripts/check_licences.py`.
@@ -987,14 +995,14 @@ All commands from `api/` with the project venv (`.venv`, Python 3.11).
 ```bash
 cd api
 
-# All tests (FakeBackend only; @model tests are skipped once the skip hook lands)
+# All tests (FakeBackend only; @model tests skip unless HEARNARRO_TEST_MODEL=1)
 .venv/bin/python -m pytest
 
 # The M2 unit tests that pass today (32 passed at read time, result 281)
 .venv/bin/python -m pytest tests/test_fake_backend.py tests/test_encode.py \
     tests/test_settings.py tests/test_boundary_util.py -q
 
-# M2 tests by requirement (red or planned files fail or are absent until their code lands)
+# M2 tests by requirement
 .venv/bin/python -m pytest tests/test_syn1_timestamps.py tests/test_syn3_speed.py -q
 
 # Sentence-boundary measurement with the printed table
@@ -1004,7 +1012,7 @@ cd api
 .venv/bin/ruff check . && .venv/bin/ruff format --check .
 ```
 
-Model smoke and gate (planned; needs Kokoro installed and a pinned revision):
+Model smoke and gate (needs the `tts` extra; the revision defaults to the D15 pin):
 
 ```bash
 HEARNARRO_TEST_MODEL=1 HEARNARRO_KOKORO_REVISION=<hash> \
@@ -1028,7 +1036,8 @@ HEARNARRO_TTS_BACKEND=fake .venv/bin/python -m hearnarro serve --data-dir ~/hear
 HEARNARRO_TTS_BACKEND=kokoro HEARNARRO_KOKORO_REVISION=<hash> HF_HOME=~/.cache/huggingface \
     .venv/bin/python -m hearnarro serve --data-dir ~/hearnarro-m2 --port 8765
 
-# Then, once the routes are implemented
+# Then (the full procedure with expected output is docs/M2_TESTING.md)
+.venv/bin/python scripts/m1_smoke.py --base-url http://127.0.0.1:8765 --audio
 curl -s http://127.0.0.1:8765/voices
 curl -sI "http://127.0.0.1:8765/audio/1?voice=fake_f1&speed=1.0"           # 404 before first GET
 curl -s -D - -o seg1.wav "http://127.0.0.1:8765/audio/1?voice=fake_f1&speed=1.0"
@@ -1046,18 +1055,18 @@ lookahead come from the environment through `load_settings()`.
 | `stretch_pcm`, `scale_timestamps` (numpy WSOLA, D17) | `stretch.py` | done, phase 2 |
 | `GET`/`HEAD /audio`, `GET /voices` | `routes/audio.py`, `routes/voices.py` | done, phase 2 |
 | `test_syn5_queue.py`, `test_api_audio.py`, `test_syn_gate.py` (FakeBackend part) | `api/tests/` | done (written before the code) |
-| `OpusEncoder` (library or ffmpeg, container WebM or Ogg) | `encode.py` | after the licence decision; WAV until then |
+| `OpusEncoder` (`opuscodec`, Ogg; D16) | `encode.py` | done, phase 4 (333) |
 | `KokoroBackend`, the `@model` smoke and gate tests, the skip hook for `HEARNARRO_TEST_MODEL` | `kokoro_backend.py`, `conftest.py`, `test_syn_gate.py` | done, phase 3 (311) |
 | Model load on the synthesis thread before `yield` in the lifespan | `app.py` | done, phase 2 (`build_backend` runs on `synth_executor`) |
 | 5 s cap on shutdown | `service.py`, `app.py` | done, phase 2 |
 | `scripts/bench.py`; first TTFA and RTF numbers | `api/scripts/` | done, phase 3 (314: at 0.5x 6 of 20 sentences of up to 200 chars exceed 2 s) |
-| Boundary thresholds asserted in `test_syn_boundaries.py` | `api/tests/` | after supervisor review of result 261 |
+| Boundary thresholds asserted in `test_syn_boundaries.py` | `api/tests/` | done (D18) |
 | Retry policy for a key whose row is `failed` (retry vs 502 from the row) | `service.py` | done: retried once, then 502 from the row |
 | Exact seek rule ("outside the window") | `service.py`, `test_syn5_queue.py` | done: outside `[last, last+N]` or a voice/speed change |
 | Whether the native-max intermediate is cached for the stretched path, and whether stretch works from PCM or a decoded cache file | `service.py` | done: both cached; stretch from fresh PCM |
-| `test_syn5_seek_clears_queue_and_refills_from_new_position` and `test_syn5_first_request_jumps_the_queue` compare by `normalized_text`, but report_01 orders 0 and 4 (and 1 and 5) have the same text, so the explicitly requested order 0 matches `at(4)`; the service synthesized orders 0, 30..34 and 0, 40 (`_agent/results/299_queue_test_text_collision.txt`). Fix: compare by segment id or order | `api/tests/test_syn5_queue.py` | test owner |
+| `test_syn5_seek_clears_queue_and_refills_from_new_position` and `test_syn5_first_request_jumps_the_queue` compare by `normalized_text`, but report_01 orders 0 and 4 (and 1 and 5) have the same text, so the explicitly requested order 0 matches `at(4)`; the service synthesized orders 0, 30..34 and 0, 40 (`_agent/results/299_queue_test_text_collision.txt`). Fix: compare by segment id or order | `api/tests/test_syn5_queue.py` | done (commit 5350b46) |
 | Header-size limit for `X-Timestamps` on long sentences (sidecar JSON is the PRD's alternative) | `routes/audio.py` | measure in phase 2 |
 | Deleting a document's audio files (rows cascade; files do not) | LIB-4 | M4 |
-| PRD SYN-6 says "keyed by (segment hash, voice, speed)"; the design and DDL key by `segment_id` and backend | `docs/PRD.md` | supervisor (PRD sync) |
-| `hearnarro/synthesis/compat/num2words`, `HEARNARRO_AUDIO_FORMAT` in settings, `api/scripts/check_licences.py` (D15, D16, spec amendment) | `synthesis/compat/`, `settings.py`, `api/scripts/` | phase 3 |
-| Technical Design D9 assumes an ONNX session; D15 uses `kokoro` + torch | `docs/TECHNICAL_DESIGN.md` | supervisor, after the backend decision |
+| PRD SYN-6 says "keyed by (segment hash, voice, speed)"; the design and DDL key by `segment_id` and backend | `docs/PRD.md` | done, phase 4 (SYN-6 row reads "segment id") |
+| `hearnarro/synthesis/compat/num2words`, `HEARNARRO_AUDIO_FORMAT` in settings, `api/scripts/check_licences.py` (D15, D16, spec amendment) | `synthesis/compat/`, `settings.py`, `api/scripts/` | done, phase 3 |
+| Technical Design D9 assumes an ONNX session; D15 uses `kokoro` + torch | `docs/TECHNICAL_DESIGN.md` | done (D9 reads "model session (PyTorch CPU, D15)") |

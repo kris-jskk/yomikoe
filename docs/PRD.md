@@ -87,7 +87,7 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | SYN-3 | P0 | Speed from 0.5x to 3.0x in 0.1 steps; applied in the model's duration control where supported, time-stretch fallback above the model's range |
 | SYN-4 | P0 | Backend is an interface (`synthesize(text, voice, speed) -> audio, timestamps`); Kokoro is the first implementation |
 | SYN-5 | P0 | Lookahead queue: keep N segments ahead of playback synthesized; N configurable, default 5 |
-| SYN-6 | P1 | Cache synthesized audio keyed by (segment hash, voice, speed) so re-listening is instant |
+| SYN-6 | P1 | Cache synthesized audio keyed by (segment id, voice, speed) so re-listening is instant; the id, not a text hash, so a re-ingested document never reuses stale audio (D7) |
 | SYN-7 | P1 | Second backend (GPU model such as Fish Speech or Qwen3-TTS) selectable per document |
 | SYN-8 | P2 | Content-aware delivery: pause length and pitch differ for headings, captions, body text |
 | SYN-9 | P2 | Voice cloning from a reference clip |
@@ -129,7 +129,7 @@ API server (FastAPI)
    |  parse job            |  synthesize(segment, voice, speed)     |  read / write
 Ingestion worker          Synthesis service  --cache-->           Storage
   pdfplumber text, OCR      TTSBackend interface                    SQLite: docs, segments, state
-  blocks, order, sentences  Kokoro now, GPU backend later           files: PDFs, Opus audio cache
+  blocks, order, sentences  Kokoro now, GPU backend later           files: PDFs, WAV/Opus cache
   async job per upload      audio + word timestamps out             cache key: segment, voice, speed
   \-- writes parsed segments -----------------------------------------^
 ```
@@ -146,11 +146,11 @@ The browser never touches a model or the PDF; it asks the API for parsed segment
 | Layout / academic PDFs | Marker (optional, P1) | Handles two-column papers and equations better than a raw geometric parser |
 | OCR | Tesseract via pytesseract, PaddleOCR as upgrade | Tesseract is zero-setup; Paddle is more accurate on photos |
 | Sentence split | pysbd | Rule-based, handles abbreviations and citations better than regex |
-| Text normalization | Custom rules + `num2words` | No off-the-shelf library covers citations and tech vocabulary |
-| TTS v1 | Kokoro-82M via `kokoro` package, ONNX runtime on CPU | Apache-2.0, \~50 voices, native speed parameter, returns token timestamps |
+| Text normalization | Custom rules | No off-the-shelf library covers citations and tech vocabulary; `num2words` (LGPL) is not used (D15) |
+| TTS v1 | Kokoro-82M via vendored model code on PyTorch CPU, GPL-free (D15) | Apache-2.0, \~50 voices (10 exposed in v1), native speed parameter, word timings from predicted durations; the `kokoro` package is not installed because its `misaki[en]` extras are GPL/LGPL |
 | TTS v2 | Fish Speech or Qwen3-TTS behind the same interface | Higher quality, needs a GPU |
-| Time-stretch fallback | `pyrubberband` or ffmpeg atempo | Only above the model's native speed range |
-| Audio format | PCM 24 kHz internally, Opus/WebM per segment to the browser (decided 2026-10-15) | \~60 KB per sentence, browser-native decode via decodeAudioData |
+| Time-stretch fallback | WSOLA in process (D17) | Only above the model's native speed range (2.1–3.0x); numpy, no extra dependency, pitch kept |
+| Audio format | PCM 24 kHz internally; WAV per segment by default, Ogg Opus optional (D16); browser matrix in M3 | WAV needs no dependency and decodes everywhere via decodeAudioData; Ogg Opus at 48 kbps (`opuscodec`, Apache-2.0, `opus` extra) is 6–8x smaller (42 KB vs 276 KB for a 5.75 s sentence) |
 | Storage | SQLite + local filesystem | Single-user v1; swap to Postgres + S3 when multi-user |
 | Job queue | In-process asyncio task queue | No Redis until there is more than one worker |
 | Frontend | React + TypeScript, Vite | Web Audio API scheduled buffers for gapless playback (decided 2026-10-15, see Technical Design D5), Media Session API |
@@ -163,7 +163,7 @@ Every model in v1 is downloaded from the Hugging Face Hub; nothing is trained in
 
 | Role | Hub repo (verify) | License | How it loads |
 | --- | --- | --- | --- |
-| TTS v1 | `hexgrad/Kokoro-82M` | Apache-2.0 | `kokoro` package, ONNX on CPU |
+| TTS v1 | `hexgrad/Kokoro-82M`, pinned at revision `f3ff3571791e39611d31c381e3a41a3af07b4987` | Apache-2.0 | `hf_hub_download(revision=...)`; vendored model code on PyTorch CPU (D15) |
 | TTS v2 (GPU) | `fishaudio/fish-speech-*` or `Qwen/Qwen3-TTS-*` | Apache-2.0 | Model's own inference code or `transformers` |
 | OCR, scanned pages (HF-only option) | `microsoft/trocr-base-printed`, `facebook/nougat-base` for academic layouts | MIT / CC-BY-NC (Nougat, check) | `transformers`; Tesseract stays the default because it needs no GPU |
 | Layout analysis | Marker's bundled detection and layout models | GPL-3 (Marker) | `marker-pdf` package; optional, P1 |
@@ -255,7 +255,7 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
 
 1. M1 Ingest + skeleton: ING-1 to ING-5, the `documents`/`blocks`/`segments` tables, `POST /documents` and `GET /documents/{id}/segments`, a CLI that dumps a PDF's segments to stdout for eyeballing. Start by collecting the 20 fixture PDFs: five academic two-column papers, five single-column reports, five scanned pages, five with heavy tables and equations.
 2. M2 Synthesis + stream: SYN-1 to SYN-5, the Kokoro backend, the audio cache table, `GET /audio/{segment_id}` with its lookahead queue. Benchmark script that reports real-time factor and time-to-first-audio. Also (added 2026-10-16, after D14): a sentence-boundary truth independent of the extractor (ordered prose text with reviewed sentence breaks) and a boundary precision/recall metric over the word stream, gated in M2 because synthesis is where boundaries become audible; the M1 golden measures order only.
-3. M3 Reader UI: PLAY-1 to PLAY-5, the React app with Web Audio scheduled playback and word highlighting from timestamps. Voice and speed pickers.
+3. M3 Reader UI: PLAY-1 to PLAY-5, the React app with Web Audio scheduled playback and word highlighting from timestamps. Voice and speed pickers. Clause-level chunking of the first sentence at speeds < 1.0 (D19). The browser decode matrix for WAV and Ogg Opus (D16).
 4. M4 Library + polish: LIB-1 to LIB-4, PLAY-6 to PLAY-8, ING-6 and ING-7, OCR fallback (ING-2), Docker Compose, the 300-page soak test.
 
 After v1: SYN-7 second backend, SYN-8 content-aware delivery, PLAY-9 export, ING-9 more formats.
@@ -279,7 +279,7 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 
 - [ ] Product name decided: HearNarro; register hearnarro.com before the first push - still working
 - [ ] Should speed be global or per document by default? Current plan: per document, with a global default -- this can be a global setting and the user should be able to change it
-- [ ] Cache format decided 2026-10-15: Opus/WebM at 48 kbps via ffmpeg - lets go with opus
+- [x] Cache format decided 2026-10-15: Opus at 48 kbps - lets go with opus. Amended 2026-10-16 (D16): WAV by default in M2, Ogg Opus at 48 kbps optional in process through `opuscodec` (`HEARNARRO_AUDIO_FORMAT=opus`); no external encoder binary. Which one becomes the default is decided in M3 with the browser matrix
 - [ ] Is a 2 s time-to-first-audio target realistic on an M1 laptop with Kokoro ONNX? Benchmark in M2 week 1
 - [ ] Do we need Marker in v1, or does pdfplumber plus a column-detection heuristic clear the 95% gate?
 - [ ] Phone browser: does iOS Safari allow background playback through Media Session with MSE? Verify early in M3

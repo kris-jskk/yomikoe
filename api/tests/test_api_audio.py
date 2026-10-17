@@ -196,3 +196,38 @@ async def test_syn2_voices_six_across_both_genders(tmp_path: Path) -> None:
         assert {"id", "name", "backend", "language", "gender"} <= set(v)
         assert v["language"]  # BCP-47 tag, e.g. en-US
     assert len({v["id"] for v in voices}) == len(voices)
+
+
+async def test_syn1_audio_format_opus_serves_ogg_same_timestamps_d16(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    """HEARNARRO_AUDIO_FORMAT=opus: the encoder comes from settings; same X-Timestamps as WAV."""
+    import pytest
+
+    pytest.importorskip("opuscodec")
+    async with ready_document(tmp_path / "wav") as (client, segments):
+        seg = worded(segments)[0]
+        params = {"voice": VOICE, "speed": 1.0}
+        wav = await client.get(f"/audio/{seg['id']}", params=params)
+        assert wav.status_code == 200 and wav.headers["content-type"].startswith("audio/wav")
+
+    monkeypatch.setenv("HEARNARRO_AUDIO_FORMAT", "opus")
+    monkeypatch.setenv("HEARNARRO_TTS_BACKEND", "fake")
+    async with client_for(tmp_path / "ogg", tts_backend=SpyBackend(), lookahead=0) as client:
+        doc_id = (await upload(client, REPORT_PDF)).json()["id"]
+        assert (await wait_settled(client, doc_id))["status"] == "ready"
+        page = (await client.get(f"/documents/{doc_id}/segments?limit=500")).json()
+        seg2 = worded(page["segments"])[0]
+        assert seg2["text"] == seg["text"]
+        url = f"/audio/{seg2['id']}"
+        ogg = await client.get(url, params=params)
+        assert ogg.status_code == 200, ogg.text
+        assert ogg.headers["content-type"].startswith("audio/ogg")
+        assert ogg.content[:4] == b"OggS"
+        assert len(ogg.content) < len(wav.content)
+        assert ogg.headers["x-timestamps"] == wav.headers["x-timestamps"]
+        assert ogg.headers["x-duration-ms"] == wav.headers["x-duration-ms"]
+        head = await client.head(url, params=params)
+        assert head.status_code == 200 and head.headers["content-type"].startswith("audio/ogg")
+        files = list((tmp_path / "ogg").rglob("*.ogg"))
+        assert files, "cache file should carry the .ogg extension"

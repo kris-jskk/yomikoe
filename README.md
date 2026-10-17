@@ -43,6 +43,8 @@ The smoke script uploads the 15 text fixtures, scores them with the gate's word-
 measure, and exits 0 when all pass (mean 0.9914 today). The full hand-testing procedure,
 with the curl sequence and expected numbers, is in [docs/M1_TESTING.md](docs/M1_TESTING.md).
 
+Audio (M2): `.venv/bin/python scripts/m1_smoke.py --audio` fetches audio for the first segments of every document (start the server with `HEARNARRO_TTS_BACKEND=kokoro` and the `tts` extra for real speech); the step-by-step check is [docs/M2_TESTING.md](docs/M2_TESTING.md).
+
 ## Getting started
 
 ```bash
@@ -52,7 +54,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Models download from the Hugging Face Hub on first run into `$HF_HOME`; set it to a persistent path. `ffmpeg` must be on PATH for the Opus audio cache.
+Models download from the Hugging Face Hub on first run into `$HF_HOME`; set it to a persistent path. Audio is cached as WAV by default; `pip install -e ".[opus]"` and `HEARNARRO_AUDIO_FORMAT=opus` switch to Ogg Opus (no ffmpeg needed).
 
 ## Benchmark (M2)
 

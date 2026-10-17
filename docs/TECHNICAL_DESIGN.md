@@ -6,7 +6,7 @@ Companion to the PRD. The PRD says what v1 does; this doc says how, and records 
 
 ## Decision log
 
-Eleven decisions shape v1; three are yours to confirm (D5, D7, D10) and the rest follow from the PRD's constraints. Each is argued in its section below.
+Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm (D5, D7, D10) and the rest follow from the PRD's constraints. D12–D19 were added during M1 and M2. Each is argued in its section below.
 
 | # | Decision | Recommendation | Status |
 | --- | --- | --- | --- |
@@ -14,7 +14,7 @@ Eleven decisions shape v1; three are yours to confirm (D5, D7, D10) and the rest
 | D2 | Reading order | Geometric: x-gap column detection per page, then top-to-bottom within column; no ML in v1 | Proposed |
 | D3 | Header/footer removal | Repetition across pages (same normalized text in same band on 3+ pages) plus page-number regex | Proposed |
 | D4 | Sentence splitting | pysbd on merged block text; keep char offsets back to the block | Proposed |
-| D5 | Audio delivery to browser | Per-segment HTTP fetch of Opus + Web Audio API scheduled buffers; no WebSocket, no MSE in v1 | **Decided 2026-10-15; PRD updated** |
+| D5 | Audio delivery to browser | Per-segment HTTP fetch of encoded audio (WAV by default, Ogg Opus optional, D16) + Web Audio API scheduled buffers; no WebSocket, no MSE in v1 | **Decided 2026-10-15; PRD updated** |
 | D6 | Speed | Kokoro native 0.5–2.0x; 2.1–3.0x synthesize at 2.0x then time-stretch in-process with a numpy WSOLA (ratio ≤ 1.5; D17 replaced ffmpeg `atempo`) | **Amended 2026-10-16 (D17)** |
 | D7 | Cache format | One file per (segment, voice, speed): WAV (24 kHz PCM16 mono) by default in M2; Ogg Opus via `opuscodec` behind `HEARNARRO_AUDIO_FORMAT=opus` (D16); no ffmpeg | **Decided 2026-10-15; amended 2026-10-16 (D16)** |
 | D8 | Highlight sync | Word spans in DOM; `requestAnimationFrame` loop reads AudioContext clock; binary search over timestamps | Proposed |
@@ -24,6 +24,11 @@ Eleven decisions shape v1; three are yours to confirm (D5, D7, D10) and the rest
 | D12 | Golden comparison scope | Prose-only; figure text dropped; inline math joined; table/equation internals excluded until ING-7 | **Decided 2026-10-16** |
 | D13 | Extractor: pdfplumber + pypdfium2, replacing PyMuPDF (AGPL) | pdfplumber (MIT; pdfminer.six underneath) supplies glyphs, fonts, images, vector drawings and ruled tables; stage 1 groups glyphs into lines and blocks itself in content-stream order; pypdfium2 (Apache-2.0/BSD-3) renders pages for OCR. Supersedes the PyMuPDF part of D1 | **Decided 2026-10-16** |
 | D14 | Golden score granularity | Word-sequence edit distance over ordered prose; sentence-level printed as diagnostic; char-mass guard | **Decided 2026-10-16** |
+| D15 | Kokoro runtime without the GPL chain | `hexgrad/Kokoro-82M` pinned at `f3ff3571791e39611d31c381e3a41a3af07b4987`, fetched with `hf_hub_download(revision=...)`; Kokoro's Apache-2.0 model code vendored and run on PyTorch CPU; base `misaki.en.G2P` without extras, an own `num2words` shim (`inflect`), and a vendored g2p_en fallback for out-of-vocabulary words. Never installed: `kokoro`, `misaki[en]`, phonemizer, espeak-ng, `num2words` | **Decided 2026-10-16** |
+| D16 | Audio container | WAV (stdlib) per segment by default in M2; Ogg Opus at 48 kbps via `opuscodec` (Apache-2.0, in process) behind `HEARNARRO_AUDIO_FORMAT=opus` and the `opus` extra; media type from the file extension; browser decode matrix (Safari and Ogg Opus) in M3, a WebM muxer only if needed. Replaces the ffmpeg subprocess of D7's original plan | **Decided 2026-10-16** |
+| D17 | Time-stretch | In-process numpy WSOLA, ratio ≤ 1.5, pitch kept, timestamps scaled by `1/ratio`; replaces ffmpeg `atempo` in D6 | **Decided 2026-10-16** |
+| D18 | Sentence-boundary gate | Boundary P/R/F1 over the aligned word stream against `<stem>.sentences.txt`: F1 ≥ 0.90 per fixture, mean F1 ≥ 0.95, recall ≥ 0.97 per fixture; raised when block-boundary false positives are fixed | **Decided 2026-10-16** |
+| D19 | The 0.5x time-to-first-audio gate | The M2 gate is measured on the spec sentence (passes at 0.5x); the benchmark reports the full distribution (some 200-character sentences exceed 2 s at 0.5x); M3 adds clause-level chunking of the first sentence at speeds < 1.0 and measures the wait in the player | **Decided 2026-10-16 (user)** |
 
 ## Ingestion pipeline
 
@@ -115,7 +120,7 @@ The service owns one `TTSBackend`, one cache and one lookahead queue per active 
 
 **Kokoro specifics.** `hexgrad/Kokoro-82M` (Apache-2.0) on PyTorch CPU (D15), pinned at revision `f3ff3571791e39611d31c381e3a41a3af07b4987` and fetched with `hf_hub_download(revision=...)`: 82M parameters, 24 kHz output, voices named by language and gender (`af_heart`, `am_michael`, `bf_emma`, `bm_george`…), and a `speed` float the model applies in its duration predictor. The PyPI `kokoro` package is not used: it declares `misaki[en]`, whose extras are GPL/LGPL (phonemizer, espeak-ng, num2words), so Kokoro's Apache-2.0 model code is vendored (`hearnarro/synthesis/kokoro_model/`) and `KokoroBackend` drives `KModel` with base `misaki.en.G2P` itself, with an own `num2words` shim and a g2p_en-based fallback for out-of-vocabulary words. Word timings come from the model's predicted durations per phoneme (25 ms frames); the backend joins tokens into whitespace words, keeping the first token's start and the last token's end. Measured on an Apple M5 Pro CPU (`bench/2026-10-16.json`): RTF ≈ 0.08 at 1.0x, warm first audio 0.86 s mean for 80–200-character sentences, cold start (imports + load) ≈ 2.3 s, so the model loads in the lifespan.
 
-**Speed (D6).** Kokoro is clean between 0.5x and 2.0x; above that the duration predictor produces clipped consonants. So: for requested speed ≤ 2.0, pass it to the model and cache at that exact speed. For 2.1–3.0, synthesize at 2.0 (one cache entry), then time-stretch the PCM in-process with WSOLA (D17: numpy, no new dependency and no ffmpeg; Hann frames of 1024 samples at 24 kHz, synthesis hop 512, analysis hop `512 × ratio`, each frame placed within ±256 samples where it best continues the previous one, so pitch is kept; ratio ≤ 1.5; output length within 2 % of `len/ratio`) and scale every timestamp by `1/ratio` (floored, clamped to the stretched duration). Stretched output is cached too, keyed by the requested speed, alongside the 2.0x file. This keeps the cache from exploding (users scrub through speeds) while keeping word sync exact.
+**Speed (D6).** Kokoro is clean between 0.5x and 2.0x; above that the duration predictor produces clipped consonants. So: for requested speed ≤ 2.0, pass it to the model and cache at that exact speed. For 2.1–3.0, synthesize at 2.0 (one cache entry), then time-stretch the PCM in-process with WSOLA (D17: numpy, no new dependency and no subprocess; Hann frames of 1024 samples at 24 kHz, synthesis hop 512, analysis hop `512 × ratio`, each frame placed within ±256 samples where it best continues the previous one, so pitch is kept; ratio ≤ 1.5; output length within 2 % of `len/ratio`) and scale every timestamp by `1/ratio` (floored, clamped to the stretched duration). Stretched output is cached too, keyed by the requested speed, alongside the 2.0x file. This keeps the cache from exploding (users scrub through speeds) while keeping word sync exact.
 
 **Cache.** Key is `(segment_id, voice_id, speed, backend_name)`; value is a file path plus the timestamp JSON. The key uses `segment_id` not a text hash because re-ingesting a document creates new segment ids and should not reuse stale audio. The cache is write-through: synthesize, encode, write file, insert row, then return. Eviction is manual (LIB-4 delete) in v1; a size cap with LRU is a one-line addition later.
 
@@ -133,8 +138,8 @@ Recommendation: drop the WebSocket and Media Source Extensions from the PRD and 
 Browser (Web Audio)            API                              Synthesis thread
   |-- GET /audio/k?voice&speed -->|                                    |
   |                               |-- cache miss: synthesize k ------->|  (jumps queue)
-  |                               |<-- PCM + timestamps; encode Opus --|
-  |<-- 200 audio/webm + X-Timestamps JSON --|                          |
+  |                               |<-- PCM + timestamps; encode (D16) -|
+  |<-- 200 audio/wav|ogg + X-Timestamps --|                            |
   decodeAudioData, schedule at t0, start highlight loop               |
 --- both sides run ahead ------------------------------------------------
   |                               |-- enqueue k+1 .. k+5 ------------->|
@@ -147,9 +152,9 @@ Browser (Web Audio)            API                              Synthesis thread
 
 **Why not MSE over a WebSocket (the PRD's original plan).** MSE is designed for one continuous media stream; feeding it a sequence of independently encoded Opus segments means managing `SourceBuffer` append windows, timestamp offsets per segment and the "quota exceeded" eviction dance, and iOS Safari only supports MSE via `ManagedMediaSource` on 17.1+. A WebSocket adds a stateful connection to reconnect, resume and multiplex per document. None of that buys anything at sentence granularity: segments are 1–10 s of audio, and the browser can simply ask for the next one.
 
-**Why Web Audio.** `AudioContext.decodeAudioData` turns an Opus/WebM response into an `AudioBuffer`; an `AudioBufferSourceNode.start(when)` scheduled at `t0 + sum(previous durations)` plays each segment exactly when the previous one ends, with no gap and no click, because the audio thread does the splicing. `audioContext.currentTime` is a monotonic hardware clock the highlight loop can read every frame. Speed is already baked into the audio, so `playbackRate` stays 1.0 and pitch is never touched in the browser.
+**Why Web Audio.** `AudioContext.decodeAudioData` turns a WAV or Ogg Opus response (D16) into an `AudioBuffer`; an `AudioBufferSourceNode.start(when)` scheduled at `t0 + sum(previous durations)` plays each segment exactly when the previous one ends, with no gap and no click, because the audio thread does the splicing. `audioContext.currentTime` is a monotonic hardware clock the highlight loop can read every frame. Speed is already baked into the audio, so `playbackRate` stays 1.0 and pitch is never touched in the browser.
 
-**Protocol.** `GET /audio/{segment_id}?voice=af_heart&speed=1.5` returns `audio/webm` (Opus) with an `X-Timestamps` header carrying the word timestamp JSON (translated to `text` offsets). The API blocks on a cache miss until the synthesis thread finishes that segment; the client sets a 15 s timeout. A `HEAD` on the same URL answers 200 or 404 so the client can probe cache state without downloading. The client keeps two segments decoded ahead of the one playing; the server's lookahead queue keeps five synthesized ahead, so the client's prefetch almost always hits the cache.
+**Protocol.** `GET /audio/{segment_id}?voice=af_heart&speed=1.5` returns the encoded segment (`audio/wav` by default, `audio/ogg` with `HEARNARRO_AUDIO_FORMAT=opus`, D16) with an `X-Timestamps` header carrying the word timestamp JSON (translated to `text` offsets) and `X-Duration-Ms`. The API blocks on a cache miss until the synthesis thread finishes that segment; the client sets a 15 s timeout. A `HEAD` on the same URL answers 200 or 404 so the client can probe cache state without downloading. The client keeps two segments decoded ahead of the one playing; the server's lookahead queue keeps five synthesized ahead, so the client's prefetch almost always hits the cache.
 
 **Seek and settings change.** Stop every scheduled source node, clear the client buffer, fetch the target segment with the new `(voice, speed)`, and start a fresh schedule at `currentTime + 0.05`. The server sees the new request, clears its queue for this document and refills from the new position. A speed change mid-sentence restarts that sentence from its beginning, which PLAY-4 allows and which users read as "it repeated the sentence" rather than a glitch.
 
@@ -240,10 +245,10 @@ CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);  -- default_v
 $HEARNARRO_DATA_DIR/
   hearnarro.db
   pdfs/{sha256}.pdf
-  audio/{document_id}/{segment_id}/{voice_id}_{speed}.webm
+  audio/{document_id}/{segment_id}/{voice_id}_{speed}.wav    (.ogg with Opus, D16)
 ```
 
-**Amended 2026-10-16 (D16).** M2 caches WAV (24 kHz, 16-bit mono PCM in a stdlib `wave` container, `audio/wav`, `.wav`): it needs no dependency and every browser's `decodeAudioData` accepts it. Ogg Opus via `opuscodec` (Apache-2.0, in-process; about 7x smaller than WAV) is opt-in with `HEARNARRO_AUDIO_FORMAT=opus` (`audio/ogg`, `.ogg`); while that encoder is unavailable, `default_encoder("opus")` falls back to WAV with a logged warning. There is no ffmpeg anywhere (licence and install cost). The media type is derived from the cached file's extension, so WAV and Opus entries can coexist. Browser decode of Ogg Opus (Safari before 18.4 reportedly fails) is verified in M3 with the real player; a WebM muxer is written only if Safari needs it. The original plan, kept for reference: Opus in WebM at 48 kHz, 48 kbps mono (a 10 s sentence \~60 KB, a 40-page paper at one voice and speed \~40 MB) via one ffmpeg subprocess per segment.
+**Amended 2026-10-16 (D16).** M2 caches WAV (24 kHz, 16-bit mono PCM in a stdlib `wave` container, `audio/wav`, `.wav`): it needs no dependency and every browser's `decodeAudioData` accepts it. Ogg Opus via `opuscodec` (Apache-2.0, in-process; about 7x smaller than WAV) is opt-in with `HEARNARRO_AUDIO_FORMAT=opus` (`audio/ogg`, `.ogg`; install the `opus` extra). The encoder takes the 24 kHz PCM as is (libopus accepts 8/12/16/24/48 kHz input; decoders play at 48 kHz), 48 kbps mono, QEXT off. Without `opuscodec` installed, `default_encoder("opus")` falls back to WAV with a logged warning. There is no ffmpeg anywhere (licence and install cost). The media type is derived from the cached file's extension, so WAV and Opus entries can coexist. Browser decode of Ogg Opus (Safari before 18.4 reportedly fails) is verified in M3 with the real player; a WebM muxer is written only if Safari needs it. The original plan, kept for reference: Opus in WebM at 48 kHz, 48 kbps mono (a 10 s sentence \~60 KB, a 40-page paper at one voice and speed \~40 MB) via one ffmpeg subprocess per segment.
 
 **Migrations.** Alembic from day one, even for SQLite; the schema will change in M2 and M4 and hand-editing a user's database is not an option.
 
@@ -256,7 +261,7 @@ One uvicorn process serves everything; CPU-heavy work goes to two executors chos
 | HTTP + routing | asyncio event loop | FastAPI native; every handler is `async def` and never blocks |
 | Ingestion (stages 1–5) | `ProcessPoolExecutor(max_workers=2)` | pdfminer's pure-Python parsing holds the GIL for long stretches and Tesseract is a subprocess anyway; a 300-page parse must not stall the API. Two workers so one slow OCR job does not block a second upload |
 | Synthesis | `ThreadPoolExecutor(max_workers=1)` | PyTorch releases the GIL inside its kernels; one thread serializes jobs and owns the single model (D15). A thread, not a process, so the loaded model (300 MB) is not duplicated |
-| Opus encoding | `asyncio.create_subprocess_exec("ffmpeg", ...)` | Non-blocking subprocess from the event loop, piped stdin/stdout, no temp files |
+| Encoding (D16) | On the synthesis thread, in process: `WavEncoder` (stdlib) or `OpusEncoder` (`opuscodec`) | No subprocess and no temp files; a 5.75 s sentence encodes to Opus in about 0.1 s |
 | SQLite | `aiosqlite`, one connection per request | WAL mode so the ingestion process can write while the API reads |
 
 **Startup.** Load the Kokoro pipeline in the synthesis thread before accepting requests (`lifespan` hook); first load pulls weights from the Hub into `HF_HOME`, later loads take \~2 s. Seed the `voices` list from `backend.voices()`.
@@ -333,7 +338,7 @@ Four kinds of test, each tied to a milestone gate; the gate tests are written be
 All three were decided on 2026-10-15 as recommended; the rest of the doc stands on the PRD's constraints and can be changed later without unwinding anything.
 
 - [ ] **D5 — Audio delivery.** Accept per-segment HTTP + Web Audio scheduling, replacing the PRD's WebSocket + MSE? If yes, I update the PRD (remove `/play` WebSocket, change two stack rows) and `docs/PRD.md` in the repo.
-- [ ] **D7 — Cache format.** Opus/WebM at 48 kbps via an ffmpeg subprocess (you leaned Opus in the PRD). The alternative is raw PCM: 10x the disk, no ffmpeg dependency.
+- [ ] **D7 — Cache format.** Decided 2026-10-15 as Opus at 48 kbps; amended 2026-10-16 by D16: WAV by default in M2, Ogg Opus optional in process via `opuscodec`, no external encoder. The default for v1 is chosen in M3 with the browser decode matrix.
 - [ ] **D10 — Player state.** Plain `useReducer` state machine now, XState only if it grows past \~10 states. The alternative is XState from day one for the visualizer and test tooling, at the cost of a dependency and a learning curve for the coding agent.
 
 Open but not blocking:
