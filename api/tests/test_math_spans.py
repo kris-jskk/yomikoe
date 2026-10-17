@@ -28,8 +28,9 @@ def _violations(block: LogicalBlock) -> list[str]:
     out: list[str] = []
     for s in block.math_spans:
         got = _squash(block.text[s.start : s.end])
-        want = _squash("".join(r.text for r in s.runs))
-        if not (0 <= s.start < s.end <= len(block.text)) or got != want:
+        # a content span (text-font maths found by content, m5 p3d) has no runs: no geometry
+        want = _squash("".join(r.text for r in s.runs)) if s.runs else got
+        if not (0 <= s.start < s.end <= len(block.text)) or got != want or not got:
             out.append(f"block {block.id} [{s.start}:{s.end}] {got!r} != {want!r}")
     return out
 

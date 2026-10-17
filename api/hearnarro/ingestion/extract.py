@@ -78,6 +78,16 @@ RULE_STACK_GAP = 0.5  # ... and lie within this fraction of the page height of t
 RULE_STACK_MIN = 3  # top rule, mid rule, bottom rule
 COLUMN_ROWS = 2  # ... on at least this many lines
 COLUMN_GAP = 1.0  # a glyph gap this many font sizes wide inside a ruled region is a column gap
+# Prose in a frame is no table (ING-3, ING-4; m5 p3d, formula_08/09): a table region holding more
+# than TABLE_PROSE_LINES_MAX lines of running prose (no column gap, at least PROSE_LINE_WIDTH of
+# the region wide) is prose between rules (M1 tables: at most 2); a find_tables region at least
+# TEXTBOX_MIN_WIDTH of the page wide with no column gap on any line is a framed text box (an
+# exercise or admonition box with a title row), so neither a table nor, where a drawn figure
+# region coincides with it (TEXTBOX_COVER of the figure's area), a figure.
+TABLE_PROSE_LINES_MAX = 3
+PROSE_LINE_WIDTH = 0.6
+TEXTBOX_MIN_WIDTH = 0.6
+TEXTBOX_COVER = 0.9
 # Display-equation lines (ING-3): a line holding a math-font glyph whose text-font letters are
 # under MATH_LINE_PROSE of its glyphs is "math"; a block never mixes math and prose lines.
 MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
@@ -864,11 +874,10 @@ def rule_tables(rules: Sequence[BBox], page_height: float) -> list[BBox]:
     return [_union(st) for st in stacks if len(st) >= RULE_STACK_MIN]
 
 
-def has_columns(region: BBox, lines: Sequence[Sequence[LayoutChar]]) -> bool:
-    """Text lines centred in ``region`` have a glyph gap wider than COLUMN_GAP font sizes
-    on at least COLUMN_ROWS lines (table rows; a title page framed by rules, even with a
-    letter-spaced banner, has fewer). Pure."""
-    rows = 0
+def _region_lines(region: BBox, lines: Sequence[Sequence[LayoutChar]]) -> tuple[int, int, int]:
+    """(lines centred in ``region``, those with a glyph gap wider than COLUMN_GAP font sizes,
+    those with none that are at least PROSE_LINE_WIDTH of the region wide). Pure."""
+    total = gapped = prose = 0
     for line in lines:
         glyphs = [c for c in line if c.bbox is not None and c.upright]
         if len(glyphs) < 2:
@@ -876,13 +885,47 @@ def has_columns(region: BBox, lines: Sequence[Sequence[LayoutChar]]) -> bool:
         box = _union([c.bbox for c in glyphs if c.bbox is not None])
         if not (region.x0 <= box.x_mid <= region.x1 and region.y0 <= box.y_mid <= region.y1):
             continue
+        total += 1
         if any(
             b.bbox.x0 - a.bbox.x1 > COLUMN_GAP * max(a.size, b.size, 1.0)
             for a, b in itertools.pairwise(glyphs)
             if a.bbox is not None and b.bbox is not None
         ):
-            rows += 1
-    return rows >= COLUMN_ROWS
+            gapped += 1
+        elif region.width > 0 and box.width >= PROSE_LINE_WIDTH * region.width:
+            prose += 1
+    return total, gapped, prose
+
+
+def has_columns(region: BBox, lines: Sequence[Sequence[LayoutChar]]) -> bool:
+    """Text lines centred in ``region`` have a glyph gap wider than COLUMN_GAP font sizes
+    on at least COLUMN_ROWS lines (table rows; a title page framed by rules, even with a
+    letter-spaced banner, has fewer). Pure."""
+    return _region_lines(region, lines)[1] >= COLUMN_ROWS
+
+
+def is_prose_region(region: BBox, lines: Sequence[Sequence[LayoutChar]]) -> bool:
+    """More than TABLE_PROSE_LINES_MAX lines of running prose lie in ``region`` (a ruled page
+    with paragraphs between its rules, not a table). Pure."""
+    return _region_lines(region, lines)[2] > TABLE_PROSE_LINES_MAX
+
+
+def is_text_box(region: BBox, lines: Sequence[Sequence[LayoutChar]], page_width: float) -> bool:
+    """``region`` spans at least TEXTBOX_MIN_WIDTH of the page and holds text lines, none with
+    a column gap: a framed box around prose (an exercise box), not a table. Pure."""
+    total, gapped, _ = _region_lines(region, lines)
+    return region.width >= TEXTBOX_MIN_WIDTH * page_width and total > 0 and gapped == 0
+
+
+def _covered(fig: BBox, boxes: Sequence[BBox]) -> bool:
+    """TEXTBOX_COVER of ``fig``'s area lies inside one of ``boxes``."""
+    area = _area(fig)
+    for b in boxes:
+        inter = BBox(max(fig.x0, b.x0), max(fig.y0, b.y0), min(fig.x1, b.x1), min(fig.y1, b.y1))
+        overlap = area > 0 and inter.x1 > inter.x0 and inter.y1 > inter.y0
+        if overlap and _area(inter) >= TEXTBOX_COVER * area:
+            return True
+    return False
 
 
 def _drawing_rects(page: Any, coords: _Coords) -> list[BBox]:
@@ -966,19 +1009,26 @@ def extract_pages(
             ruled = [
                 t
                 for t in rule_tables(_hrules(pdf_page, coords), float(pdf_page.height))
-                if has_columns(t, lines)
+                if has_columns(t, lines) and not is_prose_region(t, lines)
             ]
+            found = _table_bboxes(pdf_page, coords)
+            boxes = [t for t in found if is_text_box(t, lines, float(pdf_page.width))]
+            found = [t for t in found if t not in boxes and not is_prose_region(t, lines)]
             page = page_from_layout(
                 number,
                 float(pdf_page.width),
                 float(pdf_page.height),
                 group_blocks(lines),
                 image_bboxes=[coords.obj(im) for im in pdf_page.images],
-                table_bboxes=[*_table_bboxes(pdf_page, coords), *ruled],
+                table_bboxes=[*found, *ruled],
             )
-            page.figure_bboxes = figure_regions(
-                page.image_bboxes, _drawing_rects(pdf_page, coords), page.width, page.height
-            )
+            page.figure_bboxes = [
+                f
+                for f in figure_regions(
+                    page.image_bboxes, _drawing_rects(pdf_page, coords), page.width, page.height
+                )
+                if f in page.image_bboxes or not _covered(f, boxes)
+            ]
             pdf_page.close()
             if page.text_chars < min_text_chars:
                 page.has_text_layer = False

@@ -135,7 +135,8 @@ class MathSpan:
     """A run of maths inside ``LogicalBlock.text`` (MATH-1, MATH-2; spec m5 §3a).
 
     Invariant: ``block.text[start:end]`` equals the joined text of ``runs`` up to the
-    whitespace (and line-end hyphens) ``merge_lines`` changes.
+    whitespace (and line-end hyphens) ``merge_lines`` changes. A span found by content in a
+    text font (``merge.content_spans``, m5 p3d) has no runs: no geometry, read from its text.
     """
 
     start: int  # offsets into LogicalBlock.text

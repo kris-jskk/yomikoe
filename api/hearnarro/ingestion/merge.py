@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import re
 
-from hearnarro.ingestion.classify import BOILERPLATE_RE, EMAIL, SCRIPT_RATIO, _is_math_font
+from hearnarro.ingestion.classify import (
+    BOILERPLATE_RE,
+    EMAIL,
+    MATH_CHARS,
+    SCRIPT_RATIO,
+    _is_math_font,
+)
 from hearnarro.ingestion.models import (
     BULLET_GLYPHS,
     INLINE_ITEM_RE,
@@ -24,6 +30,8 @@ JOIN_BLOCKERS = {"heading", "list", "equation"}
 # MATH-2: block types whose maths-font runs become inline MathSpans (a list item's text is
 # rebuilt by split_items, so lists carry none yet).
 INLINE_MATH_TYPES = {"body", "heading", "caption", "footnote"}
+# ... and the types whose text-font maths is found by content (``content_spans``), lists included.
+CONTENT_MATH_TYPES = INLINE_MATH_TYPES | {"list"}
 PARA_JOIN_GAP = 1.0  # same-page join: B starts at most this many of A's font sizes below A
 # ... and the join is on only for documents where stage 1 split paragraphs systematically:
 # at least PARA_JOIN_MIN_COUNT candidate pairs making up PARA_JOIN_MIN_SHARE of the body
@@ -249,6 +257,113 @@ def _math_runs(line: Line) -> list[list[int]]:
             run.pop()
         if any(mathy(line.spans[k]) for k in run):
             out.append(run)
+    return out
+
+
+# MATH-2 (m5 p3d): maths set in a text font (textbook pages, OCR text) has no maths-font run,
+# so it is found by content. A relation token is maths wherever it stands; an operation token is
+# maths next to an operand; a dash is a minus only after a symbolic operand ("x – mean",
+# "n − 1"), never after a word. The span widens over the operands next to it (a letter, a
+# number, a token holding a MATH_CHARS glyph or brackets); a span never holds a word of three
+# letters, so prose words stay with the prose reader.
+CONTENT_RELATIONS = frozenset("=<>≤≥~∼≈≠±≡∝∈")
+CONTENT_OPERATIONS = frozenset("+×÷·→⋅∗")
+CONTENT_DASHES = frozenset("-–−")
+_TOKEN_RE = re.compile(r"\S+")
+_NUMBER_RE = re.compile(r"^\d+(?:[.,]\d+)?$")
+BRACKET_REACH = 4
+_EDGE = ".,;:!?\"'“”‘’"
+_SYMBOLIC_RE = re.compile(r"^[\w¯′'#.*/^()\[\]{}+\-–−,|=<>~]+$")
+_WORD3_RE = re.compile(r"[A-Za-z]{3}")
+_INNER_RELATION_RE = re.compile(r"[=<>≤≥]")
+_GLYPHS_NONASCII = frozenset(c for c in MATH_CHARS if not c.isascii())
+
+
+def _core(tok: str) -> str:
+    return tok.strip(_EDGE)
+
+
+def _glyph_token(core: str) -> bool:
+    return any(c in _GLYPHS_NONASCII or "Ͱ" <= c <= "Ͽ" or c == "√" for c in core)
+
+
+def _operand(tok: str) -> bool:
+    """A symbolic operand: a letter, a number, a glyph token, a bracket group; no word."""
+    core = _core(tok)
+    if not core or core in CONTENT_RELATIONS | CONTENT_OPERATIONS | CONTENT_DASHES:
+        return False
+    if _glyph_token(core):
+        return True
+    return bool(_SYMBOLIC_RE.match(core)) and not _WORD3_RE.search(core) and core != "a"
+
+
+def _inner_relation(tok: str) -> bool:
+    """A token like "x=17" or "Z=" (OCR): a relation sign inside a short non-link token."""
+    core = _core(tok)
+    return (
+        0 < len(core) <= 15
+        and bool(_INNER_RELATION_RE.search(core))
+        and "://" not in core
+        and "@" not in core
+        and not core.startswith(("<", ">"))
+    )
+
+
+def content_spans(text: str, taken: list[MathSpan] | None = None) -> list[MathSpan]:
+    """Inline MathSpans (no runs) over text-font maths in ``text`` by content (MATH-2): see
+    CONTENT_RELATIONS. Spans overlapping ``taken`` are dropped. Pure."""
+    toks = [(m.start(), m.end(), m.group()) for m in _TOKEN_RE.finditer(text)]
+    marks: list[tuple[int, int]] = []  # token index ranges [lo, hi]
+    for i, (_, _, tok) in enumerate(toks):
+        core = _core(tok)
+        left = i > 0 and _operand(toks[i - 1][2])
+        right = i + 1 < len(toks) and _operand(toks[i + 1][2])
+        if core in CONTENT_RELATIONS or (core in CONTENT_OPERATIONS and (left or right)):
+            marks.append((i - 1 if left else i, i + 1 if right else i))
+        elif core in CONTENT_DASHES and left and i + 1 < len(toks):
+            numbers = _NUMBER_RE.match(_core(toks[i - 1][2])) and _NUMBER_RE.match(
+                _core(toks[i + 1][2])
+            )
+            if core == "−" or not numbers:  # "2015 – 2020" is a range, "5 − 2" a minus
+                marks.append((i - 1, i + 1 if right else i))
+        elif _inner_relation(tok):  # a lone glyph token is the reader's (glyph_spans, units)
+            marks.append((i, i))
+    merged: list[list[int]] = []
+    for lo, hi in sorted(marks):
+        if merged and (lo <= merged[-1][1] or (lo == merged[-1][1] + 1 and _operand(toks[lo][2]))):
+            merged[-1][1] = max(merged[-1][1], hi)
+        else:
+            merged.append([lo, hi])
+    for m in merged:  # an open bracket group ("N(5, 6)") closes within BRACKET_REACH tokens
+        depth = sum(t[2].count("(") - t[2].count(")") for t in toks[m[0] : m[1] + 1])
+        reach = 0
+        while (
+            depth > 0
+            and m[1] + 1 < len(toks)
+            and reach < BRACKET_REACH
+            and not _WORD3_RE.search(toks[m[1] + 1][2])
+        ):
+            m[1] += 1
+            reach += 1
+            depth += toks[m[1]][2].count("(") - toks[m[1]][2].count(")")
+    busy = [(sp.start, sp.end) for sp in taken or []]
+    out: list[MathSpan] = []
+    for lo, hi in merged:
+        s, e = toks[lo][0], toks[hi][1]
+        while s < e and text[s] in _EDGE + "([":
+            if text[s] in "([" and text[s:e].count(text[s]) <= text[s:e].count(
+                ")]"["([".index(text[s])]
+            ):
+                break
+            s += 1
+        while e > s and text[e - 1] in _EDGE + ")]":
+            if text[e - 1] in ")]" and text[s:e].count(text[e - 1]) <= text[s:e].count(
+                "(["[")]".index(text[e - 1])]
+            ):
+                break
+            e -= 1
+        if s < e and not _WORD3_RE.search(text[s:e]) and not any(s < b and a < e for a, b in busy):
+            out.append(MathSpan(s, e, False, []))
     return out
 
 
@@ -528,6 +643,10 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
     for lb in out:
         lb.text = lb.text.rstrip(SOFT_HYPHEN)  # a soft hyphen no later block joined onto
         lb.math_spans = _shift(lb.math_spans, 0, len(lb.text), 0)
+        if lb.type in CONTENT_MATH_TYPES:
+            found = content_spans(lb.text, lb.math_spans)
+            if found:
+                lb.math_spans = sorted([*lb.math_spans, *found], key=lambda sp: sp.start)
     return out
 
 

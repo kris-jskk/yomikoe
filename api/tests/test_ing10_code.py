@@ -87,14 +87,8 @@ def test_ing10_d14_guard_weighs_code_raw_text() -> None:
     "name",
     [
         "formula_08_sympy_integration",
-        pytest.param(
-            "formula_09_scipy_least_squares",
-            marks=pytest.mark.xfail(
-                reason="stage 1 reports a near-full-page table region on this page, and the "
-                "table rule wins over code (spec m5 §3d), so its listing stays table/figure",
-                strict=True,
-            ),
-        ),
+        # m5 p3d: the near-full-page ruled region is prose between rules (is_prose_region)
+        "formula_09_scipy_least_squares",
     ],
 )
 def test_ing10_formula_fixtures_have_code_blocks(name: str) -> None:
