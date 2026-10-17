@@ -17,6 +17,41 @@ _TLDS = r"com|org|net|io|ai|co|edu|gov|dev|app|me|us|uk|de|fr|ca|info|biz|tv|ly|
 # "https:// host" and "www. host" (a PDF line break) still reach the host.
 _SPACE_BEFORE_HOST = r"(?:\s(?=[\w-]+\.\w))?"
 
+# Roman numerals I..XXXIX that label structure ("PART II", "World War II") are spoken as
+# cardinals; without this the voice reads "II" as letters or a pronoun ("PART E").
+_ROMAN_UP = r"(?:X{1,3}(?:IX|IV|V?I{0,3})|IX|IV|V?I{1,3}|V)"
+_ROMAN = rf"(?:{_ROMAN_UP}|(?-i:{_ROMAN_UP.lower()}))"
+_STRUCTURAL = (
+    r"part|chapter|book|section|volume|vol\.|act|scene|appendix|war|phase|stage|step|level|tier"
+)
+_ROMAN_VALUES = {"I": 1, "V": 5, "X": 10}
+_ONES = [
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+]
+_TENS = {2: "twenty", 3: "thirty"}
+# A heading that is a numeral alone ("II", "XIV.") or leads with one ("II. Making Money").
+_HEADING_ROMAN = re.compile(rf"(?P<num>{_ROMAN})(?=\.?\s*$|\.\s)")
+
+
 _PATTERN = re.compile(
     r"(?P<citation>\[\d+(?:\s*[,–-]\s*\d+)*\])"
     r"|(?P<etal>\bet al\.)"
@@ -25,6 +60,7 @@ _PATTERN = re.compile(
     r"[^\s/]+(?:/\S*)?)"
     rf"|(?P<email>(?<![\w.+-])[A-Za-z0-9._%+-]+@{_LABEL}(?:\.{_LABEL})*\.[A-Za-z]{{2,}}\b)"
     rf"|(?P<domain>(?<![\w@./:-])(?:{_LABEL}\.)+(?:{_TLDS})(?![\w-]|\.\w)(?:/\S*)?)"
+    rf"|(?P<roman>(?i:\b(?P<kw>{_STRUCTURAL})[ \t]+)(?P<num>{_ROMAN})\b(?![-'’]?\w))"
 )
 _URL_PREFIX = re.compile(r"(?:https?://\s?(?:www\.)?|www\.\s?)")
 _URL_TRAILING = ".,;:!?)]}'\"”’"
@@ -36,7 +72,24 @@ _PATH_MAX_CHARS = 30
 _SPOKEN = {".": " dot ", "/": " slash ", "@": " at "}
 
 
-def normalize(text: str) -> tuple[str, list[int]]:
+def roman_value(numeral: str) -> int:
+    """Value of a valid roman numeral made of I, V and X (either case)."""
+    total = 0
+    digits = [_ROMAN_VALUES[c] for c in numeral.upper()]
+    for k, v in enumerate(digits):
+        total += -v if k + 1 < len(digits) and digits[k + 1] > v else v
+    return total
+
+
+def number_words(n: int) -> str:
+    """Cardinal words for 1..39 ("two", "fourteen", "twenty-one")."""
+    if n < 20:
+        return _ONES[n]
+    tens, ones = divmod(n, 10)
+    return _TENS[tens] + (f"-{_ONES[ones]}" if ones else "")
+
+
+def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
     """Return (normalized_text, char_map) with len(char_map) == len(normalized_text).
 
     One left-to-right pass over regex matches (citation, et al., percent, URL, e-mail,
@@ -57,6 +110,15 @@ def normalize(text: str) -> tuple[str, list[int]]:
     A leading bullet (``GLYPH_BULLET_RE``: a glyph such as "•" or "→", or "-" "–" "—" "*"
     before a space) and the whitespace around it emit nothing, so a list item is spoken from
     its first word; numbered markers ("1." "a)") are kept and spoken.
+
+    Roman numerals I..XXXIX (all upper or all lower case) after a structural word on the
+    same line (part, chapter, book, section, volume, vol., act, scene, appendix, war, phase,
+    stage, step, level, tier; any case) become cardinal words ("PART II" -> "Part two"); an
+    all-caps keyword is title-cased letter for letter so it is not spelled out. "I" after a
+    lowercase keyword followed by a lowercase word ("part I think") is the pronoun and is
+    kept. When ``heading`` is true, a numeral that is the whole text ("II", "XIV.") or leads
+    it before ". " ("II. Making Money") is converted too, except a bare "I". "Henry VIII"
+    and "Mr. X" have no keyword and are untouched.
     """
     out: list[str] = []
     cmap: list[int] = []
@@ -99,6 +161,10 @@ def normalize(text: str) -> tuple[str, list[int]]:
 
     bullet = GLYPH_BULLET_RE.match(text)
     pos = bullet.end() if bullet else 0
+    lead = _HEADING_ROMAN.match(text, pos) if heading else None
+    if lead and lead.group("num").upper() != "I":
+        emit(number_words(roman_value(lead.group("num"))), pos, lead.end() - pos)
+        pos = lead.end()
     for m in _PATTERN.finditer(text, pos):
         for i in range(pos, m.start()):
             out.append(text[i])
@@ -120,6 +186,27 @@ def normalize(text: str) -> tuple[str, list[int]]:
             trimmed = token.rstrip(_URL_TRAILING)
             suffix_start = start + len(trimmed)
             emit_address(start, suffix_start, kind)
+        elif kind == "roman":
+            kw, num = m.group("kw"), m.group("num")
+            nxt = text[end : end + 2]
+            if (
+                num in ("I", "i")
+                and kw[0].islower()
+                and len(nxt) == 2
+                and nxt[0] == " "
+                and (nxt[1].islower())
+            ):
+                emit(token, start, len(token))  # "part I think": the pronoun
+            else:
+                kw_out = kw.capitalize() if kw.isupper() and len(kw) > 1 else kw
+                for k, ch in enumerate(kw_out):
+                    out.append(ch)
+                    cmap.append(start + k)
+                num_start = m.start("num")
+                for i in range(start + len(kw), num_start):
+                    out.append(text[i])
+                    cmap.append(i)
+                emit(number_words(roman_value(num)), num_start, len(num))
         for i in range(suffix_start, end):
             out.append(text[i])
             cmap.append(i)

@@ -240,3 +240,6 @@ the same word. Steps 3, 6 and 7 need your eyes, Safari and your ears.
   them as zero-length clips, skipped silently with no gap. A failed prefetch of a later segment is
   skipped with a `hearnarro:skip-segment` console warning. Dropping page markers in the parser is an
   M4 item (ING-4).
+- Documents ingested before a normalizer change keep their old `normalized_text`; run
+  `cd api && .venv/bin/python -m hearnarro renormalize --data-dir ~/hearnarro-m1 --document-id N`
+  (or `--all`) to re-apply it; it drops the cached audio of the changed segments only.

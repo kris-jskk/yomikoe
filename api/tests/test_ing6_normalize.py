@@ -213,3 +213,74 @@ def test_ing6_numbered_markers_and_non_bullets_are_spoken(text: str) -> None:
     out, cmap = normalize(text)
     assert out == text
     assert cmap == list(range(len(text)))
+
+
+# Roman numerals that label structure are read as numbers (PART II report, 2026-10-17).
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("PART II", "Part two"),
+        ("Part II: Wealth", "Part two: Wealth"),
+        ("Chapter IV", "Chapter four"),
+        ("CHAPTER XIV. The End", "Chapter fourteen. The End"),
+        ("Book III", "Book three"),
+        ("Act V, Scene ii", "Act five, Scene two"),
+        ("Appendix VII", "Appendix seven"),
+        ("Volume I", "Volume one"),
+        ("Vol. IX of the set", "Vol. nine of the set"),
+        ("Section IX applies.", "Section nine applies."),
+        ("After World War II ended.", "After World War two ended."),
+        ("World War I ended.", "World War one ended."),
+        ("Phase XXXIX", "Phase thirty-nine"),
+        ("see part iv below", "see part four below"),
+        ("Step XXI.", "Step twenty-one."),
+    ],
+)
+def test_ing6_roman_after_structural_word(text: str, expected: str) -> None:
+    out, cmap = normalize(text)
+    assert out == expected
+    assert len(cmap) == len(out)
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [("II", "two"), ("XIV.", "fourteen."), ("II. Making Money", "two. Making Money")],
+)
+def test_ing6_roman_heading_alone_or_leading(text: str, expected: str) -> None:
+    assert normalize(text, heading=True)[0] == expected
+    assert normalize(text)[0] == text  # body text: untouched
+
+
+@pytest.mark.parametrize(
+    ("text", "heading"),
+    [
+        ("Henry VIII was king.", False),
+        ("Mr. X said no.", False),
+        ("I", True),
+        ("I think so.", True),
+        ("It was part I think of the plan.", False),
+        ("Louis XIV", True),
+        ("Part MMX", False),
+        ("Partial II", False),
+        ("Part IIa", False),
+        ("Part\nII", False),
+    ],
+)
+def test_ing6_roman_negative_cases(text: str, heading: bool) -> None:
+    assert normalize(text, heading=heading) == (text, list(range(len(text))))
+
+
+def test_ing6_roman_char_map_round_trip() -> None:
+    text = "PART II: How to Get Rich"
+    out, cmap = normalize(text)
+    assert out == "Part two: How to Get Rich"
+    _assert_expansion_in_span(text, "II", out, cmap, "two")
+    assert cmap[:4] == [0, 1, 2, 3]  # "Part" maps to "PART" letter by letter
+    tail = out.index(":")
+    assert cmap[tail:] == list(range(text.index(":"), len(text)))
+    heading = "XXXVIII. Notes"
+    out, cmap = normalize(heading, heading=True)
+    assert out == "thirty-eight. Notes"
+    _assert_expansion_in_span(heading, "XXXVIII", out, cmap, "thirty-eight")
+    assert all(0 <= i < len(heading) for i in cmap)

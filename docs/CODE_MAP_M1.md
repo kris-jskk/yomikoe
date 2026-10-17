@@ -53,7 +53,12 @@ M1 turns a PDF into ordered sentence segments in SQLite and serves them over HTT
   split into sentences with offsets back into the merged block text.
 - **ING-6 (subset)** normalization for speech (`normalized_text` plus `char_map`): citations
   dropped, `et al.`, percent, URLs, bare domains and e-mail addresses spoken with "dot" / "slash" / "at"; all-caps tokens left as written (the M2 backend
-  decides spoken vs spelled), and acronym definitions collected per document.
+  decides spoken vs spelled), and acronym definitions collected per document. Roman numerals
+  I..XXXIX after a structural word (part, chapter, book, section, volume, vol., act, scene,
+  appendix, war, phase, stage, step, level, tier) become cardinal words ("PART II" -> "Part two"),
+  and in a heading segment (`normalize(text, heading=True)`) a numeral alone or leading "II. Title"
+  does too, except a bare "I". `hearnarro renormalize --data-dir D (--document-id N | --all)`
+  re-applies the rules to stored segments and drops the audio cache rows of those that changed.
 - A document quality checklist (`hearnarro check`, 12 checks), a CLI, an HTTP smoke script.
 - ING-7 (table rows as prose) and ING-8 are not M1 (PRD milestones); OCR quality is M4.
 
