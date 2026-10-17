@@ -393,3 +393,81 @@ def test_eval7_speed_from_bench() -> None:
     assert agg["ttfa_p50_ms"] <= agg["ttfa_p95_ms"]
     assert set(agg["per_speed"]) == {"1.0"}
     assert agg["ttfa_p95_ms"] <= 2000  # PRD M2: first audio within 2 s
+
+
+# --- E3: HTML scorecard (D31, D33) -------------------------------------------------------
+
+RUNS = Path(__file__).resolve().parents[2] / "evals" / "runs"
+NEWEST = RUNS / "2026-10-17_d5f2e10.json"
+FIRST_BASELINE = RUNS / "2026-10-17_eadaef6.json"
+# Headline aggregates of the newest record as the scorecard prints them (4 decimals below 100,
+# 1 decimal from 100 up): EVAL-1 mean, EVAL-2 mean_f1, EVAL-3 total_mean_rate, EVAL-4
+# accuracy, EVAL-5 mean_wer, EVAL-6 share_within_150ms, EVAL-7 ttfa_p95_ms and rtf_mean.
+NEWEST_HEADLINES = ["0.9914", "0.9661", "2.5847", "0.6921", "0.3312", "0.7094", "2163.4", "0.0954"]
+
+
+def _load(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text())
+
+
+def test_e3_report_html_newest_alone() -> None:
+    from hearnarro.evals import report
+
+    record = _load(NEWEST)
+    html = report.html_scorecard(record)
+    assert html.startswith("<title>")
+    assert '<meta name="claude:viewport-fit-sides" content="cover">' in html
+    assert "<!doctype" not in html.lower() and "<body" not in html
+    assert "HearNarro Eval Scorecard" in html and record["run_id"] in html
+    for sid in record["suites"]:
+        assert f'id="{sid}"' in html, sid
+    for value in NEWEST_HEADLINES:
+        assert value in html, value
+
+
+def test_e3_report_html_against_first_baseline_marks_no_baseline() -> None:
+    from hearnarro.evals import report
+
+    record, base = _load(NEWEST), _load(FIRST_BASELINE)
+    html = report.html_scorecard(record, base)
+    assert base["run_id"] in html
+    missing = [sid for sid in record["suites"] if sid not in base["suites"]]
+    assert missing == ["EVAL-3", "EVAL-4", "EVAL-5", "EVAL-6", "EVAL-7"]
+    for sid in missing:
+        tile = re.search(rf'<div class="tile[^"]*" data-suite="{sid}">(.*?)</div>', html, re.DOTALL)
+        assert tile and "no baseline" in tile.group(1), sid
+    for value in NEWEST_HEADLINES:
+        assert value in html, value
+
+
+def test_e3_report_html_regressions_block_lists_lowered_example() -> None:
+    from hearnarro.evals import report
+
+    base = _load(NEWEST)
+    cand = copy.deepcopy(base)
+    cand["run_id"] = "2026-10-17_synthetic"
+    lowered, kept = cand["suites"]["EVAL-2"]["examples"][:2]
+    lowered["score"] -= 0.05
+    lowered["f1"] -= 0.05
+    html = report.html_scorecard(cand, base)
+    block = re.search(r'<ol class="regressions" data-suite="EVAL-2">(.*?)</ol>', html, re.DOTALL)
+    assert block, "no EVAL-2 regressions block"
+    assert lowered["id"] in block.group(1)
+    assert kept["id"] not in block.group(1)
+    assert "-0.0500" in block.group(1)
+
+
+def test_e3_report_html_standalone_and_cli(tmp_path: Path) -> None:
+    from hearnarro.evals import report
+    from hearnarro.evals.__main__ import main
+
+    record = _load(NEWEST)
+    assert report.html_scorecard(record, standalone=True).startswith("<!doctype html>")
+    out = tmp_path / "card.html"
+    code = main(["report", str(NEWEST), "--baseline", str(FIRST_BASELINE), "--html", str(out)])
+    assert code == 0 and out.exists()
+    text = out.read_text()
+    assert text.startswith("<title>") and "no baseline" in text
+    out2 = tmp_path / "card_standalone.html"
+    main(["report", str(NEWEST), "--html", str(out2), "--standalone"])
+    assert out2.read_text().startswith("<!doctype html>")
