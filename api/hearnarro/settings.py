@@ -24,7 +24,7 @@ TRIM_LEAD_ENV = "HEARNARRO_TRIM_LEAD_MS"  # SYN-1: silence kept before a clip's 
 TRIM_TAIL_ENV = "HEARNARRO_TRIM_TAIL_MS"  # SYN-1: silence kept after its last sound
 DEFAULT_TRIM_LEAD_MS = 60
 DEFAULT_TRIM_TAIL_MS = 150
-AUDIO_FORMATS = ("wav", "opus")  # D16: wav default
+AUDIO_FORMATS = ("wav", "opus")  # D16: opus default (decided 2026-10-17)
 DEFAULT_LOOKAHEAD = 5
 BACKENDS = ("fake", "kokoro")
 # D15: hexgrad/Kokoro-82M revision used when HEARNARRO_TTS_BACKEND=kokoro names no revision.
@@ -43,7 +43,7 @@ class Settings:
     kokoro_revision: str | None
     lookahead: int
     data_dir: Path
-    audio_format: str = "wav"  # "wav" | "opus" (D16)
+    audio_format: str = "opus"  # "wav" | "opus" (D16)
     trim_lead_ms: int = DEFAULT_TRIM_LEAD_MS
     trim_tail_ms: int = DEFAULT_TRIM_TAIL_MS
 
@@ -121,7 +121,7 @@ def load_settings(
         if lookahead < 0:
             raise SettingsError(f"{LOOKAHEAD_ENV}={raw!r} must be >= 0")
 
-    audio_format = (env.get(AUDIO_FORMAT_ENV) or "wav").strip().lower()
+    audio_format = (env.get(AUDIO_FORMAT_ENV) or "opus").strip().lower()
     if audio_format not in AUDIO_FORMATS:
         raise SettingsError(f"{AUDIO_FORMAT_ENV}={audio_format!r}; expected one of {AUDIO_FORMATS}")
 

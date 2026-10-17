@@ -57,7 +57,7 @@ def test_syn5_settings_lookahead_and_data_dir_from_env(tmp_path: Path) -> None:
     assert s.data_dir == tmp_path
 
 
-def test_syn1_settings_audio_format_wav_default_opus_opt_in() -> None:
-    assert load_settings({}, kokoro_installed=False).audio_format == "wav"
-    env = {"HEARNARRO_AUDIO_FORMAT": "opus"}
-    assert load_settings(env, kokoro_installed=False).audio_format == "opus"
+def test_syn1_settings_audio_format_opus_default_wav_opt_in() -> None:
+    assert load_settings({}, kokoro_installed=False).audio_format == "opus"  # D16
+    env = {"HEARNARRO_AUDIO_FORMAT": "wav"}
+    assert load_settings(env, kokoro_installed=False).audio_format == "wav"
