@@ -83,6 +83,7 @@ OPEN, CLOSE = "([{⟨", ")]}⟩"
 BIGOPS = {"∑": "sum", "∏": "prod", "∫": "int", "∮": "int"}
 _NUM = re.compile(r"\d+(?:\.\d+)?")
 _LABEL_TAIL = re.compile(r"\s*\(\s*(\d+(?:\.\d+)*)\s*\)\s*$")
+_LABEL_HEAD = re.compile(r"^\s*\(\s*(\d+(?:\.\d+)*)\s*\)\s+")  # left-numbered (amsmath leqno)
 
 
 def _lex(text: str) -> list[_Tok]:
@@ -297,12 +298,44 @@ def _as_interval(group: Node) -> Node | None:
     return Node("interval", [Node("row", a), Node("row", b)], group.text)
 
 
+# TeX's CMEX extension font (large delimiters, operators, radicals): PDFs made by TeX expose its
+# glyphs under their code points, so "P" is a summation sign and "\x00" a big left parenthesis.
+# Control characters never occur in text, so they are read as CMEX delimiters in any run.
+_CMEX_DELIMS = dict(
+    zip(
+        range(0x24),
+        "()[]⌊⌋⌈⌉{}⟨⟩|‖/\\()()[]⌊⌋⌈⌉{}⟨⟩/\\()[]",
+        strict=True,
+    )
+)
+_CMEX_LETTERS = {
+    "P": "∑", "X": "∑", "Q": "∏", "Y": "∏", "R": "∫", "Z": "∫",
+    "H": "∮", "I": "∮", "p": "√", "q": "√", "r": "√", "s": "√", "t": "√",
+}  # fmt: skip
+_CONTROL_DELIMS = str.maketrans({chr(k): v for k, v in _CMEX_DELIMS.items() if k < 0x20})
+
+
+def cmex_text(text: str, font: str = "") -> str:
+    """``text`` with CMEX code points read as the delimiters and operators they draw."""
+    if "cmex" in font.lower():
+        table = {**_CMEX_LETTERS, **{chr(k): v for k, v in _CMEX_DELIMS.items() if k >= 0x21}}
+        text = "".join(table.get(c, c) for c in text)
+    return text.translate(_CONTROL_DELIMS)
+
+
+def _base_size(runs: list[Any]) -> float:
+    """The body size of a display: the largest size outside CMEX, whose large delimiters and
+    operators would otherwise make every other run look like a script."""
+    sizes = [r.size for r in runs if "cmex" not in r.font.lower()]
+    return max(sizes) if sizes else max(r.size for r in runs)
+
+
 def _runs_rows(span: MathSpan) -> list[list[tuple[str, str]]]:
     """Rows of (text, script) pieces from the span's runs; script is "", "sup" or "sub"."""
     runs = [r for r in span.runs if r.text]
     if not runs:
         return []
-    base = max(r.size for r in runs)
+    base = _base_size(runs)
     rows: list[list[tuple[str, str]]] = []
     row_y0 = row_mid = 0.0
     for r in runs:
@@ -312,12 +345,12 @@ def _runs_rows(span: MathSpan) -> list[list[tuple[str, str]]]:
             kind = "sup" if r.superscript or mid < row_mid else "sub"
             if not rows:
                 raise _Fail("script without base")
-            rows[-1].append((r.text, kind))
+            rows[-1].append((cmex_text(r.text, r.font), kind))
             continue
         if not rows or r.bbox.y0 > row_y0 + 0.5 * r.size:
             rows.append([])
             row_y0, row_mid = r.bbox.y0, (r.bbox.y0 + r.bbox.y1) / 2
-        rows[-1].append((r.text, ""))
+        rows[-1].append((cmex_text(r.text, r.font), ""))
     return rows
 
 
@@ -340,6 +373,8 @@ def _strip_label(toks: list[_Tok], label: str | None) -> list[_Tok]:
         and toks[-1].text == ")"
     ):
         return toks[:-3]
+    if label and len(toks) > 3 and [t.text for t in toks[:3]] == ["(", label, ")"]:
+        return toks[3:]  # left-numbered display (MATH-4)
     return toks
 
 
@@ -360,7 +395,7 @@ def parse(span: MathSpan, text: str | None = None) -> Node | None:
 
     ``text`` is used instead of the runs when the span carries none (a clipped span)."""
     try:
-        rows = _runs_rows(span) if span.runs else ([[(text, "")]] if text else [])
+        rows = _runs_rows(span) if span.runs else ([[(cmex_text(text), "")]] if text else [])
         if not rows:
             return None
         if len(rows) == 1:
@@ -386,6 +421,7 @@ def parse(span: MathSpan, text: str | None = None) -> Node | None:
 
 
 def label_of(text: str) -> str | None:
-    """ "3" from a display line ending in "(3)" (MATH-4)."""
-    m = _LABEL_TAIL.search(text)
+    """ "3" from a display line ending in "(3)", or starting with it when the document numbers
+    equations on the left (MATH-4)."""
+    m = _LABEL_TAIL.search(text) or _LABEL_HEAD.match(text)
     return m.group(1) if m else None

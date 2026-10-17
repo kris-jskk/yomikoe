@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -110,6 +111,9 @@ def name_of(ch: str) -> str | None:
         return EXTRA[ch]
     if ch in FUNCTIONS:
         return FUNCTIONS[ch]
+    if 0x1D400 <= ord(ch) <= 0x1D7FF:  # mathematical alphanumerics (𝑥, 𝐀, 𝟏): the plain letter
+        plain = unicodedata.normalize("NFKC", ch)
+        return name_of(plain) if plain != ch else None
     if ch in SUPERSCRIPTS:
         d = SUPERSCRIPTS[ch]
         return {"2": "squared", "3": "cubed", "T": "transpose"}.get(d, f"to the {d}")

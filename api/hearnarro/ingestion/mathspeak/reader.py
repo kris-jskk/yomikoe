@@ -13,8 +13,17 @@ left to right by ``symbols.name_of``.
 
 from __future__ import annotations
 
+import re
+
 from hearnarro.ingestion.mathspeak import symbols as sy
-from hearnarro.ingestion.mathspeak.structure import RELATIONS, MathSpan, Node, label_of
+from hearnarro.ingestion.mathspeak.structure import (
+    LIMOPS,
+    RELATIONS,
+    MathSpan,
+    Node,
+    cmex_text,
+    label_of,
+)
 
 _LIMOP_WORDS = {
     "lim": "the limit",
@@ -264,18 +273,40 @@ def _span_text(span: MathSpan) -> str:
 
 
 def fallback(span: MathSpan, text: str | None = None) -> str:
-    """MATH-1: "equation N" (or "equation") then every symbol left to right by name; never empty."""
+    """MATH-1: "equation N" (or "equation") then every symbol left to right by name; never empty.
+
+    An inline span (``display`` False) is read without the "equation" word: it sits inside a
+    sentence. A digit run (with decimal points) is one number and a function name (``log``,
+    ``tr``, ``max``) one word, so neither is spelled out character by character."""
     raw = text if text is not None else _span_text(span)
-    label = span.label or label_of(raw)
-    words = ["equation", label] if label else ["equation"]
+    label = (span.label or label_of(raw)) if span.display else None
+    if not span.display:
+        words: list[str] = []
+    else:
+        words = ["equation", label] if label else ["equation"]
     if label:
-        raw = raw[: raw.rfind("(")] if "(" in raw else raw
-    for ch in raw:
-        if not ch.isspace():
-            name = sy.name_of(ch) or sy.ACCENTS.get(ch)
-            if name:
-                words.append(name)
+        head = _LABEL_HEAD_RE.match(raw)
+        if head and head.group(1) == label:
+            raw = raw[head.end() :]
+        elif "(" in raw:
+            raw = raw[: raw.rfind("(")]
+    for tok in _FALLBACK_TOKEN.findall(cmex_text(raw)):
+        if tok[0].isdigit():
+            words.append(tok)
+        elif len(tok) > 1 and (tok in sy.FUNCTIONS or tok in LIMOPS):
+            words.append(sy.FUNCTIONS.get(tok, tok))
+        else:
+            for ch in tok:
+                name = sy.name_of(ch) or sy.ACCENTS.get(ch)
+                if name:
+                    words.append(name)
+    if not words:
+        words = ["equation"]
     return _join(words)
+
+
+_LABEL_HEAD_RE = re.compile(r"^\s*\(\s*(\d+(?:\.\d+)*)\s*\)\s+")
+_FALLBACK_TOKEN = re.compile(r"\d+(?:\.\d+)*|[A-Za-z]+|\S")
 
 
 def prefix(label: str | None) -> str:

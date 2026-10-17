@@ -21,6 +21,7 @@ clips the block's ``math_spans`` to the segment, calls ``speak_segment`` and sto
 from __future__ import annotations
 
 import itertools
+import re
 from collections.abc import Iterable, Sequence
 from dataclasses import replace
 from typing import Any
@@ -28,11 +29,18 @@ from typing import Any
 from hearnarro.ingestion.mathspeak.reader import fallback, prefix, speak
 from hearnarro.ingestion.mathspeak.references import rewrite_references
 from hearnarro.ingestion.mathspeak.structure import MathSpan, Node, label_of, parse
-from hearnarro.ingestion.mathspeak.symbols import rewrite_units
+from hearnarro.ingestion.mathspeak.symbols import name_of, rewrite_units
 from hearnarro.ingestion.normalize import normalize
 from hearnarro.ingestion.profile import PROSE_DEFAULT, DocumentProfile
 
-__all__ = ["apply_mathspeak", "char_map_errors", "math_segments", "speak_segment", "speak_span"]
+__all__ = [
+    "apply_mathspeak",
+    "char_map_errors",
+    "glyph_spans",
+    "math_segments",
+    "speak_segment",
+    "speak_span",
+]
 
 
 def speak_span(
@@ -46,10 +54,16 @@ def speak_span(
         stand_in = MathSpan(start, end, display, [], label)
     else:
         start, end, display, label = span.start, span.end, span.display, span.label
+        # A span's own leading or trailing whitespace stays with the prose around it, so the
+        # spoken maths does not glue onto the next word ("k sub 2we").
+        while start < end - 1 and text[start].isspace():
+            start += 1
+        while end > start + 1 and text[end - 1].isspace():
+            end -= 1
         raw = text[start:end]
         if display and label is None:
             label = label_of(raw)
-        stand_in = replace(span, label=label) if label != span.label else span
+        stand_in = replace(span, start=start, end=end, label=label)
         tree = parse(stand_in, raw)
     spoken = speak(tree, intervals=intervals).strip() if tree is not None else ""
     if not spoken:
@@ -148,10 +162,43 @@ def apply_mathspeak(
                     runs=sp.runs if inside else [],
                 )
             )
+        if getattr(block, "type", None) not in ("table", "code"):
+            local.extend(glyph_spans(seg.text, local))
         if not local and not rewrite_references(seg.text) and not rewrite_units(seg.text):
             continue
         seg.normalized_text, seg.char_map, entries = _speak(seg.text, local, profile)
         seg.math_json = entries or None
+
+
+_TOKEN = re.compile(r"\S+")
+_EDGE_PUNCT = ".,;:!?"
+
+
+def glyph_spans(text: str, spans: Sequence[MathSpan] = ()) -> list[MathSpan]:
+    """Inline spans (no runs) over the whitespace tokens of ``text`` that hold a non-ASCII
+    character named by the MATH-3 table and lie outside ``spans``: maths set in a text font
+    ("prior Π", "θ ∈Θ") has no math-font run for ``merge_blocks`` to mark (MATH-2, MATH-3).
+    Sentence punctuation and an unmatched bracket at either end stay with the prose; a token the
+    unit or reference rewrites already cover is left to them."""
+    out: list[MathSpan] = []
+    taken = [(a, b) for a, b, _ in rewrite_units(text) + rewrite_references(text)]
+    taken += [(sp.start, sp.end) for sp in spans]
+    for m in _TOKEN.finditer(text):
+        s, e = m.start(), m.end()
+        while e > s and text[e - 1] in _EDGE_PUNCT:
+            e -= 1
+        tok = text[s:e]
+        if not tok:
+            continue
+        if tok[-1] in ")]" and tok.count(tok[-1]) > tok.count("(" if tok[-1] == ")" else "["):
+            e -= 1
+        if tok[0] in "([" and tok.count(tok[0]) > tok.count(")" if tok[0] == "(" else "]"):
+            s += 1
+        if s >= e or any(s < b and a < e for a, b in taken):  # units ("10 μm") stay MATH-3
+            continue
+        if any(not c.isascii() and name_of(c) for c in text[s:e]):
+            out.append(MathSpan(s, e, False, []))
+    return out
 
 
 def math_segments(result: Any) -> list[Any]:
