@@ -15,7 +15,7 @@ services:
       HEARNARRO_WEB_DIST: /app/web/dist
       HEARNARRO_TTS_BACKEND: kokoro
       HEARNARRO_KOKORO_REVISION: f3ff3571791e39611d31c381e3a41a3af07b4987
-      HEARNARRO_AUDIO_FORMAT: wav
+      HEARNARRO_AUDIO_FORMAT: opus
       HF_HOME: /hf_home
     restart: unless-stopped
 

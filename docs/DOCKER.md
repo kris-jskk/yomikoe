@@ -14,6 +14,16 @@ docker compose up --build        # build the image and start the server (Ctrl-C 
 Then open <http://localhost:8765/> in the browser. Check the API with
 `curl -i http://localhost:8765/documents` (expect `200`).
 
+The default host port is 8765. To use another host port, create an optional, git-ignored
+`docker-compose.override.yml` next to `docker-compose.yml`, for example:
+
+```yaml
+services:
+  api:
+    ports: !override
+      - "8766:8765"
+```
+
 To run it in the background instead: `docker compose up --build -d`, and `docker compose down` to stop.
 
 ## Volumes
@@ -33,5 +43,5 @@ and run offline. The image build itself also needs network (npm and pip packages
 ## Settings
 
 Environment variables in `docker-compose.yml`: `HEARNARRO_TTS_BACKEND` (`kokoro`, or `fake` for a
-silent test backend), `HEARNARRO_KOKORO_REVISION`, `HEARNARRO_AUDIO_FORMAT` (`wav` default; `opus`
-needs the `opus` extra, which this image does not install).
+silent test backend), `HEARNARRO_KOKORO_REVISION`, `HEARNARRO_AUDIO_FORMAT` (`opus` default: audio is
+served as Ogg Opus, and the image installs the `opus` extra; set `HEARNARRO_AUDIO_FORMAT=wav` to opt out).

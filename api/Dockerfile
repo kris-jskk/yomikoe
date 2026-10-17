@@ -34,7 +34,7 @@ COPY api/hearnarro ./hearnarro
 # Editable install keeps hearnarro/storage/migrations (env.py, versions/) on disk; a wheel install
 # would drop them because the migrations directory is not a Python package.
 # CPU-only torch from the PyTorch index keeps the image free of the CUDA wheels.
-RUN pip install --extra-index-url https://download.pytorch.org/whl/cpu -e ".[tts]"
+RUN pip install --extra-index-url https://download.pytorch.org/whl/cpu -e ".[tts,opus]"
 
 COPY --from=web /src/web/dist /app/web/dist
 

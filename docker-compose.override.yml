@@ -1,6 +1,0 @@
-# Local check override (m4-4): the host dev server holds 8765, so the container is published
-# on host port 8766. `!override` replaces the base ports list instead of appending to it.
-services:
-  api:
-    ports: !override
-      - "8766:8765"

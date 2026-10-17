@@ -24,3 +24,6 @@ data/
 
 # User PDFs for local smoke runs (never committed)
 api/tests/user_docs/*.pdf
+
+# Local compose port override (m4-4; see docs/DOCKER.md)
+docker-compose.override.yml
