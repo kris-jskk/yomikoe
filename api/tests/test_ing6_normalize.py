@@ -284,3 +284,61 @@ def test_ing6_roman_char_map_round_trip() -> None:
     assert out == "thirty-eight. Notes"
     _assert_expansion_in_span(heading, "XXXVIII", out, cmap, "thirty-eight")
     assert all(0 <= i < len(heading) for i in cmap)
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("On a scale of 1–10, I would", "On a scale of 1 to 10, I would"),
+        ("See pages 10-12.", "See pages 10 to 12."),
+        ("See pp. 10-12.", "See pp. 10 to 12."),
+        ("From 1990–1995 it grew.", "From 1990 to 1995 it grew."),
+        ("From 1990—1995 it grew.", "From 1990 to 1995 it grew."),
+        ("Ages 3 - 5 only.", "Ages 3 to 5 only."),
+        ("Ages 3 – 5 only.", "Ages 3 to 5 only."),
+        ("A 5–10% gain.", "A 5 to 10 percent gain."),
+        ("Walk 5-10km daily.", "Walk 5 to 10km daily."),
+        ("(1-3)", "(1 to 3)"),
+    ],
+)
+def test_ing6_numeric_range_read_as_to(text: str, expected: str) -> None:
+    out, cmap = normalize(text)
+    assert out == expected
+    assert len(cmap) == len(out)
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "ISBN 978-0-12-345678-9 here.",
+        "Dated 2026-10-17 today.",
+        "Row A-1 is empty.",
+        "During COVID-19 we stayed in.",
+        "A 3-D film.",
+        "Let x-1 be small.",
+        "Call 555-1234-5678 now.",
+        "Between 1.5-2 litres.",
+        "Ran 9:00-10:00 daily.",
+        "Code 12345-6789 here.",
+        "Odd 3 -5 spacing.",
+    ],
+)
+def test_ing6_numeric_range_negative_cases(text: str) -> None:
+    assert normalize(text) == (text, list(range(len(text))))
+
+
+def test_ing6_numeric_range_char_map_round_trip() -> None:
+    text = "On a scale of 1–10, I would"
+    out, cmap = normalize(text)
+    assert out == "On a scale of 1 to 10, I would"
+    dash = text.index("–")
+    o = out.index(" to ")
+    assert cmap[o : o + 4] == [dash] * 4  # " to " maps onto the dash
+    assert cmap[:o] == list(range(dash))
+    assert cmap[o + 4 :] == list(range(dash + 1, len(text)))
+    spaced = "Ages 3 - 5 only."
+    out, cmap = normalize(spaced)
+    o = out.index(" to ")
+    assert all(spaced.index(" - ") <= i < spaced.index(" - ") + 3 for i in cmap[o : o + 4])
+    assert cmap[o + 4 :] == list(range(spaced.index("5"), len(spaced)))
