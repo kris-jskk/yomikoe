@@ -24,6 +24,10 @@ from hearnarro.ingestion.models import ITEM_RE, BBox, Block, BlockType, Line, Pa
 PAGE_NUMBER_RE = re.compile(
     r"^(?:\d+|[ivxlc]+|page\s+(?:\d+|[ivxlc]+)\b.*|\d+\s+of\s+\d+)$", re.IGNORECASE
 )
+# ING-4 (document 17): a block whose only text is a bracketed or bare page number ("[47]",
+# "23") left mid-page by a scan-to-PDF tool or leaked from a TOC; typed noise, never read.
+# A bare 19xx/20xx is kept: a lone year (a cover or title-page date) is content, not a marker.
+PAGE_MARKER_RE = re.compile(r"^(?:\[\d{1,4}\]|(?!(?:19|20)\d\d$)\d{1,4})$")
 EMAIL = r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"
 URL = r"(?:https?://|www\.)\S+"
 # A line whose only content is emails/URLs (comma, semicolon or space separated).
@@ -346,6 +350,8 @@ def _classify(
         return "noise"
     if TABLE_FIRST and _inside(block, tables):
         return "table"
+    if PAGE_MARKER_RE.match(text) and not any(block.bbox.overlaps(t) for t in tables):
+        return "noise"  # ING-4: a page marker outside the TOC region (and outside any table)
     size = _max_size(block)
     if median > 0 and size >= HEADING_SIZE_RATIO * median:
         return "heading"

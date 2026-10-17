@@ -192,6 +192,7 @@ def _line_from_layout(chars: LayoutLine) -> Line | None:
             if key is not None:
                 text.append(c.text)
             continue
+        letters = c.text.translate(LIGATURE_CHARS)  # ING-5: "\ufb01" -> "fi"
         if upright:
             k = (c.font, round(c.size, 2), True, raised(c))
         else:  # pdfminer reports a rotated glyph's advance as its size; use the line's
@@ -199,7 +200,7 @@ def _line_from_layout(chars: LayoutLine) -> Line | None:
         if k != key:
             flush()
             key, text, boxes = k, [], []
-        text.append(c.text)
+        text.append(letters)
         boxes.append(c.bbox)
     flush()
     spans = [s for s in spans if s.text]
@@ -235,7 +236,7 @@ def page_from_layout(
             continue
         bbox = _union([ln.bbox for ln in lines])
         blocks.append(Block(page=number, index=index, bbox=bbox, lines=lines))
-    return Page(
+    page = Page(
         number=number,
         width=width,
         height=height,
@@ -243,10 +244,20 @@ def page_from_layout(
         image_bboxes=list(image_bboxes),
         table_bboxes=list(table_bboxes),
     )
+    page.text_chars = _char_count(page)
+    return page
 
 
 def _char_count(page: Page) -> int:
-    return sum(len(s.text.strip()) for b in page.blocks for ln in b.lines for s in ln.spans)
+    """Non-space glyphs on the page (ING-2 ``Page.text_chars``)."""
+    return sum(
+        1
+        for b in page.blocks
+        for ln in b.lines
+        for s in ln.spans
+        for c in s.text
+        if not c.isspace()
+    )
 
 
 def _touch(a: BBox, b: BBox) -> bool:
@@ -620,7 +631,17 @@ def _font_drops(chars: Sequence[dict[str, Any]]) -> dict[str, float]:
 # (f_i, f_f_i, uniFB01, ...): the repair looks the glyph up through the font's own cmap and, when
 # the mapped text is one punctuation character and the glyph is a ligature, uses the letters.
 _LIGATURES = {"ff": "ff", "fi": "fi", "fl": "fl", "ffi": "ffi", "ffl": "ffl", "ft": "ft"}
-_LIGATURE_UNI = {"FB00": "ff", "FB01": "fi", "FB02": "fl", "FB03": "ffi", "FB04": "ffl"}
+_LIGATURE_UNI = {
+    "FB00": "ff",
+    "FB01": "fi",
+    "FB02": "fl",
+    "FB03": "ffi",
+    "FB04": "ffl",
+    "FB05": "st",
+    "FB06": "st",
+}
+# ING-5: the same ligatures as text-layer code points (U+FB00..U+FB06), decomposed in stage 1.
+LIGATURE_CHARS = str.maketrans({chr(int(code, 16)): text for code, text in _LIGATURE_UNI.items()})
 
 
 def ligature_text(glyph: str) -> str | None:
@@ -957,7 +978,7 @@ def extract_pages(
                 page.image_bboxes, _drawing_rects(pdf_page, coords), page.width, page.height
             )
             pdf_page.close()
-            if _char_count(page) < min_text_chars:
+            if page.text_chars < min_text_chars:
                 page.has_text_layer = False
                 page.blocks = []
                 if ocr and ocr_available():

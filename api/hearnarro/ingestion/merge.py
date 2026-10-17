@@ -10,7 +10,9 @@ from hearnarro.ingestion.models import (
     INLINE_ITEM_RE,
     ITEM_RE,
     Block,
+    Line,
     LogicalBlock,
+    Span,
 )
 from hearnarro.ingestion.segment import _segmenter
 
@@ -38,12 +40,14 @@ LINE_END_HYPHENS = ("-", "\u2010", "\u2011")
 SOFT_HYPHEN = "\u00ad"  # invisible break point: always dropped at a line end, no space added
 
 
-def merge_lines(lines: list[str]) -> str:
+def merge_lines(lines: list[str], *, heading: bool = False) -> str:
     """Join lines with spaces, de-hyphenating before a lowercase continuation.
 
     A soft hyphen ending a line is removed and the next line joined without a space. A soft
     hyphen ending the last line is left in place so a later cross-block ``merge_lines`` call
-    can still join on it; ``merge_blocks`` strips any that remain.
+    can still join on it; ``merge_blocks`` strips any that remain. In a heading (``heading``),
+    a line ending in a hyphen before any other continuation keeps the hyphen and joins with
+    no space ("Multi-" + "Modal" -> "Multi-Modal", ING-4 document 17).
     """
     parts = [" ".join(line.split()) for line in lines]
     out = ""
@@ -52,6 +56,8 @@ def merge_lines(lines: list[str]) -> str:
             continue
         if out.endswith(SOFT_HYPHEN) or (out.endswith(LINE_END_HYPHENS) and part[0].islower()):
             out = out[:-1] + part
+        elif heading and out.endswith(LINE_END_HYPHENS):
+            out = out + part
         elif out:
             out = out + " " + part
         else:
@@ -78,6 +84,74 @@ def split_items(lines: list[str]) -> list[str]:
             else:
                 items.append([piece])
     return [text for text in (merge_lines(item) for item in items) if text]
+
+
+# ING-7: cells of a table row are spans this many font sizes apart; closer spans are one cell.
+CELL_GAP = 1.0
+WORD_GAP = 0.15  # spans of one cell further apart than this (in font sizes) get a space
+EQUATION_LABEL_RE = re.compile(r"\((\d{1,3}[a-z]?)\)\s*$")
+
+
+def table_cells(line: Line) -> list[str]:
+    """The cells of one table row (ING-7): its spans left to right, split where the gap to the
+    previous span exceeds CELL_GAP font sizes."""
+    cells: list[str] = []
+    prev: Span | None = None
+    for span in sorted(line.spans, key=lambda sp: sp.bbox.x0):
+        text = " ".join(span.text.split())
+        if not text:
+            continue
+        size = max(span.size, prev.size if prev else 0.0, 1.0)
+        gap = span.bbox.x0 - prev.bbox.x1 if prev is not None else 0.0
+        if prev is None or gap > CELL_GAP * size:
+            cells.append(text)
+        else:
+            cells[-1] += (" " if gap > WORD_GAP * size else "") + text
+        prev = span
+    return cells
+
+
+def table_rows(block: Block) -> list[str]:
+    """Spoken rows of a table block (ING-7): cells joined with ", ", ended with "."; a row with
+    no alphabetic character is skipped."""
+    rows: list[str] = []
+    for line in block.lines:
+        if is_noise_line(line.text):
+            continue
+        row = ", ".join(table_cells(line)).rstrip(" .,;:")
+        if any(c.isalpha() for c in row):
+            rows.append(row + ".")
+    return rows
+
+
+def equation_cue(raw_lines: list[str]) -> str:
+    """ "Equation N." when a label like "(3)" ends a line of the block, else "Equation." (ING-7)."""
+    for line in raw_lines:
+        m = EQUATION_LABEL_RE.search(line)
+        if m:
+            return f"Equation {m.group(1)}."
+    return "Equation."
+
+
+def _table_groups(blocks: list[Block]) -> dict[int, tuple[int, int]]:
+    """Index of the first block of each run of consecutive same-page table blocks -> (table
+    number, spoken rows in the run). Tables are numbered through the document (ING-7)."""
+    groups: dict[int, tuple[int, int]] = {}
+    number = 0
+    first: int | None = None
+    for i, block in enumerate(blocks):
+        if block.type != "table" or block.inline:
+            first = None
+            continue
+        rows = len(table_rows(block))
+        if first is not None and blocks[i - 1].page == block.page:
+            n, r = groups[first]
+            groups[first] = (n, r + rows)
+            continue
+        number += 1
+        first = i
+        groups[i] = (number, rows)
+    return groups
 
 
 def is_noise_line(text: str) -> bool:
@@ -181,16 +255,17 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
     """
     in_author_block = True
     paragraph_joins = _paragraph_joins_on(blocks)
+    tables = _table_groups(blocks)
     out: list[LogicalBlock] = []
     candidate: int | None = None  # index in ``out`` of the last body block seen
     last_body: Block | None = None
-    for block in blocks:
+    for i, block in enumerate(blocks):
         lines = [ln.text for ln in block.lines if not is_noise_line(ln.text)]
         if block.page > 0 or ABSTRACT_RE.match(block.text):
             in_author_block = False
         if in_author_block and block.type in ("heading", "body"):
             lines = [strip_emails(ln) for ln in lines]
-        text = merge_lines(lines)
+        text = merge_lines(lines, heading=block.type == "heading")
         if block.inline and out and text:
             # Stage 3 found this block continuing the previous block's text line (inline maths).
             out[-1].text = merge_lines([out[-1].text, text])
@@ -236,6 +311,20 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
             continue
         if block.type in JOIN_BLOCKERS:
             candidate = None
+        if block.type == "table":
+            # ING-7: a cue "Table N, R rows." on the first block of a table, then one line per
+            # spoken row; split_sentences makes one segment per line.
+            spoken = table_rows(block)
+            if i in tables:
+                number, rows = tables[i]
+                if rows:
+                    spoken.insert(0, f"Table {number}, {rows} {'row' if rows == 1 else 'rows'}.")
+            out.append(_logical(len(out), block, "\n".join(spoken), raw=text))
+            continue
+        if block.type == "equation":
+            # ING-7: one cue segment; the symbols are never spoken.
+            out.append(_logical(len(out), block, equation_cue(lines), raw=text))
+            continue
         if block.type == "list":
             for item in split_items(lines):
                 out.append(_logical(len(out), block, item))
@@ -250,7 +339,12 @@ def _size(block: Block) -> float:
     return max((s.size for ln in block.lines for s in ln.spans), default=0.0)
 
 
-def _logical(id_: int, block: Block, text: str) -> LogicalBlock:
+def _logical(id_: int, block: Block, text: str, raw: str | None = None) -> LogicalBlock:
     return LogicalBlock(
-        id=id_, page=block.page, type=block.type, text=text, source=[(block.page, block.index)]
+        id=id_,
+        page=block.page,
+        type=block.type,
+        text=text,
+        source=[(block.page, block.index)],
+        raw_text=raw,
     )

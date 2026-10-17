@@ -23,6 +23,7 @@ from tests.golden_util import (
     CHAR_MASS_TOLERANCE,
     char_mass_balanced,
     char_mass_ratio,
+    excluded_actual_texts,
     prose_only,
     seq_levenshtein,
     word_score,
@@ -69,7 +70,9 @@ def _score(name: str) -> Score:
     expected, excluded_expected = prose_only((r["type"], r["text"]) for r in rows)
     result = ingest(FIXTURES / f"{name}.pdf", document_id=0, ocr=True)
     block_type = {b.id: b.type for b in result.blocks}
-    actual, excluded_actual = prose_only((block_type[s.block_id], s.text) for s in result.segments)
+    actual, _ = prose_only((block_type[s.block_id], s.text) for s in result.segments)
+    # ING-7: table/equation segments are cues; the guard weighs their blocks' raw text (D14).
+    excluded_actual = excluded_actual_texts(result.blocks, result.segments)
     assert expected, f"{name}.expected.jsonl has no prose segments"
     return Score(
         word=word_score(actual, expected),

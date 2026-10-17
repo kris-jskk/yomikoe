@@ -203,6 +203,19 @@ def _letter_splits(text: str, spans: list[Span]) -> list[Span]:
     return out
 
 
+def _line_spans(text: str) -> list[Span]:
+    """One stripped span per non-empty line (ING-7 table rows and cues)."""
+    spans: list[Span] = []
+    pos = 0
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if stripped:
+            start = pos + line.index(stripped)
+            spans.append((start, start + len(stripped)))
+        pos += len(line) + 1
+    return spans
+
+
 def split_sentences(
     block: LogicalBlock,
     *,
@@ -215,7 +228,10 @@ def split_sentences(
     text = block.text
     if not text.strip():
         return []
-    spans = _letter_splits(text, _merge(text, _pysbd_spans(block), abbreviations))
+    if block.type in ("table", "equation"):
+        spans = _line_spans(text)  # ING-7: cue and row lines are one segment each
+    else:
+        spans = _letter_splits(text, _merge(text, _pysbd_spans(block), abbreviations))
     segments: list[Segment] = []
     for i, (start, end) in enumerate(spans):
         sent = text[start:end]

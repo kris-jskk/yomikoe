@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import string
 from collections.abc import Iterable
+from typing import Any
 
 # D12: the golden comparison keeps only these types; table and equation internals wait for
 # ING-7 (M4), and figure/noise/header/footer text is never read.
@@ -39,6 +40,23 @@ def prose_only(items: Iterable[tuple[str, str]]) -> tuple[list[str], list[str]]:
     for type_, text in items:
         (kept if type_ in PROSE_TYPES else excluded).append(norm(text))
     return kept, excluded
+
+
+def excluded_actual_texts(blocks: Iterable[Any], segments: Iterable[Any]) -> list[str]:
+    """D14 guard, actual side, after ING-7: table and equation blocks speak cues, so their
+    character mass is taken from the block's raw merged text (``LogicalBlock.raw_text``, once
+    per block) rather than from the cue segments; other excluded blocks keep their segment text.
+    """
+    by_id = {b.id: b for b in blocks}
+    out: list[str] = []
+    for b in by_id.values():
+        if b.type not in PROSE_TYPES and b.raw_text is not None:
+            out.append(norm(b.raw_text))
+    for s in segments:
+        b = by_id[s.block_id]
+        if b.type not in PROSE_TYPES and b.raw_text is None:
+            out.append(norm(s.text))
+    return out
 
 
 def words(texts: list[str]) -> list[str]:

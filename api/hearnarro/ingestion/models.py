@@ -126,6 +126,7 @@ class Page:
     # D12: image bboxes plus unions of vector drawings covering 2%-80% of the page
     figure_bboxes: list[BBox] = field(default_factory=list)
     has_text_layer: bool = True
+    text_chars: int = 0  # ING-2: non-space glyphs stage 1 found in the text layer
 
 
 @dataclass
@@ -137,6 +138,9 @@ class LogicalBlock:
     type: BlockType
     text: str  # merged text (lines joined, de-hyphenated, cross-page joined)
     source: list[tuple[int, int]]  # (page, block.index) of every raw block merged in
+    # ING-7: a table or equation block's text is spoken cues; this keeps the raw merged text so
+    # the D14 excluded-mass guard can still weigh the table/equation characters.
+    raw_text: str | None = None
 
 
 @dataclass
