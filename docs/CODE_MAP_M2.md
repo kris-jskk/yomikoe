@@ -19,6 +19,8 @@ files untracked). Statuses below describe the files as they were read, not as th
 committed. The per-file inventory, with how each status was decided, is in
 `_agent/results/280_m2_code_inventory.txt`.
 
+**Update, phase 2 (service, cache, queue, stretch, audio API; commit "SYN-1 SYN-3 SYN-5 SYN-6: synthesis service ...").** `stretch.py`, `cache.py`, `service.py`, `routes/audio.py`, `routes/voices.py` and the `app.py` lifespan are now real code, tested on the FakeBackend: `_agent/results/297_syn_tests_green.txt` (58 passed, 2 failed, 2 `@model` skipped; the two failures are a test defect, see "Open items"), full suite `_agent/results/300_full_suite.txt`, manual run `_agent/results/302_manual_audio.txt`. Where the code differs from the designed walkthrough below, the step now says what the code does. `KokoroBackend` and `OpusEncoder` remain stubs here (another worker owns them).
+
 ### What M2 adds
 
 M1 turns a PDF into ordered sentence segments in SQLite. M2 turns one segment into audio the
@@ -62,17 +64,19 @@ at read time. Both are **to be measured in phase 3**.
 | `FakeBackend` (`fake.py`) | tested |
 | `WavEncoder`, `default_encoder` (`encode.py`) | tested |
 | `OpusEncoder` (`encode.py`) | stub |
-| `stretch_pcm`, `scale_timestamps` (`stretch.py`) | stub |
-| `AudioCache` (`cache.py`) | stub (`AudioEntry` is real) |
-| `SynthesisService`, `DbSegmentRepo` (`service.py`) | stub (`shutdown` is a no-op) |
+| `stretch_pcm`, `scale_timestamps` (`stretch.py`) | tested (numpy WSOLA, D17) |
+| `AudioCache` (`cache.py`) | tested |
+| `SynthesisService`, `DbSegmentRepo` (`service.py`) | tested (two queue tests fail on a test defect; Open items) |
 | `KokoroBackend` (`kokoro_backend.py`) | stub |
-| `GET`/`HEAD /audio`, `GET /voices` (`routes/`) | stub |
-| App wiring (`app.py` lifespan, `build_backend`) | implemented, uncommitted |
+| `GET`/`HEAD /audio`, `GET /voices` (`routes/`) | tested |
+| App wiring (`app.py` lifespan, `build_backend`) | tested (through `test_api_audio.py`) |
 | `settings.py` | tested |
 | Test doubles in `conftest.py` | implemented, uncommitted |
 | `boundary_util.py`, `test_syn_boundaries.py` | tested (measurement, no thresholds) |
-| `test_syn1_timestamps.py`, `test_syn3_speed.py` | red |
-| `test_syn5_queue.py`, `test_api_audio.py`, `test_syn_gate.py`, `scripts/bench.py` | planned |
+| `test_syn1_timestamps.py`, `test_syn3_speed.py`, `test_api_audio.py`, `test_syn_gate.py` (FakeBackend part), `test_stretch.py` | green (297) |
+| `test_syn5_queue.py` | 8 of 10 green; 2 fail on a fixture text collision (`_agent/results/299_queue_test_text_collision.txt`) |
+| `test_stretch.py` | WSOLA length within 2 % and pitch kept at 1.05–1.5; short/empty input; `scale_timestamps` order | SYN-3 | green (297) |
+| `scripts/bench.py` | planned (other worker) |
 
 ## Code flows
 
@@ -90,21 +94,21 @@ This is the path that decides time-to-first-audio. The browser has asked for a s
 has never been synthesized with this voice and speed.
 
 1. **HTTP in.** uvicorn → FastAPI → `api/hearnarro/routes/audio.py` → `get_audio(segment_id: int, voice: str, speed: float, request: Request) -> Response`
-   [stub]. FastAPI parses the path and query; a missing `voice` or `speed`, or a non-numeric
+   [tested]. FastAPI parses the path and query; a missing `voice` or `speed`, or a non-numeric
    value, is rejected by FastAPI itself with 422 before the handler runs.
-2. **Validate speed.** `routes/audio.py` → `get_audio` [stub]. Rule from the spec: `0.5 ≤ speed ≤ 3.0`
+2. **Validate speed.** `routes/audio.py` → `get_audio` [tested]. Rule from the spec: `0.5 ≤ speed ≤ 3.0`
    (`MIN_SPEED`, `MAX_SPEED` in the module) and `speed * 10` integral, else 422. The integral
    check must tolerate float error (`2.3 * 10` is `22.999999999999996`), so the designed check
    is "`round(speed * 10)` is within a small epsilon of `speed * 10`", and the value passed on
    is `round(speed, 1)` so every later cache key uses one canonical float.
-3. **Validate voice.** `routes/audio.py` → `get_audio` [stub]. `voice` must be one of
+3. **Validate voice.** `routes/audio.py` → `get_audio` [tested]. `voice` must be one of
    `request.app.state.tts_backend.voices()` ids, else 422. (`FakeBackend.synthesize` would also
    raise `ValueError` for an unknown voice, but the API rejects it before any work is queued.)
 4. **Hand to the service.** `routes/audio.py` → `svc.get_audio(segment_id, voice, speed)` in
    `api/hearnarro/synthesis/service.py` → `SynthesisService.get_audio(self, segment_id: int, voice_id: str, speed: float) -> AudioEntry`
-   [stub]. Crosses: three plain values.
+   [tested]. Crosses: three plain values.
 5. **Load the segment.** `service.py` → `self.repo.get_segment(segment_id)` →
-   `DbSegmentRepo.get_segment(self, segment_id: int) -> Segment | None` [stub]. Designed: one
+   `DbSegmentRepo.get_segment(self, segment_id: int) -> Segment | None` [tested]. Designed: one
    aiosqlite connection from `Engine.connect()` (`storage/db.py`), a `SELECT` on `segments` by
    primary key, `char_map` BLOB decoded with `unpack_char_map(blob: bytes) -> list[int]`
    (`storage/db.py`). Crosses: a `segments` row → `hearnarro.ingestion.models.Segment`
@@ -112,18 +116,24 @@ has never been synthesized with this voice and speed.
    `None` → the route answers 404.
 6. **Cache lookup.** `service.py` → `self.cache.get(segment_id, voice_id, speed, self.backend.name)` →
    `cache.py` → `AudioCache.get(self, segment_id: int, voice_id: str, speed: float, backend: str) -> AudioEntry | None`
-   [stub]. Designed: `SELECT` from `audio_cache` on the primary key
+   [tested]. Designed: `SELECT` from `audio_cache` on the primary key
    `(segment_id, voice_id, speed, backend)`. Returns `None` here (miss). If the row says `ready`
    but the file is gone, the designed behaviour is to treat it as a miss.
-7. **Join an in-flight job or jump the queue.** `service.py` → `get_audio` [stub]. If a lookahead
+7. **Join an in-flight job or jump the queue.** `service.py` → `get_audio` [tested]. If a lookahead
    job for exactly this key is already running on the synthesis thread, the request awaits that
    job's future instead of starting a second synthesis (Technical Design D5 diagram: "cache hit,
    or wait on in-flight job"). Otherwise this job is placed ahead of every queued lookahead job
    ("the first segment of a play request jumps the queue", SYN-5), so TTFA is one synthesis,
    not six. If the request is a seek (different voice or speed from the document's current
    queue, or an order outside the current window), the service clears and refills the queue
-   first; see flow (e).
-8. **Choose native or stretched.** `service.py` → `get_audio` [stub].
+   first; see flow (e). **Code:** the seek check runs first in `get_audio` (`_note_request`): per
+   document the service keeps the last requested `(voice, speed, order)`; a request with another
+   voice or speed, or an order outside `[last, last + lookahead]`, clears that document's queue
+   (log line `seek: document D order j ... queue cleared (n dropped)`). The miss then goes straight to
+   the executor; the queue consumer hands the executor one job at a time, so the request waits
+   for at most the job in flight. A key already queued is removed from the queue; a key in flight
+   is awaited through the in-flight map.
+8. **Choose native or stretched.** `service.py` → `get_audio` [tested].
    `lo, hi = self.backend.speed_range()` (`FakeBackend`: `(0.5, 2.0)`). If `speed ≤ hi`, synthesize
    at `speed`. Otherwise synthesize at `hi` and remember `ratio = speed / hi`
    (for 2.1 to 3.0 with `hi = 2.0`: 1.05 to 1.5). See "Speed handling".
@@ -136,33 +146,35 @@ has never been synthesized with this voice and speed.
    `audio` is PCM 16-bit mono little-endian, `timestamps` carry offsets into **`normalized_text`**.
    The event loop is free while this runs.
 10. **Stretch (only above native max).** Same job, still on the synthesis thread →
-    `stretch.py` → `stretch_pcm(pcm: bytes, sample_rate: int, ratio: float) -> bytes` [stub] and
-    `scale_timestamps(ts: list[WordTimestamp], ratio: float) -> list[WordTimestamp]` [stub].
+    `stretch.py` → `stretch_pcm(pcm: bytes, sample_rate: int, ratio: float) -> bytes` [tested] and
+    `scale_timestamps(ts: list[WordTimestamp], ratio: float) -> list[WordTimestamp]` [tested].
     Crosses: PCM in, PCM about `len/ratio` long out; timestamps with `start_ms`/`end_ms` scaled by
-    `1/ratio`, char offsets untouched.
-11. **Translate offsets: normalized → text.** `service.py` [stub]. Each `WordTimestamp` from the
+    `1/ratio`, char offsets untouched. **Code:** an in-process numpy WSOLA (Hann frames of 1024
+    samples, synthesis hop 512, analysis hop `512 * ratio`, ±256-sample similarity search; D17,
+    no new dependency). Times are floored, then clamped to the stretched duration. Both the
+    stretched file and the native-max (2.0x) file are cached (spec amendment).
+11. **Translate offsets: normalized → text.** `service.py` [tested]. Each `WordTimestamp` from the
     backend has `char_start`/`char_end` into `segment.normalized_text`. The service maps them
     through `segment.char_map` to offsets into `segment.text` (what the reader displays). This is
     **the one place** in the system where offsets change space; see "Data structures" for the rule.
     Crosses: `list[WordTimestamp]` (normalized offsets) → `list[WordTimestamp]` (text offsets).
-12. **Encode for the browser.** Same job on the synthesis thread, or a subprocess for an
-    ffmpeg-based encoder → `encode.py` → `self.encoder.encode(pcm, sample_rate)` →
+12. **Encode for the browser.** Same job on the synthesis thread (no ffmpeg anywhere, D16) → `encode.py` → `self.encoder.encode(pcm, sample_rate)` →
     `AudioEncoder.encode(self, pcm: bytes, sample_rate: int) -> bytes`. Today
     `default_encoder()` returns `WavEncoder` [tested] because `OpusEncoder` [stub] reports
-    itself unavailable. Crosses: PCM bytes → container bytes (`audio/wav` today; Opus in WebM or
-    Ogg once chosen).
+    itself unavailable. Crosses: PCM bytes → container bytes (`audio/wav` by default; Ogg Opus
+    behind `HEARNARRO_AUDIO_FORMAT=opus` once `OpusEncoder` lands, D16).
 13. **Write through the cache.** `service.py` → `await self.cache.put(entry, audio_bytes)` →
-    `cache.py` → `AudioCache.put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry` [stub].
+    `cache.py` → `AudioCache.put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry` [tested].
     Designed order: write `data_dir/audio/{document_id}/{segment_id}/{voice_id}_{speed:.1f}.{ext}.tmp`,
     rename to the final name (atomic on one filesystem), then insert the `audio_cache` row with
     `status='ready'`, `path`, `duration_ms`, `timestamps_json` (text offsets), `created_at`.
     Crosses: a file on disk, one row, and the returned `AudioEntry` with `path` filled.
     The file is renamed before the row is inserted, so a row never points at a half-written file.
-14. **Respond.** `routes/audio.py` → `get_audio` [stub] builds a `Response`:
-    body = the encoded bytes (read from `entry.path`, or kept from step 12),
+14. **Respond.** `routes/audio.py` → `get_audio` [tested] builds a `Response`:
+    body = the encoded bytes (code: read from `entry.path` with `asyncio.to_thread`),
     `Content-Type: entry.media_type`, `X-Timestamps: <JSON list>`, `X-Duration-Ms: <int>`.
     See "Data structures" for the header shape.
-15. **Lookahead enqueue.** `service.py` → `get_audio` [stub], after the response's entry is in
+15. **Lookahead enqueue.** `service.py` → `get_audio` [tested], after the response's entry is in
     hand: enqueue the next `lookahead` segments of the same document with the same voice and
     speed. The spec phrases this as `segment_id+1 .. +lookahead`; the repo protocol offers
     `SegmentRepo.segments_from(self, document_id: int, from_order: int, limit: int) -> list[Segment]`,
@@ -170,7 +182,12 @@ has never been synthesized with this voice and speed.
     document. Jobs whose key is already cached are skipped. The queue consumer runs each job on the
     synthesis thread exactly as steps 8 to 13, and the window slides as the browser asks for later
     segments. Crosses: job tuples `(segment_id, voice_id, speed)` into a per-document queue
-    bounded at `QUEUE_BOUND = 16` (D9).
+    bounded at `QUEUE_BOUND = 16` (D9). **Code:** the window is enqueued in a `finally`, so it
+    also runs after a failed synthesis; each candidate is checked against the cache, the queue
+    and the in-flight map before it is appended. One `collections.deque` holds jobs for all
+    documents (the bound of 16 is total); `queue_depth(D)` counts that document's waiting jobs,
+    not the one in flight. The window slides on requests (hits and misses), not on job
+    completion: the lookahead tests require exactly `k .. k+N` cached after one request.
 
 ```
 Browser            routes/audio.py        service.py              cache.py / SQLite      synth thread (backend, stretch, encode)
@@ -200,33 +217,32 @@ Browser            routes/audio.py        service.py              cache.py / SQL
 
 ### b. The same call on a cache hit
 
-1. `routes/audio.py` → `get_audio`: validation as in (a) steps 1 to 3 [stub].
+1. `routes/audio.py` → `get_audio`: validation as in (a) steps 1 to 3 [tested].
 2. `service.py` → `SynthesisService.get_audio`: `repo.get_segment(segment_id)` (needed for the
-   document id and to answer 404) [stub].
+   document id and to answer 404) [tested].
 3. `cache.py` → `AudioCache.get(...)` returns an `AudioEntry` with `status == "ready"`, `path`,
    `duration_ms`, `media_type` and `timestamps` already in **text** offsets (they were translated
-   before they were stored) [stub].
-4. No synthesis, no thread hop. The service still slides the lookahead window forward (enqueue
+   before they were stored) [tested].
+4. No synthesis, no thread hop. The seek check of (a) step 7 runs first. The service still slides the lookahead window forward (enqueue
    the next N, skipping cached ones), because the browser's prefetch of k+1 and k+2 arrives as
-   hits while playback moves on, and the server must keep five ahead [stub].
+   hits while playback moves on, and the server must keep five ahead [tested].
 5. `routes/audio.py` reads the file at `entry.path` (designed: off the event loop, e.g.
    `asyncio.to_thread(path.read_bytes)`, or a `FileResponse`) and returns the same headers as (a)
-   [stub]. The test contract (`test_api_audio.py`, planned) asserts the second call is faster than
+   [tested]. The test contract (`test_api_audio.py`, planned) asserts the second call is faster than
    the first and that `HEAD` then answers 200.
 
 ### c. `HEAD /audio/{segment_id}?voice=&speed=`
 
-1. `routes/audio.py` → `head_audio(segment_id: int, voice: str, speed: float, request: Request) -> Response` [stub].
-2. Same speed validation as GET (designed; the spec states 422 for GET and only "200 if cached
-   ready, 404 otherwise" for HEAD).
-3. `cache.py` → `AudioCache.get(segment_id, voice, speed, backend_name)` [stub].
+1. `routes/audio.py` → `head_audio(segment_id: int, voice: str, speed: float, request: Request) -> Response` [tested]; code: `svc.cached(segment_id, voice, speed)` (never synthesizes, no segment lookup).
+2. Same speed and voice validation as GET (code: 422 for HEAD too).
+3. `cache.py` → `AudioCache.get(segment_id, voice, speed, backend_name)` [tested].
 4. 200 with no body if the entry exists and is `ready`; 404 otherwise, including `failed` rows
    and unknown segments. HEAD **never** synthesizes and never touches the queue; the browser uses
    it to probe cache state without downloading.
 
 ### d. `GET /voices`
 
-1. `api/hearnarro/routes/voices.py` → `list_voices(request: Request) -> list[dict[str, Any]]` [stub].
+1. `api/hearnarro/routes/voices.py` → `list_voices(request: Request) -> list[dict[str, Any]]` [tested].
 2. Designed: `request.app.state.tts_backend.voices()` → `list[Voice]` → each serialized as
    `{id, name, backend, language, gender}` (the `Voice` dataclass fields). The PRD says "all
    voices across backends"; v1 registers one backend, so the list is that backend's.
@@ -241,17 +257,19 @@ endpoint; the server infers intent from the `GET /audio` stream.
 
 1. **Normal playback.** Every `GET /audio/k` (hit or miss) ends with the window sliding to
    `k+1 .. k+N` for the same `(document, voice, speed)`. Jobs already cached are skipped; jobs
-   already queued are not duplicated [stub].
+   already queued are not duplicated [tested].
 2. **Seek, voice change, speed change.** A `GET /audio/j` whose voice or speed differs from the
-   document's queue, or whose order is outside the current window, is a seek. The service calls
+   document's last request, or whose order is outside `[last, last + N]`, is a seek (code:
+   `_note_request` inside `get_audio`; it clears the document's queue, then `j` is synthesized
+   and the window `j+1 .. j+N` is enqueued). The explicit form is
    `SynthesisService.prefetch(self, document_id: int, from_order: int, voice_id: str, speed: float) -> None`
-   [stub], which **clears the document's queue** and **refills it from `from_order`**. Segment
-   `j` itself still jumps the queue as in flow (a) step 7. The exact rule for "outside the
-   window" is not fixed by the spec; the tests in `test_syn5_queue.py` (planned) will pin it.
+   [tested], which **clears the document's queue** and enqueues `from_order .. from_order+N-1`
+   (N jobs, so `queue_depth` is at most N right after it returns), and sets the document's last order
+   to `from_order`.
 3. **What happens to the job already running.** The backend call on the synthesis thread is a
    blocking function and cannot be interrupted. It finishes, its result is cached (useful if the
    user seeks back), and its waiters (if any) receive it. Only queued, not-started jobs are dropped.
-4. **Observability.** `SynthesisService.queue_depth(self, document_id: int) -> int` [stub] reports
+4. **Observability.** `SynthesisService.queue_depth(self, document_id: int) -> int` [tested] reports
    how many jobs are queued for a document; tests use it to check "lookahead enqueues N" and
    "seek clears and refills".
 
@@ -274,24 +292,25 @@ Browser                     routes/audio.py         service.py (queue for doc D)
 
 1. On the synthesis thread, `TTSBackend.synthesize` raises (any exception; in tests,
    `SpyBackend(fail_texts={...})` in `conftest.py` raises `RuntimeError("spy backend: induced failure")`).
-2. `run_in_executor` re-raises it in the awaiting coroutine in `service.py` [stub].
+2. `run_in_executor` re-raises it in the awaiting coroutine in `service.py` [tested].
 3. `service.py` logs it with the segment id, then `await self.cache.mark_failed(segment_id, voice_id, speed, backend, reason)` →
-   `AudioCache.mark_failed(self, segment_id: int, voice_id: str, speed: float, backend: str, reason: str) -> None` [stub].
-   Designed: upsert the `audio_cache` row with `status='failed'`, `path` NULL. The DDL has no
-   reason column, so the reason lives in the log and in the exception, not in the row.
+   `AudioCache.mark_failed(self, segment_id: int, voice_id: str, speed: float, backend: str, reason: str) -> None` [tested].
+   Code: `INSERT OR REPLACE` the `audio_cache` row with `status='failed'`, `path` NULL and
+   `timestamps_json = {"failures": n, "reason": ...}` (no migration; spec amendment).
 4. **If a request was waiting** (flow a): the service raises
    `SegmentSynthesisFailed(segment_id, reason)` (`service.py`, real class:
    `def __init__(self, segment_id: int, reason: str) -> None`, attributes `segment_id`, `reason`).
-   `routes/audio.py` turns it into **502** with JSON `{"segment_id": ..., "reason": ...}` [stub].
+   `routes/audio.py` turns it into **502** with JSON `{"segment_id": ..., "reason": ...}` [tested].
 5. **If it was a lookahead job**: nothing is waiting; the queue moves on to the next job.
 6. The browser (M3) skips a failed segment with 200 ms of silence so playback never stalls.
-7. Not yet decided: whether a later `GET` for a `failed` key retries synthesis or answers 502
-   from the row. Listed under "Open items".
+7. Retry rule (spec amendment, code): an explicit `GET` for a `failed` key retries once; after
+   the second failure (`failures >= 2`) the `GET` answers 502 from the row without synthesizing.
+   The lookahead queue never retries a failed row.
 
 ### g. App start-up and shutdown
 
 `api/hearnarro/app.py` → `create_app(data_dir: Path | None = None, *, max_upload_bytes: int = MAX_UPLOAD_BYTES, executor_factory: Callable[[], Executor] | None = None, tts_backend: TTSBackend | None = None, encoder: AudioEncoder | None = None, lookahead: int | None = None) -> FastAPI`
-[implemented, uncommitted]. `create_app` registers three routers (`documents`, `audio`,
+[tested]. `create_app` registers three routers (`documents`, `audio`,
 `voices`) and returns the app; all resources are made in the `lifespan` context manager.
 
 Start-up, in order (current code):
@@ -312,18 +331,17 @@ Start-up, in order (current code):
 7. `app.state.synthesis = SynthesisService(backend, app.state.encoder, app.state.audio_cache, DbSegmentRepo(app.state.engine), lookahead=n_ahead, executor=app.state.synth_executor)`.
 8. `yield`: the app serves requests.
 
-Designed but **not in the current code**: load the model **on the synthesis thread** before
-accepting requests (Technical Design D9 "Startup"), so the session lives on the thread that runs
-it and the first request does not pay the load. Today `build_backend` constructs `KokoroBackend`
-on the event loop thread, and the constructor only stores the revision. The intended shape is
-an `await loop.run_in_executor(synth_executor, <load>)` in the lifespan before `yield`.
+**Code (phase 2):** `synth_executor` is created first and the backend is built **on the synthesis
+thread**: `backend = await loop.run_in_executor(app.state.synth_executor, build_backend, settings)`
+(only when no `tts_backend` was injected), so a model load never blocks the event loop (spec
+amendment; Technical Design D9 "Startup"). One INFO line logs backend, lookahead and encoder.
 
 Shutdown, in order (current code):
 
-1. `await app.state.synthesis.shutdown()`: designed to cancel the queue and wait **at most 5 s**
-   (`SHUTDOWN_WAIT_S = 5.0`) for the in-flight synthesis. Today it is a no-op returning `None`
-   (the comment in `service.py` explains it must not raise because the lifespan always calls it).
-2. `await asyncio.to_thread(app.state.synth_executor.shutdown, wait=True)`: waits for the thread.
+1. `await app.state.synthesis.shutdown()`: clears the queue, cancels the consumer task, then waits
+   **at most 5 s** (`SHUTDOWN_WAIT_S = 5.0`) for the in-flight synthesis by awaiting a no-op job on
+   the single-worker executor (FIFO, so it completes after the running job).
+2. `app.state.synth_executor.shutdown(wait=False, cancel_futures=True)`: no unbounded wait.
 3. M1 teardown: process pool shutdown with `cancel_futures=True`, cancel and gather ingestion
    watcher tasks.
 
@@ -387,10 +405,10 @@ Signatures are copied from the files as read, or from the spec where the file do
 | `__init__.py` | Package marker | none | none | none | implemented (empty) |
 | `backend.py` | The backend interface and its value types (SYN-4) | `class Voice` (`id: str`, `name: str`, `backend: str`, `language: str`, `gender: str`); `class WordTimestamp` (`word: str`, `start_ms: int`, `end_ms: int`, `char_start: int`, `char_end: int`); `class SynthResult` (`audio: bytes`, `sample_rate: int`, `timestamps: list[WordTimestamp]`, property `duration_ms -> int`); `class TTSBackend(Protocol)`: `name: str`, `def voices(self) -> list[Voice]`, `def speed_range(self) -> tuple[float, float]`, `def synthesize(self, text: str, voice_id: str, speed: float) -> SynthResult` | none | none | tested |
 | `fake.py` | Deterministic backend for tests and model-free runs | `SAMPLE_RATE = 24_000`, `WORD_MS = 80`; `def frames_per_word(speed: float) -> int`; `class FakeBackend` (`name = "fake"`, `voices`, `speed_range` → `(0.5, 2.0)`, `synthesize`) | none | none | tested |
-| `encode.py` | PCM16 → browser container (D7) | `class EncoderUnavailable(RuntimeError)`; `class AudioEncoder(Protocol)`: `media_type: str`, `ext: str`, `def encode(self, pcm: bytes, sample_rate: int) -> bytes`; `class WavEncoder` (`"audio/wav"`, `"wav"`); `class OpusEncoder` (`"audio/webm"`, `"webm"`); `def default_encoder() -> AudioEncoder` | none | log line (once per process) | tested (`WavEncoder`, `default_encoder`); stub (`OpusEncoder`) |
-| `stretch.py` | Speeds above native max (D6, SYN-3) | `MAX_RATIO = 1.5`; `def stretch_pcm(pcm: bytes, sample_rate: int, ratio: float) -> bytes`; `def scale_timestamps(ts: list[WordTimestamp], ratio: float) -> list[WordTimestamp]` | none | none | stub |
-| `cache.py` | Write-through audio cache (D7, SYN-6) | `class AudioEntry` (dataclass, see "Data structures"); `class AudioCache`: `def __init__(self, data_dir: Path, db: Engine) -> None`, `async def get(self, segment_id: int, voice_id: str, speed: float, backend: str) -> AudioEntry \| None`, `async def put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry`, `async def mark_failed(self, segment_id: int, voice_id: str, speed: float, backend: str, reason: str) -> None` | `audio_cache` rows; files under `data_dir/audio/` | `audio_cache` rows; audio files (`.tmp` then rename) | stub (`AudioEntry` real) |
-| `service.py` | Orchestration: cache, queue, thread, stretch, translate, encode (SYN-1/3/5/6) | `DEFAULT_LOOKAHEAD = 5`, `QUEUE_BOUND = 16`, `SHUTDOWN_WAIT_S = 5.0`; `class SegmentSynthesisFailed(Exception)`; `class SegmentRepo(Protocol)`: `async def get_segment(self, segment_id: int) -> Segment \| None`, `async def segments_from(self, document_id: int, from_order: int, limit: int) -> list[Segment]`; `class DbSegmentRepo` (`def __init__(self, db: Engine) -> None` + the two methods); `class SynthesisService`: `def __init__(self, backend: TTSBackend, encoder: AudioEncoder, cache: AudioCache, repo: SegmentRepo, *, lookahead: int = DEFAULT_LOOKAHEAD, executor: ThreadPoolExecutor \| None = None) -> None`, `async def get_audio(self, segment_id: int, voice_id: str, speed: float) -> AudioEntry`, `async def prefetch(self, document_id: int, from_order: int, voice_id: str, speed: float) -> None`, `def queue_depth(self, document_id: int) -> int`, `async def shutdown(self) -> None` | `segments` rows (via repo); cache | cache (via `AudioCache`); log | stub (`shutdown` no-op) |
+| `encode.py` | PCM16 → browser container (D7) | `class EncoderUnavailable(RuntimeError)`; `class AudioEncoder(Protocol)`: `media_type: str`, `ext: str`, `def encode(self, pcm: bytes, sample_rate: int) -> bytes`; `class WavEncoder` (`"audio/wav"`, `"wav"`); `class OpusEncoder` (`"audio/ogg"`, `"ogg"`; D16); `def default_encoder(audio_format: str = "wav") -> AudioEncoder` | none | log line (once per process) | tested (`WavEncoder`, `default_encoder`); stub (`OpusEncoder`) |
+| `stretch.py` | Speeds above native max (D6, SYN-3) | `MAX_RATIO = 1.5`; `def stretch_pcm(pcm: bytes, sample_rate: int, ratio: float) -> bytes`; `def scale_timestamps(ts: list[WordTimestamp], ratio: float) -> list[WordTimestamp]` | none | none | tested (numpy WSOLA, D17; `test_syn3_speed.py`, `test_stretch.py`) |
+| `cache.py` | Write-through audio cache (D7, SYN-6) | `class AudioEntry` (dataclass, see "Data structures"); `class AudioCache`: `def __init__(self, data_dir: Path, db: Engine) -> None`, `async def get(self, segment_id: int, voice_id: str, speed: float, backend: str) -> AudioEntry \| None`, `async def put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry`, `async def mark_failed(self, segment_id: int, voice_id: str, speed: float, backend: str, reason: str) -> None` | `audio_cache` rows; files under `data_dir/audio/` | `audio_cache` rows; audio files (`.tmp` then rename) | tested (`test_api_audio.py`) |
+| `service.py` | Orchestration: cache, queue, thread, stretch, translate, encode (SYN-1/3/5/6) | `DEFAULT_LOOKAHEAD = 5`, `QUEUE_BOUND = 16`, `SHUTDOWN_WAIT_S = 5.0`; `class SegmentSynthesisFailed(Exception)`; `class SegmentRepo(Protocol)`: `async def get_segment(self, segment_id: int) -> Segment \| None`, `async def segments_from(self, document_id: int, from_order: int, limit: int) -> list[Segment]`; `class DbSegmentRepo` (`def __init__(self, db: Engine) -> None` + the two methods); `class SynthesisService`: `def __init__(self, backend: TTSBackend, encoder: AudioEncoder, cache: AudioCache, repo: SegmentRepo, *, lookahead: int = DEFAULT_LOOKAHEAD, executor: ThreadPoolExecutor \| None = None) -> None`, `async def get_audio(self, segment_id: int, voice_id: str, speed: float) -> AudioEntry`, `async def prefetch(self, document_id: int, from_order: int, voice_id: str, speed: float) -> None`, `def queue_depth(self, document_id: int) -> int`, `async def shutdown(self) -> None` | `segments` rows (via repo); cache | cache (via `AudioCache`); log | tested (`test_syn1`, `test_syn3`, `test_syn5`; see Open items) |
 | `kokoro_backend.py` | The only module that names a TTS model | `MODEL_REPO = "hexgrad/Kokoro-82M"`; `class KokoroBackend` (`name = "kokoro"`, `def __init__(self, revision: str) -> None`, `voices`, `speed_range`, `synthesize`) | model weights from the Hub at the pinned revision (designed) | `$HF_HOME` cache (designed) | stub |
 
 #### `backend.py`
@@ -515,8 +533,8 @@ the `@model` smoke and gate tests (planned).
 
 | File | Responsibility | Public functions | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
-| `audio.py` | Audio endpoints (SYN-1/3/5/6, D5) | `router = APIRouter()`; `MIN_SPEED = 0.5`, `MAX_SPEED = 3.0`; `@router.get("/audio/{segment_id}") async def get_audio(segment_id: int, voice: str, speed: float, request: Request) -> Response`; `@router.head("/audio/{segment_id}") async def head_audio(segment_id: int, voice: str, speed: float, request: Request) -> Response` | `app.state.synthesis`, `app.state.tts_backend`, `app.state.audio_cache` (designed) | HTTP response | stub |
-| `voices.py` | Voice list (SYN-2) | `router = APIRouter()`; `@router.get("/voices") async def list_voices(request: Request) -> list[dict[str, Any]]` | `app.state.tts_backend.voices()` (designed) | HTTP response | stub |
+| `audio.py` | Audio endpoints (SYN-1/3/5/6, D5) | `router = APIRouter()`; `MIN_SPEED = 0.5`, `MAX_SPEED = 3.0`; `@router.get("/audio/{segment_id}") async def get_audio(segment_id: int, voice: str, speed: float, request: Request) -> Response`; `@router.head("/audio/{segment_id}") async def head_audio(segment_id: int, voice: str, speed: float, request: Request) -> Response` | `app.state.synthesis`, `app.state.tts_backend`, `app.state.audio_cache` (designed) | HTTP response | tested |
+| `voices.py` | Voice list (SYN-2) | `router = APIRouter()`; `@router.get("/voices") async def list_voices(request: Request) -> list[dict[str, Any]]` | `app.state.tts_backend.voices()` (designed) | HTTP response | tested |
 | `documents.py` | M1 document endpoints | unchanged in M2 (the spec: `GET /documents/{id}` and the list gain nothing new) | `documents`, `sections`, `segments` | `documents`, PDF files | implemented (M1) |
 
 ### `api/hearnarro/storage/` (as touched by M2)
@@ -524,7 +542,7 @@ the `@model` smoke and gate tests (planned).
 | File | M2 relevance | Public functions used by M2 | Status |
 | --- | --- | --- | --- |
 | `db.py` | Connection factory and `char_map` codec | `class Engine` with `async def connect(self) -> AsyncIterator[aiosqlite.Connection]` (context manager; WAL, foreign keys, busy timeout 10 s); `def engine(data_dir: Path) -> Engine`; `def resolve_data_dir(data_dir: Path \| str \| None) -> Path` (used by `settings.py`); `def unpack_char_map(blob: bytes) -> list[int]` (packed little-endian uint16) | implemented (M1, unchanged) |
-| `repo.py` | M1 query helpers; has `list_segments` (no `char_map` column) and no single-segment or audio_cache helper | none directly; `DbSegmentRepo` and `AudioCache` hold their own SQL | implemented (M1, unchanged) |
+| `repo.py` | M1 query helpers plus M2 segment lookups | `async def get_segment_row(conn, segment_id: int) -> dict \| None`, `async def segment_rows_from(conn, document_id: int, from_order: int, limit: int) -> list[dict]` (both include `char_map`; used by `DbSegmentRepo`); `AudioCache` holds its own SQL | implemented (M1) + M2 additions, tested |
 | `jobs.py` | M1 ingestion worker in the process pool | none; M2 does not touch ingestion | implemented (M1, unchanged) |
 | `migrations/versions/0001_initial_schema.py` | Created `audio_cache` with the D7 DDL in M1 | n/a; M2 needs no migration unless the schema changes (then via Alembic, per CLAUDE.md) | implemented (M1) |
 
@@ -533,7 +551,7 @@ the `@model` smoke and gate tests (planned).
 | File | Responsibility | Public functions / classes | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
 | `settings.py` | Runtime configuration from env vars | `BACKEND_ENV`, `KOKORO_REVISION_ENV`, `LOOKAHEAD_ENV`, `DATA_DIR_ENV`, `DEFAULT_LOOKAHEAD = 5`, `BACKENDS = ("fake", "kokoro")`; `class SettingsError(ValueError)`; `class Settings` (frozen: `tts_backend: str`, `kokoro_revision: str \| None`, `lookahead: int`, `data_dir: Path`); `def kokoro_available() -> bool`; `def load_settings(env: Mapping[str, str] \| None = None, *, kokoro_installed: bool \| None = None) -> Settings` | `os.environ`; whether the `kokoro` package is importable | warning log when falling back to fake | tested |
-| `app.py` | App factory and lifespan | `def build_backend(settings: Settings) -> TTSBackend`; `def create_app(...) -> FastAPI` (signature in flow g) | settings | `app.state.*` | implemented (M2 part uncommitted) |
+| `app.py` | App factory and lifespan | `def build_backend(settings: Settings) -> TTSBackend`; `def create_app(...) -> FastAPI` (signature in flow g) | settings | `app.state.*` | tested |
 
 `load_settings` rules: an explicit `HEARNARRO_TTS_BACKEND` wins and must be `fake` or `kokoro`
 (else `SettingsError`); `kokoro` then requires `HEARNARRO_KOKORO_REVISION` (else `SettingsError`).
@@ -556,11 +574,12 @@ with a warning naming why. `HEARNARRO_LOOKAHEAD` must be an integer ≥ 0. The `
 | `test_fake_backend.py` | FakeBackend contract | SYN-1, SYN-2, SYN-3, SYN-4 | tested |
 | `test_encode.py` | WavEncoder and default_encoder | SYN-1 | tested |
 | `test_settings.py` | env parsing | SYN-4, SYN-5 | tested |
-| `test_syn1_timestamps.py` | timestamp invariants on 50 fixture sentences, native and stretched; char_map translation | SYN-1 | red |
-| `test_syn3_speed.py` | `scale_timestamps` math; `stretch_pcm` length and ratio bounds; native vs stretched path; API speed validation | SYN-3 | red |
-| `test_syn5_queue.py` | lookahead enqueues N; seek clears/refills; cached jobs skipped; first request jumps the queue | SYN-5 | planned |
-| `test_api_audio.py` | HTTP contract: miss then hit, headers, 404/422/502, HEAD, `/voices` ≥ 6 both genders | SYN-1, SYN-2, SYN-6 | planned |
-| `test_syn_gate.py` | Gate: FakeBackend contract always; Kokoro TTFA ≤ 2000 ms at four speeds (`@model`) | M2 gate | planned |
+| `test_syn1_timestamps.py` | timestamp invariants on 50 fixture sentences, native and stretched; char_map translation | SYN-1 | green (297) |
+| `test_syn3_speed.py` | `scale_timestamps` math; `stretch_pcm` length and ratio bounds; native vs stretched path; API speed validation | SYN-3 | green (297) |
+| `test_syn5_queue.py` | lookahead enqueues N; seek clears/refills; cached jobs skipped; first request jumps the queue | SYN-5 | 8 of 10 green; 2 fail on a fixture text collision (`_agent/results/299_queue_test_text_collision.txt`) |
+| `test_stretch.py` | WSOLA length within 2 % and pitch kept at 1.05–1.5; short/empty input; `scale_timestamps` order | SYN-3 | green (297) |
+| `test_api_audio.py` | HTTP contract: miss then hit, headers, 404/422/502, HEAD, `/voices` ≥ 6 both genders | SYN-1, SYN-2, SYN-6 | green (297) |
+| `test_syn_gate.py` | Gate: FakeBackend contract always; Kokoro TTFA ≤ 2000 ms at four speeds (`@model`) | M2 gate | green (FakeBackend part, 297); `@model` skipped |
 | `boundary_util.py` | Sentence-boundary metric | ING-5, SYN-1 | tested |
 | `test_boundary_util.py` | Metric unit tests | ING-5 | tested |
 | `test_syn_boundaries.py` | Truth files keep the expected word stream; prints per-fixture P/R/F1 (not asserted) | ING-5, SYN-1 | tested (measurement) |
@@ -630,12 +649,15 @@ class AudioEntry:
     media_type: str
     duration_ms: int
     timestamps: list[WordTimestamp]  # offsets into Segment.text
+    document_id: int = 0  # for the file path (spec amendment)
+    failures: int = 0     # failed rows: explicit attempts that failed
 ```
 
-The service's return value and the cache's unit. Note two gaps against the table: the
-`audio_cache` row has no `media_type` column (it has to be derived from the file extension or
-the current encoder), and `AudioEntry` has no `document_id`, which the file path needs (the
-cache has to look it up from `segments`). Both are listed under "Open items".
+The service's return value and the cache's unit. `media_type` is not a column: `AudioCache.get`
+derives it from the file extension (`.wav` → `audio/wav`, `.ogg`/`.opus` → `audio/ogg`).
+`document_id` comes from the segment row when the service builds the entry; on `get` it is read
+back from the file path. The two new fields have defaults so positional construction (the
+test doubles) keeps working.
 
 ### The `audio_cache` row (D7 DDL, `migrations/versions/0001_initial_schema.py`)
 
@@ -745,8 +767,9 @@ the queue waits for at most the one job already running. A thread, not a process
 model (hundreds of MB) is not duplicated and needs no pickling. A second backend on a GPU would
 get its own executor.
 
-**How the queue is consumed (designed).** Each active document has a bounded queue (16) of
-`(segment_id, voice_id, speed)` jobs. One consumer coroutine per service pulls the next job,
+**How the queue is consumed (code).** One `deque` of jobs (`segment`, `voice_id`, `speed`) shared by
+all documents, bounded at 16 in total; seeks remove one document's jobs. One consumer coroutine per
+service (started lazily on the first enqueue) pulls the next job,
 checks the cache (skip if present), and awaits `run_in_executor(self._executor, job)`; because
 the executor has one worker, at most one job runs at a time across all documents. A cache-miss
 request does not enter the back of the queue; it is submitted ahead of the queued lookahead jobs.
@@ -762,8 +785,8 @@ running job ends. The worst-case added latency for a seek is therefore one synth
 ingestion processes write while the API reads. Cache writes are small single-row inserts.
 
 **Shutdown.** Cancel queue consumers and queued jobs, wait up to 5 s for the running job, then
-shut the executor down. Today `SynthesisService.shutdown` is a no-op and
-`synth_executor.shutdown(wait=True)` has no time cap (Open items).
+shut the executor down without waiting (`cancel_futures=True`). Code as described; tested by
+`test_syn5_shutdown_returns_within_5s_with_queue_full`.
 
 ## Speed handling
 
@@ -779,19 +802,20 @@ cache entry is keyed by that speed. Both `FakeBackend` and the designed `KokoroB
 **Stretched path.** For `speed > hi` (2.1 to 3.0): synthesize at `hi`, then
 `stretch_pcm(pcm, sample_rate, ratio)` with `ratio = speed / hi` (1.05 to 1.5), and
 `scale_timestamps(ts, ratio)`. The result is cached under the **requested** speed, so 2.5x is
-one file and 3.0x another. The Technical Design (D6) also caches the 2.0x intermediate as its own
-entry, which makes moving between 2.1x and 3.0x cost one stretch rather than one synthesis; the
-spec does not say whether the service stores it, and stretching from a cached Opus file would
-need a decode first (Open items).
+one file and 3.0x another. The 2.0x intermediate is cached as its own entry too (spec amendment;
+code: the stretched file is written first, then the native one if it is not cached yet). Stretch
+always works from fresh PCM; a cached 2.0x file is not decoded and re-stretched (a later
+optimisation, not needed for the gate).
 
-**Timestamp scaling.** `start_ms' = int(start_ms * (1 / ratio))`, same for `end_ms`; char offsets
+**Timestamp scaling.** Code: `start_ms' = floor(start_ms / ratio + 1e-9)`, same for `end_ms`, then
+clamped to the stretched `duration_ms` by the service; char offsets
 are not touched (stretching changes time, not text). Since `1/ratio < 1`, order and
-non-overlap are preserved; the red test requires each value within 1 ms of the exact product.
+non-overlap are preserved; the test requires each value within 1 ms of the exact product.
 The invariant "last `end_ms ≤ duration_ms`" after stretch depends on `stretch_pcm` returning
 close to `len/ratio`; `test_syn1_timestamp_invariants_stretched_50_sentences` (red) checks it at
-2.5x and 3.0x.
+2.5x and 3.0x (green, 297).
 
-**Which tests pin it.** `test_syn3_speed.py` (red): native path passes the speed straight to the
+**Which tests pin it.** `test_syn3_speed.py` (green, 297): native path passes the speed straight to the
 backend at 0.5/1.0/1.5/2.0; stretched path calls the backend at native max for 2.1/2.5/3.0;
 scale math; stretch length; ratio bounds; API validation 0.5 to 3.0 in 0.1 steps.
 
@@ -977,20 +1001,21 @@ lookahead come from the environment through `load_settings()`.
 
 | Item | Where | Lands in |
 | --- | --- | --- |
-| `SynthesisService` (`get_audio`, `prefetch`, `queue_depth`, real `shutdown`), `DbSegmentRepo` | `service.py` | phase 2 (service, queue, cache) |
-| `AudioCache` (`get`, `put`, `mark_failed`); `document_id` lookup for the file path; `media_type` from extension | `cache.py` | phase 2 |
-| `stretch_pcm`, `scale_timestamps` (implementation chosen by the survey) | `stretch.py` | phase 2 |
-| `GET`/`HEAD /audio`, `GET /voices` | `routes/audio.py`, `routes/voices.py` | phase 2 |
-| `test_syn5_queue.py`, `test_api_audio.py`, `test_syn_gate.py` (FakeBackend part) | `api/tests/` | phase 2 (written before the code) |
+| `SynthesisService` (`get_audio`, `prefetch`, `queue_depth`, real `shutdown`), `DbSegmentRepo` | `service.py` | done, phase 2 |
+| `AudioCache` (`get`, `put`, `mark_failed`); `document_id` lookup for the file path; `media_type` from extension | `cache.py` | done, phase 2 |
+| `stretch_pcm`, `scale_timestamps` (numpy WSOLA, D17) | `stretch.py` | done, phase 2 |
+| `GET`/`HEAD /audio`, `GET /voices` | `routes/audio.py`, `routes/voices.py` | done, phase 2 |
+| `test_syn5_queue.py`, `test_api_audio.py`, `test_syn_gate.py` (FakeBackend part) | `api/tests/` | done (written before the code) |
 | `OpusEncoder` (library or ffmpeg, container WebM or Ogg) | `encode.py` | after the licence decision; WAV until then |
 | `KokoroBackend`, the `@model` smoke and gate tests, the skip hook for `HEARNARRO_TEST_MODEL` | `kokoro_backend.py`, `conftest.py`, `test_syn_gate.py` | phase 3 |
-| Model load on the synthesis thread before `yield` in the lifespan | `app.py` | phase 3 (with Kokoro) |
-| 5 s cap on shutdown (`synth_executor.shutdown(wait=True)` has none today) | `service.py`, `app.py` | phase 2 |
+| Model load on the synthesis thread before `yield` in the lifespan | `app.py` | done, phase 2 (`build_backend` runs on `synth_executor`) |
+| 5 s cap on shutdown | `service.py`, `app.py` | done, phase 2 |
 | `scripts/bench.py`; first TTFA and RTF numbers (`276_spike_rtf.txt` absent at read time) | `api/scripts/` | phase 3 |
 | Boundary thresholds asserted in `test_syn_boundaries.py` | `api/tests/` | after supervisor review of result 261 |
-| Retry policy for a key whose row is `failed` (retry vs 502 from the row) | `service.py` | phase 2; to be fixed in the spec |
-| Exact seek rule ("outside the window") | `service.py`, `test_syn5_queue.py` | phase 2; to be fixed in the spec |
-| Whether the native-max intermediate is cached for the stretched path, and whether stretch works from PCM or a decoded cache file | `service.py` | phase 2; to be fixed in the spec |
+| Retry policy for a key whose row is `failed` (retry vs 502 from the row) | `service.py` | done: retried once, then 502 from the row |
+| Exact seek rule ("outside the window") | `service.py`, `test_syn5_queue.py` | done: outside `[last, last+N]` or a voice/speed change |
+| Whether the native-max intermediate is cached for the stretched path, and whether stretch works from PCM or a decoded cache file | `service.py` | done: both cached; stretch from fresh PCM |
+| `test_syn5_seek_clears_queue_and_refills_from_new_position` and `test_syn5_first_request_jumps_the_queue` compare by `normalized_text`, but report_01 orders 0 and 4 (and 1 and 5) have the same text, so the explicitly requested order 0 matches `at(4)`; the service synthesized orders 0, 30..34 and 0, 40 (`_agent/results/299_queue_test_text_collision.txt`). Fix: compare by segment id or order | `api/tests/test_syn5_queue.py` | test owner |
 | Header-size limit for `X-Timestamps` on long sentences (sidecar JSON is the PRD's alternative) | `routes/audio.py` | measure in phase 2 |
 | Deleting a document's audio files (rows cascade; files do not) | LIB-4 | M4 |
 | PRD SYN-6 says "keyed by (segment hash, voice, speed)"; the design and DDL key by `segment_id` and backend | `docs/PRD.md` | supervisor (PRD sync) |

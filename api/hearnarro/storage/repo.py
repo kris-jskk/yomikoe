@@ -96,3 +96,26 @@ async def list_segments(
         'WHERE s.document_id = ? AND s."order" >= ? ORDER BY s."order" LIMIT ?',
         (document_id, from_order, limit),
     )
+
+
+SEGMENT_COLUMNS = (
+    'id, document_id, block_id, "order", section_id, text, normalized_text, '
+    "char_start, char_end, char_map"
+)
+
+
+async def get_segment_row(conn: aiosqlite.Connection, segment_id: int) -> dict[str, Any] | None:
+    """One ``segments`` row with its packed ``char_map`` (SYN-1 timestamp translation)."""
+    return await _one(conn, f"SELECT {SEGMENT_COLUMNS} FROM segments WHERE id = ?", (segment_id,))
+
+
+async def segment_rows_from(
+    conn: aiosqlite.Connection, document_id: int, from_order: int, limit: int
+) -> list[dict[str, Any]]:
+    """Rows of one document with ``order >= from_order`` in reading order (SYN-5 lookahead)."""
+    return await _all(
+        conn,
+        f'SELECT {SEGMENT_COLUMNS} FROM segments WHERE document_id = ? AND "order" >= ? '
+        'ORDER BY "order" LIMIT ?',
+        (document_id, from_order, limit),
+    )

@@ -1,4 +1,4 @@
-"""FastAPI application factory (M1 skeleton; D7 storage, D9 process model)."""
+"""FastAPI application factory (D7 storage, D9 process model; M2 synthesis wiring)."""
 
 from __future__ import annotations
 
@@ -66,16 +66,22 @@ def create_app(
         app.state.ingest_executor = (executor_factory or _default_executor)()
         app.state.ingest_tasks = set()
         app.state.ingest_seconds = {}
+        # D9: one synthesis thread; the backend (model load) is built on it, off the loop.
+        app.state.synth_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="synth")
         backend, n_ahead, enc = tts_backend, lookahead, encoder
         if backend is None or n_ahead is None or enc is None:
             settings = load_settings()
-            backend = backend if backend is not None else build_backend(settings)
+            if backend is None:
+                loop = asyncio.get_running_loop()
+                backend = await loop.run_in_executor(
+                    app.state.synth_executor, build_backend, settings
+                )
             n_ahead = n_ahead if n_ahead is not None else settings.lookahead
             enc = enc if enc is not None else default_encoder(settings.audio_format)
+        log.info("TTS backend: %s; lookahead %s; encoder %s", backend.name, n_ahead, enc.ext)
         app.state.tts_backend = backend
         app.state.encoder = enc
         app.state.audio_cache = AudioCache(root, app.state.engine)
-        app.state.synth_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="synth")
         app.state.synthesis = SynthesisService(
             backend,
             app.state.encoder,
@@ -87,8 +93,8 @@ def create_app(
         try:
             yield
         finally:
-            await app.state.synthesis.shutdown()
-            await asyncio.to_thread(app.state.synth_executor.shutdown, wait=True)
+            await app.state.synthesis.shutdown()  # waits <= 5 s for the job in flight
+            app.state.synth_executor.shutdown(wait=False, cancel_futures=True)
             executor: Executor = app.state.ingest_executor
             await asyncio.to_thread(executor.shutdown, wait=True, cancel_futures=True)
             tasks = list(app.state.ingest_tasks)
