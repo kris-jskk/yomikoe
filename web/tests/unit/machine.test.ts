@@ -362,3 +362,115 @@ describe('PLAY-1..PLAY-5 player reducer', () => {
     expect(reduce(playing, bogus)).toBe(playing)
   })
 })
+
+// M4 events (spec _agent/specs/m4-library-interfaces.md §2): SET_SKIP (PLAY-8), RESTORE_POSITION and
+// TICK_SAVE (LIB-2), settings while loading (LIB-3, M3 deviation 6). The hook computes skippedIds with
+// player/skip.ts; the reducer only stores and honours them.
+const SKIP_ALL = { footnotes: true, captions: true, references: true }
+
+describe('PLAY-8 SET_SKIP', () => {
+  it('PLAY-8 SET_SKIP stores the toggles and the skipped ids', () => {
+    const s = reduce(st('paused'), { type: 'SET_SKIP', skip: SKIP_ALL, skippedIds: [102, 103] })
+    expect(s.skip).toEqual(SKIP_ALL)
+    expect([...s.skippedIds]).toEqual([102, 103])
+    expect(s.current).toEqual({ segmentId: 105, offsetMs: 2300 })
+  })
+
+  it('PLAY-8 SET_SKIP from idle moves a newly skipped current segment to the next unskipped', () => {
+    const s = reduce(st('idle'), { type: 'SET_SKIP', skip: SKIP_ALL, skippedIds: [105, 106] })
+    expect(s.status).toBe('idle')
+    expect(s.current).toEqual({ segmentId: 107, offsetMs: 0 })
+  })
+
+  it('PLAY-8 SET_SKIP from playing rebuilds at the next unskipped segment', () => {
+    const s = reduce(st('playing'), { type: 'SET_SKIP', skip: SKIP_ALL, skippedIds: [105, 106] })
+    expect(s.status).toBe('loading')
+    expect(s.current).toEqual({ segmentId: 107, offsetMs: 0 })
+    expect(s.generation).toBe(6)
+  })
+
+  it('PLAY-8 SKIP jumps over skipped segments', () => {
+    const skipped = reduce(st('paused', { current: { segmentId: 104, offsetMs: 0 } }), {
+      type: 'SET_SKIP',
+      skip: SKIP_ALL,
+      skippedIds: [105, 106],
+    })
+    expect(reduce(skipped, { type: 'SKIP', by: 1 }).current).toEqual({
+      segmentId: 107,
+      offsetMs: 0,
+    })
+    const back = reduce(
+      { ...skipped, current: { segmentId: 107, offsetMs: 0 } },
+      { type: 'SKIP', by: -1 },
+    )
+    expect(back.current).toEqual({ segmentId: 104, offsetMs: 0 })
+  })
+
+  it('PLAY-8 SEEK onto a skipped segment lands on the next unskipped', () => {
+    const skipped = reduce(st('paused'), {
+      type: 'SET_SKIP',
+      skip: SKIP_ALL,
+      skippedIds: [108, 109],
+    })
+    expect(reduce(skipped, { type: 'SEEK', segmentId: 108 }).current).toEqual({
+      segmentId: 110,
+      offsetMs: 0,
+    })
+  })
+})
+
+describe('LIB-2 RESTORE_POSITION', () => {
+  it('LIB-2 RESTORE_POSITION from idle sets current and offset before the first PLAY', () => {
+    const loaded = reduce(initialState, load)
+    const s = reduce(loaded, { type: 'RESTORE_POSITION', segmentId: 106, offsetMs: 1500 })
+    expect(s.status).toBe('idle')
+    expect(s.current).toEqual({ segmentId: 106, offsetMs: 1500 })
+    const playing = reduce(s, { type: 'PLAY', at: 1 })
+    expect(playing.current).toEqual({ segmentId: 106, offsetMs: 1500 })
+  })
+
+  it('LIB-2 RESTORE_POSITION is ignored once playback has started', () => {
+    const s = st('playing')
+    expect(reduce(s, { type: 'RESTORE_POSITION', segmentId: 101, offsetMs: 0 })).toBe(s)
+  })
+
+  it('LIB-2 RESTORE_POSITION for a segment not in the document is ignored', () => {
+    const s = st('idle')
+    expect(reduce(s, { type: 'RESTORE_POSITION', segmentId: 999, offsetMs: 0 })).toBe(s)
+  })
+})
+
+describe('LIB-2 TICK_SAVE', () => {
+  it('LIB-2 TICK_SAVE from playing yields the {segment_id, offset_ms} payload', () => {
+    const s = reduce(st('playing'), { type: 'TICK_SAVE' })
+    expect(s.pendingSave).toEqual({ segment_id: 105, offset_ms: 2300 })
+  })
+
+  it.each(['idle', 'loading', 'paused', 'error'] as const)(
+    'LIB-2 TICK_SAVE from %s yields nothing',
+    (status) => {
+      const s = st(status)
+      const out = reduce(s, { type: 'TICK_SAVE' })
+      expect(out).toBe(s)
+      expect(out.pendingSave ?? null).toBeNull()
+    },
+  )
+
+  it('LIB-2 initial state has no pending save', () => {
+    expect(initialState.pendingSave).toBeNull()
+  })
+})
+
+describe('LIB-3 settings while loading (M3 deviation 6)', () => {
+  it('LIB-3 SET_SPEED from loading is applied when the load finishes', () => {
+    const s1 = reduce(st('loading'), { type: 'SET_SPEED', speed: 1.5 })
+    const s2 = reduce(s1, { type: 'AUDIO_READY', generation: s1.generation, at: 2000 })
+    expect(s2.speed).toBe(1.5)
+  })
+
+  it('LIB-3 SET_VOICE from loading is applied when the load finishes', () => {
+    const s1 = reduce(st('loading'), { type: 'SET_VOICE', voice: 'am_adam' })
+    const s2 = reduce(s1, { type: 'AUDIO_READY', generation: s1.generation, at: 2000 })
+    expect(s2.voice).toBe('am_adam')
+  })
+})

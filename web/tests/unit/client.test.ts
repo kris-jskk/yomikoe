@@ -5,12 +5,17 @@ import {
   ApiError,
   TIMEOUT_MS,
   audioUrl,
+  deleteDocument,
   fetchAudio,
   getAllSegments,
   getDocument,
   getDocuments,
+  getSettings,
   getVoices,
   isEmptyAudio,
+  patchDocument,
+  putSettings,
+  uploadDocument,
 } from '../../src/api/client'
 import type { Segment, SegmentsPage, WordTimestamp } from '../../src/api/types'
 
@@ -222,5 +227,128 @@ describe('fetchAudio', () => {
     const err = (await pending) as ApiError
     expect(err).toBeInstanceOf(ApiError)
     expect(err.message).toBe('aborted')
+  })
+})
+
+// M4 client functions (spec _agent/specs/m4-library-interfaces.md §1, §2). Server shapes: api/tests/test_lib_gate.py;
+// an unset position is {segment_id: null, offset_ms: 0}, never null (_agent/drafts/m4-1-build-lib.md).
+const SUMMARY = {
+  id: 7,
+  title: 'Doc',
+  filename: 'doc.pdf',
+  page_count: 3,
+  pages_done: 3,
+  status: 'ready',
+  segment_count: 40,
+  position: { segment_id: 12, offset_ms: 1234 },
+  progress: 0.3,
+  settings: { voice_id: 'af_heart', speed: 1.5 },
+  last_opened_at: '2026-10-17T10:00:00Z',
+}
+
+function init(i = 0): RequestInit {
+  return fetchMock.mock.calls[i][1] ?? {}
+}
+
+function headerOf(ri: RequestInit, name: string): string | null {
+  return new Headers(ri.headers).get(name)
+}
+
+describe('LIB-2/LIB-3 patchDocument', () => {
+  it('LIB-2 patchDocument sends PATCH JSON to /documents/{id} and returns the summary', async () => {
+    fetchMock.mockResolvedValueOnce(json(SUMMARY))
+    const body = { position: { segment_id: 12, offset_ms: 1234 } }
+    const out = await patchDocument(7, body)
+    expect(calledUrls()).toEqual(['/documents/7'])
+    expect(init().method).toBe('PATCH')
+    expect(headerOf(init(), 'Content-Type')).toContain('application/json')
+    expect(JSON.parse(String(init().body))).toEqual(body)
+    expect(init().keepalive ?? false).toBe(false)
+    expect(out.position).toEqual({ segment_id: 12, offset_ms: 1234 })
+    expect(out.progress).toBe(0.3)
+  })
+
+  it('LIB-2 patchDocument sets keepalive when asked (pagehide save, D26)', async () => {
+    fetchMock.mockResolvedValueOnce(json(SUMMARY))
+    await patchDocument(7, { position: { segment_id: 12, offset_ms: 0 } }, { keepalive: true })
+    expect(init().keepalive).toBe(true)
+  })
+
+  it('LIB-3 patchDocument carries settings and opened', async () => {
+    fetchMock.mockResolvedValueOnce(json(SUMMARY))
+    await patchDocument(7, { settings: { voice_id: 'af_heart', speed: 1.5 }, opened: true })
+    expect(JSON.parse(String(init().body))).toEqual({
+      settings: { voice_id: 'af_heart', speed: 1.5 },
+      opened: true,
+    })
+  })
+
+  it('LIB-2 patchDocument throws ApiError on 422', async () => {
+    fetchMock.mockResolvedValueOnce(json({ detail: 'foreign segment' }, 422))
+    const err = await patchDocument(7, { position: { segment_id: 999, offset_ms: 0 } }).catch(
+      (e: unknown) => e,
+    )
+    expect(err).toBeInstanceOf(ApiError)
+    expect((err as ApiError).status).toBe(422)
+  })
+})
+
+describe('LIB-4 deleteDocument', () => {
+  it('LIB-4 deleteDocument sends DELETE and resolves on 204', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
+    await expect(deleteDocument(7)).resolves.toBeUndefined()
+    expect(calledUrls()).toEqual(['/documents/7'])
+    expect(init().method).toBe('DELETE')
+  })
+
+  it('LIB-4 deleteDocument throws ApiError 409 while parsing', async () => {
+    fetchMock.mockResolvedValueOnce(json({ detail: 'parsing' }, 409))
+    const err = await deleteDocument(7).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect((err as ApiError).status).toBe(409)
+  })
+})
+
+describe('LIB-3 getSettings / putSettings', () => {
+  it('LIB-3 getSettings GETs /settings', async () => {
+    fetchMock.mockResolvedValueOnce(json({ default_voice_id: null, default_speed: 1.25 }))
+    expect(await getSettings()).toEqual({ default_voice_id: null, default_speed: 1.25 })
+    expect(calledUrls()).toEqual(['/settings'])
+    expect(init().method ?? 'GET').toBe('GET')
+  })
+
+  it('LIB-3 putSettings PUTs JSON and returns the stored settings', async () => {
+    const s = { default_voice_id: 'af_heart', default_speed: 1.5 }
+    fetchMock.mockResolvedValueOnce(json(s))
+    expect(await putSettings(s)).toEqual(s)
+    expect(calledUrls()).toEqual(['/settings'])
+    expect(init().method).toBe('PUT')
+    expect(headerOf(init(), 'Content-Type')).toContain('application/json')
+    expect(JSON.parse(String(init().body))).toEqual(s)
+  })
+})
+
+describe('LIB-1 uploadDocument', () => {
+  it('LIB-1 uploadDocument POSTs multipart with the file under "file"', async () => {
+    fetchMock.mockResolvedValueOnce(json({ id: 9, status: 'parsing' }, 202))
+    const file = new File([new Uint8Array([37, 80, 68, 70])], 'paper.pdf', {
+      type: 'application/pdf',
+    })
+    expect(await uploadDocument(file)).toEqual({ id: 9, status: 'parsing' })
+    expect(calledUrls()).toEqual(['/documents'])
+    expect(init().method).toBe('POST')
+    const body = init().body
+    expect(body).toBeInstanceOf(FormData)
+    const sent = (body as FormData).get('file')
+    expect(sent).toBeInstanceOf(File)
+    expect((sent as File).name).toBe('paper.pdf')
+    // the browser sets the multipart boundary; a hand-set Content-Type would break it
+    expect(headerOf(init(), 'Content-Type')).toBeNull()
+  })
+
+  it('LIB-1 uploadDocument resolves on 200 for an already-uploaded file', async () => {
+    fetchMock.mockResolvedValueOnce(json({ id: 3, status: 'ready' }, 200))
+    const file = new File([new Uint8Array([1])], 'again.pdf')
+    expect(await uploadDocument(file)).toEqual({ id: 3, status: 'ready' })
   })
 })
