@@ -17,7 +17,8 @@ FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 TEXT_FIXTURES = [
     e["name"]
     for e in json.loads((FIXTURES / "manifest.json").read_text())
-    if e["class"] != "scanned"
+    if e["class"]
+    in ("academic", "report", "tables")  # M1 classes with sentences.txt; not scanned/formula
 ]
 
 # (fixture, check) -> allowed count, re-pinned after the false-positive fixes (math ellipsis,

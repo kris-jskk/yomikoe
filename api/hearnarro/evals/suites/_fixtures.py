@@ -19,6 +19,21 @@ def manifest() -> list[dict[str, Any]]:
     return json.loads((FIXTURES / "manifest.json").read_text())
 
 
+M1_CLASSES = ("academic", "report", "scanned", "tables")
+
+
+def entries(
+    classes: tuple[str, ...] | None = None, *, skip_scanned: bool = False
+) -> list[dict[str, Any]]:
+    """Manifest entries filtered by class; EVAL-2/3 need ``sentences.txt`` so pass ``M1_CLASSES``."""
+    return [
+        e
+        for e in manifest()
+        if (classes is None or e["class"] in classes)
+        and not (skip_scanned and e["class"] == "scanned")
+    ]
+
+
 def expected_rows(name: str) -> list[tuple[str, str]]:
     """(type, text) rows of ``<name>.expected.jsonl``."""
     path = FIXTURES / f"{name}.expected.jsonl"

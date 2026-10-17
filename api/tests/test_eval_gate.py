@@ -22,7 +22,8 @@ from hearnarro.ingestion.extract import ocr_available
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 ENTRIES: list[dict] = json.loads((FIXTURES / "manifest.json").read_text())
 EVAL1_COUNT = sum(1 for e in ENTRIES if e["class"] != "scanned" or ocr_available())
-EVAL2_COUNT = sum(1 for e in ENTRIES if e["class"] != "scanned")
+M1_TEXT = ("academic", "report", "tables")
+EVAL2_COUNT = sum(1 for e in ENTRIES if e["class"] in M1_TEXT)
 EVAL1_CLASSES = {e["class"] for e in ENTRIES if e["class"] != "scanned" or ocr_available()}
 
 
@@ -105,7 +106,7 @@ def test_e0_compare_flags_one_lowered_example(run_result: tuple[dict, Path]) -> 
 
 # --- E1: EVAL-3 clean-text rates and EVAL-4 speech form (D31, D32, D33) ---------------------
 
-EVAL3_COUNT = sum(1 for e in ENTRIES if e["class"] != "scanned")
+EVAL3_COUNT = sum(1 for e in ENTRIES if e["class"] in M1_TEXT)
 EVAL4_CATEGORIES = {
     "cardinal",
     "decimal_percent",
@@ -142,7 +143,8 @@ def test_eval3_eval4_registered_tier0_with_direction() -> None:
 
 
 def test_eval_all_tier0_runs_four_suites_under_60s(all_run: dict[str, Any]) -> None:
-    assert set(all_run["suites"]) == {"EVAL-1", "EVAL-2", "EVAL-3", "EVAL-4"}
+    # EVAL-10 (M5 mathspeak) is also tier 0 now.
+    assert set(all_run["suites"]) == {"EVAL-1", "EVAL-2", "EVAL-3", "EVAL-4", "EVAL-10"}
     assert all_run["seconds"] < 60
     assert all_run["suites"]["EVAL-3"]["direction"] == "lower"
 

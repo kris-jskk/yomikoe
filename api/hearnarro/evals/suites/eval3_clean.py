@@ -24,8 +24,7 @@ def dataset() -> list[dict[str, Any]]:
     """One example per non-scanned manifest entry."""
     return [
         {"id": e["name"], "class": e["class"], "skip": None}
-        for e in _fixtures.manifest()
-        if e["class"] != "scanned"
+        for e in _fixtures.entries(_fixtures.M1_CLASSES, skip_scanned=True)
     ]
 
 
