@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from hearnarro.ingestion.classify import BOILERPLATE_RE, EMAIL
+from hearnarro.ingestion.classify import BOILERPLATE_RE, EMAIL, SCRIPT_RATIO, _is_math_font
 from hearnarro.ingestion.models import (
     BULLET_GLYPHS,
     INLINE_ITEM_RE,
@@ -12,6 +12,7 @@ from hearnarro.ingestion.models import (
     Block,
     Line,
     LogicalBlock,
+    MathSpan,
     Span,
 )
 from hearnarro.ingestion.segment import _segmenter
@@ -20,6 +21,9 @@ TERMINAL_PUNCT = '.!?:;"”’'
 # Non-body types that end a join candidate: a new section, a list or a display equation
 # interrupts the sentence. Other non-body types (footnote, caption, table, ...) are floats.
 JOIN_BLOCKERS = {"heading", "list", "equation"}
+# MATH-2: block types whose maths-font runs become inline MathSpans (a list item's text is
+# rebuilt by split_items, so lists carry none yet).
+INLINE_MATH_TYPES = {"body", "heading", "caption", "footnote"}
 PARA_JOIN_GAP = 1.0  # same-page join: B starts at most this many of A's font sizes below A
 # ... and the join is on only for documents where stage 1 split paragraphs systematically:
 # at least PARA_JOIN_MIN_COUNT candidate pairs making up PARA_JOIN_MIN_SHARE of the body
@@ -49,20 +53,64 @@ def merge_lines(lines: list[str], *, heading: bool = False) -> str:
     a line ending in a hyphen before any other continuation keeps the hyphen and joins with
     no space ("Multi-" + "Modal" -> "Multi-Modal", ING-4 document 17).
     """
-    parts = [" ".join(line.split()) for line in lines]
+    return merge_lines_map(lines, heading=heading)[0]
+
+
+def _collapse(line: str) -> tuple[str, list[int]]:
+    """``" ".join(line.split())`` and, per character of ``line``, its index in the result
+    (-1 for whitespace that was dropped)."""
+    out: list[str] = []
+    pos: list[int] = []
+    pending = False
+    for ch in line:
+        if ch.isspace():
+            if out and not pending:
+                pending = True
+                pos.append(len(out))  # the run's first space becomes the single space
+            else:
+                pos.append(-1)
+            continue
+        if pending:
+            out.append(" ")
+            pending = False
+        pos.append(len(out))
+        out.append(ch)
+    if pending:  # trailing whitespace: the space it would have become is dropped
+        for k in range(len(pos) - 1, -1, -1):
+            if pos[k] == len(out):
+                pos[k] = -1
+                break
+    return "".join(out), pos
+
+
+def merge_lines_map(lines: list[str], *, heading: bool = False) -> tuple[str, list[list[int]]]:
+    """``merge_lines`` plus, for every character of every input line, its index in the merged
+    text (-1 when dropped: collapsed whitespace, a line-end hyphen joined away). MATH-2 uses it
+    to place maths runs of a line inside the merged block text (spec m5 §3a)."""
     out = ""
-    for part in parts:
+    maps: list[list[int]] = []
+    last: tuple[int, int] | None = None  # (line, char) owning out's last character
+    for li, line in enumerate(lines):
+        part, pos = _collapse(line)
         if not part:
+            maps.append([-1] * len(line))
             continue
         if out.endswith(SOFT_HYPHEN) or (out.endswith(LINE_END_HYPHENS) and part[0].islower()):
-            out = out[:-1] + part
+            if last is not None:
+                maps[last[0]][last[1]] = -1
+            out = out[:-1]
+            offset = len(out)
         elif heading and out.endswith(LINE_END_HYPHENS):
-            out = out + part
+            offset = len(out)
         elif out:
-            out = out + " " + part
+            out = out + " "
+            offset = len(out)
         else:
-            out = part
-    return out
+            offset = 0
+        out = out + part
+        maps.append([p + offset if p >= 0 else -1 for p in pos])
+        last = (li, max(k for k, p in enumerate(pos) if p >= 0))
+    return out, maps
 
 
 _GLYPHS = frozenset(BULLET_GLYPHS)
@@ -124,6 +172,21 @@ def table_rows(block: Block) -> list[str]:
     return rows
 
 
+def code_cue(code: str) -> str:
+    """ "Code listing, N lines." with N the non-empty lines of ``code`` (ING-10)."""
+    n = sum(1 for line in code.split("\n") if line.strip())
+    return f"Code listing, {n} {'line' if n == 1 else 'lines'}."
+
+
+def equation_label(raw_lines: list[str]) -> str | None:
+    """The label of a display equation, "3" from a line ending in "(3)" (MATH-4)."""
+    for line in raw_lines:
+        m = EQUATION_LABEL_RE.search(line)
+        if m:
+            return m.group(1)
+    return None
+
+
 def equation_cue(raw_lines: list[str]) -> str:
     """ "Equation N." when a label like "(3)" ends a line of the block, else "Equation." (ING-7)."""
     for line in raw_lines:
@@ -152,6 +215,89 @@ def _table_groups(blocks: list[Block]) -> dict[int, tuple[int, int]]:
         first = i
         groups[i] = (number, rows)
     return groups
+
+
+def _math_runs(line: Line) -> list[list[int]]:
+    """Indices of the spans of ``line`` forming inline maths runs (MATH-2): maximal runs of
+    maths-font spans, extended over the scripts next to them (superscript, or smaller than
+    SCRIPT_RATIO of the line's largest size) and whitespace-only spans between them."""
+    top = max((s.size for s in line.spans), default=0.0)
+
+    def mathy(s: Span) -> bool:
+        return bool(s.text.strip()) and _is_math_font(s.font)
+
+    def script(s: Span) -> bool:
+        return bool(s.text.strip()) and (s.superscript or s.size < SCRIPT_RATIO * top)
+
+    runs: list[list[int]] = []
+    cur: list[int] = []
+    for k, s in enumerate(line.spans):
+        if mathy(s) or (cur and (script(s) or not s.text.strip())):
+            cur.append(k)
+        else:
+            if cur:
+                runs.append(cur)
+            cur = []
+            # a script directly before a maths span opens the run with it
+            if script(s) and k + 1 < len(line.spans) and mathy(line.spans[k + 1]):
+                cur = [k]
+    if cur:
+        runs.append(cur)
+    out: list[list[int]] = []
+    for run in runs:
+        while run and not line.spans[run[-1]].text.strip():
+            run.pop()
+        if any(mathy(line.spans[k]) for k in run):
+            out.append(run)
+    return out
+
+
+def _inline_spans(lines: list[Line], texts: list[str], heading: bool) -> list[MathSpan]:
+    """Inline MathSpans over the maths-font runs of ``lines`` in ``merge_lines(texts)``.
+    A line whose kept text differs from its spans' text (email stripping) gets none."""
+    _, maps = merge_lines_map(texts, heading=heading)
+    spans: list[MathSpan] = []
+    for line, text, pos in zip(lines, texts, maps, strict=True):
+        if text != line.text:
+            continue
+        starts: list[int] = []
+        acc = 0
+        for s in line.spans:
+            starts.append(acc)
+            acc += len(s.text)
+        for run in _math_runs(line):
+            lo = starts[run[0]]
+            hi = starts[run[-1]] + len(line.spans[run[-1]].text)
+            kept = [p for p in pos[lo:hi] if p >= 0]
+            if kept:
+                spans.append(MathSpan(kept[0], kept[-1] + 1, False, [line.spans[k] for k in run]))
+    return spans
+
+
+def _shift(spans: list[MathSpan], lo: int, hi: int, offset: int) -> list[MathSpan]:
+    """Spans starting in [lo, hi), clipped to hi and moved by ``offset``."""
+    out: list[MathSpan] = []
+    for s in spans:
+        if lo <= s.start < hi:
+            end = min(s.end, hi)
+            if end > s.start:
+                out.append(MathSpan(s.start + offset, end + offset, s.display, s.runs, s.label))
+    return out
+
+
+def _join(target: LogicalBlock, text: str, spans: list[MathSpan]) -> None:
+    """``target.text = merge_lines([target.text, text])``, keeping both sides' MathSpans.
+
+    Both texts are already merged (single spaces), so the head keeps its offsets (less a
+    line-end hyphen joined away) and ``text`` lands at the end of the joined text."""
+    joined = merge_lines([target.text, text])
+    tail = " ".join(text.split())
+    head_len = len(joined) - len(tail)
+    kept = _shift(target.math_spans, 0, head_len, 0)
+    if tail == text:
+        kept.extend(_shift(spans, 0, len(text), head_len))
+    target.text = joined
+    target.math_spans = kept
 
 
 def is_noise_line(text: str) -> bool:
@@ -260,16 +406,36 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
     candidate: int | None = None  # index in ``out`` of the last body block seen
     last_body: Block | None = None
     for i, block in enumerate(blocks):
-        lines = [ln.text for ln in block.lines if not is_noise_line(ln.text)]
+        kept = [ln for ln in block.lines if not is_noise_line(ln.text)]
+        lines = [ln.text for ln in kept]
         if block.page > 0 or ABSTRACT_RE.match(block.text):
             in_author_block = False
         if in_author_block and block.type in ("heading", "body"):
             lines = [strip_emails(ln) for ln in lines]
-        text = merge_lines(lines, heading=block.type == "heading")
+        heading = block.type == "heading"
+        text = merge_lines(lines, heading=heading)
+        spans = _inline_spans(kept, lines, heading) if block.type in INLINE_MATH_TYPES else []
         if block.inline and out and text:
             # Stage 3 found this block continuing the previous block's text line (inline maths).
-            out[-1].text = merge_lines([out[-1].text, text])
-            out[-1].source.append((block.page, block.index))
+            host = out[-1]
+            runs = [sp for ln in kept for sp in ln.spans if sp.text.strip()]
+            if host.type == "code" and host.raw_text is not None:
+                host.raw_text = host.raw_text + "\n" + "\n".join(lines)
+                host.text = code_cue(host.raw_text)
+            elif host.type == "table":
+                host.text = merge_lines([host.text, text])
+            elif host.type == "equation" and host.math_spans:
+                # MATH-1: a fragment continuing a display equation widens its one span
+                _join(host, text, [])
+                display = host.math_spans[0] if host.math_spans else None
+                if display is not None:
+                    display.end = len(host.text)
+                    display.runs = [*display.runs, *runs]
+                host.raw_text = host.text
+            else:
+                # MATH-2: the characters the fragment added are one inline span
+                _join(host, text, [MathSpan(0, len(text), False, runs)])
+            host.source.append((block.page, block.index))
             continue
         if (
             block.type in ("body", "heading")
@@ -278,7 +444,7 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
             and _size(block) < FLOAT_SIZE_RATIO * _size(last_body)
         ):
             # Small-print body or heading text (figure labels) between fragments is a float.
-            out.append(_logical(len(out), block, text))
+            out.append(_logical(len(out), block, text, spans=spans))
             continue
         if block.type == "body":
             if (
@@ -299,13 +465,15 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
             ):
                 target = out[candidate]
                 head, rest = (text, "") if candidate == len(out) - 1 else _first_sentence(text)
-                target.text = merge_lines([target.text, head])
+                rest_at = len(text) - len(rest)
+                _join(target, head, _shift(spans, 0, len(head), 0))
                 target.source.append((block.page, block.index))
                 if rest:
-                    out.append(_logical(len(out), block, rest))
+                    rest_spans = _shift(spans, rest_at, len(text), -rest_at)
+                    out.append(_logical(len(out), block, rest, spans=rest_spans))
                     candidate = len(out) - 1
             else:
-                out.append(_logical(len(out), block, text))
+                out.append(_logical(len(out), block, text, spans=spans))
                 candidate = len(out) - 1
             last_body = block
             continue
@@ -322,8 +490,35 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
             out.append(_logical(len(out), block, "\n".join(spoken), raw=text))
             continue
         if block.type == "equation":
-            # ING-7: one cue segment; the symbols are never spoken.
-            out.append(_logical(len(out), block, equation_cue(lines), raw=text))
+            # MATH-1: the raw expression is the text and one display span covers it; the
+            # mathspeak reader speaks it (its fallback is the ING-7 cue). raw_text keeps the
+            # same text for the D14 excluded-mass guard.
+            runs = [sp for ln in kept for sp in ln.spans if sp.text.strip()]
+            display = [MathSpan(0, len(text), True, runs, equation_label(lines))] if text else []
+            out.append(_logical(len(out), block, text, raw=text, spans=display))
+            continue
+        if block.type == "code":
+            # ING-10: one cue "Code listing, N lines."; raw_text keeps the code (VIEW-1, D14).
+            # Consecutive code blocks on one page are one listing.
+            code = "\n".join(ln for ln in lines if ln.strip())
+            if not code:
+                continue
+            prev = blocks[i - 1] if i else None
+            if (
+                out
+                and out[-1].type == "code"
+                and out[-1].raw_text is not None
+                and prev is not None
+                and prev.type == "code"
+                and prev.page == block.page
+            ):
+                listing = out[-1]
+                listing.raw_text = f"{listing.raw_text}\n{code}"
+                listing.source.append((block.page, block.index))
+            else:
+                listing = _logical(len(out), block, "", raw=code)
+                out.append(listing)
+            listing.text = code_cue(listing.raw_text or "")
             continue
         if block.type == "list":
             for item in split_items(lines):
@@ -332,6 +527,7 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
         out.append(_logical(len(out), block, text))
     for lb in out:
         lb.text = lb.text.rstrip(SOFT_HYPHEN)  # a soft hyphen no later block joined onto
+        lb.math_spans = _shift(lb.math_spans, 0, len(lb.text), 0)
     return out
 
 
@@ -339,7 +535,13 @@ def _size(block: Block) -> float:
     return max((s.size for ln in block.lines for s in ln.spans), default=0.0)
 
 
-def _logical(id_: int, block: Block, text: str, raw: str | None = None) -> LogicalBlock:
+def _logical(
+    id_: int,
+    block: Block,
+    text: str,
+    raw: str | None = None,
+    spans: list[MathSpan] | None = None,
+) -> LogicalBlock:
     return LogicalBlock(
         id=id_,
         page=block.page,
@@ -347,4 +549,5 @@ def _logical(id_: int, block: Block, text: str, raw: str | None = None) -> Logic
         text=text,
         source=[(block.page, block.index)],
         raw_text=raw,
+        math_spans=list(spans or []),
     )

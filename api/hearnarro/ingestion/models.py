@@ -95,6 +95,7 @@ BlockType = Literal[
     "noise",  # never read: rotated stamps, email/URL-only lines, cover boilerplate
     "figure",  # never read: text >= 80% inside a figure region (D12)
     "toc",  # never read: a table of contents (heading "Contents" and its entries)
+    "code",  # ING-10: a code listing, spoken as one cue "Code listing, N lines."
 ]
 
 
@@ -130,6 +131,21 @@ class Page:
 
 
 @dataclass
+class MathSpan:
+    """A run of maths inside ``LogicalBlock.text`` (MATH-1, MATH-2; spec m5 §3a).
+
+    Invariant: ``block.text[start:end]`` equals the joined text of ``runs`` up to the
+    whitespace (and line-end hyphens) ``merge_lines`` changes.
+    """
+
+    start: int  # offsets into LogicalBlock.text
+    end: int
+    display: bool  # True for a whole equation block, False for an inline span
+    runs: list[Span]  # the stage 1 spans, in reading order, geometry kept
+    label: str | None = None  # "3" from a trailing "(3)" (MATH-4)
+
+
+@dataclass
 class LogicalBlock:
     """Output of stage 4: one readable unit after line/page merging."""
 
@@ -141,6 +157,8 @@ class LogicalBlock:
     # ING-7: a table or equation block's text is spoken cues; this keeps the raw merged text so
     # the D14 excluded-mass guard can still weigh the table/equation characters.
     raw_text: str | None = None
+    # MATH-1, MATH-2: maths runs inside ``text``, set by merge_blocks (spec m5 §3a).
+    math_spans: list[MathSpan] = field(default_factory=list)
 
 
 @dataclass

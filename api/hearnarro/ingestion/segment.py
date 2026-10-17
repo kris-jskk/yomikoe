@@ -230,8 +230,8 @@ def split_sentences(
     text = block.text
     if not text.strip():
         return []
-    if block.type in ("table", "equation"):
-        spans = _line_spans(text)  # ING-7: cue and row lines are one segment each
+    if block.type in ("table", "equation", "code"):
+        spans = _line_spans(text)  # ING-7, ING-10: cue and row lines are one segment each
     else:
         spans = _letter_splits(text, _merge(text, _pysbd_spans(block), abbreviations))
     segments: list[Segment] = []

@@ -3,7 +3,8 @@
 Rules from docs/TECHNICAL_DESIGN.md stage 2, first match wins:
 noise (off-page: less than OFF_PAGE_INSIDE_FRAC of the bbox inside the page box), noise
 (rotated text), header/footer, noise (boilerplate text), heading, caption, footnote,
-table, equation, list, body. Then (D12) any block but a caption whose bbox lies at least
+table, code (ING-10), equation, list, body. Then (D12) any block but a caption or a code
+listing whose bbox lies at least
 FIGURE_INSIDE_FRAC inside a figure region (Page.figure_bboxes) is typed figure. Two document
 passes follow: cover-page pull quotes typed heading by size become body, and a table of
 contents (a "Contents" heading and the TOC-like blocks after it) is typed toc (never read).
@@ -43,6 +44,13 @@ RULE_RE = re.compile(r"^[_\-–—=\s]{5,}$")
 CAPTION_RE = re.compile(r"^(?:Figure|Fig\.|Table|Listing)\s*\d")
 MATH_CHARS = set("=+−-×÷∑∫√∂∞≤≥≈∝∈∀∃αβγδεθλμπσφω^_{}|")
 MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
+# ING-10 code listings (spec m5 §3d): monospace fonts, by name.
+MONO_FONT_MARKERS = ("Mono", "Courier", "Consolas", "Menlo", "CMTT", "SFTT", "Inconsolata", "Code")
+CODE_MONO_SHARE = 0.7  # a block this monospace by character is code
+CODE_MIN_LINES = 3  # ... or this many lines, CODE_INDENTED_SHARE of them indented code lines
+CODE_INDENTED_SHARE = 0.5
+CODE_INDENT = 1.0  # a line is indented when it starts this many font sizes right of the block
+CODE_PUNCT_RE = re.compile(r"[{};=()]|->|=>|^\s*(?:#|//)")
 EQ_NUMBER_RE = re.compile(r"^\(\d+[a-z]?\)[.,]?$")
 SCRIPT_RATIO = 0.8  # text smaller than this share of the block's largest size is a script
 EQ_PROSE_LETTERS: float | None = 0.5
@@ -191,6 +199,37 @@ def _bold_majority(block: Block) -> bool:
 
 def _is_math_font(font: str) -> bool:
     return any(m in font for m in MATH_FONT_MARKERS)
+
+
+def _is_mono_font(font: str) -> bool:
+    return any(m in font for m in MONO_FONT_MARKERS)
+
+
+def _is_code(block: Block) -> bool:
+    """A code listing (ING-10, spec m5 §3d): at least CODE_MONO_SHARE of its non-space
+    characters are in a monospace font; or, with no maths font, at least CODE_MIN_LINES lines
+    of which CODE_INDENTED_SHARE are indented by CODE_INDENT font sizes and hold code
+    punctuation (``{ } ; = ( ) -> =>``, a leading ``#`` or ``//``)."""
+    total = 0
+    mono = 0
+    for ln in block.lines:
+        for s in ln.spans:
+            n = sum(1 for ch in s.text if not ch.isspace())
+            total += n
+            if _is_mono_font(s.font):
+                mono += n
+    if total and mono >= CODE_MONO_SHARE * total:
+        return True
+    lines = [ln for ln in block.lines if ln.text.strip()]
+    if len(lines) < CODE_MIN_LINES:
+        return False
+    if any(_is_math_font(s.font) for ln in lines for s in ln.spans):
+        return False
+    indent = CODE_INDENT * max(_max_size(block), 1.0)
+    coded = sum(
+        1 for ln in lines if ln.bbox.x0 - block.bbox.x0 >= indent and CODE_PUNCT_RE.search(ln.text)
+    )
+    return coded >= CODE_INDENTED_SHARE * len(lines)
 
 
 def _is_equation(block: Block) -> bool:
@@ -373,6 +412,8 @@ def _classify(
         return "footnote"
     if any(block.bbox.overlaps(t) for t in tables):
         return "table"
+    if _is_code(block):
+        return "code"
     if _is_equation(block):
         return "equation"
     if ITEM_RE.match(block.lines[0].text):
@@ -607,7 +648,8 @@ def _fold_vertical_titles(page: Page) -> None:
 def classify_pages(pages: list[Page]) -> list[Page]:
     """Set block.type in place (first matching rule wins) and return pages.
 
-    Figure-internal text (D12) overrides every type but caption. Then cover pull quotes are
+    Figure-internal text (D12) overrides every type but caption and code (ING-10: a listing
+    on a shaded box is still read as its cue). Then cover pull quotes are
     retyped body, vertical letter stacks fold into one heading, drop caps join their
     paragraph, and a table of contents is typed toc.
     """
@@ -617,7 +659,7 @@ def classify_pages(pages: list[Page]) -> list[Page]:
         tables = _cover_tables(page, median)
         for block in page.blocks:
             block.type = _classify(block, page, median, repeated, tables)
-            if block.type != "caption" and in_figure(block, page.figure_bboxes):
+            if block.type not in ("caption", "code") and in_figure(block, page.figure_bboxes):
                 block.type = "figure"
         if page.number < COVER_PAGES:
             _retype_pull_quotes(page, median)

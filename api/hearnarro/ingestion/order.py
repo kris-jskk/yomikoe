@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from hearnarro.ingestion.models import Block, Line, Page
 
-READ_TYPES = {"body", "heading", "list", "caption", "equation", "table"}
+READ_TYPES = {"body", "heading", "list", "caption", "equation", "table", "code"}  # code: ING-10
 GUTTER_FRAC = 0.015  # minimum gutter width, fraction of page width
 CROSS_FRAC = 0.05  # at most this share of the text may straddle the gutter
 NARROW_SHARE = 0.5  # narrow blocks must hold at least this share of the page's text
