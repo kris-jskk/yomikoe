@@ -248,6 +248,18 @@ validates it and writes `evals/listening/<date>_<listener>.json`; `run EVAL-9` (
 | `api/tests/fixtures/listening/sample_sheet.md` (E4) | filled 4-row fixture sheet (listener "fixture"); never ingested into evals/listening/ | tested |
 | `evals/listening/pending_2026-10-17/sheet.md` (E4) | first real-voice (kokoro) sheet awaiting a listener; WAVs ignored by .gitignore | pending human |
 
+### M5 phase 1 modules (EVAL-10, EVAL-4 MATH/TERM categories; spec `_agent/specs/m5-academic-reading.md` §1b–§1d)
+
+| File | Responsibility | Status |
+| --- | --- | --- |
+| `api/hearnarro/evals/suites/eval10_mathspeak.py` (M5) | EVAL-10 Spoken mathematics, tier 0, direction higher (MATH-1..4). `dataset()`: one example per `math_speech.jsonl` pair plus one per manifest entry of class `formula` (class `fixture`; skipped when its pdf or spoken.txt is missing, or when image-only without an OCR engine). `spoken(raw, block)`: `raw` → stage-1 `Block` with span geometry (`^{..}` superscript span, `_{..}` subscript span, `\n` stacked lines, `$..$` maths-font run in body text) → `merge_blocks` → `split_sentences` → `mathspeak.apply_mathspeak` when that package exists. `math_segments(result)` (delegates to `mathspeak.math_segments` once phase 3 lands; else equation segments plus segments with non-empty `math_spans`), `formula_entries()`, `has_text_layer(name)` (pypdfium2), `spoken_lines(name)`, `fixture_actual(name)`, `fixture_score(name)`; `score` → `score`, `actual`, `expected` (`text_layer` for a fixture); `aggregate` → `mean`, `min`, `by_class` (display, inline, symbol, reference, fixture). Reads `math_speech.jsonl`, `tests/fixtures/pdfs/manifest.json`, `formula_*.pdf`, `formula_*.spoken.txt` | implemented, tier-0 run (`_agent/results/659`) |
+| `api/hearnarro/evals/data/math_speech.jsonl` (M5) | 158 raw → spoken pairs (`id`, `class`, `raw`, `spoken`, `block`): 52 display, 40 inline, 46 symbol, 20 reference; every MATH-3 symbol, the Greek letters, the MATH-3 units and formulas, every MATH-4 form at least twice; spoken side in the spec §3c convention | implemented |
+| `api/hearnarro/evals/data/speech_form.jsonl` (M5 addition) | 280 new EVAL-4 pairs, 20 per category: `math_symbol`, `math_unit`, `math_chem`, `math_reference`, `term_math`, `term_stats`, `term_physics`, `term_chem`, `term_bio`, `term_cs`, `term_latin_greek`, `term_surname`, `term_abbreviation`, `term_citation`; existing 302 pairs unchanged. `term_*` expected sides use respellings where the TERM-1 pronunciation differs from spelling; phase 4 owns corrections | implemented |
+| `api/hearnarro/evals/scorers.py` (M5 addition) | `mathspeak_score(actual, expected) -> float`: `1 - seq_levenshtein(words(actual), words(expected)) / max(1, len(expected words))`, clamped at 0 (EVAL-10, gate b) | implemented, tested (`test_evals_scorers.py`) |
+| `api/hearnarro/evals/suites/__init__.py` (M5 change) | registers EVAL-10 | implemented |
+| `api/tests/test_m5_gate_mathspeak.py` (M5) | M5 gate (a) formula fixtures present (10 entries, files, 5 cut, 1 image-only, ≥ 2 textbook, ≥ 2 with a `code` block), (b) per-fixture score ≥ 0.90 / 0.75 scanned and mean ≥ 0.92, (e) `compute_profile` (imported inside the test) matches the manifest `profile` on ≥ 28 of 30; image-only cases `@pytest.mark.ocr` | red by design at phase 1 (`_agent/results/661`) |
+| `api/tests/test_evals_scorers.py` (M5) | `mathspeak_score`: identical, case/punctuation, empty expected, partial, texts or words | tested |
+
 ### Test helpers and tests
 
 | File | Responsibility | Status |

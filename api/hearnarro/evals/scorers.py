@@ -88,6 +88,16 @@ def word_score(actual_texts: list[str], expected_texts: list[str]) -> float:
     return 1 - seq_levenshtein(actual, expected) / len(expected)
 
 
+def mathspeak_score(actual: list[str], expected: list[str]) -> float:
+    """EVAL-10 and M5 gate (b) score, D14-style (MATH-1..4): ``1 - seq_levenshtein / max(1,
+    len(expected))`` over the ``words`` tokenization (lowercased, punctuation stripped from each
+    token) of the two lists, clamped at 0. The arguments may be texts (segments, spoken.txt
+    lines) or words; ``words`` is idempotent on a word list. An empty expected side scores 1.0
+    when the actual side is empty too and 0.0 once it holds a word."""
+    got, want = words(actual), words(expected)
+    return max(0.0, 1 - seq_levenshtein(got, want) / max(1, len(want)))
+
+
 def char_mass_ratio(prose_texts: list[str], excluded_texts: list[str]) -> float:
     """D14 guard input: chars in excluded (table/equation) segments / chars in all segments."""
     excluded = sum(len(t) for t in excluded_texts)

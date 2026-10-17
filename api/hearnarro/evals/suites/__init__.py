@@ -22,6 +22,7 @@ from hearnarro.evals.suites import (
     eval7_speed,
     eval8_ocr,
     eval9_listening,
+    eval10_mathspeak,
 )
 
 SUITES: dict[str, ModuleType] = {
@@ -36,6 +37,7 @@ SUITES: dict[str, ModuleType] = {
         eval7_speed,
         eval8_ocr,
         eval9_listening,
+        eval10_mathspeak,
     )
 }
 

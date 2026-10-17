@@ -300,3 +300,283 @@
 {"id": "equation_cue_18", "category": "equation_cue", "text": "We set λ to a small value.", "expected": "We set lambda to a small value.", "note": "an inline Greek letter is spoken by name"}
 {"id": "equation_cue_19", "category": "equation_cue", "text": "The mean μ is known.", "expected": "The mean mu is known.", "note": "an inline Greek letter is spoken by name"}
 {"id": "equation_cue_20", "category": "equation_cue", "text": "The loss is below ε.", "expected": "The loss is below epsilon.", "note": "an inline Greek letter is spoken by name"}
+{"id": "math_symbol_01", "category": "math_symbol", "text": "We require a ≤ b here.", "expected": "We require a is less than or equal to b here."}
+{"id": "math_symbol_02", "category": "math_symbol", "text": "The score is ≥ 0.5 on every split.", "expected": "The score is greater than or equal to zero point five on every split."}
+{"id": "math_symbol_03", "category": "math_symbol", "text": "Note that π ≈ 3.14 is enough.", "expected": "Note that pi is approximately equal to three point one four is enough."}
+{"id": "math_symbol_04", "category": "math_symbol", "text": "Assume x ≠ y throughout.", "expected": "Assume x is not equal to y throughout."}
+{"id": "math_symbol_05", "category": "math_symbol", "text": "The error is ± 2 percent.", "expected": "The error is plus or minus two percent."}
+{"id": "math_symbol_06", "category": "math_symbol", "text": "The grid is 3 × 3 cells.", "expected": "The grid is three times three cells."}
+{"id": "math_symbol_07", "category": "math_symbol", "text": "Take 10 ÷ 2 as the step.", "expected": "Take ten divided by two as the step."}
+{"id": "math_symbol_08", "category": "math_symbol", "text": "The dot product a · b vanishes.", "expected": "The dot product a dot b vanishes."}
+{"id": "math_symbol_09", "category": "math_symbol", "text": "The operator ∇ acts on f.", "expected": "The operator del acts on f."}
+{"id": "math_symbol_10", "category": "math_symbol", "text": "The bound goes to ∞ slowly.", "expected": "The bound goes to infinity slowly."}
+{"id": "math_symbol_11", "category": "math_symbol", "text": "Every x ∈ S is counted.", "expected": "Every x is an element of s is counted."}
+{"id": "math_symbol_12", "category": "math_symbol", "text": "Each y ∉ S is dropped.", "expected": "Each y is not an element of s is dropped."}
+{"id": "math_symbol_13", "category": "math_symbol", "text": "The set A ⊂ B is finite.", "expected": "The set a is a subset of b is finite."}
+{"id": "math_symbol_14", "category": "math_symbol", "text": "The symbol ∑ denotes a sum.", "expected": "The symbol the sum of denotes a sum."}
+{"id": "math_symbol_15", "category": "math_symbol", "text": "Here ∂ is a partial derivative.", "expected": "Here partial is a partial derivative."}
+{"id": "math_symbol_16", "category": "math_symbol", "text": "We take √2 as the scale.", "expected": "We take the square root of two as the scale."}
+{"id": "math_symbol_17", "category": "math_symbol", "text": "The map x → y is linear.", "expected": "The map x goes to y is linear."}
+{"id": "math_symbol_18", "category": "math_symbol", "text": "The rule p ⇒ q holds.", "expected": "The rule p implies q holds."}
+{"id": "math_symbol_19", "category": "math_symbol", "text": "The claim holds ∀ n.", "expected": "The claim holds for all n."}
+{"id": "math_symbol_20", "category": "math_symbol", "text": "The weight α is tuned per task.", "expected": "The weight alpha is tuned per task."}
+{"id": "math_unit_01", "category": "math_unit", "text": "The road is 12 km long.", "expected": "The road is twelve kilometers long."}
+{"id": "math_unit_02", "category": "math_unit", "text": "Latency stayed under 40 ms.", "expected": "Latency stayed under forty milliseconds."}
+{"id": "math_unit_03", "category": "math_unit", "text": "The pores are 5 μm across.", "expected": "The pores are five micrometers across."}
+{"id": "math_unit_04", "category": "math_unit", "text": "The carrier runs at 48 kHz.", "expected": "The carrier runs at forty-eight kilohertz."}
+{"id": "math_unit_05", "category": "math_unit", "text": "The yield stress is 250 MPa.", "expected": "The yield stress is two hundred fifty megapascals."}
+{"id": "math_unit_06", "category": "math_unit", "text": "We added 0.5 mol of acid.", "expected": "We added zero point five moles of acid."}
+{"id": "math_unit_07", "category": "math_unit", "text": "The film is 200 nm thick.", "expected": "The film is two hundred nanometers thick."}
+{"id": "math_unit_08", "category": "math_unit", "text": "The clock is 3 GHz.", "expected": "The clock is three gigahertz."}
+{"id": "math_unit_09", "category": "math_unit", "text": "The dose was 10 mg daily.", "expected": "The dose was ten milligrams daily."}
+{"id": "math_unit_10", "category": "math_unit", "text": "The beam carries 2 kN.", "expected": "The beam carries two kilonewtons."}
+{"id": "math_unit_11", "category": "math_unit", "text": "The tank holds 4 mL of fluid.", "expected": "The tank holds four milliliters of fluid."}
+{"id": "math_unit_12", "category": "math_unit", "text": "The pulse lasts 8 ns.", "expected": "The pulse lasts eight nanoseconds."}
+{"id": "math_unit_13", "category": "math_unit", "text": "The motor draws 15 kW.", "expected": "The motor draws fifteen kilowatts."}
+{"id": "math_unit_14", "category": "math_unit", "text": "The battery stores 60 kWh.", "expected": "The battery stores sixty kilowatt hours."}
+{"id": "math_unit_15", "category": "math_unit", "text": "The current is 5 mA.", "expected": "The current is five milliamps."}
+{"id": "math_unit_16", "category": "math_unit", "text": "The gap is 3 mm wide.", "expected": "The gap is three millimeters wide."}
+{"id": "math_unit_17", "category": "math_unit", "text": "The coil is rated at 2 MHz.", "expected": "The coil is rated at two megahertz."}
+{"id": "math_unit_18", "category": "math_unit", "text": "The sample spun at 20 μs per turn.", "expected": "The sample spun at twenty microseconds per turn."}
+{"id": "math_unit_19", "category": "math_unit", "text": "The rope holds 1 kN.", "expected": "The rope holds one kilonewton."}
+{"id": "math_unit_20", "category": "math_unit", "text": "The supply is 12 kV.", "expected": "The supply is twelve kilovolts."}
+{"id": "math_chem_01", "category": "math_chem", "text": "Water, H2O, covers the surface.", "expected": "Water, H two O, covers the surface."}
+{"id": "math_chem_02", "category": "math_chem", "text": "Levels of CO2 rose.", "expected": "Levels of C O two rose."}
+{"id": "math_chem_03", "category": "math_chem", "text": "Methane is CH4.", "expected": "Methane is C H four."}
+{"id": "math_chem_04", "category": "math_chem", "text": "Table salt is NaCl.", "expected": "Table salt is N a C l."}
+{"id": "math_chem_05", "category": "math_chem", "text": "Ozone, O3, absorbs ultraviolet light.", "expected": "Ozone, O three, absorbs ultraviolet light."}
+{"id": "math_chem_06", "category": "math_chem", "text": "Ammonia, NH3, is a base.", "expected": "Ammonia, N H three, is a base."}
+{"id": "math_chem_07", "category": "math_chem", "text": "Sulfuric acid is H2SO4.", "expected": "Sulfuric acid is H two S O four."}
+{"id": "math_chem_08", "category": "math_chem", "text": "Glucose is C6H12O6.", "expected": "Glucose is C six H twelve O six."}
+{"id": "math_chem_09", "category": "math_chem", "text": "Nitrogen gas, N2, is inert.", "expected": "Nitrogen gas, N two, is inert."}
+{"id": "math_chem_10", "category": "math_chem", "text": "Oxygen, O2, supports combustion.", "expected": "Oxygen, O two, supports combustion."}
+{"id": "math_chem_11", "category": "math_chem", "text": "Hydrogen peroxide is H2O2.", "expected": "Hydrogen peroxide is H two O two."}
+{"id": "math_chem_12", "category": "math_chem", "text": "Calcium carbonate is CaCO3.", "expected": "Calcium carbonate is C a C O three."}
+{"id": "math_chem_13", "category": "math_chem", "text": "Ethanol is C2H5OH.", "expected": "Ethanol is C two H five O H."}
+{"id": "math_chem_14", "category": "math_chem", "text": "Carbon monoxide, CO, is toxic.", "expected": "Carbon monoxide, C O, is toxic."}
+{"id": "math_chem_15", "category": "math_chem", "text": "Nitric acid is HNO3.", "expected": "Nitric acid is H N O three."}
+{"id": "math_chem_16", "category": "math_chem", "text": "Sodium hydroxide is NaOH.", "expected": "Sodium hydroxide is N a O H."}
+{"id": "math_chem_17", "category": "math_chem", "text": "Iron oxide, Fe2O3, is rust.", "expected": "Iron oxide, F e two O three, is rust."}
+{"id": "math_chem_18", "category": "math_chem", "text": "Hydrochloric acid is HCl.", "expected": "Hydrochloric acid is H C l."}
+{"id": "math_chem_19", "category": "math_chem", "text": "Propane is C3H8.", "expected": "Propane is C three H eight."}
+{"id": "math_chem_20", "category": "math_chem", "text": "Silicon dioxide, SiO2, is quartz.", "expected": "Silicon dioxide, S i O two, is quartz."}
+{"id": "math_reference_01", "category": "math_reference", "text": "As shown in Eq. (3), the loss falls.", "expected": "As shown in equation three, the loss falls."}
+{"id": "math_reference_02", "category": "math_reference", "text": "Substitute into Eq. (7).", "expected": "Substitute into equation seven."}
+{"id": "math_reference_03", "category": "math_reference", "text": "Eqs. 3–5 define the model.", "expected": "Equations three to five define the model."}
+{"id": "math_reference_04", "category": "math_reference", "text": "The updates follow Eqs. 8–10.", "expected": "The updates follow equations eight to ten."}
+{"id": "math_reference_05", "category": "math_reference", "text": "Equation (2) is the objective.", "expected": "Equation two is the objective."}
+{"id": "math_reference_06", "category": "math_reference", "text": "Rearranging Equation (5) gives the estimator.", "expected": "Rearranging equation five gives the estimator."}
+{"id": "math_reference_07", "category": "math_reference", "text": "We combine Eq. (1) and Eq. (4).", "expected": "We combine equation one and equation four."}
+{"id": "math_reference_08", "category": "math_reference", "text": "By Eq. (12) the bound is tight.", "expected": "By equation twelve the bound is tight."}
+{"id": "math_reference_09", "category": "math_reference", "text": "Eqs. 2–4 are linear.", "expected": "Equations two to four are linear."}
+{"id": "math_reference_10", "category": "math_reference", "text": "Equation (9) follows directly.", "expected": "Equation nine follows directly."}
+{"id": "math_reference_11", "category": "math_reference", "text": "Theorem 2.1 Every bounded sequence converges in a subsequence.", "expected": "Theorem two point one, every bounded sequence converges in a subsequence."}
+{"id": "math_reference_12", "category": "math_reference", "text": "Theorem 4 The estimator is consistent.", "expected": "Theorem four, the estimator is consistent."}
+{"id": "math_reference_13", "category": "math_reference", "text": "Lemma 3 The map is continuous.", "expected": "Lemma three, the map is continuous."}
+{"id": "math_reference_14", "category": "math_reference", "text": "Lemma 1.2 The sum is finite.", "expected": "Lemma one point two, the sum is finite."}
+{"id": "math_reference_15", "category": "math_reference", "text": "Definition A graph is a pair of sets.", "expected": "Definition, a graph is a pair of sets."}
+{"id": "math_reference_16", "category": "math_reference", "text": "Definition 2 A norm is a function on a vector space.", "expected": "Definition two, a norm is a function on a vector space."}
+{"id": "math_reference_17", "category": "math_reference", "text": "Proof By induction on n.", "expected": "Proof, by induction on n."}
+{"id": "math_reference_18", "category": "math_reference", "text": "Proof Suppose the claim fails.", "expected": "Proof, suppose the claim fails."}
+{"id": "math_reference_19", "category": "math_reference", "text": "Corollary 5 The rate is optimal.", "expected": "Corollary five, the rate is optimal."}
+{"id": "math_reference_20", "category": "math_reference", "text": "Corollary The limit exists.", "expected": "Corollary, the limit exists."}
+{"id": "term_math_01", "category": "term_math", "text": "The eigenvalue is real.", "expected": "The eye-gen-value is real."}
+{"id": "term_math_02", "category": "term_math", "text": "We use the Euler method.", "expected": "We use the Oiler method."}
+{"id": "term_math_03", "category": "term_math", "text": "The Riemann sum converges.", "expected": "The Reemahn sum converges."}
+{"id": "term_math_04", "category": "term_math", "text": "The Cauchy sequence is bounded.", "expected": "The Koh-shee sequence is bounded."}
+{"id": "term_math_05", "category": "term_math", "text": "A Hilbert space is complete.", "expected": "A Hill-bert space is complete."}
+{"id": "term_math_06", "category": "term_math", "text": "The Jacobian is invertible.", "expected": "The Juh-koh-bee-an is invertible."}
+{"id": "term_math_07", "category": "term_math", "text": "The Hessian is positive definite.", "expected": "The Hesh-un is positive definite."}
+{"id": "term_math_08", "category": "term_math", "text": "The Lagrangian has two terms.", "expected": "The Luh-gran-jee-un has two terms."}
+{"id": "term_math_09", "category": "term_math", "text": "The Laplacian is linear.", "expected": "The Luh-plah-shun is linear."}
+{"id": "term_math_10", "category": "term_math", "text": "The manifold is smooth.", "expected": "The manifold is smooth."}
+{"id": "term_math_11", "category": "term_math", "text": "The homeomorphism preserves holes.", "expected": "The ho-mee-oh-mor-fizm preserves holes."}
+{"id": "term_math_12", "category": "term_math", "text": "The Fourier transform is unitary.", "expected": "The Foo-ree-ay transform is unitary."}
+{"id": "term_math_13", "category": "term_math", "text": "A Banach space is complete.", "expected": "A Bah-nahk space is complete."}
+{"id": "term_math_14", "category": "term_math", "text": "The Galois group is finite.", "expected": "The Gal-wah group is finite."}
+{"id": "term_math_15", "category": "term_math", "text": "The isomorphism is natural.", "expected": "The eye-so-mor-fizm is natural."}
+{"id": "term_math_16", "category": "term_math", "text": "The Poincaré conjecture was proved.", "expected": "The Pwan-car-ay conjecture was proved."}
+{"id": "term_math_17", "category": "term_math", "text": "A Lipschitz function is continuous.", "expected": "A Lip-shits function is continuous."}
+{"id": "term_math_18", "category": "term_math", "text": "The Chebyshev bound is loose.", "expected": "The Cheb-ih-shev bound is loose."}
+{"id": "term_math_19", "category": "term_math", "text": "The Gaussian kernel is smooth.", "expected": "The Gow-see-un kernel is smooth."}
+{"id": "term_math_20", "category": "term_math", "text": "The Dirichlet problem is well posed.", "expected": "The Dee-ree-klay problem is well posed."}
+{"id": "term_stats_01", "category": "term_stats", "text": "The posterior is Gaussian.", "expected": "The posterior is Gow-see-un."}
+{"id": "term_stats_02", "category": "term_stats", "text": "We report the heteroscedastic error.", "expected": "We report the het-er-oh-skeh-das-tic error."}
+{"id": "term_stats_03", "category": "term_stats", "text": "The data are homoscedastic.", "expected": "The data are ho-mo-skeh-das-tic."}
+{"id": "term_stats_04", "category": "term_stats", "text": "Apply a Bonferroni correction.", "expected": "Apply a Bon-fer-oh-nee correction."}
+{"id": "term_stats_05", "category": "term_stats", "text": "The Kolmogorov test rejects.", "expected": "The Kol-mo-gor-off test rejects."}
+{"id": "term_stats_06", "category": "term_stats", "text": "The kurtosis is high.", "expected": "The ker-toh-sis is high."}
+{"id": "term_stats_07", "category": "term_stats", "text": "Use the Bayesian estimate.", "expected": "Use the Bay-zhun estimate."}
+{"id": "term_stats_08", "category": "term_stats", "text": "The Poisson rate is fixed.", "expected": "The Pwah-sohn rate is fixed."}
+{"id": "term_stats_09", "category": "term_stats", "text": "The covariate is binary.", "expected": "The co-vair-ee-ut is binary."}
+{"id": "term_stats_10", "category": "term_stats", "text": "We compute the quantile.", "expected": "We compute the kwon-tile."}
+{"id": "term_stats_11", "category": "term_stats", "text": "The Wilcoxon test is used.", "expected": "The Wil-cox-un test is used."}
+{"id": "term_stats_12", "category": "term_stats", "text": "A Weibull model fits.", "expected": "A Vye-bull model fits."}
+{"id": "term_stats_13", "category": "term_stats", "text": "Markov chains mix fast.", "expected": "Mar-koff chains mix fast."}
+{"id": "term_stats_14", "category": "term_stats", "text": "The estimator is asymptotically normal.", "expected": "The estimator is ay-simp-tot-ik-lee normal."}
+{"id": "term_stats_15", "category": "term_stats", "text": "The likelihood is concave.", "expected": "The likelihood is concave."}
+{"id": "term_stats_16", "category": "term_stats", "text": "We fit a Dirichlet prior.", "expected": "We fit a Dee-ree-klay prior."}
+{"id": "term_stats_17", "category": "term_stats", "text": "The Mahalanobis distance is large.", "expected": "The Ma-ha-la-no-bis distance is large."}
+{"id": "term_stats_18", "category": "term_stats", "text": "The heteroskedasticity is mild.", "expected": "The het-er-oh-skeh-das-tis-ih-tee is mild."}
+{"id": "term_stats_19", "category": "term_stats", "text": "The ANOVA table follows.", "expected": "The an-oh-vah table follows."}
+{"id": "term_stats_20", "category": "term_stats", "text": "A Bernoulli trial is binary.", "expected": "A Ber-noo-lee trial is binary."}
+{"id": "term_physics_01", "category": "term_physics", "text": "The Hamiltonian is conserved.", "expected": "The Ham-il-toe-nee-an is conserved."}
+{"id": "term_physics_02", "category": "term_physics", "text": "A boson has integer spin.", "expected": "A boe-zon has integer spin."}
+{"id": "term_physics_03", "category": "term_physics", "text": "A fermion has half spin.", "expected": "A fair-mee-on has half spin."}
+{"id": "term_physics_04", "category": "term_physics", "text": "Schrödinger derived the equation.", "expected": "Shroe-ding-er derived the equation."}
+{"id": "term_physics_05", "category": "term_physics", "text": "Planck set the scale.", "expected": "Plahnk set the scale."}
+{"id": "term_physics_06", "category": "term_physics", "text": "The photon is massless.", "expected": "The photon is massless."}
+{"id": "term_physics_07", "category": "term_physics", "text": "The Coulomb force is attractive.", "expected": "The Koo-lom force is attractive."}
+{"id": "term_physics_08", "category": "term_physics", "text": "The tensor is symmetric.", "expected": "The tensor is symmetric."}
+{"id": "term_physics_09", "category": "term_physics", "text": "Heisenberg stated the principle.", "expected": "High-zen-berg stated the principle."}
+{"id": "term_physics_10", "category": "term_physics", "text": "The Lorentz factor grows.", "expected": "The Lor-ents factor grows."}
+{"id": "term_physics_11", "category": "term_physics", "text": "The muon decays quickly.", "expected": "The myoo-on decays quickly."}
+{"id": "term_physics_12", "category": "term_physics", "text": "The quark carries color.", "expected": "The kwork carries color."}
+{"id": "term_physics_13", "category": "term_physics", "text": "The Doppler shift is small.", "expected": "The Dop-ler shift is small."}
+{"id": "term_physics_14", "category": "term_physics", "text": "The entropy increases.", "expected": "The entropy increases."}
+{"id": "term_physics_15", "category": "term_physics", "text": "The Boltzmann constant is tiny.", "expected": "The Boltz-mahn constant is tiny."}
+{"id": "term_physics_16", "category": "term_physics", "text": "The hadron collides.", "expected": "The had-ron collides."}
+{"id": "term_physics_17", "category": "term_physics", "text": "The neutrino oscillates.", "expected": "The new-tree-no oscillates."}
+{"id": "term_physics_18", "category": "term_physics", "text": "The gauge field is massless.", "expected": "The gayj field is massless."}
+{"id": "term_physics_19", "category": "term_physics", "text": "Maxwell unified the forces.", "expected": "Maxwell unified the forces."}
+{"id": "term_physics_20", "category": "term_physics", "text": "The Feynman diagram is drawn.", "expected": "The Fine-mun diagram is drawn."}
+{"id": "term_chem_01", "category": "term_chem", "text": "The catalyst is palladium.", "expected": "The catalyst is palladium."}
+{"id": "term_chem_02", "category": "term_chem", "text": "The enzyme is a protease.", "expected": "The enzyme is a pro-tee-ase."}
+{"id": "term_chem_03", "category": "term_chem", "text": "The ligand binds the metal.", "expected": "The lig-und binds the metal."}
+{"id": "term_chem_04", "category": "term_chem", "text": "The solution is stoichiometric.", "expected": "The solution is stoy-key-oh-met-rik."}
+{"id": "term_chem_05", "category": "term_chem", "text": "The isomer is chiral.", "expected": "The isomer is kye-rul."}
+{"id": "term_chem_06", "category": "term_chem", "text": "The reaction is exothermic.", "expected": "The reaction is ex-oh-ther-mik."}
+{"id": "term_chem_07", "category": "term_chem", "text": "Add the reagent slowly.", "expected": "Add the ree-ay-jent slowly."}
+{"id": "term_chem_08", "category": "term_chem", "text": "The alkane is saturated.", "expected": "The al-kane is saturated."}
+{"id": "term_chem_09", "category": "term_chem", "text": "The benzene ring is stable.", "expected": "The ben-zeen ring is stable."}
+{"id": "term_chem_10", "category": "term_chem", "text": "The anion is stable.", "expected": "The an-eye-on is stable."}
+{"id": "term_chem_11", "category": "term_chem", "text": "The cation migrates.", "expected": "The cat-eye-on migrates."}
+{"id": "term_chem_12", "category": "term_chem", "text": "The molecule is amphiphilic.", "expected": "The molecule is am-fih-fil-ik."}
+{"id": "term_chem_13", "category": "term_chem", "text": "The polymer is cross-linked.", "expected": "The polymer is cross-linked."}
+{"id": "term_chem_14", "category": "term_chem", "text": "The electrolyte is aqueous.", "expected": "The electrolyte is ay-kwee-us."}
+{"id": "term_chem_15", "category": "term_chem", "text": "The titration ends at pH 7.", "expected": "The titration ends at P H seven."}
+{"id": "term_chem_16", "category": "term_chem", "text": "The enantiomer rotates light.", "expected": "The en-an-tee-oh-mer rotates light."}
+{"id": "term_chem_17", "category": "term_chem", "text": "The hydroxyl group is polar.", "expected": "The hy-drox-il group is polar."}
+{"id": "term_chem_18", "category": "term_chem", "text": "The aldehyde oxidizes.", "expected": "The al-duh-hyde oxidizes."}
+{"id": "term_chem_19", "category": "term_chem", "text": "The isotope is radioactive.", "expected": "The isotope is radioactive."}
+{"id": "term_chem_20", "category": "term_chem", "text": "The phenol is acidic.", "expected": "The fee-nol is acidic."}
+{"id": "term_bio_01", "category": "term_bio", "text": "The mitochondria produce energy.", "expected": "The my-toe-kon-dree-uh produce energy."}
+{"id": "term_bio_02", "category": "term_bio", "text": "Meiosis halves the chromosomes.", "expected": "My-oh-sis halves the chromosomes."}
+{"id": "term_bio_03", "category": "term_bio", "text": "The ribosome builds proteins.", "expected": "The rye-bo-zome builds proteins."}
+{"id": "term_bio_04", "category": "term_bio", "text": "The phenotype is visible.", "expected": "The fee-no-type is visible."}
+{"id": "term_bio_05", "category": "term_bio", "text": "The allele is recessive.", "expected": "The uh-leel is recessive."}
+{"id": "term_bio_06", "category": "term_bio", "text": "Apoptosis removes cells.", "expected": "Ap-op-toe-sis removes cells."}
+{"id": "term_bio_07", "category": "term_bio", "text": "The cytoplasm is fluid.", "expected": "The sigh-toe-plaz-um is fluid."}
+{"id": "term_bio_08", "category": "term_bio", "text": "The genome was sequenced.", "expected": "The jee-nome was sequenced."}
+{"id": "term_bio_09", "category": "term_bio", "text": "The eukaryote has a nucleus.", "expected": "The you-kair-ee-oat has a nucleus."}
+{"id": "term_bio_10", "category": "term_bio", "text": "The prokaryote lacks a nucleus.", "expected": "The pro-kair-ee-oat lacks a nucleus."}
+{"id": "term_bio_11", "category": "term_bio", "text": "The organism is a nematode.", "expected": "The organism is a nem-uh-toad."}
+{"id": "term_bio_12", "category": "term_bio", "text": "The protein is phosphorylated.", "expected": "The protein is fos-for-il-ated."}
+{"id": "term_bio_13", "category": "term_bio", "text": "The neuron fires.", "expected": "The neuron fires."}
+{"id": "term_bio_14", "category": "term_bio", "text": "The axon is myelinated.", "expected": "The axon is my-uh-lin-ated."}
+{"id": "term_bio_15", "category": "term_bio", "text": "Homeostasis is maintained.", "expected": "Ho-mee-oh-stay-sis is maintained."}
+{"id": "term_bio_16", "category": "term_bio", "text": "The cell undergoes mitosis.", "expected": "The cell undergoes my-toe-sis."}
+{"id": "term_bio_17", "category": "term_bio", "text": "The species is Escherichia coli.", "expected": "The species is Esh-er-ik-ee-uh coli."}
+{"id": "term_bio_18", "category": "term_bio", "text": "The chloroplast holds chlorophyll.", "expected": "The klor-oh-plast holds klor-oh-fil."}
+{"id": "term_bio_19", "category": "term_bio", "text": "The epithelium lines the gut.", "expected": "The ep-ih-thee-lee-um lines the gut."}
+{"id": "term_bio_20", "category": "term_bio", "text": "The enzyme is a kinase.", "expected": "The enzyme is a kye-nase."}
+{"id": "term_cs_01", "category": "term_cs", "text": "The cache uses a hash table.", "expected": "The cache uses a hash table."}
+{"id": "term_cs_02", "category": "term_cs", "text": "Dijkstra gave the algorithm.", "expected": "Dike-struh gave the algorithm."}
+{"id": "term_cs_03", "category": "term_cs", "text": "The tuple is immutable.", "expected": "The too-pul is immutable."}
+{"id": "term_cs_04", "category": "term_cs", "text": "The queue is FIFO.", "expected": "The queue is fye-foe."}
+{"id": "term_cs_05", "category": "term_cs", "text": "The parser emits a token.", "expected": "The parser emits a token."}
+{"id": "term_cs_06", "category": "term_cs", "text": "The SQL query is slow.", "expected": "The sequel query is slow."}
+{"id": "term_cs_07", "category": "term_cs", "text": "The function is idempotent.", "expected": "The function is eye-dem-poe-tent."}
+{"id": "term_cs_08", "category": "term_cs", "text": "Use a regex to match.", "expected": "Use a rej-ex to match."}
+{"id": "term_cs_09", "category": "term_cs", "text": "The daemon restarts.", "expected": "The dee-mun restarts."}
+{"id": "term_cs_10", "category": "term_cs", "text": "The kernel is preemptive.", "expected": "The kernel is pree-emp-tive."}
+{"id": "term_cs_11", "category": "term_cs", "text": "The heap is a binary tree.", "expected": "The heap is a binary tree."}
+{"id": "term_cs_12", "category": "term_cs", "text": "A mutex guards the data.", "expected": "A myoo-tex guards the data."}
+{"id": "term_cs_13", "category": "term_cs", "text": "The cache is LRU.", "expected": "The cache is L R U."}
+{"id": "term_cs_14", "category": "term_cs", "text": "The API is stateless.", "expected": "The A P I is stateless."}
+{"id": "term_cs_15", "category": "term_cs", "text": "We use a GUI.", "expected": "We use a gooey."}
+{"id": "term_cs_16", "category": "term_cs", "text": "The array is zero indexed.", "expected": "The array is zero indexed."}
+{"id": "term_cs_17", "category": "term_cs", "text": "The JSON file is small.", "expected": "The jay-son file is small."}
+{"id": "term_cs_18", "category": "term_cs", "text": "The nginx server proxies.", "expected": "The engine-ex server proxies."}
+{"id": "term_cs_19", "category": "term_cs", "text": "The repo uses Git.", "expected": "The repo uses Git."}
+{"id": "term_cs_20", "category": "term_cs", "text": "The cache is LIFO.", "expected": "The cache is lye-foe."}
+{"id": "term_latin_greek_01", "category": "term_latin_greek", "text": "The result holds a fortiori.", "expected": "The result holds ah for-shee-or-ee."}
+{"id": "term_latin_greek_02", "category": "term_latin_greek", "text": "The claim is ad hoc.", "expected": "The claim is ad hock."}
+{"id": "term_latin_greek_03", "category": "term_latin_greek", "text": "The analysis is post hoc.", "expected": "The analysis is post hock."}
+{"id": "term_latin_greek_04", "category": "term_latin_greek", "text": "The data were collected in vivo.", "expected": "The data were collected in vee-voe."}
+{"id": "term_latin_greek_05", "category": "term_latin_greek", "text": "The assay ran in vitro.", "expected": "The assay ran in vee-troe."}
+{"id": "term_latin_greek_06", "category": "term_latin_greek", "text": "The case is sui generis.", "expected": "The case is soo-ee jen-er-is."}
+{"id": "term_latin_greek_07", "category": "term_latin_greek", "text": "The model is defined a priori.", "expected": "The model is defined ah pree-or-ee."}
+{"id": "term_latin_greek_08", "category": "term_latin_greek", "text": "The proof is by reductio ad absurdum.", "expected": "The proof is by reh-duk-tee-oh ad ab-sur-dum."}
+{"id": "term_latin_greek_09", "category": "term_latin_greek", "text": "This is a sine qua non.", "expected": "This is a sin-ay kwah non."}
+{"id": "term_latin_greek_10", "category": "term_latin_greek", "text": "The text was copied verbatim.", "expected": "The text was copied ver-bay-tim."}
+{"id": "term_latin_greek_11", "category": "term_latin_greek", "text": "The stimulus was given per se.", "expected": "The stimulus was given per say."}
+{"id": "term_latin_greek_12", "category": "term_latin_greek", "text": "The result is mutatis mutandis.", "expected": "The result is moo-tah-tis moo-tan-dis."}
+{"id": "term_latin_greek_13", "category": "term_latin_greek", "text": "The terms are de facto standard.", "expected": "The terms are day fak-toe standard."}
+{"id": "term_latin_greek_14", "category": "term_latin_greek", "text": "The plural of criterion is criteria.", "expected": "The plural of kry-teer-ee-on is kry-teer-ee-uh."}
+{"id": "term_latin_greek_15", "category": "term_latin_greek", "text": "The phenomena were observed.", "expected": "The fuh-nom-ih-nuh were observed."}
+{"id": "term_latin_greek_16", "category": "term_latin_greek", "text": "The hypotheses were tested.", "expected": "The high-poth-uh-seez were tested."}
+{"id": "term_latin_greek_17", "category": "term_latin_greek", "text": "The schema is fixed.", "expected": "The skee-muh is fixed."}
+{"id": "term_latin_greek_18", "category": "term_latin_greek", "text": "The corpus is large.", "expected": "The kor-pus is large."}
+{"id": "term_latin_greek_19", "category": "term_latin_greek", "text": "The data are in situ.", "expected": "The data are in sit-oo."}
+{"id": "term_latin_greek_20", "category": "term_latin_greek", "text": "The rule holds ceteris paribus.", "expected": "The rule holds kay-ter-is par-ih-bus."}
+{"id": "term_surname_01", "category": "term_surname", "text": "Nguyen proposed the method.", "expected": "Win proposed the method."}
+{"id": "term_surname_02", "category": "term_surname", "text": "Schmidhuber trained the network.", "expected": "Shmit-hoo-ber trained the network."}
+{"id": "term_surname_03", "category": "term_surname", "text": "Goodfellow introduced the model.", "expected": "Goodfellow introduced the model."}
+{"id": "term_surname_04", "category": "term_surname", "text": "Vapnik studied the bound.", "expected": "Vap-nik studied the bound."}
+{"id": "term_surname_05", "category": "term_surname", "text": "Kolmogorov defined complexity.", "expected": "Kol-mo-gor-off defined complexity."}
+{"id": "term_surname_06", "category": "term_surname", "text": "Tversky ran the experiment.", "expected": "Tver-skee ran the experiment."}
+{"id": "term_surname_07", "category": "term_surname", "text": "Hinton revived the idea.", "expected": "Hinton revived the idea."}
+{"id": "term_surname_08", "category": "term_surname", "text": "Bengio extended the result.", "expected": "Ben-jee-oh extended the result."}
+{"id": "term_surname_09", "category": "term_surname", "text": "Szegedy found the examples.", "expected": "Seg-ed-ee found the examples."}
+{"id": "term_surname_10", "category": "term_surname", "text": "Sutskever trained the model.", "expected": "Soots-keh-ver trained the model."}
+{"id": "term_surname_11", "category": "term_surname", "text": "Hochreiter described the gradient problem.", "expected": "Hoke-rye-ter described the gradient problem."}
+{"id": "term_surname_12", "category": "term_surname", "text": "Krizhevsky won the challenge.", "expected": "Kri-zhev-skee won the challenge."}
+{"id": "term_surname_13", "category": "term_surname", "text": "Erdős proved the bound.", "expected": "Air-dush proved the bound."}
+{"id": "term_surname_14", "category": "term_surname", "text": "Grothendieck rebuilt the field.", "expected": "Grote-en-deek rebuilt the field."}
+{"id": "term_surname_15", "category": "term_surname", "text": "Noether proved the theorem.", "expected": "Ner-ter proved the theorem."}
+{"id": "term_surname_16", "category": "term_surname", "text": "Ramanujan found the identity.", "expected": "Rah-mah-noo-jun found the identity."}
+{"id": "term_surname_17", "category": "term_surname", "text": "Leibniz wrote the notation.", "expected": "Libe-nits wrote the notation."}
+{"id": "term_surname_18", "category": "term_surname", "text": "Huang reported the data.", "expected": "Hwahng reported the data."}
+{"id": "term_surname_19", "category": "term_surname", "text": "Zhang et al. replicated it.", "expected": "Jahng et al replicated it."}
+{"id": "term_surname_20", "category": "term_surname", "text": "Xu measured the effect.", "expected": "Shoo measured the effect."}
+{"id": "term_abbreviation_01", "category": "term_abbreviation", "text": "The rate is fixed, i.e. constant.", "expected": "The rate is fixed, that is constant."}
+{"id": "term_abbreviation_02", "category": "term_abbreviation", "text": "Use a prior, e.g. a Gaussian.", "expected": "Use a prior, for example a Gow-see-un."}
+{"id": "term_abbreviation_03", "category": "term_abbreviation", "text": "See the appendix, cf. the main text.", "expected": "See the appendix, compare the main text."}
+{"id": "term_abbreviation_04", "category": "term_abbreviation", "text": "Take the derivative w.r.t. x.", "expected": "Take the derivative with respect to x."}
+{"id": "term_abbreviation_05", "category": "term_abbreviation", "text": "The values are 2 and 3, resp.", "expected": "The values are two and three, respectively."}
+{"id": "term_abbreviation_06", "category": "term_abbreviation", "text": "Find x s.t. the sum is zero.", "expected": "Find x such that the sum is zero."}
+{"id": "term_abbreviation_07", "category": "term_abbreviation", "text": "The set is open iff it is not closed.", "expected": "The set is open if and only if it is not closed."}
+{"id": "term_abbreviation_08", "category": "term_abbreviation", "text": "Assume w.l.o.g. that a is positive.", "expected": "Assume without loss of generality that a is positive."}
+{"id": "term_abbreviation_09", "category": "term_abbreviation", "text": "Two methods, viz. the first and the second.", "expected": "Two methods, namely the first and the second."}
+{"id": "term_abbreviation_10", "category": "term_abbreviation", "text": "See chapter 4 et seq. for details.", "expected": "See chapter four and following for details."}
+{"id": "term_abbreviation_11", "category": "term_abbreviation", "text": "The same source, ibid., gives the date.", "expected": "The same source, in the same place, gives the date."}
+{"id": "term_abbreviation_12", "category": "term_abbreviation", "text": "As argued in Smith, op. cit., the claim fails.", "expected": "As argued in Smith, in the work cited, the claim fails."}
+{"id": "term_abbreviation_13", "category": "term_abbreviation", "text": "Many models, e.g. trees and forests, work.", "expected": "Many models, for example trees and forests, work."}
+{"id": "term_abbreviation_14", "category": "term_abbreviation", "text": "The mean, i.e. the average, is reported.", "expected": "The mean, that is the average, is reported."}
+{"id": "term_abbreviation_15", "category": "term_abbreviation", "text": "Compare both sets, cf. table 2.", "expected": "Compare both sets, compare table two."}
+{"id": "term_abbreviation_16", "category": "term_abbreviation", "text": "The gradient w.r.t. the weights is zero.", "expected": "The gradient with respect to the weights is zero."}
+{"id": "term_abbreviation_17", "category": "term_abbreviation", "text": "A graph is connected iff it has one component.", "expected": "A graph is connected if and only if it has one component."}
+{"id": "term_abbreviation_18", "category": "term_abbreviation", "text": "Pick y s.t. y is positive.", "expected": "Pick y such that y is positive."}
+{"id": "term_abbreviation_19", "category": "term_abbreviation", "text": "The rates are 5 and 7 percent, resp.", "expected": "The rates are five and seven percent, respectively."}
+{"id": "term_abbreviation_20", "category": "term_abbreviation", "text": "Assume w.l.o.g. the list is sorted.", "expected": "Assume without loss of generality the list is sorted."}
+{"id": "term_citation_01", "category": "term_citation", "text": "This was shown before (Smith et al., 2019).", "expected": "This was shown before Smith et al twenty nineteen."}
+{"id": "term_citation_02", "category": "term_citation", "text": "The method is standard (Jones, 2020).", "expected": "The method is standard Jones twenty twenty."}
+{"id": "term_citation_03", "category": "term_citation", "text": "Prior work agrees (Lee and Kim, 2018).", "expected": "Prior work agrees Lee and Kim twenty eighteen."}
+{"id": "term_citation_04", "category": "term_citation", "text": "Results vary (Brown & Davis, 2021).", "expected": "Results vary Brown and Davis twenty twenty-one."}
+{"id": "term_citation_05", "category": "term_citation", "text": "The model was proposed (Chen et al., 2017).", "expected": "The model was proposed Chen et al twenty seventeen."}
+{"id": "term_citation_06", "category": "term_citation", "text": "This is known [12, 14].", "expected": "This is known."}
+{"id": "term_citation_07", "category": "term_citation", "text": "The bound is tight [3].", "expected": "The bound is tight."}
+{"id": "term_citation_08", "category": "term_citation", "text": "Several papers report it [5–8].", "expected": "Several papers report it."}
+{"id": "term_citation_09", "category": "term_citation", "text": "The loss is common (Wang, 2016).", "expected": "The loss is common Wang twenty sixteen."}
+{"id": "term_citation_10", "category": "term_citation", "text": "It scales well (Garcia et al., 2022).", "expected": "It scales well Garcia et al twenty twenty-two."}
+{"id": "term_citation_11", "category": "term_citation", "text": "The idea is old (Turing, 1950).", "expected": "The idea is old Turing nineteen fifty."}
+{"id": "term_citation_12", "category": "term_citation", "text": "The proof is classical (Hilbert, 1900).", "expected": "The proof is classical Hill-bert nineteen hundred."}
+{"id": "term_citation_13", "category": "term_citation", "text": "The data come from a survey [21].", "expected": "The data come from a survey."}
+{"id": "term_citation_14", "category": "term_citation", "text": "We follow the protocol [2, 9, 11].", "expected": "We follow the protocol."}
+{"id": "term_citation_15", "category": "term_citation", "text": "The effect replicates (Nguyen et al., 2015).", "expected": "The effect replicates Win et al twenty fifteen."}
+{"id": "term_citation_16", "category": "term_citation", "text": "The trick is widely used (Kingma and Ba, 2015).", "expected": "The trick is widely used Kingma and Bah twenty fifteen."}
+{"id": "term_citation_17", "category": "term_citation", "text": "The result was extended (Miller, 2019a).", "expected": "The result was extended Miller twenty nineteen a."}
+{"id": "term_citation_18", "category": "term_citation", "text": "Smith et al. (2019) proved it.", "expected": "Smith et al twenty nineteen proved it."}
+{"id": "term_citation_19", "category": "term_citation", "text": "The baseline is weak [7].", "expected": "The baseline is weak."}
+{"id": "term_citation_20", "category": "term_citation", "text": "This holds in general (Zhang et al., 2020).", "expected": "This holds in general Jahng et al twenty twenty."}
