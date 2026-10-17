@@ -1,4 +1,4 @@
-# HearNarro evals code map: runner, run records, compare (E0, E1, E2)
+# HearNarro evals code map: runner, run records, compare, scorecard (E0, E1, E2, E3)
 
 This document explains how the eval layer works end to end and what every file under
 `api/hearnarro/evals/` does. It is written for an engineer who has read `docs/PRD.md`,
@@ -173,6 +173,32 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
      `char_mass_ok`), or the example is missing from `b` ("new failure").
 3. `report.scorecard(b, comparison)` prints B's scorecard with the Δ column and the regressions.
 
+### c. `python -m hearnarro.evals report RUN [--baseline RUN] [--html PATH] [--standalone]` (E3)
+
+```
+ record (+ baseline) ──► store.compare ──► report.html_scorecard ──► PATH (Artifact page contract)
+                                            header · tiles · per-suite sections · footer
+```
+
+1. `__main__.main` → `store.read_record` for the run and the optional baseline (path, run id or
+   `latest`). Without `--html` it prints the markdown `scorecard` (same as `compare`).
+2. `report.html_scorecard(record, baseline, standalone)` calls `store.compare(baseline, record)`
+   and renders: a header (run, commit, date, backend, tesseract, python, tier, wall seconds,
+   baseline id); one tile per suite with the `HEADLINES` aggregate(s) (EVAL-1 `mean`, EVAL-2
+   `mean_f1`, EVAL-3 `total_mean_rate`, EVAL-4 `accuracy`, EVAL-5 `mean_wer`, EVAL-6
+   `share_within_150ms`, EVAL-7 `ttfa_p95_ms` and `rtf_mean`), the delta coloured by which way
+   is better, and a badge: `N regressions` or `no baseline` when the suite is absent from the
+   baseline; then per suite an aggregate table (baseline, this run, Δ), an inline-SVG bar chart of
+   per-example `score` worst first (axis 0 to a rounded max, at most `MAX_BARS` = 30 bars, a tick
+   at the baseline score of the same example, regressed bars in the bad colour), the regressions
+   list (`<ol class="regressions" data-suite=…>`) and every field of the worst example; a footer
+   with the reproduce commands.
+3. The output starts with `<title>` and the viewport-fit meta, no document skeleton (published
+   unchanged as an Artifact); `--standalone` wraps it in `<!doctype html>…<body>` for local use.
+4. The committed scorecard `docs/guide/evals-scorecard.html` is `report 2026-10-17_d5f2e10
+   --baseline 2026-10-17_eadaef6` (`_agent/results/590_e3_report_cmd.txt`): EVAL-1 and EVAL-2
+   0 regressions, EVAL-3 to EVAL-7 no baseline.
+
 ## Modules and files
 
 ### `api/hearnarro/evals/`
@@ -180,10 +206,10 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 | File | Responsibility | Public | Reads / writes | Status |
 | --- | --- | --- | --- | --- |
 | `__init__.py` | Package docstring (D31–D34) | none | none | implemented |
-| `__main__.py` | argparse CLI: `run`, `compare` | `main` | stdout; records via `store` | tested (by hand, `556`) |
+| `__main__.py` | argparse CLI: `run`, `compare`, `report` (E3) | `main` | stdout; records via `store`; `--html` file | tested (gate, `592`) |
 | `runner.py` | Runs the selected suites and writes one record | `run(suite_ids, out_dir=None, tier=0) -> (record, path)` | `git rev-parse`; fixtures via suites; record via `store` | tested (gate) |
 | `store.py` | Record files, `latest.json` pointer, compare per D33; honours suite `direction`, compares nested example metrics under dotted keys (E1), and per-metric `METRIC_RULES` with relative tolerances (E2) | `DEFAULT_RUNS_DIR`, `LATEST`, `TOLERANCE`, `DEFAULT_TOLERANCE`, `write_record`, `read_record`, `compare` | `evals/runs/*.json` | tested (gate) |
-| `report.py` | Markdown scorecard; the worst example is the highest score for a lower-is-better suite | `scorecard(record, comparison=None)`, `lines_for_compare(comparison)` | none | tested (by hand, `556`) |
+| `report.py` | Markdown scorecard; HTML scorecard (E3) with tiles, aggregate tables, per-example bar charts, regressions and worst example; the worst example is the highest score for a lower-is-better suite | `scorecard(record, comparison=None)`, `lines_for_compare(comparison)`, `html_scorecard(record, baseline=None, standalone=False)`, `HEADLINES`, `fmt_num` | none | tested (gate, `592`) |
 | `scorers.py` | Pure scoring functions moved from `api/tests/golden_util.py` (D12/D14 word score, char-mass guard) and `api/tests/boundary_util.py` (boundary alignment, P/R/F1) | `PROSE_TYPES`, `CHAR_MASS_TOLERANCE`, `PUNCTUATION`, `norm`, `seq_levenshtein`, `prose_only`, `excluded_actual_texts`, `words`, `word_score`, `char_mass_ratio`, `char_mass_balanced`, `sentence_words`, `boundaries`, `align_boundaries`, `prf`, `matched_pairs` (E2), `percentile` (E2) | none | tested (`test_golden_util.py`, `test_boundary_util.py`, gate) |
 | `suites/__init__.py` | Suite registry (EVAL-1..7); optional per-suite `DIRECTION` and `METRIC_RULES` | `SUITES`, `select(ids, tier)`, `direction(suite_id)` | none | tested (gate) |
 | `suites/_fixtures.py` | Fixture manifest, expected rows, truth sentences, one cached ingest per PDF | `FIXTURES`, `manifest`, `expected_rows`, `truth_sentences`, `ingest_result`, `ingested` | `api/tests/fixtures/pdfs/` (manifest, `*.pdf`, `*.expected.jsonl`, `*.sentences.txt`) | tested (gate) |
@@ -206,7 +232,7 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 | --- | --- | --- |
 | `api/tests/golden_util.py` | Re-exports the reading-order scorers from `hearnarro.evals.scorers` (no logic) | tested (`554`) |
 | `api/tests/boundary_util.py` | Re-exports the boundary scorers (including `_alignment`) from `hearnarro.evals.scorers` | tested (`554`) |
-| `api/tests/test_eval_gate.py` | E0 gate: record shape, aggregates, compare zero/one-regression cases; E1: registry direction, `all` under 60 s, EVAL-3 rates, lower-is-better compare, EVAL-4 dataset shape, app path, aggregates; E2 (model-gated): registry tiers, sentence list, WER normalization, EVAL-5/6/7 on 5 sentences, per-metric compare rules | tested (`553`, `562`, `576`) |
+| `api/tests/test_eval_gate.py` | E0 gate: record shape, aggregates, compare zero/one-regression cases; E1: registry direction, `all` under 60 s, EVAL-3 rates, lower-is-better compare, EVAL-4 dataset shape, app path, aggregates; E2 (model-gated): registry tiers, sentence list, WER normalization, EVAL-5/6/7 on 5 sentences, per-metric compare rules; E3: HTML scorecard alone, against the first baseline (`no baseline` tiles), regressions block on a synthetic pair, `--standalone` and CLI | tested (`553`, `562`, `576`, `592`) |
 
 ### `evals/runs/` (repo root)
 
@@ -264,7 +290,7 @@ regressions: [{suite, id, reason, metrics: {field: {baseline, candidate, delta}}
 2. Extra record fields (marked † above): `seconds`, `config.python`, `config.tier`, suite `title`,
    `tier`, `seconds`, `skipped`, and EVAL-1 `char_mass_ok` (the D14 guard kept as data).
 3. `--tier` filters only `all`; suites named explicitly run whatever their tier.
-4. `report.py` emits markdown only; the HTML scorecard in spec 3.4 is not written yet.
+4. (E3) The HTML scorecard is `report --html`; `run` and `compare` still print markdown.
 5. `commit` is `HEAD` at run time; uncommitted changes in the working tree are not recorded.
 6. (E1) Every suite record carries `direction` (`higher` / `lower`), not in spec 3.4; compare uses
    it, falling back to the registry for records written before E1.
@@ -301,7 +327,8 @@ regressions: [{suite, id, reason, metrics: {field: {baseline, candidate, delta}}
 ## How to run
 
 From `api/`: `.venv/bin/python -m hearnarro.evals run all` (or `run EVAL-1 EVAL-2`), add
-`--baseline <run_id>` to see deltas; `.venv/bin/python -m hearnarro.evals compare <a> <b>`. Gate:
+`--baseline <run_id>` to see deltas; `.venv/bin/python -m hearnarro.evals compare <a> <b>`; HTML scorecard:
+`.venv/bin/python -m hearnarro.evals report <run> --baseline <run> --html <path> [--standalone]`. Gate:
 `.venv/bin/python -m pytest tests/test_eval_gate.py`.
 
 Tier 1 (needs `pip install -e '.[tts,evals]'`; first run downloads the ~145 MB recogniser):
@@ -310,5 +337,5 @@ Tier 1 (needs `pip install -e '.[tts,evals]'`; first run downloads the ~145 MB r
 
 ## Open items
 
-- EVAL-8, EVAL-9 suites, `data/listening_rubric.md`, the HTML scorecard (spec 3.3, 3.4).
+- EVAL-8, EVAL-9 suites, `data/listening_rubric.md` (spec 3.3); linking the scorecard from a milestone guide (supervisor).
 - EVAL-1 scanned class needs tesseract on this machine (5 fixtures skipped in the baseline).
