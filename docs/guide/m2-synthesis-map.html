@@ -1,0 +1,376 @@
+<title>HearNarro M2 Synthesis Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 920px) of numbered guide sections; figures in their own overflow containers; same tokens as the M1 guide so the two read as one set. */
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --fg: #1d2129; --muted: #5d6470; --line: #d9d6cd;
+  --accent: #8b4a1f; --accent-soft: #f3e8df;
+  --done: #2f7d4f; --done-soft: #e1f0e6; --run: #b36b00; --run-soft: #fbeedb; --next: #6b6f78; --next-soft: #ebebe8;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; }
+main { max-width: 920px; margin: 0 auto; display: grid; gap: 48px; }
+h1 { font-size: 28px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+h2 .k { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-right: 10px; font-weight: 500; }
+h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 18px 0 8px; }
+p { margin: 0 0 10px; max-width: 70ch; }
+.lede { font-size: 17px; color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--accent-soft); padding: 1px 5px; border-radius: 3px; }
+.gate { border-left: 3px solid var(--accent); padding: 8px 14px; background: var(--surface); display: grid; gap: 4px; margin-top: 16px; }
+.gate b { font-weight: 600; }
+.stamp { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 14px; font-family: var(--font-mono); }
+.stamp .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--done); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; margin-top: 14px; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { text-decoration: underline; outline: none; }
+figure { margin: 18px 0 6px; background: var(--surface); border: 1px solid var(--line); padding: 14px; overflow-x: auto; }
+figure svg { display: block; max-width: 100%; height: auto; font-family: var(--font-body); }
+figure svg .mono { font-family: var(--font-mono); }
+figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 80ch; }
+.why { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.why > div { background: var(--surface); border: 1px solid var(--line); padding: 12px 14px; min-width: 0; }
+.why b { display: block; font-weight: 600; margin-bottom: 4px; }
+.why p { font-size: 14px; color: var(--muted); margin: 0; }
+@media (max-width: 640px) { .why { grid-template-columns: 1fr; } }
+table.rules { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+table.rules th, table.rules td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.rules th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+.ledger { display: grid; border-top: 1px solid var(--line); margin-top: 14px; }
+.phase { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.phase .who { font-size: 13px; color: var(--muted); display: grid; gap: 4px; align-content: start; }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; width: fit-content; }
+.pill.done { background: var(--done-soft); color: var(--done); } .pill.run { background: var(--run-soft); color: var(--run); } .pill.next { background: var(--next-soft); color: var(--next); }
+.phase .what { min-width: 0; display: grid; gap: 6px; }
+.phase .what b { font-weight: 600; }
+.phase .what .why-line { font-size: 14px; color: var(--accent); }
+.phase ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+.phase li { margin: 2px 0; }
+@media (max-width: 520px) { .phase { grid-template-columns: 1fr; gap: 6px; } }
+.note ul { margin: 0; padding-left: 18px; } .note li { margin: 5px 0; }
+</style>
+
+<main>
+  <header>
+    <h1>HearNarro M2: turning sentences into sound that stays in sync</h1>
+    <p class="lede">An architectural guide to Milestone 2. M1 produced an ordered list of sentences. M2 makes each one audible on demand, fast enough that pressing play feels instant, at any speed from half to triple, with word timings that still line up with the text on screen. This page explains the mechanism, why each piece exists, and where the work stands.</p>
+    <div class="gate">
+      <b>The gate that ends M2</b>
+      <span>First audio within 2 seconds of a play request, at every speed from 0.5x to 3.0x, on a laptop CPU with no GPU. Measured by a benchmark script against the real voice model on a cold cache, and by a contract test against a fake backend in CI. The sentence-boundary metric deferred from M1 is also measured here, and its threshold set once the first numbers are in.</span>
+    </div>
+    <div class="stamp"><span class="dot"></span><span>status as of 2026-10-16 23:05 PDT · M2 CLOSED: 489 tests pass, 0 licence violations, gate met on the spec sentence at every speed, smoke audio pass clean on both backends · server running with Kokoro on the user's documents · merged to main and pushed · updated at every phase change</span></div>
+    <nav class="toc">
+      <a href="#why">1 Why M2 is where the product becomes real</a>
+      <a href="#flow">2 The synthesis flow</a>
+      <a href="#queue">3 The lookahead queue</a>
+      <a href="#speed">4 Speed: native range and stretch</a>
+      <a href="#sync">5 Keeping word timings honest</a>
+      <a href="#delivery">6 Delivery to the browser</a>
+      <a href="#boundaries">7 Sentence boundaries, measured</a>
+      <a href="#deps">8 Dependencies and licences</a>
+      <a href="#sequence">9 The work sequence</a>
+      <a href="#status">10 Status</a>
+    </nav>
+  </header>
+
+  <section id="why">
+    <h2><span class="k">1</span>Why M2 is where the product becomes real</h2>
+    <p>A reader who presses play is willing to wait about as long as it takes a person to clear their throat. Longer than that and the app feels broken. Speech synthesis on a CPU is not instant: an 82-million-parameter model produces a sentence in a few hundred milliseconds to a couple of seconds, depending on length. So M2 is not only "call the model"; it is the machinery that hides the model's latency: synthesize one sentence at a time, start playing the first while the next five are being made, cache everything so a second listen costs nothing, and do all of it on one dedicated thread so the API stays responsive.</p>
+    <p>The second half of M2 is honesty of timing. The model reports when each word starts and ends. Those timings are what highlight the word being spoken in M3. If they drift, even by half a word, the highlight looks wrong and the reader stops trusting it. Every transformation in this milestone, speed changes above the model's range included, has to carry the timings along exactly.</p>
+    <div class="why">
+      <div><b>One sentence per synthesis call</b><p>The sentence is the unit of playback, seek, resume and voice change. It is also the size at which the model is both fast and good; quality drops and latency grows past about 300 characters.</p></div>
+      <div><b>A backend interface, not a model</b><p><code>TTSBackend</code> is the only place a model is named (SYN-4). Tests use a fake backend that returns silence with synthetic timings, so CI needs no model download and runs in seconds. Kokoro is the first real implementation; a GPU model later is a drop-in.</p></div>
+      <div><b>Cache by segment id</b><p>Audio is keyed by (segment, voice, speed, backend). Re-listening is instant (SYN-6), and because the key is the segment id rather than a text hash, re-ingesting a document never serves stale audio.</p></div>
+      <div><b>Measured, not assumed</b><p>The 2-second target is a benchmark number on this machine, written to a file with a date. The PRD lists "is 2 s realistic on an M1 laptop" as an open question; M2 answers it with a measurement in its first week.</p></div>
+    </div>
+  </section>
+
+  <section id="flow">
+    <h2><span class="k">2</span>The synthesis flow</h2>
+    <p>One request for one sentence's audio passes through six stages. The first thing checked is the cache; on a hit nothing else runs. On a miss the request jumps ahead of any queued lookahead work, because the listener is waiting on this sentence and not on the ones after it.</p>
+    <figure>
+      <svg viewBox="0 0 900 330" role="img" aria-label="Synthesis flow left to right: GET audio for a segment; cache lookup; on miss, the synthesis service runs on one worker thread: the backend synthesizes PCM and token timestamps; if the requested speed exceeds the backend's range the audio is stretched and the timestamps scaled; timestamps are translated from normalized text offsets to display text offsets through the char map; the encoder wraps the PCM in a container; the cache stores file and row; the response carries audio plus an X-Timestamps header. After the response, the next five segments are enqueued.">
+        <defs><marker id="arrF" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="10" y="60" width="120" height="60" rx="3"/>
+          <rect x="180" y="60" width="110" height="60" rx="3"/>
+          <rect x="340" y="20" width="540" height="200" rx="4" stroke-dasharray="5 3"/>
+          <rect x="360" y="60" width="120" height="60" rx="3"/>
+          <rect x="520" y="60" width="110" height="60" rx="3"/>
+          <rect x="670" y="60" width="110" height="60" rx="3"/>
+          <rect x="360" y="150" width="120" height="50" rx="3"/>
+          <rect x="520" y="150" width="110" height="50" rx="3"/>
+          <rect x="670" y="150" width="110" height="50" rx="3"/>
+          <line x1="130" y1="90" x2="178" y2="90" marker-end="url(#arrF)"/>
+          <path d="M290,80 L320,80 L320,50 L358,50 L358,60" fill="none"/>
+          <line x1="290" y1="90" x2="358" y2="90" marker-end="url(#arrF)"/>
+          <line x1="480" y1="90" x2="518" y2="90" marker-end="url(#arrF)"/>
+          <line x1="630" y1="90" x2="668" y2="90" marker-end="url(#arrF)"/>
+          <path d="M725,120 L725,135 L420,135 L420,148" marker-end="url(#arrF)"/>
+          <line x1="480" y1="175" x2="518" y2="175" marker-end="url(#arrF)"/>
+          <line x1="630" y1="175" x2="668" y2="175" marker-end="url(#arrF)"/>
+          <path d="M780,175 L820,175 L820,255 L70,255 L70,122" marker-end="url(#arrF)" stroke-dasharray="4 3"/>
+          <path d="M235,120 L235,255" stroke-dasharray="4 3"/>
+        </g>
+        <g fill="currentColor" font-size="12" text-anchor="middle">
+          <text x="70" y="85">GET /audio/{id}</text><text x="70" y="102" font-size="11" opacity="0.7">?voice=&amp;speed=</text>
+          <text x="235" y="85">cache?</text><text x="235" y="102" font-size="11" opacity="0.7">hit → respond at once</text>
+          <text x="420" y="85">backend</text><text x="420" y="102" font-size="11" opacity="0.7">PCM 24 kHz + token times</text>
+          <text x="575" y="85">stretch?</text><text x="575" y="102" font-size="11" opacity="0.7">only above native max</text>
+          <text x="725" y="85">translate times</text><text x="725" y="102" font-size="11" opacity="0.7">normalized → text offsets</text>
+          <text x="420" y="172">encode</text><text x="420" y="189" font-size="11" opacity="0.7">PCM → container</text>
+          <text x="575" y="172">cache.put</text><text x="575" y="189" font-size="11" opacity="0.7">file + row, tmp then rename</text>
+          <text x="725" y="172">respond</text><text x="725" y="189" font-size="11" opacity="0.7">audio + X-Timestamps</text>
+          <text x="610" y="40" font-size="11" opacity="0.8">one synthesis thread, one model session (D9); this request jumps the queue</text>
+          <text x="445" y="275" font-size="11" opacity="0.8">then enqueue segments id+1 … id+5 for the same voice and speed (SYN-5); cached ones are skipped</text>
+        </g>
+        <g fill="currentColor" font-size="10" opacity="0.75" text-anchor="middle"><text x="325" y="104">miss</text><text x="305" y="46">hit</text></g>
+      </svg>
+      <figcaption>One cache miss end to end. The backend is the only stage that knows which model is loaded; stretch and translate are pure functions over PCM and timestamp lists; encode and cache are the same for every backend. A hit skips the whole dashed box.</figcaption>
+    </figure>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>stage</th><th>what it does</th><th>why it is a separate piece</th></tr>
+      <tr><td>backend</td><td>text in, PCM and per-token start/end out; a <code>speed</code> input the model applies in its duration predictor</td><td>SYN-4: the only module allowed to name a model; swapped for a GPU model or a fake without touching anything else</td></tr>
+      <tr><td>stretch</td><td>for speeds above the backend's native maximum: time-stretch the audio by the remaining ratio and divide every timing by it</td><td>D6: keeps the model inside the range where it sounds clean, and keeps the cache from holding one file per speed step</td></tr>
+      <tr><td>translate</td><td>map timing offsets from the spoken text to the displayed text through the segment's character map</td><td>the browser only ever sees offsets into the text it shows; section 5</td></tr>
+      <tr><td>encode</td><td>wrap PCM in a browser-decodable container (Opus if the licence survey finds a clean path, otherwise WAV)</td><td>D7: a 10-second sentence is about 60 KB as Opus, ten times that as PCM; both decode natively in the browser</td></tr>
+      <tr><td>cache</td><td>write file to a temporary name, rename, insert the row; key (segment, voice, speed, backend)</td><td>write-through so a crash never leaves a half file behind a row; SYN-6</td></tr>
+      <tr><td>queue</td><td>after any response, enqueue the next five for the same voice and speed; a seek or settings change clears and refills</td><td>SYN-5: the client's prefetch of the next sentence then nearly always hits the cache</td></tr>
+    </table></div>
+  </section>
+
+  <section id="queue">
+    <h2><span class="k">3</span>The lookahead queue</h2>
+    <p>The queue is the trick that makes a slow model feel fast. Synthesis takes a fraction of the audio's own duration, so while one sentence plays, the thread has time to make several more. The service keeps a window of five sentences ahead of the one playing. When one finishes, the window slides. Anything already cached is skipped. A play request for a sentence outside the window jumps the queue, and a seek throws the whole window away and rebuilds it from the new position, so scrubbing through a document never piles up stale work.</p>
+    <figure>
+      <svg viewBox="0 0 900 230" role="img" aria-label="Timeline: the listener plays sentence k; the synthesis thread works on k+1 through k+5 in order while k plays; the client prefetches k+1 and k+2 and finds them cached. A seek to sentence j clears the queue; j is synthesized first, then j+1 through j+5.">
+        <defs><marker id="arrQ" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+        <g fill="currentColor" font-size="12" font-weight="600"><text x="10" y="40">playing</text><text x="10" y="95">synth thread</text><text x="10" y="150">queue</text></g>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="120" y="22" width="220" height="26"/><rect x="340" y="22" width="150" height="26"/><rect x="490" y="22" width="110" height="26"/>
+          <rect x="120" y="78" width="60" height="26"/><rect x="186" y="78" width="60" height="26"/><rect x="252" y="78" width="60" height="26"/><rect x="318" y="78" width="60" height="26"/><rect x="384" y="78" width="60" height="26"/>
+          <rect x="600" y="78" width="60" height="26" stroke-width="2"/><rect x="666" y="78" width="60" height="26"/><rect x="732" y="78" width="60" height="26"/>
+          <line x1="600" y1="10" x2="600" y2="190" stroke-dasharray="4 3"/>
+          <line x1="130" y1="190" x2="880" y2="190" marker-end="url(#arrQ)"/>
+        </g>
+        <g fill="currentColor" font-size="11" text-anchor="middle" class="mono">
+          <text x="230" y="39">k (3.8 s)</text><text x="415" y="39">k+1</text><text x="545" y="39">k+2</text>
+          <text x="150" y="95">k+1</text><text x="216" y="95">k+2</text><text x="282" y="95">k+3</text><text x="348" y="95">k+4</text><text x="414" y="95">k+5</text>
+          <text x="630" y="95">j</text><text x="696" y="95">j+1</text><text x="762" y="95">j+2</text>
+        </g>
+        <g fill="currentColor" font-size="11" opacity="0.8">
+          <text x="120" y="150">[k+1 … k+5] slides as each finishes; cached ids are dropped</text>
+          <text x="606" y="150">seek to j: clear, j jumps, refill [j+1 … j+5]</text>
+          <text x="120" y="175">client prefetch of k+1, k+2: cache hits</text>
+          <text x="606" y="62" font-size="10" opacity="0.7">seek</text>
+          <text x="840" y="206" text-anchor="end">time</text>
+        </g>
+      </svg>
+      <figcaption>Why five: at the model's measured real-time factor of roughly 0.1 to 0.2, five sentences of lookahead is twenty to fifty seconds of slack. A single ordinary asyncio queue consumed by one thread is enough; there is nothing to lock.</figcaption>
+    </figure>
+  </section>
+
+  <section id="speed">
+    <h2><span class="k">4</span>Speed: the native range and the stretch region</h2>
+    <p>Kokoro takes a speed value and applies it inside its duration predictor, which is the best way to go faster: the model shortens vowels and pauses the way a fast speaker does, and the timings it reports are already correct. It is clean between 0.5x and 2.0x. Above that, consonants clip. So for 2.1x to 3.0x the service synthesizes at 2.0x, stretches the audio by the remaining ratio (at most 1.5, inside the range where stretching is artifact-free), and divides every timing by that ratio. Both the 2.0x file and the stretched file are cached, keyed by the speed the user asked for.</p>
+    <figure>
+      <svg viewBox="0 0 900 200" role="img" aria-label="A speed axis from 0.5x to 3.0x. From 0.5 to 2.0 the model's own speed input is used and the audio is cached at that exact speed. From 2.1 to 3.0 the model runs at 2.0 and a time-stretch supplies the rest, ratio 1.05 to 1.5, with timestamps divided by the ratio.">
+        <defs><marker id="arrS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.4"><line x1="60" y1="100" x2="860" y2="100" marker-end="url(#arrS)"/></g>
+        <rect x="60" y="80" width="480" height="40" fill="currentColor" opacity="0.08"/>
+        <rect x="540" y="80" width="300" height="40" fill="currentColor" opacity="0.18"/>
+        <g fill="none" stroke="currentColor" stroke-width="1"><line x1="60" y1="92" x2="60" y2="108"/><line x1="220" y1="92" x2="220" y2="108"/><line x1="540" y1="92" x2="540" y2="108"/><line x1="840" y1="92" x2="840" y2="108"/></g>
+        <g fill="currentColor" font-size="12" text-anchor="middle" class="mono">
+          <text x="60" y="130">0.5x</text><text x="220" y="130">1.0x</text><text x="540" y="130">2.0x</text><text x="840" y="130">3.0x</text>
+        </g>
+        <g fill="currentColor" font-size="12" text-anchor="middle">
+          <text x="300" y="60">native: model speed input, cached at that speed</text>
+          <text x="690" y="60">stretch: model at 2.0x, then × ratio 1.05 … 1.5</text>
+          <text x="300" y="165" font-size="11" opacity="0.8">timings come from the model, already correct</text>
+          <text x="690" y="165" font-size="11" opacity="0.8">timings ÷ ratio; the 2.0x file is reused for every speed above it</text>
+        </g>
+      </svg>
+      <figcaption>Decision D6. The split keeps audio quality inside the model's comfort zone and keeps the cache small: a user who scrubs from 2.1x to 3.0x in 0.1 steps causes one model run and nine cheap stretches, not ten model runs.</figcaption>
+    </figure>
+  </section>
+
+  <section id="sync">
+    <h2><span class="k">5</span>Keeping word timings honest</h2>
+    <p>The model reads <code>normalized_text</code> ("3.2 percent"); the reader shows <code>text</code> ("3.2%"). Timings come back against the spoken form, so the API translates each word's character span through the segment's character map before caching. The browser never sees spoken-text offsets. After a stretch, every start and end is divided by the same ratio, so the relative positions do not move. Two invariants are tested on fifty fixture sentences at every speed: timings are sorted and non-overlapping, and the last one ends no later than the audio does.</p>
+    <figure>
+      <svg viewBox="0 0 860 170" role="img" aria-label="Three rows: a word timestamp from the backend with char offsets into the normalized text; the char map; the resulting offsets into the displayed text that the API sends. The word percent at 480 to 820 ms with normalized offsets 15 to 22 becomes display offsets 14 to 15, the percent sign.">
+        <g fill="currentColor" font-size="12" class="mono">
+          <text x="10" y="30">backend:  word="percent"  480–820 ms  char 15–22 of normalized_text</text>
+          <text x="10" y="70">char_map: normalized index 15…21 → text index 14 (every char of the expansion points at "%")</text>
+          <text x="10" y="110">API:      word="percent"  480–820 ms  char 14–15 of text   ← what the browser highlights</text>
+          <text x="10" y="150">stretch 1.25: 384–656 ms, same chars</text>
+        </g>
+      </svg>
+      <figcaption>One word through the pipeline. The character map built by the normalizer in M1 is what makes this a lookup rather than a guess; the stretch is a division that preserves order.</figcaption>
+    </figure>
+  </section>
+
+  <section id="delivery">
+    <h2><span class="k">6</span>Delivery to the browser</h2>
+    <p>Decision D5 replaced the original WebSocket-plus-MSE plan with one HTTP request per sentence. The browser fetches <code>GET /audio/{segment_id}?voice=&amp;speed=</code>, decodes the response with <code>decodeAudioData</code>, and schedules the buffer to start exactly when the previous one ends on the Web Audio clock. That is gapless by construction, and the same clock drives the word highlight in M3. M2 builds the server side of this: the endpoint, the headers, the blocking cache miss, and a <code>HEAD</code> probe so the client can ask "is it ready" without downloading.</p>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>call</th><th>response</th><th>why</th></tr>
+      <tr><td>GET /audio/{id}?voice=&amp;speed=</td><td>200, body = encoded audio, <code>X-Timestamps</code> JSON in text offsets, <code>X-Duration-Ms</code>; blocks on a miss</td><td>one round trip gives the client everything it needs to play and highlight a sentence</td></tr>
+      <tr><td>HEAD /audio/{id}?…</td><td>200 if cached, 404 otherwise; never synthesizes</td><td>lets the client probe the cache for prefetch decisions without triggering work</td></tr>
+      <tr><td>GET /voices</td><td>every voice across backends: id, name, language, gender</td><td>SYN-2: at least six voices across both genders, exposed for the picker</td></tr>
+      <tr><td>errors</td><td>404 unknown segment; 422 speed outside 0.5–3.0 in 0.1 steps or unknown voice; 502 with a reason when the backend fails on that sentence</td><td>a bad sentence is marked failed and skipped with a short silence; playback never stalls on it</td></tr>
+    </table></div>
+  </section>
+
+  <section id="boundaries">
+    <h2><span class="k">7</span>Sentence boundaries, measured</h2>
+    <p>M1's gate measured reading order at word level and deliberately ignored where sentences are cut, because the cuts in the ground truth came from the old extractor. M2 is where cuts become audible: a sentence split in two gets two synthesis calls, two prosodic contours and a pause in the middle; two sentences merged get one long contour. So M2 builds a boundary truth and a metric. The truth is the same ordered words as the reading-order truth with reviewed line breaks, which lets a validator prove nothing but the breaks moved. The metric aligns the parser's word stream to the truth's and scores boundaries as precision and recall.</p>
+    <figure>
+      <svg viewBox="0 0 900 180" role="img" aria-label="Two word streams aligned word by word: the truth with sentence boundaries marked after certain words, and the parser's output with its boundaries. A boundary at the same aligned word counts as a true positive; a parser boundary with no truth boundary is a false positive (a split); a truth boundary the parser lacks is a false negative (a merge).">
+        <g fill="currentColor" font-size="12" font-weight="600"><text x="10" y="40">truth</text><text x="10" y="110">parser</text></g>
+        <g fill="currentColor" font-size="12" class="mono">
+          <text x="90" y="40">see fig 2 for details | the model fails here | we fix it in eq 8 and move on |</text>
+          <text x="90" y="110">see fig | 2 for details | the model fails here we fix it in eq | 8 and move on |</text>
+        </g>
+        <g fill="currentColor" font-size="11" opacity="0.85">
+          <text x="150" y="140">↑ split after "fig": false positive</text>
+          <text x="430" y="140">↑ missing after "here": false negative (merge)</text>
+          <text x="90" y="165">true positives: after "details", after "on"  →  precision 2/4, recall 2/3</text>
+        </g>
+      </svg>
+      <figcaption>The metric on a toy case. Splits after abbreviations and merges at old block edges are the two error types seen in M1; the first measurement tells us which dominates before any threshold is chosen.</figcaption>
+    </figure>
+  </section>
+
+  <section id="deps">
+    <h2><span class="k">8</span>Dependencies and licences, settled before code</h2>
+    <p>M1 found its extractor was AGPL after the parser was built, and paid for the swap. M2 does the survey first. Three questions are open on this machine, which has no Homebrew, no ffmpeg and no espeak:</p>
+    <div class="note"><ul>
+      <li><b>Which Kokoro runtime, and how it turns text into phonemes.</b> The common path uses espeak-ng, which is GPL-3. The G2P library Kokoro ships with (misaki) is Apache-2.0 and handles most English without espeak; what it does for words outside its lexicon decides whether the GPL fallback is needed at all. Also: whether the ONNX build exposes per-token timings and a speed input, and the pinned revision of the Apache-2.0 model weights.</li>
+      <li><b>How to encode Opus without ffmpeg.</b> ffmpeg is LGPL or GPL depending on the build; the project's rule is Apache, MIT or BSD. libopus itself is BSD. The survey lists Python packages that write Opus from wheels on Apple Silicon and whether Safari, including iOS, decodes each container. WAV needs nothing and decodes everywhere; it is the fallback and the test path.</li>
+      <li><b>How to time-stretch without ffmpeg.</b> A pure-numpy WSOLA or an MIT library replaces <code>atempo</code> if ffmpeg stays out.</li>
+    </ul></div>
+    <p>The interfaces in the spec are written so that none of these choices changes the service, the cache, the queue or the API: the backend, the encoder and the stretch function are each one module behind a fixed signature.</p>
+    <h3>Decided 2026-10-16 (D15, D16, D17)</h3>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>question</th><th>decision</th><th>evidence</th></tr>
+      <tr><td>runtime</td><td>Kokoro-82M (Apache-2.0, revision pinned) on PyTorch CPU; the backend drives the model directly with the Apache-2.0 G2P; no phonemizer, no espeak, no num2words; an Apache-2.0 fallback G2P for unknown words; model loaded at start-up</td><td>GPL-free install verified; RTF 0.078; first audio 0.83 s warm (results 273–276)</td></tr>
+      <tr><td>container</td><td>WAV by default in M2; Ogg Opus optional via an Apache-2.0 wheel; browser matrix tested in M3 before Opus becomes default</td><td>Opus 42 KB vs WAV 276 KB for 5.75 s (result 277); Safari support for Ogg Opus unconfirmed</td></tr>
+      <tr><td>stretch</td><td>WSOLA in process (MIT, numpy), ratio ≤ 1.5; no ffmpeg</td><td>1.5x stretch in 20 ms, length error 1.5 % (result 278)</td></tr>
+    </table></div>
+  </section>
+
+  <section id="sequence">
+    <h2><span class="k">9</span>The work sequence</h2>
+    <div class="ledger">
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>Supervisor</span></div>
+        <div class="what"><b>0a. Branch and spec</b>
+          <span class="why-line">Why: workers code against one signed-off contract, as in M1.</span>
+          <ul><li>Branch <code>m2-synthesis</code> from the merged main. The interface spec covers FakeBackend, stretch, encoder, cache, service, queue, the audio and voices endpoints, config, the Kokoro backend's contract, the benchmark, the test list and the boundary truth format and metric.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Sonnet)</span></div>
+        <div class="what"><b>0b. Dependency and licence survey</b>
+          <span class="why-line">Why: section 8; decide before building, not after.</span>
+          <ul><li>Findings (results 253, sources per row): the model weights are Apache-2.0 at a pinned revision. The <code>kokoro</code> package (Apache-2.0, PyTorch) exposes per-token timings and a speed input, but requires <code>misaki[en]</code>, whose extra pulls a GPL-3 phonemizer fork and an espeak-ng loader. <code>kokoro-onnx</code> (MIT) requires espeak-ng outright and gives per-phoneme timings only. misaki's own English G2P is Apache-2.0 and, per its source, falls back to a neural model rather than espeak for unknown words. For Opus, one Apache-2.0 encoder wheel exists for Apple Silicon (<code>opuscodec</code>), unverified; Safari decodes WebM/Opus from about 17.4 and Ogg/Opus only from 18.4 per developer reports. ffmpeg is LGPL or GPL by build. Time-stretch: <code>audiotsm</code> (MIT, numpy, unmaintained) or a small in-house WSOLA.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Opus), results 273–279</span></div>
+        <div class="what"><b>0d. Licensing spike: Kokoro without the GPL chain</b>
+          <span class="why-line">Why: a survey reads licences; only a run shows whether the Apache-only install actually speaks.</span>
+          <ul><li>In a scratch environment, not the project's: install <code>kokoro</code> without dependencies, <code>misaki</code> without its English extra, PyTorch CPU; confirm nothing GPL is present; synthesize a normal sentence and one with unknown words; check per-token timings and the speed input; measure real-time factor on this machine. Try the Apache Opus encoder and the MIT time-stretch on the output. Decisions D15 (runtime), D16 (container) follow from the numbers.</li>
+              <li><b>Result:</b> an install with no GPL, LGPL or AGPL package exists and speaks. Two top-level imports had to be avoided: Kokoro's pipeline module imports the espeak bridge, so the backend drives the model directly with Kokoro's Apache-2.0 grapheme-to-phoneme library; and that library imports <code>num2words</code>, which is LGPL, so a small in-house number-to-words module stands in for it. Unknown words are dropped silently without espeak, so the backend gets an Apache-2.0 fallback G2P with letter spelling as last resort. Measured on this machine, warm: real-time factor 0.078, worst first audio 0.83 s for a 160-character sentence, against the 2 s gate; cold start about 2 s, so the model loads at server start. Speed input works natively. Opus via an Apache-2.0 wheel writes Ogg Opus at a seventh of WAV's size; WSOLA stretch at 1.5x costs 20 ms.</li>
+              <li><b>Decisions:</b> D15 Kokoro on PyTorch CPU with the GPL-free recipe, model revision pinned; D16 WAV as the M2 default, Opus optional until the real browser matrix is tested in M3; D17 WSOLA stretch in process, no ffmpeg anywhere. Also found: <code>num2words</code> was already in the project's dependency list from M1 (unused by the code); it is removed. The licence rule in CLAUDE.md now says explicitly that non-copyleft OSI licences such as PSF and ISC in transitive components are fine, and a licence check script joins the test suite.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Opus), commit 5745b40</span></div>
+        <div class="what"><b>0c. Sentence-boundary truth and metric</b>
+          <span class="why-line">Why: section 7; the measurement has to exist before a threshold is chosen.</span>
+          <ul><li>Fifteen <code>.sentences.txt</code> files: 141 candidate changes to the reading-order truth's line breaks, 116 accepted and 25 rejected with reasons, word streams verified identical. Metric and unit tests in place.</li>
+              <li><b>First measurement:</b> mean precision 0.888, recall 0.985, F1 0.933. False positives 163 against false negatives 26: the parser almost never merges sentences, it over-splits, mostly after abbreviations ("et seq.", "Natl.", "Eq.", "vs.", "e.g.") and at one-letter maths variables. Lowest fixtures: tables_04 0.890, tables_01 0.896, report_05 0.907. Threshold not set yet; the splitter fix comes first.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Opus), commit 5e686db</span></div>
+        <div class="what"><b>0e. Splitter fix</b>
+          <span class="why-line">Why: the errors M1 parked are now measurable and safe to fix, because the reading-order gate scores words, not cuts.</span>
+          <ul><li>An abbreviation list as data; the splitter keeps abbreviations, initials, section numbers and closing quotes inside the sentence with character offsets exact; golden and quality checklist unchanged; the three user documents re-dumped to show the effect.</li>
+              <li><b>Result:</b> mean precision 0.888 → 0.942, recall 0.985 → 0.991, F1 0.933 → 0.966. Reports 0.99 to 1.0. The fix is a post-merge over the splitter's spans, so offsets stay exact by construction. On the user's documents about 150 closing quotation marks rejoined their sentences, including the one parked in M1. Word-level golden identical to four decimals. What remains: false positives at block boundaries (stages 1 to 4, not the splitter), and three suspected truth artefacts noted for review.</li>
+              <li><b>Decision D18:</b> the boundary gate asserts F1 ≥ 0.90 and recall ≥ 0.97 per fixture and mean F1 ≥ 0.95, pinning the current state against regression; raised when the block-boundary splits are addressed.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Opus), commit 6e8b6c1</span></div>
+        <div class="what"><b>1. Tests red</b>
+          <span class="why-line">Why: the gate and the invariants are the acceptance criteria and must exist before the code.</span>
+          <ul><li>Timestamp invariants over fifty fixture sentences, speed and stretch math, queue behaviour, the audio and voices API contract, the gate test in its fake-backend form; the FakeBackend itself, since every test needs it; stubs for the rest.</li>
+              <li><b>Result:</b> 457 tests collect; 47 new ones fail with NotImplementedError and nothing else; FakeBackend (12 tests), the WAV encoder and settings are already green. The test-writer's ten readings of the spec are recorded for the implementers, and one open point it raised (does a cache hit slide the lookahead window) was decided: yes.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Opus), commit d5d1942</span></div>
+        <div class="what"><b>2. Service, cache, queue, API on the fake backend</b>
+          <ul><li>Make the red tests green with no model involved. The WAV encoder is the only encoder at this point. The stage diagrams in sections 2 and 3 become the built thing.</li>
+              <li><b>Result:</b> the service, the SQLite-plus-files cache with the temp-then-rename write, a numpy WSOLA stretch (no new dependency), the audio and voices routes and the lifespan wiring. Proven over HTTP on a live server: a GET returns audio with the timestamp header, HEAD answers from the cache, a 2.5x request writes the 2.0x file and the stretched file, a far-away request logs the seek and clears the queue, unknown segment 404, speed 3.1 422. One refinement decided during the build: the lookahead window slides on every request rather than on job completion, because the tests pin exactly five segments after one request. Two queue tests were red because the report fixture repeats its cover line; they now compare by segment id.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Opus), commit 8bad728</span></div>
+        <div class="what"><b>3. Kokoro backend and the benchmark</b>
+          <ul><li>The one module that names a model, with the revision pinned; the benchmark script reporting time-to-first-audio and real-time factor at four speeds; the gate measured on this machine.</li>
+              <li><b>How it was built:</b> the four Kokoro model files (Apache-2.0, 972 lines) are vendored with their licence and a notice of the three edits, so the PyPI package and its GPL chain are never installed. The Apache-2.0 fallback G2P turned out to depend on a GPL edit-distance library, so only its small neural predictor and weights were vendored too. Licence check over the 99 installed distributions: zero violations; phonemizer, espeak, num2words and the rest confirmed absent.</li>
+              <li><b>Measured on this machine (cold cache, warm model, voice af_heart):</b> real-time factor 0.08 at 1.0x and 2.0x, 0.12 at 3.0x including the stretch; cold start 2.3 s, so the model loads at server start. Unknown words such as "Kubernetes" and "Zygalski" are now spoken and timed, with a warning logged per word. Model tests: 30 passed.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>1 worker (Opus), commit 08127d1</span></div>
+        <div class="what"><b>4. Opus wiring, smoke audio pass, docs, close</b>
+          <ul><li>Stretch already landed in phase 2 and is measured at 3.0x in the benchmark. This phase wires the optional Ogg Opus encoder behind a setting, adds an <code>--audio</code> pass to the smoke script (voices, first segments at 1.0x and 2.5x, timestamp invariants over the API, first-audio times) run on both backends, writes <code>docs/M2_TESTING.md</code> for the hands-on test, and brings the PRD and Technical Design in line with D15 to D19, removing the last ffmpeg mentions.</li>
+              <li><b>Result:</b> Opus optional behind <code>HEARNARRO_AUDIO_FORMAT=opus</code>, 24 KB against 196 KB of WAV for a 4-second clip, licence check still clean at 100 packages. Smoke audio pass: 90 requests on the fake backend and 90 on Kokoro, zero failures, every timestamp set valid against the text over the API; Kokoro first audio mean 0.58 s, worst 2.2 s on one cold segment. PRD and Technical Design now carry D15 to D19; the decision log had been missing five rows and has them.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>Supervisor</span></div>
+        <div class="what"><b>5. Close M2</b>
+          <ul><li>Supervisor's own run: 489 passed, 12 skipped; licence check 100 distributions, 0 violations; lint clean. The server on the user's data directory restarted with the Kokoro backend (model cache copied to <code>~/hearnarro-m1/hf</code>); four sentences from the user's three documents synthesized and handed over as WAV files, first audio 0.2 to 1.2 s from a cold cache. Both guides copied into <code>docs/guide/</code>; branch merged into main and pushed.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill next">next</span><span>M3</span></div>
+        <div class="what"><b>Carried into M3</b>
+          <ul><li>The reader UI with Web Audio scheduling and word highlighting from these timestamps (PLAY-1 to PLAY-5).</li>
+              <li>Clause-level chunking of the first sentence at speeds below 1.0 (D19), measured in the player.</li>
+              <li>The browser decode matrix for Ogg Opus; Opus becomes the default only if Safari passes, else a WebM muxer.</li>
+              <li>Listening checks that no automated test covers: voice quality, the fallback pronunciation of unknown words, the WSOLA stretch above 2.0x.</li>
+              <li>Two stale mentions of "Kokoro ONNX" remain in the PRD's footprint row and an open question; cosmetic.</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="status">
+    <h2><span class="k">10</span>Status</h2>
+    <p>As of 2026-10-16 23:05 PDT: M2 is closed and merged into main. The whole stack runs end to end on this machine: fake-backend tests green, Kokoro backend GPL-free and pinned, benchmark in <code>bench/2026-10-16.json</code>, boundary gate asserted (D18), both code maps in the repo, the hands-on procedure in <code>docs/M2_TESTING.md</code>. The server is up on port 8765 with Kokoro and the user's three documents.</p>
+    <h3>Gate measurement (benchmark, 20 fixture sentences of 80–200 characters, cold cache, warm model)</h3>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>speed</th><th>first audio, mean</th><th>median</th><th>worst</th><th>under 2 s</th><th>spec sentence (150 chars)</th></tr>
+      <tr><td>0.5x</td><td>1883 ms</td><td>1767 ms</td><td>2986 ms</td><td>14 of 20</td><td>1842 ms, pass</td></tr>
+      <tr><td>1.0x</td><td>862 ms</td><td>798 ms</td><td>1411 ms</td><td>20 of 20</td><td>997 ms, pass</td></tr>
+      <tr><td>2.0x</td><td>458 ms</td><td>432 ms</td><td>727 ms</td><td>20 of 20</td><td>472 ms, pass</td></tr>
+      <tr><td>3.0x</td><td>469 ms</td><td>438 ms</td><td>740 ms</td><td>20 of 20</td><td>483 ms, pass</td></tr>
+    </table></div>
+    <p>At 0.5x the model produces twice the audio for the same text, so first-audio time scales with sentence length and the longest sentences cross 2 s. Every other speed clears the gate with a wide margin.</p>
+    <p><b>Decision D19 (user, 2026-10-16 22:20):</b> the gate is measured on the spec's 150-character sentence, which passes at every speed; the benchmark keeps reporting the full distribution so the 0.5x tail stays visible; M3 adds clause-level chunking of the first sentence at speeds below 1.0, where the player can measure the listener's real wait. The PRD gate wording does not change; the M3 item is added.</p>
+    <p><b>Also found and fixed during the close:</b> two guard tests on the splitter exposed a real bug in its merge pass, which was joining numbered list items and bracketed reference entries that the splitter had cut correctly. Fixed with the boundary gate and golden unchanged. The worker contract now requires that a cited green run come from the final code, because that bug slipped through a run made before the last edit.</p>
+    <h3>Things to know now</h3>
+    <div class="note"><ul>
+      <li><b>No ffmpeg, no espeak, no Homebrew on this machine.</b> The survey decides whether M2 needs any of them; the spec is written so it does not have to.</li>
+      <li><b>The real model is tested only on request.</b> One smoke test and the benchmark run Kokoro, both skipped unless asked for; everything else uses the fake backend and runs in seconds.</li>
+      <li><b>The code map</b> for this milestone is <code>docs/CODE_MAP_M2.md</code> in the repo: every request flow traced file by file with sequence diagrams, every module with its signatures, reads, writes and status, the data structures, the concurrency model and the licence situation. It names the commit it describes and is updated whenever a module lands. Its first review found five gaps in the spec (cache path needs the document id, media type derived from the file extension, a retry rule for failed rows, the rule that recognizes a seek, lifespan loading on the synthesis thread), all resolved in the spec before implementation.</li>
+      <li><b>The M1 guide stays the reference for ingestion:</b> <a href="https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n">HearNarro M1 Ingest Map</a>.</li>
+    </ul></div>
+  </section>
+</main>
