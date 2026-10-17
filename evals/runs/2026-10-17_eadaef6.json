@@ -1,0 +1,280 @@
+{
+  "run_id": "2026-10-17_eadaef6",
+  "commit": "eadaef6",
+  "date": "2026-10-17T10:39:24Z",
+  "config": {
+    "backend": "fake",
+    "speed": 1.0,
+    "tesseract": false,
+    "python": "3.11.16",
+    "tier": 0
+  },
+  "suites": {
+    "EVAL-1": {
+      "title": "Order",
+      "tier": 0,
+      "examples": [
+        {
+          "id": "academic_01_seahelm_audio",
+          "class": "academic",
+          "score": 0.9919443427316001,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_02_memduet",
+          "class": "academic",
+          "score": 0.9912376779846659,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_03_pruned_reasoning",
+          "class": "academic",
+          "score": 0.9963269054178145,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_04_legislative_xml",
+          "class": "academic",
+          "score": 0.9839373970345964,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_05_sparse_autoencoders",
+          "class": "academic",
+          "score": 0.9958100558659218,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_01_pfn_bayes",
+          "class": "tables",
+          "score": 0.9787150177374853,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_02_non_gaussian_sem",
+          "class": "tables",
+          "score": 0.9877064925086438,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_03_copula_subspaces",
+          "class": "tables",
+          "score": 0.9710444674250258,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_04_markov_kernel",
+          "class": "tables",
+          "score": 0.9756373937677054,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_05_decomposing_learner",
+          "class": "tables",
+          "score": 0.9989479221462388,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_01_zero_trust",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_02_patch_mgmt",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_03_ssdf",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_04_rmf",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_05_controls",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        }
+      ],
+      "skipped": [
+        {
+          "id": "scanned_01_seahelm_audio",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        },
+        {
+          "id": "scanned_02_pruned_reasoning",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        },
+        {
+          "id": "scanned_03_zero_trust",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        },
+        {
+          "id": "scanned_04_copula_subspaces",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        },
+        {
+          "id": "scanned_05_markov_kernel",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        }
+      ],
+      "aggregate": {
+        "mean": 0.99142051150798,
+        "min": 0.9710444674250258,
+        "by_class": {
+          "academic": 0.9918512758069198,
+          "report": 1.0,
+          "tables": 0.9824102587170198
+        }
+      },
+      "seconds": 7.89
+    },
+    "EVAL-2": {
+      "title": "Boundaries",
+      "tier": 0,
+      "examples": [
+        {
+          "id": "academic_01_seahelm_audio",
+          "class": "academic",
+          "score": 0.9702970297029704,
+          "precision": 0.9671052631578947,
+          "recall": 0.9735099337748344,
+          "f1": 0.9702970297029704
+        },
+        {
+          "id": "academic_02_memduet",
+          "class": "academic",
+          "score": 0.9375,
+          "precision": 0.9051724137931034,
+          "recall": 0.9722222222222222,
+          "f1": 0.9375
+        },
+        {
+          "id": "academic_03_pruned_reasoning",
+          "class": "academic",
+          "score": 0.9821428571428571,
+          "precision": 0.9734513274336283,
+          "recall": 0.990990990990991,
+          "f1": 0.9821428571428571
+        },
+        {
+          "id": "academic_04_legislative_xml",
+          "class": "academic",
+          "score": 0.9620253164556961,
+          "precision": 0.9421487603305785,
+          "recall": 0.9827586206896551,
+          "f1": 0.9620253164556961
+        },
+        {
+          "id": "academic_05_sparse_autoencoders",
+          "class": "academic",
+          "score": 0.9887640449438202,
+          "precision": 0.9777777777777777,
+          "recall": 1.0,
+          "f1": 0.9887640449438202
+        },
+        {
+          "id": "tables_01_pfn_bayes",
+          "class": "tables",
+          "score": 0.9176470588235295,
+          "precision": 0.8540145985401459,
+          "recall": 0.9915254237288136,
+          "f1": 0.9176470588235295
+        },
+        {
+          "id": "tables_02_non_gaussian_sem",
+          "class": "tables",
+          "score": 0.9317269076305221,
+          "precision": 0.8923076923076924,
+          "recall": 0.9747899159663865,
+          "f1": 0.9317269076305221
+        },
+        {
+          "id": "tables_03_copula_subspaces",
+          "class": "tables",
+          "score": 0.935361216730038,
+          "precision": 0.8848920863309353,
+          "recall": 0.9919354838709677,
+          "f1": 0.935361216730038
+        },
+        {
+          "id": "tables_04_markov_kernel",
+          "class": "tables",
+          "score": 0.9282296650717703,
+          "precision": 0.8738738738738738,
+          "recall": 0.9897959183673469,
+          "f1": 0.9282296650717703
+        },
+        {
+          "id": "tables_05_decomposing_learner",
+          "class": "tables",
+          "score": 0.9832402234636871,
+          "precision": 0.967032967032967,
+          "recall": 1.0,
+          "f1": 0.9832402234636871
+        },
+        {
+          "id": "report_01_zero_trust",
+          "class": "report",
+          "score": 0.98989898989899,
+          "precision": 0.98,
+          "recall": 1.0,
+          "f1": 0.98989898989899
+        },
+        {
+          "id": "report_02_patch_mgmt",
+          "class": "report",
+          "score": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        {
+          "id": "report_03_ssdf",
+          "class": "report",
+          "score": 0.98989898989899,
+          "precision": 0.98,
+          "recall": 1.0,
+          "f1": 0.98989898989899
+        },
+        {
+          "id": "report_04_rmf",
+          "class": "report",
+          "score": 0.9876543209876543,
+          "precision": 0.975609756097561,
+          "recall": 1.0,
+          "f1": 0.9876543209876543
+        },
+        {
+          "id": "report_05_controls",
+          "class": "report",
+          "score": 0.9873417721518987,
+          "precision": 0.975,
+          "recall": 1.0,
+          "f1": 0.9873417721518987
+        }
+      ],
+      "skipped": [],
+      "aggregate": {
+        "mean_f1": 0.9661152261934948,
+        "min_recall": 0.9722222222222222
+      },
+      "seconds": 1.36
+    }
+  },
+  "seconds": 9.25
+}
