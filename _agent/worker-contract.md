@@ -28,6 +28,8 @@ On top of that, evidence works like this:
 - The green run you cite must come from the final code. If you edit anything after a run (a new test,
   a lint fix, a rename), run again and cite the new file; a run from before the last edit is not evidence.
 - Never print, cat, or grep credential, token or key files (`.env`, `*.pem`, `*.key`).
+- Python runs through `api/.venv/bin/python` (pip-managed). Never run `uv run`, `uv sync` or `uv pip`:
+  a worker did on 2026-10-17 and it re-synced the venv and left `api/uv.lock`; the user chose pip (M4).
 
 ## 2. Things you never do
 
