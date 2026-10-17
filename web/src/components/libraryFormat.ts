@@ -26,3 +26,14 @@ export function formatLastOpened(iso: string | null, now: Date): string {
   if (diff < 7 * DAY) return `${Math.floor(diff / DAY)} days ago`
   return new Date(t).toISOString().slice(0, 10)
 }
+
+/** ING-11 badge text: the effective class, with "(auto)" when the user has not overridden it. */
+export function formatProfile(p: { class: string; override: string | null } | undefined): string {
+  if (!p) return 'prose (auto)'
+  return p.override ? p.class : `${p.class} (auto)`
+}
+
+/** ING-11: what the badge says after a PATCH re-normalized the document. */
+export function formatRenormalized(changed: number): string {
+  return changed === 1 ? 're-normalized 1 sentence' : `re-normalized ${changed} sentences`
+}

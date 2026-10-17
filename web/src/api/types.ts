@@ -81,6 +81,26 @@ export interface DocumentSummary {
   progress: number
   settings: DocumentSettings | null
   last_opened_at: string | null
+  /** ING-11 (D40): absent from servers before M5. */
+  profile?: DocumentProfile
+  /** Only on a PATCH that changed the profile: segments re-normalized, cache rows removed. */
+  renormalized?: { changed: number; removed: number }
+}
+
+export type ProfileClass = 'prose' | 'mixed' | 'math'
+
+/** ING-11 document profile: effective class (override wins), computed class and raw shares. */
+export interface DocumentProfile {
+  class: ProfileClass
+  computed_class: ProfileClass
+  override: ProfileClass | null
+  math_share: number
+  display_per_page: number
+  inline_token_share: number
+  code_share: number
+  citation_style: 'numeric' | 'author_year' | 'none'
+  scanned_share: number
+  author_year_citations: 'read' | 'skip'
 }
 
 /** `GET /documents/{id}`: the summary plus sections. */
@@ -93,6 +113,8 @@ export interface DocumentPatch {
   position?: { segment_id: number; offset_ms: number }
   settings?: DocumentSettings
   opened?: boolean
+  /** ING-11: `class: null` clears the override; a change re-normalizes on the server. */
+  profile?: { class?: ProfileClass | null; author_year_citations?: 'read' | 'skip' }
 }
 
 /** `GET` / `PUT /settings`: global defaults (LIB-3). */

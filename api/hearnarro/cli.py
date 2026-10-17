@@ -64,6 +64,11 @@ def renormalize_document(
     """
     from hearnarro.ingestion.normalize import normalize
     from hearnarro.storage.db import pack_char_map
+    from hearnarro.storage.repo import get_document_profile
+
+    # ING-11, D40: the stored profile (override wins) drives the bracket rule, as at ingestion.
+    # Phase 3 adds each segment's math_json spans here (MATH-2); until then no maths spans.
+    profile = get_document_profile(conn, document_id)
 
     rows = conn.execute(
         "SELECT s.id, s.text, s.normalized_text, s.char_map, b.type FROM segments s "
@@ -73,7 +78,7 @@ def renormalize_document(
     changed = removed = orphans = 0
     with conn:
         for seg_id, text, old_norm, old_map, block_type in rows:
-            norm, cmap = normalize(text, heading=block_type == "heading")
+            norm, cmap = normalize(text, heading=block_type == "heading", profile=profile)
             packed = pack_char_map(cmap)
             if norm == old_norm and packed == bytes(old_map):
                 continue

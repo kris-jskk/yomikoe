@@ -9,9 +9,11 @@ from typing import Any
 
 import aiosqlite
 
+from hearnarro.ingestion.profile import DocumentProfile, ProfileClass
+
 DOCUMENT_COLUMNS = (
     "id, title, filename, sha256, page_count, pages_done, parse_ms, status, fail_reason, "
-    "voice_id, speed, acronyms_json, ocr_skipped_pages, "
+    "voice_id, speed, acronyms_json, profile_json, ocr_skipped_pages, "
     "position_segment_id, position_offset_ms, created_at, last_opened_at"
 )
 DuplicateDocument = sqlite3.IntegrityError
@@ -47,6 +49,33 @@ def document_acronyms(doc: dict[str, Any]) -> dict[str, str]:
 async def get_document_acronyms(conn: aiosqlite.Connection, document_id: int) -> dict[str, str]:
     row = await _one(conn, "SELECT acronyms_json FROM documents WHERE id = ?", (document_id,))
     return document_acronyms(row) if row else {}
+
+
+def document_profile(doc: dict[str, Any]) -> DocumentProfile:
+    """``documents.profile_json`` (``PROSE_DEFAULT`` when NULL: ingested before 0005; ING-11)."""
+    return DocumentProfile.from_json(doc.get("profile_json"))
+
+
+def get_document_profile(conn: sqlite3.Connection, document_id: int) -> DocumentProfile:
+    row = conn.execute("SELECT profile_json FROM documents WHERE id = ?", (document_id,)).fetchone()
+    return DocumentProfile.from_json(row[0] if row else None)
+
+
+def set_profile_override(
+    conn: sqlite3.Connection,
+    document_id: int,
+    cls: ProfileClass | None,
+    author_year: str | None,
+) -> DocumentProfile:
+    """Store the user's class (``None`` clears it) and TERM-3 toggle; returns the new profile."""
+    current = get_document_profile(conn, document_id)
+    updated = current.with_override(cls, author_year)  # type: ignore[arg-type]
+    with conn:
+        conn.execute(
+            "UPDATE documents SET profile_json = ? WHERE id = ?",
+            (updated.to_json(), document_id),
+        )
+    return updated
 
 
 async def get_document_by_sha256(conn: aiosqlite.Connection, sha256: str) -> dict[str, Any] | None:

@@ -19,6 +19,7 @@ from hearnarro.ingestion.ocr import (
     default_backend,
 )
 from hearnarro.ingestion.order import order_document
+from hearnarro.ingestion.profile import PROSE_DEFAULT, DocumentProfile, compute_profile
 from hearnarro.ingestion.segment import split_sentences
 
 
@@ -29,6 +30,7 @@ class IngestResult:
     segments: list[Segment]
     acronyms: dict[str, str] = field(default_factory=dict)  # {ACR: expansion}, ING-6
     ocr_skipped_pages: int = 0  # pages that needed OCR while no engine was available (ING-2)
+    profile: DocumentProfile = PROSE_DEFAULT  # ING-11, D40: computed between stages 4 and 5
 
 
 def ingest(
@@ -39,7 +41,9 @@ def ingest(
     on_page: Callable[[int, int], None] | None = None,
     ocr_backend: OCRBackend | None | _Default = DEFAULT_OCR,
 ) -> IngestResult:
-    """extract_pages -> classify_pages -> order_document -> merge_blocks -> split_sentences;
+    """extract_pages -> classify_pages -> order_document -> merge_blocks -> compute_profile
+    -> split_sentences; the profile (ING-11, D40) is computed on the merged blocks and passed
+    to stage 5, whose normalizer needs the class for the bracket rule;
     acronym definitions are collected from the merged block texts (stage 5).
 
     ``on_page(pages_done, total)`` is forwarded to ``extract_pages``; it does not change the
@@ -56,6 +60,7 @@ def ingest(
         pages, skipped = apply_ocr(pdf_path, pages, backend)
     pages = classify_pages(pages)
     blocks = merge_blocks(order_document(pages))
+    profile = compute_profile(pages, blocks)  # ING-11, between stage 4 and stage 5
     segments: list[Segment] = []
     for block in blocks:
         segments.extend(
@@ -64,6 +69,7 @@ def ingest(
                 document_id=document_id,
                 order_start=len(segments),
                 id_start=len(segments),
+                profile=profile,
             )
         )
     return IngestResult(
@@ -72,4 +78,5 @@ def ingest(
         segments=segments,
         acronyms=document_definitions(b.text for b in blocks),
         ocr_skipped_pages=skipped,
+        profile=profile,
     )

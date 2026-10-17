@@ -14,15 +14,15 @@ import logging
 import shutil
 from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from hearnarro.storage import repo
-from hearnarro.storage.db import db_path, pdf_dir
+from hearnarro.storage.db import connect_sync, db_path, pdf_dir
 from hearnarro.storage.jobs import run_ingestion
 
 log = logging.getLogger(__name__)
@@ -77,6 +77,24 @@ def _document_summary(doc: dict[str, Any]) -> dict[str, Any]:
         },
         "progress": order / count if has_position and count else 0,
         "settings": {"voice_id": doc["voice_id"], "speed": doc["speed"]},
+        "profile": _profile_summary(doc),
+    }
+
+
+def _profile_summary(doc: dict[str, Any]) -> dict[str, Any]:
+    """ING-11, LIB-1: the effective class, the computed one, the override and the raw shares."""
+    p = repo.document_profile(doc)
+    return {
+        "class": p.effective,
+        "computed_class": p.cls,
+        "override": p.override,
+        "math_share": p.math_share,
+        "display_per_page": p.display_per_page,
+        "inline_token_share": p.inline_token_share,
+        "code_share": p.code_share,
+        "citation_style": p.citation_style,
+        "scanned_share": p.scanned_share,
+        "author_year_citations": p.author_year_citations,
     }
 
 
@@ -90,12 +108,21 @@ class DocSettingsIn(BaseModel):
     speed: float | None = Field(default=None, ge=SPEED_MIN, le=SPEED_MAX)
 
 
+class ProfileIn(BaseModel):
+    """ING-11: ``class: null`` clears the override; an unknown class is a 422."""
+
+    model_config = ConfigDict(populate_by_name=True)
+    cls: Literal["prose", "mixed", "math"] | None = Field(default=None, alias="class")
+    author_year_citations: Literal["read", "skip"] | None = None
+
+
 class DocumentPatch(BaseModel):
-    """Every key optional (LIB-2, LIB-3, D26); ``position: null`` clears the position."""
+    """Every key optional (LIB-2, LIB-3, D26, ING-11); ``position: null`` clears the position."""
 
     position: PositionIn | None = None
     settings: DocSettingsIn | None = None
     opened: bool | None = None
+    profile: ProfileIn | None = None
 
 
 async def _summary_or_404(conn: aiosqlite.Connection, document_id: int) -> dict[str, Any]:
@@ -186,10 +213,24 @@ async def get_document(document_id: int, conn: Conn) -> dict[str, Any]:
 
 
 @router.patch("/documents/{document_id}")
-async def patch_document(document_id: int, body: DocumentPatch, conn: Conn) -> dict[str, Any]:
+async def patch_document(
+    document_id: int, body: DocumentPatch, request: Request, conn: Conn
+) -> dict[str, Any]:
     """LIB-2/LIB-3: position, per-document settings, ``opened``; returns the summary.
-    404 unknown document; 422 if the position segment is not one of the document's."""
-    await _summary_or_404(conn, document_id)
+    404 unknown document; 422 if the position segment is not one of the document's.
+
+    ING-11 (D40): ``profile`` sets the class override and the TERM-3 toggle; when either
+    changes, the stored segments are re-normalized through ``renormalize_document`` (the
+    ``hearnarro renormalize`` path, no re-ingest) and the response carries
+    ``renormalized: {changed, removed}``. 409 while the document is parsing."""
+    doc = await _summary_or_404(conn, document_id)
+    renormalized: dict[str, int] | None = None
+    if body.profile is not None:
+        if doc["status"] == "parsing":
+            raise HTTPException(409, "document is still parsing")
+        renormalized = await asyncio.to_thread(
+            _apply_profile, request.app.state.data_dir, document_id, body.profile
+        )
     sent = body.model_fields_set
     fields: dict[str, Any] = {}
     if "position" in sent:
@@ -212,7 +253,28 @@ async def patch_document(document_id: int, body: DocumentPatch, conn: Conn) -> d
     if body.opened:
         fields["last_opened_at"] = repo.now_iso_ms()
     await repo.update_document_fields(conn, document_id, fields)
-    return _document_summary(await _summary_or_404(conn, document_id))
+    summary = _document_summary(await _summary_or_404(conn, document_id))
+    if renormalized is not None:
+        summary["renormalized"] = renormalized
+    return summary
+
+
+def _apply_profile(data_dir: Path, document_id: int, body: ProfileIn) -> dict[str, int]:
+    """Store the override on a sync connection and re-normalize if the profile changed."""
+    from hearnarro.cli import renormalize_document
+
+    sent = body.model_fields_set
+    conn = connect_sync(db_path(data_dir))
+    try:
+        before = repo.get_document_profile(conn, document_id)
+        cls = body.cls if "cls" in sent else before.override
+        after = repo.set_profile_override(conn, document_id, cls, body.author_year_citations)
+        if after == before:
+            return {"changed": 0, "removed": 0}
+        changed, removed, _ = renormalize_document(conn, document_id, data_dir)
+    finally:
+        conn.close()
+    return {"changed": changed, "removed": removed}
 
 
 @router.delete("/documents/{document_id}", status_code=204)

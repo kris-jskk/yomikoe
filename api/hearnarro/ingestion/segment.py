@@ -29,6 +29,7 @@ import pysbd
 from hearnarro.ingestion.abbreviations import DEFAULT_ABBREVIATIONS, AbbreviationSet
 from hearnarro.ingestion.models import LogicalBlock, Segment
 from hearnarro.ingestion.normalize import normalize
+from hearnarro.ingestion.profile import PROSE_DEFAULT, DocumentProfile
 
 Span = tuple[int, int]
 
@@ -223,6 +224,7 @@ def split_sentences(
     order_start: int,
     id_start: int,
     abbreviations: AbbreviationSet = DEFAULT_ABBREVIATIONS,
+    profile: DocumentProfile = PROSE_DEFAULT,
 ) -> list[Segment]:
     """Split block.text into sentence Segments; text == block.text[char_start:char_end]."""
     text = block.text
@@ -237,7 +239,7 @@ def split_sentences(
         sent = text[start:end]
         if sent != sent.strip() or not sent:
             raise ValueError(f"block {block.id}: sentence offsets do not round-trip: {sent!r}")
-        normalized, char_map = normalize(sent, heading=block.type == "heading")
+        normalized, char_map = normalize(sent, heading=block.type == "heading", profile=profile)
         segments.append(
             Segment(
                 id=id_start + i,

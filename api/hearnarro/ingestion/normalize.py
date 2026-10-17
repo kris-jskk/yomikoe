@@ -23,8 +23,10 @@ is not changed (misaki drops "9:30" as an unknown token; pre-existing).
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 
 from hearnarro.ingestion.models import GLYPH_BULLET_RE
+from hearnarro.ingestion.profile import PROSE_DEFAULT, DocumentProfile
 
 _LABEL = r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
 # Lowercase only, so a missing space after a sentence end ("the end.So we") is not a domain.
@@ -179,8 +181,28 @@ def number_words(n: int) -> str:
     return _TENS[tens] + (f"-{_ONES[ones]}" if ones else "")
 
 
-def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
+def _in_math(
+    start: int, end: int, profile: DocumentProfile, math_spans: Sequence[tuple[int, int]]
+) -> bool:
+    if profile.effective == "prose":
+        return False
+    return any(lo <= start and end <= hi for lo, hi in math_spans)
+
+
+def normalize(
+    text: str,
+    *,
+    heading: bool = False,
+    profile: DocumentProfile = PROSE_DEFAULT,
+    math_spans: Sequence[tuple[int, int]] = (),
+) -> tuple[str, list[int]]:
     """Return (normalized_text, char_map) with len(char_map) == len(normalized_text).
+
+    Bracket rule (ING-11, D40): under a ``prose`` profile every numeric bracket group is a
+    citation and dropped (today's rule). Under ``math`` or ``mixed`` a group that lies inside a
+    ``math_spans`` range (offsets into ``text``) is maths, an interval or a matrix, and is
+    copied as written for mathspeak; outside maths only a group of citation shape is dropped.
+    The default profile keeps every existing caller's output unchanged.
 
     One left-to-right pass over regex matches (citation, et al., percent, URL, e-mail,
     bare domain).
@@ -295,7 +317,9 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
         kind = m.lastgroup
         token = m.group()
         suffix_start = end
-        if kind == "citation":
+        if kind == "citation" and _in_math(start, end, profile, math_spans):
+            suffix_start = start  # maths, not a citation: copied as written
+        elif kind == "citation":
             nxt = text[end] if end < len(text) else ""
             if out and out[-1].isspace() and (not nxt or nxt.isspace() or nxt in _DROP_FOLLOWERS):
                 out.pop()
