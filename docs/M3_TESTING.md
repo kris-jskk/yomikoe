@@ -8,7 +8,9 @@ highlight in sync; click to seek; a speed change mid-play restarts the sentence 
 no gap or click between sentences.
 
 All `npm` commands run from `web/`, all `python` commands from `api/`. Every command below was run
-on 2026-10-17 by a worker; each section names the saved transcript under `_agent/results/`.
+on 2026-10-17 by a worker; each section names the saved transcript under `_agent/results/`. The doc
+was then followed cold, section by section, against the live Kokoro server on documents 16–19
+(`_agent/results/457_doc_s1.txt` to `457_doc_s6.txt`, `458_user_docs_functional.txt`).
 
 ## 1. Prerequisites
 
@@ -23,13 +25,19 @@ node --version; npm --version           # v24.22.0, 11.19.1
 
 The script downloads the official tarball and `SHASUMS256.txt` from nodejs.org, checks the
 SHA-256 (`node-v24.22.0-darwin-arm64.tar.gz: OK`, `_agent/results/403_node_checksum.txt`) and refuses
-to overwrite an existing `~/.local/node`. Versions: `_agent/results/404_node_versions.txt`.
+to overwrite an existing `~/.local/node`: if Node is already there it prints
+`refusing to overwrite existing /Users/<you>/.local/node` and exits 1, which is expected; go on with
+`source web/scripts/env.sh`. Versions: `_agent/results/404_node_versions.txt`.
 
 ```bash
 cd web
 npm ci                                                       # from package-lock.json, exact pins
 npx playwright install chromium webkit firefox               # into ~/.local/ms-playwright (about 1.1 GB)
 ```
+
+`npm ci` prints `added 179 packages ... found 0 vulnerabilities` and an
+`npm warn install-scripts ... fsevents@2.3.3` notice, which is harmless. With the browsers already
+present, `playwright install` prints nothing and exits 0.
 
 Transcripts: `_agent/results/406_npm_install.txt` (the first install, made with `npm install` while the
 lockfile was created; `npm ci` from the committed lockfile was not separately recorded) and
@@ -41,17 +49,18 @@ lockfile was created; `npm ci` from the committed lockfile was not separately re
 npm test             # vitest: Test Files 3 passed (3), Tests 58 passed (58)
 npm run typecheck    # tsc --noEmit, exit 0
 npm run lint         # eslint + prettier --check: "All matched files use Prettier code style!"
-npm run build        # dist/index.html and dist/assets/index-*.js (about 220 kB, 69 kB gzip)
+npm run build        # dist/index.html, dist/assets/index-*.css (about 4 kB), index-*.js (about 240 kB, 75 kB gzip)
 ```
 
 Transcripts: `_agent/results/432_unit_green.txt`, `408_typecheck.txt`, `409_lint.txt`,
-`411_build.txt`.
+`411_build.txt`; re-run on 2026-10-17: `_agent/results/457_doc_s2.txt`.
 
 ## 3. The gate, per engine
 
 The harness starts its own API with `FakeBackend` on a free port and a temp data dir, uploads
 `academic_01_seahelm_audio.pdf` (198 segments), and starts Vite on 5173 proxying to it. It never
-touches port 8765, so your own server can keep running. Stop anything else on 5173 first.
+touches port 8765, so your own server can keep running. Stop anything else on 5173 first
+(including the section 7 dev server). Run these from `web/` in a shell where `scripts/env.sh` is sourced.
 
 ```bash
 npm run e2e -- --project=chromium                                    # the gate (D22)
@@ -66,7 +75,8 @@ Expected: `9 passed` on each engine (three decode tests, the proxy harness test,
 tests). Transcripts: `_agent/results/436_e2e_chromium_gate.txt` (26.5 s),
 `437_e2e_webkit.txt` (27.2 s), `438_e2e_firefox.txt` (29.2 s). The
 `[WebServer] ... http proxy error: /documents ... ECONNREFUSED` lines at the start are the decode
-tests loading `/` before the API fixture is up; they are harmless.
+tests loading `/` before the API fixture is up; they are harmless. The cold re-run on Chromium only
+(`_agent/results/457_doc_s3.txt`, `9 passed (26.4s)`); the WebKit and Firefox lines were not re-run.
 
 What the five PLAY tests check:
 
@@ -87,7 +97,9 @@ npm run e2e -- --project=firefox  tests/e2e/decode.spec.ts
 ```
 
 Each prints a `DECODE <engine> <file> pass duration=1.0000 s rate=48000` line per file and a
-`CLOCK <engine> state=running advanced=0.69x s in 0.700 s` line (headless `currentTime` advances).
+`CLOCK <engine> state=running advanced=0.699 s in 0.700 s` line (headless `currentTime` advances;
+the advanced figure varies by a millisecond or so), then `3 passed`. Cold re-run, Chromium only:
+`_agent/results/457_doc_s4.txt`.
 
 | Engine (Playwright) | `tone.wav` | `tone.ogg` (Ogg Opus) | Evidence |
 | --- | --- | --- | --- |
@@ -101,14 +113,15 @@ Safari (section 7, step 6).
 ## 5. Licences (npm)
 
 ```bash
-cd api
+cd ../api                                            # from web/; from the repo root it is `cd api`
 .venv/bin/python scripts/check_licences.py --npm ../web | tail -2
 # production closure: react, react-dom, scheduler
 # TOTAL 179 (prod 3, dev 176)  VIOLATIONS 0 []
 ```
 
 Transcript: `_agent/results/440_licence_npm.txt` (the output; the command line is not recorded in
-the file; `--npm WEBDIR` is the flag in the script's usage line).
+the file; `--npm WEBDIR` is the flag in the script's usage line). Cold re-run:
+`_agent/results/457_doc_s5.txt`.
 
 ## 6. First audio against Kokoro (D19 measurement)
 
@@ -118,6 +131,10 @@ The script opens the reader in headless Chromium against your real server, and f
 hook's `hearnarro:first-audio` log (Play request to first sample scheduled). A second play of one
 segment per speed gives the warm (cached) wait.
 
+`HN_DATA` is your data directory (the one your documents were uploaded into, for example
+`export HN_DATA=~/hearnarro-m1`); set it in terminal 1 first. If your Kokoro server is already up on
+8765, skip terminal 1.
+
 ```bash
 # terminal 1 (api/): Kokoro on 8765 with your documents
 HEARNARRO_TTS_BACKEND=kokoro .venv/bin/python -m hearnarro serve --data-dir "$HN_DATA" --port 8765
@@ -125,8 +142,24 @@ HEARNARRO_TTS_BACKEND=kokoro .venv/bin/python -m hearnarro serve --data-dir "$HN
 source scripts/env.sh && npm run dev -- --port 5180
 # terminal 3 (repo root)
 source web/scripts/env.sh && node web/scripts/measure_first_audio.mjs
-# env: HN_API, HN_WEB, HN_DOCS (default 16,17,18,19), HN_VOICE (default af_heart)
+# env: HN_API (default http://127.0.0.1:8765), HN_WEB (default http://localhost:5180),
+#      HN_DOCS (default 16,17,18,19), HN_VOICE (default af_heart), HN_SPEEDS (default 0.5,1,2),
+#      HN_PER_SPEED (default 3), HN_WARM (default 1; 0 skips the warm rows),
+#      HN_REQLOG (default 0; 1 prints each /audio request's start and end)
 ```
+
+The full run takes a few minutes and consumes nine uncached segments per run. A short check, one
+segment of one document at 1.0x (repeat with `HN_DOCS=17`, `18`, `19`):
+
+```bash
+source web/scripts/env.sh && HN_DOCS=16 HN_SPEEDS=1 HN_PER_SPEED=1 node web/scripts/measure_first_audio.mjs
+```
+
+It prints one `speed 1 doc 16 seg ...` log line per play, a Markdown table with a cold
+(`HEAD 404`) and a warm row, and `speed 1: cold mean N ms, worst N ms (n=1)`. On 2026-10-17, one
+segment per document 16–19 at 1.0x: cold 874, 797, 981, 850 ms, warm 15–24 ms
+(`_agent/results/457_doc_s6.txt`). A segment measured once is cached afterwards, so a repeat run
+picks different segments.
 
 Result on 2026-10-17, voice `af_heart` (`_agent/results/445_first_audio_kokoro.txt`):
 
@@ -159,6 +192,7 @@ HEARNARRO_TTS_BACKEND=kokoro .venv/bin/python -m hearnarro serve --data-dir "$HN
 source scripts/env.sh && npm run dev        # http://localhost:5173, proxies /documents /audio /voices to 8765 (D21)
 ```
 
+Stop the section 6 dev server on 5180 if you no longer need it.
 `HEARNARRO_API=http://127.0.0.1:<port> npm run dev` points the proxy at another server. The API has
 no CORS (D21); always open the Vite URL, never the API port, in the browser.
 
@@ -176,6 +210,13 @@ no CORS (D21); always open the Vite URL, never the API port, in the browser.
    open the reader in Safari, and play a few sentences; the stats line should read
    `format audio/ogg`. Report whether it plays and whether boundaries are clean.
 7. Listen across at least ten sentence boundaries for gaps or clicks (PLAY-5).
+
+Steps 2, 4 and 5 were checked headless on documents 16–19 against the live Kokoro server on
+2026-10-17 (`_agent/results/458_user_docs_functional.txt`): Play reached `playing` with a highlighted
+word in 505–923 ms; a click on a word 10–16 segments down was the active segment within 20–762 ms;
+speed 1.50 restarted the current sentence within 307–807 ms and the next `/audio` request carried
+`speed=1.50`; Next section landed on a heading segment within 642–1095 ms; pause then Play resumed on
+the same word. Steps 3, 6 and 7 need your eyes, Safari and your ears.
 
 ## 8. What good looks like
 
