@@ -134,3 +134,36 @@ def test_ing11_ingest_result_carries_profile() -> None:
 
     result = _fixtures.ingest_result("report_01_zero_trust")
     assert result.profile.cls == "prose"
+
+
+def test_ing11_code_words_count_in_the_token_share() -> None:
+    """A short docs page: four maths tokens in 80 prose words is 5 % on prose alone, but the
+    listing's words are read mass too, so the share falls under 4 % (formula_08, m5-p3f)."""
+    words = ("word " * 76).strip()
+    prose = f"{words} lim𝑥→0 sin(𝑥)/𝑥 𝑙𝑜𝑔(𝑥) 𝑥."
+    blocks = _doc([("body", prose)])
+    assert compute_profile(_pages(1), blocks).inline_token_share >= 0.04
+    code = LogicalBlock(
+        id=1,
+        page=0,
+        type="code",
+        text="Code listing, 6 lines.",
+        source=[(0, 1)],
+        raw_text="from sympy import integrate, symbols, limit, sin, log\n" * 6,
+    )
+    profile = compute_profile(_pages(1), [*blocks, code])
+    assert profile.inline_token_share < 0.04
+    assert profile.cls == "mixed"
+
+
+def test_ing11_content_spans_do_not_add_inline_mass() -> None:
+    """A content span (no runs, ``merge.content_spans``) widens over operand words; only spans
+    with geometry (maths-font runs) count, the token estimate is the floor."""
+    from hearnarro.ingestion.models import MathSpan
+
+    text = PROSE + "so value = mean plus deviation here"
+    start = text.index("value")
+    block = LogicalBlock(id=0, page=0, type="body", text=text, source=[(0, 0)])
+    base = compute_profile(_pages(1), [block]).math_share
+    block.math_spans = [MathSpan(start, start + 30, False, [])]
+    assert compute_profile(_pages(1), [block]).math_share == base

@@ -201,11 +201,20 @@ def compute_profile(pages: list[Page], blocks: list[LogicalBlock]) -> DocumentPr
     eq_chars = sum(len(b.raw_text or b.text) for b in read if b.type == "equation")
     tokens = " ".join(prose).split()
     math_tokens = [t for t in tokens if any(_is_math_char(c) for c in t)]
-    # Inline mass: inline (non-display) MathSpans only, since a display span covers an equation
-    # block already counted in eq_chars. The maths-glyph token estimate is its floor: OCR pages
-    # carry no span geometry (MATH-2), and a maths glyph set in a text font is no math-font run.
+    # The token share is over the words of every read block but the equations: a code listing's
+    # words count in ``total`` (its raw text), so they count here too, or a short docs page with
+    # one line of maths in its prose reads as dense maths (formula_08, m5-p3f).
+    code_words = sum(len((b.raw_text or "").split()) for b in read if b.type == "code")
+    # Inline mass: inline (non-display) MathSpans with geometry only (maths-font runs), since a
+    # display span covers an equation block already counted in eq_chars and a content span
+    # (``merge.content_spans``, no runs) spans the operands around a text-font glyph, words the
+    # token estimate already weighs. The token estimate is the floor (and the only measure on
+    # OCR pages, which carry no span geometry).
     inline_spans = [
-        s for b in read for s in (getattr(b, "math_spans", None) or ()) if not s.display
+        s
+        for b in read
+        for s in (getattr(b, "math_spans", None) or ())
+        if not s.display and getattr(s, "runs", None)
     ]
     inline = max(_span_chars(inline_spans), sum(len(t) for t in math_tokens))
     code_chars = sum(len(b.raw_text or b.text) for b in read if b.type == "code")
@@ -213,7 +222,8 @@ def compute_profile(pages: list[Page], blocks: list[LogicalBlock]) -> DocumentPr
     text_pages = sum(1 for p in pages if p.has_text_layer) or len(pages) or 1
     math_share = (eq_chars + inline) / total if total else 0.0
     display_per_page = _display_runs(read) / text_pages
-    inline_share = len(math_tokens) / len(tokens) if tokens else 0.0
+    words = len(tokens) + code_words
+    inline_share = len(math_tokens) / words if words else 0.0
     scanned = sum(1 for p in pages if not p.has_text_layer) / len(pages) if pages else 0.0
     return DocumentProfile(
         math_share=round(math_share, 4),

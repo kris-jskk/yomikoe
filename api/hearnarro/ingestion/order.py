@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from hearnarro.ingestion.models import Block, Line, Page
+import re
+
+from hearnarro.ingestion.models import BBox, Block, Line, Page
 
 READ_TYPES = {"body", "heading", "list", "caption", "equation", "table", "code"}  # code: ING-10
 GUTTER_FRAC = 0.015  # minimum gutter width, fraction of page width
@@ -19,6 +21,15 @@ INLINE_GAP = 1.0  # ... and at most this many font sizes right of it
 INLINE_LOOKAHEAD = 10  # fragments are searched among this many following blocks
 INLINE_DROP = 0.4  # a fragment centred this many font sizes below the line hangs below it
 INLINE_HOST_CHARS = 30  # a host is prose: at least this many non-space characters
+# MATH-1, MATH-4: pieces of one display equation that stage 1 split into several blocks.
+DISPLAY_STACK_GAP = 1.5  # a piece this many font sizes above/below another is a limit or a
+# numerator/denominator of the same display ...
+DISPLAY_STACK_REACH = 1.0  # ... when it starts at most this many font sizes left/right of it
+LABEL_ONLY_RE = re.compile(r"\s*\(\d{1,3}[a-z]?\)\s*")  # an equation number "(12)" alone
+LABEL_END_RE = re.compile(r"\(\d{1,3}[a-z]?\)\s*$")  # merge.EQUATION_LABEL_RE
+# A display's left-hand side that stage 2 left as body ("∆cyc =", "(µP)(A) :="): one short line
+# ending in a relation, on the line of an equation piece.
+LHS_RE = re.compile(r"[^\n]{1,24}(?:=|:=|≤|≥|<|>|∼|≈|≡|∝|→)\s*")
 
 
 def _weight(block: Block) -> int:
@@ -206,12 +217,127 @@ def attach_inline(blocks: list[Block]) -> list[Block]:
     return out
 
 
+def _display_piece(block: Block) -> bool:
+    return not block.inline and (
+        block.type == "equation"
+        or bool(LABEL_ONLY_RE.fullmatch(block.text))
+        or (block.type == "body" and bool(LHS_RE.fullmatch(block.text)))
+    )
+
+
+def _block_size(block: Block) -> float:
+    return max((_line_size(ln) for ln in block.lines), default=0.0)
+
+
+def _v_overlap(a: BBox, b: BBox) -> float:
+    return min(a.y1, b.y1) - max(a.y0, b.y0)
+
+
+def _h_gap(a: BBox, b: BBox) -> float:
+    """Horizontal distance between the boxes; negative when their x-ranges overlap."""
+    return max(a.x0, b.x0) - min(a.x1, b.x1)
+
+
+def _same_display(a: Block, b: Block) -> bool:
+    """``a`` and ``b`` share a display line: their boxes overlap vertically, or one sits directly
+    above or below the other (a limit, a numerator or a denominator) within DISPLAY_STACK_GAP
+    font sizes and DISPLAY_STACK_REACH font sizes sideways."""
+    if _v_overlap(a.bbox, b.bbox) > 0:
+        return True
+    size = max(_block_size(a), _block_size(b)) or 10.0
+    gap = max(b.bbox.y0 - a.bbox.y1, a.bbox.y0 - b.bbox.y1)
+    return gap <= DISPLAY_STACK_GAP * size and _h_gap(a.bbox, b.bbox) <= DISPLAY_STACK_REACH * size
+
+
+def _labelled(group: list[Block]) -> bool:
+    return any(LABEL_END_RE.search(ln.text) for b in group for ln in b.lines)
+
+
+def _display_order(group: list[Block]) -> list[Block]:
+    """Left to right by x-columns; pieces stacked in one column (an operator and its limits,
+    a numerator over a denominator) top to bottom."""
+    columns: list[tuple[float, float, list[Block]]] = []
+    for b in sorted(group, key=lambda b: (b.bbox.x0, b.bbox.y0)):
+        col = columns[-1] if columns else None
+        if (
+            col is not None
+            and b.bbox.x0 < col[1]
+            and all(_v_overlap(b.bbox, m.bbox) <= 0 for m in col[2])
+        ):
+            columns[-1] = (col[0], max(col[1], b.bbox.x1), [*col[2], b])
+        else:
+            columns.append((b.bbox.x0, b.bbox.x1, [b]))
+    return [b for _, _, members in columns for b in sorted(members, key=lambda m: m.bbox.y0)]
+
+
+def merge_display_pieces(blocks: list[Block]) -> list[Block]:
+    """Join the blocks of one page that are pieces of one display equation (MATH-1, MATH-4).
+
+    Stage 1 splits a display into a block per glyph run: an equation-number "(12)" block, a lone
+    large-operator glyph, limits above and below it, a numerator or denominator line. Equation
+    blocks, label-only blocks and a short body left-hand side ending in a relation (``LHS_RE``)
+    that share a display line (``_same_display``) are joined into one ``equation`` block whose
+    lines run left to right and top to bottom (``_display_order``), so stage 4 gives the display
+    one span and its label. A group needs an equation block; two groups that each carry a label
+    stay apart (two numbered equations are two displays). Other blocks pass through unchanged."""
+    pieces = [b for b in blocks if _display_piece(b)]
+    if len(pieces) < 2:
+        return blocks
+    groups: list[list[Block]] = [[b] for b in pieces]
+    merged = True
+    while merged:
+        merged = False
+        for i in range(len(groups)):
+            for j in range(i + 1, len(groups)):
+                a, b = groups[i], groups[j]
+                if (
+                    any(_same_display(x, y) for x in a for y in b)
+                    and not (_labelled(a) and _labelled(b))
+                    and any(x.type == "equation" for x in a + b)
+                ):
+                    groups[i] = a + b
+                    del groups[j]
+                    merged = True
+                    break
+            if merged:
+                break
+    joined: dict[int, Block | None] = {}
+    for group in groups:
+        if len(group) < 2:
+            continue
+        ordered = _display_order(group)
+        first = min(group, key=lambda b: b.index)
+        joined[id(first)] = Block(
+            page=first.page,
+            index=first.index,
+            bbox=BBox(
+                min(b.bbox.x0 for b in group),
+                min(b.bbox.y0 for b in group),
+                max(b.bbox.x1 for b in group),
+                max(b.bbox.y1 for b in group),
+            ),
+            lines=[ln for b in ordered for ln in b.lines],
+            type="equation",
+            ocr=first.ocr,
+        )
+        for b in group:
+            joined.setdefault(id(b), None)
+    out: list[Block] = []
+    for b in blocks:
+        rep = joined.get(id(b), b)
+        if rep is not None:
+            out.append(rep)
+    return out
+
+
 def order_page(
     page: Page, *, gap_frac: float = GUTTER_FRAC, full_width_frac: float = 0.60
 ) -> list[Block]:
     """Readable blocks of one page in reading order: lead blocks (stage 2's folded vertical
     titles) first by top y, then the columns, footnotes last."""
-    readable = [b for b in page.blocks if b.type in READ_TYPES and b.text.strip()]
+    readable = merge_display_pieces(
+        [b for b in page.blocks if b.type in READ_TYPES and b.text.strip()]
+    )
     leads = sorted((b for b in readable if b.lead), key=lambda b: b.bbox.y0)
     readable = [b for b in readable if not b.lead]
     footnotes = [b for b in page.blocks if b.type == "footnote"]
