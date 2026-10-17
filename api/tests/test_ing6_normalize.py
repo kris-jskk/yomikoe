@@ -411,3 +411,112 @@ def test_ing6_equals_sign_char_map_round_trip() -> None:
     assert cmap[o : o + 8] == [tight.index("=")] * 8
     assert cmap[:o] == list(range(o))
     assert cmap[o + 8 :] == list(range(tight.index("=") + 1, len(tight)))
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "On a scale of 1–10, I would have said 2/10 or 3/10.",
+            "On a scale of 1 to 10, I would have said 2 out of 10 or 3 out of 10.",
+        ),
+        ("9/10 or 10/10", "9 out of 10 or 10 out of 10"),
+        ("I give it 95/100!", "I give it 95 out of 100!"),
+        ("a 0/10 effort", "a 0 out of 10 effort"),
+        ("100/100, perfect", "100 out of 100, perfect"),
+        ("(4/10)", "(4 out of 10)"),
+    ],
+)
+def test_ing6_rating_read_as_out_of(text: str, expected: str) -> None:
+    out, cmap = normalize(text)
+    assert out == expected
+    assert len(cmap) == len(out)
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "after 9/11 everything",
+        "add 1/2 cup",
+        "3/4 of them",
+        "on 10/12/2020 we",
+        "open 24/7.",
+        "digital/Kindle/eBook",
+        "60 km/h",
+        "a 2/1000 chance",
+        "05/10 padded",
+        "101/100 is too much",
+        "x2/10 id",
+        "/2/10/ path",
+        "2/10/2016",
+        "2/105",
+        "2 / 10 spaced",
+        "3/10ths",
+    ],
+)
+def test_ing6_rating_negative_cases(text: str) -> None:
+    assert normalize(text) == (text, list(range(len(text))))
+
+
+def test_ing6_rating_char_map_round_trip() -> None:
+    text = "said 2/10 or"
+    out, cmap = normalize(text)
+    assert out == "said 2 out of 10 or"
+    slash = text.index("/")
+    o = out.index(" out of ")
+    assert cmap[o : o + 8] == [slash] * 8  # " out of " maps onto the slash
+    assert cmap[:o] == list(range(slash))
+    assert cmap[o + 8 :] == list(range(slash + 1, len(text)))
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "Wealth = Income + Wealth * (Return on Investment)",
+            "Wealth equals Income + Wealth times (Return on Investment)",
+        ),
+        ("3 * 4", "3 times 4"),
+        ("a  *  b", "a times b"),
+    ],
+)
+def test_ing6_asterisk_between_terms_read_as_times(text: str, expected: str) -> None:
+    out, cmap = normalize(text)
+    assert out == expected
+    assert len(cmap) == len(out)
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "a ** b",
+        "**bold** text",
+        "a footnote* here",
+        "see *note",
+        "3*4",
+        "a *b",
+        "a* b",
+        "first line\n* second line",
+        "the line ends with *",
+        "first line *\nsecond line",
+    ],
+)
+def test_ing6_asterisk_negative_cases(text: str) -> None:
+    assert normalize(text) == (text, list(range(len(text))))
+
+
+def test_ing6_asterisk_leading_bullet_stays_silent() -> None:
+    assert normalize("* starts the line")[0] == "starts the line"
+
+
+def test_ing6_asterisk_char_map_round_trip() -> None:
+    text = "Wealth * (Return"
+    out, cmap = normalize(text)
+    assert out == "Wealth times (Return"
+    o = out.index(" times ")
+    span = range(text.index(" * "), text.index(" * ") + 3)
+    assert all(i in span for i in cmap[o : o + 7])  # " times " maps onto " * "
+    assert cmap[:o] == list(range(o))
+    assert cmap[o + 7 :] == list(range(text.index("("), len(text)))

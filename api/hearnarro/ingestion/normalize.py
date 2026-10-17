@@ -71,6 +71,15 @@ _EQUALS = (
     rf"(?={_OPERAND}(?![\w=]|[.,]\d)))"
 )
 _EQUALS_WORDS = {"=": " equals ", "≠": " does not equal "}
+# A rating, a small integer over 10 or 100 ("2/10", "95/100"), is spoken "out of"; misaki
+# reads "2/10" as "two ten". Kept narrow to stay clear of dates and fractions ("9/11", "1/2",
+# "10/12/2020", "24/7"): numerator 0..100 without a leading zero and not after a letter,
+# digit or "/", denominator exactly 10 or 100 and not followed by a word char or "/".
+_RATING = r"(?P<rating>(?<![\w/])(?:100|[1-9]?\d)(?P<rslash>/)(?:100|10)(?![\w/]))"
+# An asterisk with spaces or tabs on both sides and a non-space on both sides on the same
+# line is multiplication ("Wealth * (Return on Investment)"), spoken "times"; misaki is
+# silent on it. "**", footnote marks ("word*", "*word") and a leading "* " bullet stay.
+_TIMES = r"(?P<times>(?<=[^\s*])[ \t]+\*[ \t]+(?=[^\s*]))"
 
 
 _PATTERN = re.compile(
@@ -82,8 +91,10 @@ _PATTERN = re.compile(
     rf"|(?P<email>(?<![\w.+-])[A-Za-z0-9._%+-]+@{_LABEL}(?:\.{_LABEL})*\.[A-Za-z]{{2,}}\b)"
     rf"|(?P<domain>(?<![\w@./:-])(?:{_LABEL}\.)+(?:{_TLDS})(?![\w-]|\.\w)(?:/\S*)?)"
     rf"|(?P<roman>(?i:\b(?P<kw>{_STRUCTURAL})[ \t]+)(?P<num>{_ROMAN})\b(?![-'’]?\w))"
+    rf"|{_RATING}"
     rf"|{_RANGE}"
     rf"|{_EQUALS}"
+    rf"|{_TIMES}"
 )
 _URL_PREFIX = re.compile(r"(?:https?://\s?(?:www\.)?|www\.\s?)")
 _URL_TRAILING = ".,;:!?)]}'\"”’"
@@ -155,6 +166,13 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
     only between a number or a single letter on each side ("x=5", "2+2=4"), the expansion
     maps onto the sign. "==", "=>", "<=", ">=", "!=", a sign at the start or end of a line,
     one-sided spacing ("x =5") and unspaced words ("key=value", "v=2htl") are untouched.
+
+    A rating, an integer 0..100 (no leading zero, not after a letter, digit or "/") over
+    exactly 10 or 100 (not followed by a word char or "/"), becomes "a out of b" with " out
+    of " mapped onto the slash ("2/10" -> "2 out of 10"); "9/11", "1/2", "10/12/2020",
+    "24/7" and "km/h" are untouched. An asterisk with spaces or tabs and a non-space on both
+    sides on the same line becomes " times ", mapped onto the spaces and the asterisk; "**",
+    "word*", "*word", "3*4" and a leading "* " bullet are untouched.
     """
     out: list[str] = []
     cmap: list[int] = []
@@ -249,6 +267,15 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
                 out.append(text[i])
                 cmap.append(i)
             emit(" to ", sep_start, end - sep_start)  # the second number is matched on its own
+        elif kind == "rating":
+            slash = m.start("rslash")
+            for i in range(start, slash):
+                out.append(text[i])
+                cmap.append(i)
+            emit(" out of ", slash, 1)
+            suffix_start = slash + 1  # the denominator is copied as written
+        elif kind == "times":
+            emit(" times ", start, end - start)
         elif kind == "eqspaced":
             emit(_EQUALS_WORDS[m.group("eqs_op")], start, end - start)
         elif kind == "eqtight":
