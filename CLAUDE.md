@@ -82,7 +82,9 @@ The published architectural guides are how the user follows the work, one per mi
 M1 "HearNarro M1 Ingest Map" https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n (closed; repo copy
 `docs/guide/m1-ingest-map.html`), M2 "HearNarro M2 Synthesis Map"
 https://claude.ai/artifact/J7wJUWammFqBxc22s121Pr (source `m2-synthesis-map.html` in the session
-scratchpad; copy under `docs/guide/` when the milestone closes). Each new milestone starts a new guide.
+scratchpad; copy under `docs/guide/` when the milestone closes), M5 "HearNarro M5 Academic Map"
+https://claude.ai/artifact/WMNfhRLczt5VtYWf9Pkt9r (source `docs/guide/m5-academic-map.html` in the repo,
+published from there). Each new milestone starts a new guide.
 
 1. **Every pipeline stage gets its own diagram** in the guide: the mechanism (what goes in,
    what rule is applied, what comes out), not a labelled box. A new stage, a replaced
