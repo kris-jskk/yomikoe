@@ -218,3 +218,19 @@ def test_ing5_split_inside_a_token_is_kept_split_before_punctuation_is_undone() 
     text = "44 U.S.C. § 3551 et seq., Public Law 113-283."
     cut = text.index(", Public")
     assert _merge(text, [(0, cut), (cut, len(text))], DEFAULT_ABBREVIATIONS) == [(0, len(text))]
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Visit shopping.com for details.", ["Visit shopping.com for details."]),
+        ("see vast.com. Then go.", ["see vast.com.", "Then go."]),
+        (
+            "Read my blog at www. ericpartaker.com, but not today.",
+            ["Read my blog at www. ericpartaker.com, but not today."],
+        ),
+    ],
+)
+def test_ing5_domain_dot_is_not_a_sentence_end(text: str, expected: list[str]) -> None:
+    segments = split_sentences(_block(text), document_id=3, order_start=0, id_start=0)
+    assert [s.text for s in segments] == expected

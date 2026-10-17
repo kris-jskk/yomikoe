@@ -52,7 +52,7 @@ M1 turns a PDF into ordered sentence segments in SQLite and serves them over HTT
 - **ING-5** merge lines (de-hyphenation), join paragraphs across page and column breaks, then
   split into sentences with offsets back into the merged block text.
 - **ING-6 (subset)** normalization for speech (`normalized_text` plus `char_map`): citations
-  dropped, `et al.`, percent, URLs to host; all-caps tokens left as written (the M2 backend
+  dropped, `et al.`, percent, URLs, bare domains and e-mail addresses spoken with "dot" / "slash" / "at"; all-caps tokens left as written (the M2 backend
   decides spoken vs spelled), and acronym definitions collected per document.
 - A document quality checklist (`hearnarro check`, 12 checks), a CLI, an HTTP smoke script.
 - ING-7 (table rows as prose) and ING-8 are not M1 (PRD milestones); OCR quality is M4.
@@ -1073,15 +1073,23 @@ One pass over `_PATTERN` matches, alternatives tried in this order:
 | `citation` `\[\d+(?:\s*[,–-]\s*\d+)*\]` | dropped; if the output ends in whitespace and the next input character is whitespace, one of `,.;:!?)` or the end, that trailing space is removed too | `results [3, 5].` → `results.` |
 | `etal` `\bet al\.` | `et al` | |
 | `percent` `\b\d+(?:\.\d+)?%` | `<number> percent` | `3.2%` → `3.2 percent` |
-| `url` `(?:\bhttps?://\|\bwww\.)[^\s/]+(?:/\S*)?` | the host without `www.`; trailing `.,;:!?)]}'"”’` stays as text | `https://www.nist.gov/x.` → `nist.gov.` |
+| `url` `(?:\bhttps?://\|\bwww\.)[^\s/]+(?:/\S*)?` (one space allowed after `https://` or `www.` before a host, a PDF line break) | scheme and `www.` emit nothing; the host is spoken with `.` → ` dot `; a path of ≤ 3 plain segments (`[A-Za-z0-9_-]+`) and ≤ 30 chars is spoken with `/` → ` slash `, any other path or query is dropped; trailing `.,;:!?)]}'"”’` stays as text | `https://www.nist.gov/x.` → `nist dot gov slash x.`; `https://angel.co/syndicates` → `angel dot co slash syndicates` |
+| `email` `[A-Za-z0-9._%+-]+@host.tld` (not after a word char, `.`, `+`, `-`) | `@` → ` at `, `.` → ` dot ` | `corporate@oreilly.com.` → `corporate at oreilly dot com.` |
+| `domain` `(?:label\.)+(com\|org\|net\|io\|ai\|co\|edu\|gov\|dev\|app\|me\|us\|uk\|de\|fr\|ca\|info\|biz\|tv\|ly\|so\|xyz)` + optional `/path`, not after a word char or `@ . / : -`, not followed by a word char, `-` or `.letter`; the TLD must be lowercase (so `the end.So we` is not a domain) | as `url` | `Shopping.com.` → `Shopping dot com.`; `Twitter.com/Naval` → `Twitter dot com slash Naval`; `e.g.`, `3.2`, `Fig.2`, `v1.2.3`, `Nav.al` untouched |
 
 `char_map`: unmatched characters map to themselves; an expansion of length L′ of a token at
 `[start, start+L)` maps output character k to `start + min(L − 1, k × L // L′)` (monotone,
-inside the token). A dropped citation contributes nothing. Pinned by
+inside the token). A dropped citation contributes nothing. In a spoken address every character
+of ` dot ` / ` slash ` / ` at ` maps onto that one source `.` / `/` / `@`, host and path letters
+map to themselves, and a dropped scheme, `www.` or path maps to nothing, so highlighting stays
+exact. Pinned by
 `test_ing6_char_map_invariants`, `test_ing6_identity_on_plain_prose`,
 `test_ing6_citation_dropped_and_space_collapsed`, `test_ing6_citation_list_and_range_dropped`,
 `test_ing6_consecutive_drops_collapse_to_one_space`, `test_ing6_et_al`, `test_ing6_percent`,
-`test_ing6_url_to_domain`, `test_ing6_www_url_keeps_host_only`,
+`test_ing6_url_to_domain`, `test_ing6_www_url_keeps_host_and_short_path`,
+`test_ing6_domain_spoken_with_dot`, `test_ing6_domain_char_map_points_at_source_letters`,
+`test_ing6_www_maps_to_nothing`, `test_ing6_long_path_dropped`,
+`test_ing6_email_spoken_with_at_and_dot`, `test_ing6_non_domains_untouched`,
 `test_ing6_all_caps_tokens_left_for_the_backend`.
 
 All-caps tokens are no longer rewritten here (until 2026-10-16 a `SPOKEN_ACRONYMS` allowlist

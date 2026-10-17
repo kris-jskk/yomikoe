@@ -11,7 +11,8 @@ by construction:
    ``[9] R.``), or an unterminated span followed by a lowercase or digit start, or by a
    bracket that is maths notation or closes an open bracket (pysbd's list-item rule splits
    ``PA (i), CH (i)`` and ``(System 1)``; a real list item ``and (ii) when`` stays split), or
-   when the next span starts with ``,`` ``;`` or a hyphen; a pysbd split inside a token
+   when the next span starts with ``,`` ``;`` or a hyphen, or after ``www.`` before a host
+   (``at www. ericpartaker.com``, a line break inside a web address); a pysbd split inside a token
    with word characters on both sides is left alone (word-level golden, see ``_merge``);
 3. letter splits: a one-letter variable after a lowercase word (not ``and``, not inside a
    ``[n]`` reference entry) ends a sentence before a capital (``kernel P. Its``), which
@@ -37,6 +38,7 @@ _INITIAL = re.compile(r"\(?-?[A-Z]\.(?:-?[A-Z]\.)*")
 _REFERENCE_MARKER = re.compile(r"\[\d+\]")
 _REFERENCE_ENTRY = re.compile(r"\[\d+\]\s+[“\"(]?[A-Z]")
 _NUMBERED_ITEM = re.compile(r"\d+\.\s")
+_DOMAIN_START = re.compile(r"[\w-]+\.[a-z]")
 _OPENERS = "([{“\"‘'"
 _TERMINAL = ".!?…:;"
 _TRAILING_CLOSERS = ")]}”’\"'»"
@@ -109,6 +111,9 @@ def _should_merge(prev: str, nxt: str, abbreviations: AbbreviationSet) -> bool:
     tokens = prev.split()
     token = tokens[-1].lstrip(_OPENERS).lower()
     if token in abbreviations.non_terminal:
+        return True
+    if token in ("www.", "http://www.", "https://www.") and _DOMAIN_START.match(nxt):
+        # "my blog at www. ericpartaker.com": a line break inside a web address (ING-6).
         return True
     if token in abbreviations.before_number:
         # "No. [10] Our bodies" is a reference entry after a real sentence end, not "No. [3]".
