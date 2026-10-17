@@ -1,0 +1,119 @@
+Learning Non-Gaussian SEMs with Conditional Risk, and Why the
+Direction of Recursion Matters
+Ujas Shah Panagiota Birmpa Rebecca Morrison University of Colorado Boulder Heriot-Watt University University of Colorado Boulder
+Abstract
+Variance-based methods recover a Gaussian linear structural equation model (SEM) with equal or suitably constrained error variances, either by recursively identifying the source nodes with smallest conditional variance (top-down method) or sink nodes with highest conditional variance (bottomup method).
+We show that the use of conditional variance is incidental: replacing it with the conditional risk, i.e., the minimal expected loss of linear prediction under the negative log-likelihood of the noise distribution, extends both methods to non-Gaussian noise.
+Existing methods are the least-squares special case.
+This yields two main results.
+First, exploiting the noise distribution improves structure recovery: the matchedloss procedures recover the SEM more accurately than their least-squares counterparts and the LiNGAM methods, which are designed for non-Gaussianity.
+Second, the two methods, interchangeable in the Gaussian setting, separate under non-Gaussian noise: the top-down method is correct for every noise density with finite differential entropy, whereas the bottom-up method requires a regularity condition and can fail without it, for instance under mean-zero exponential or Cauchy noise.
+Simulations confirm both results.
+1 INTRODUCTION
+Directed acyclic graphs (DAGs), or Bayesian networks, provide a compact representation of the conditional independence and causal relations among a collection of random variables (Spirtes et al., 2000; Pearl, 2009).
+Given a random vector X = (X1, . . . , Xd)⊤, its joint distribution can be associated with a DAG G whose nodes correspond to the variables and directed edges encode the dependence of each variable on its parents.
+Equivalently, the vector can be described by a structural equation model (SEM) as a collection of equations of the form: where PA(i) ⊂{1, . . . , d} \ {i} indexes the parents of Xi, and Ni is an exogenous noise variable, i.e., a random variable whose generating mechanism is not specified by the causal model.
+Recovering the DAG, or the SEM, that generated the set of observations uncovers the dependence structure among the variables, and, under the causal Markov condition and the assumption of causal sufficiency, carries causal information (Eberhardt, 2017).
+The SEM identifies which variables directly influence which others, and how the system would respond to interventions (understood as external modifications that fix the value of a variable and propagate through the causal structure to its descendants).
+Consequently, structure learning has found applications in varied fields such as bioinformatics (Sachs et al., 2005; Shen et al., 2020), ecology (Lefcheck, 2016; Runge et al., 2019), and finance (Sanford and Moosa, 2012; Hyv¨arinen et al., 2010).
+Learning the graph structure.
+Learning the graph from purely observational data is difficult, for two reasons.
+The first is computational: the number of DAGs grows super-exponentially in the number of nodes, and searching over this space is NP-hard in general (Chickering, 1996; Chickering et al., 2004).
+The second is statistical: without further assumptions, the DAG is identifiable only up to its Markov equivalence class (the set of graphs encoding the same conditional independence relations).
+A substantial literature has developed methods that recover this equivalence class, most prominently the constraint-based PC algorithm (Spirtes and Glymour, 1991), the scorebased greedy equivalence search (GES) (Chickering, 2002), and, more recently, continuous-optimization formulations (Deng et al., 2024).
+In this paper, we are interested in recovering the true DAG itself, rather than its Markov equivalence class.
+We focus on the widely studied linear additive noise SEM, in which each variable is a linear function of its parents plus independent noise: where Λ ∈Rd×d encodes the linear dependence of each variable on its parents and N = (N1, . . . , Nd)⊤is a vector of mutually independent noise variables.
+We assume that the system has no latent confounders.
+Additional assumptions, such as non-Gaussianity or equal error variances, can make DAGs identifiable from data (Shimizu et al., 2006; Loh and B¨uhlmann, 2014; Peters and B¨uhlmann, 2014).
+Under equal error variances, simple variance-based algorithms can recover the topological order of the DAG by recursively identifying either source nodes, i.e., nodes without parents, with the smallest conditional variance (topdown method; Chen et al., 2019), or sink nodes, i.e., nodes without children, with the highest conditional variance (bottom-up method; Ghoshal and Honorio, 2018).
+These variance-based methods are distribution free and make no use of knowledge of the error distribution.
+In many applications, however, one may have reasonable knowledge of the error distribution—for example, heavy-tailed errors in finance—and it is natural to ask whether this knowledge can be leveraged for more accurate structure recovery.
+Our results.
+In this work we answer this question affirmatively and uncover an unexpected asymmetry between the two methods (top-down and bottom-up) along the way.
+We extend the top-down and bottomup variance-based approaches by replacing their use of conditional variance with a conditional risk: the minimal expected loss of linear prediction under the negative log-likelihood of the assumed noise density.
+The Gaussian equal-variance methods are recovered as the least-squares case, and their recursive orderidentification logic transfers to our methods.
+Under least squares, the top-down and bottom-up recursions are equally valid; under general losses, they are not.
+The top-down recursion, which only ever regresses a variable on its non-descendants, is correct for any noise density of finite differential entropy; the bottom-up recursion additionally requires the noise to satisfy a regularity condition.
+We show examples of noise distributions that do not meet the condition, where the bottom-up method fails, but the top-down method recovers the graph.
+In this sense, our work is both a bridge between the Gaussian and non-Gaussian structure learning literature and a re-examination of the choice between top-down and bottom-up recursion.
+Simulation experiments confirm this: losses matched to the noise perform better than their least-squares counterparts and LiNGAM family methods, and the top-down method dominates the bottom-up method, mildly in the regular regime and decisively in degenerate ones.
+Paper organization.
+The remainder of the paper is organized as follows.
+Section 2 reviews related work, Section 3 fixes notation, Section 4 presents the method and theory, and Section 5 the experiments.
+2 RELATED WORK
+Literature on structure learning for the linear additive noise model (1) divides naturally according to whether the noise is Gaussian or non-Gaussian.
+We organize related work by noise distribution (Figure 1).
+When the noise is Gaussian, the DAG is identifiable only up to Markov equivalence (Pearl, 2009).
+Peters and B¨uhlmann (2014) showed that identifiability of the true DAG is restored under the assumption of equal error variances, σ2
+1 = · · · = σ2 d = σ2: no two distinct DAGs with equal-variance Gaussian noise can generate the same observational distribution.
+This motivated variance-based algorithms that learn a topological ordering one node at a time, then select parents and estimate edge weights.
+Top-down methods (Chen et al., 2019) recursively identify a source node among the remaining vertices: under equal variances, a source of the remaining subgraph attains the minimal conditional variance given previously selected vertices.
+Bottom-up approaches (Ghoshal and Honorio, 2018) instead recursively identify a sink node: under equal variance, a sink shows the highest conditional variance given all other variables.
+These early variance-based guarantees hinge on accurate estimation of the covariance or precision matrix, and their sample complexity consequently degrades with the conditioning of the covariance matrix Σ: the required number of samples grows polynomially with the condition number, a dependence that can be severe since the condition number may itself grow with the depth of the graph.
+More recent work removes this dependence by replacing global precision-matrix estimation with nodewise regressions that directly estimate the relevant conditional variances (Park, 2023; Daskalakis et al., 2025).
+The equal-variance assumption can be relaxed somewhat.
+Identifiability continues to hold when the error variances are not equal but known, and variance-based recovery extends to heteroscedastic settings in which the noise variances satisfy suitable ratio or ordering conditions (Ghoshal and Honorio, 2018; Park and Kim, 2020).
+Our analysis carries over to these settings, but for clarity we focus on the equal-variance case here.
+Figure 1: Representative classes of methods that recover the true DAG of a linear SEM, by noise distribution (rows) and noise-scale assumption (columns).
+The list is not exhaustive.
+The bottom-right assumptions are special cases of both neighboring cells, so their methods also apply there, provided the required moments exist.
+A complementary line of work casts structure learning as a continuous optimization problem by encoding acyclicity through a smooth function of the adjacency matrix, such as the trace exponential of NOTEARS (Zheng et al., 2018), or the logdeterminant characterization of DAGMA (Bello et al., 2022).
+Another method, GOLEM (Ng et al., 2020), replaces the hard constraint with soft sparsity and acyclicity penalties.
+Because these scores are built on squared loss or the Gaussian likelihood, their minimizers are guaranteed to recover the true DAG only under equal (or known) noise variances, the same assumption that underlies variance-based methods (Reisach et al., 2021; Ng et al., 2024).
+When the errors are non-Gaussian, the linear SEM is identifiable without any assumption on the noise scales by the LiNGAM (Linear non-Gaussian acyclic model) family of methods.
+ICA-LiNGAM (Shimizu et al., 2006) estimates the ordering with independent component analysis, while DirectLiNGAM (Shimizu et al., 2011) recovers topological order top-down, selecting at each step the variable that is most independent of the residuals of the remaining variables regressed on it.
+Hyv¨arinen and Smith (2013) replace the independence measure in DirectLiNGAM with pairwise likelihood ratios.
+More recently, Oh et al. (2025) introduced OptLiNGAM, a sample-optimal procedure for SEMs with sub-Gaussian noise, and NOTIME (Berrevoets et al., 2025) brought identifiability under LiNGAM to differentiable structure learning by penalizing the joint dependence of the fitted residuals.
+Closest to our work are methods that order variables by entropy.
+Xie et al. (2019) study linear SEMs with i.i.d. noise (ETPIA).
+They approximate entropy with a Gram–Charlier expansion in the variance, skewness, and kurtosis, and then remove the source’s effect by least-squares regression during recursion, so the method requires finite fourth moments.
+Feigenbaum et al. (2024) identify sources and sinks by comparing conditional entropies with noise entropy, but their study is limited to discrete noise distributions.
+Our criterion is also entropy-based, but focuses on continuous variables in linear models.
+Other methods keep the recursive ordering but replace the variance with another measure of residual uncertainty.
+Gao et al. (2020) (NPVAR) order nonparametric DAGs top-down using residual variances from nonparametric regression, without assuming linearity or independent noise.
+Rajendran et al. (2021) replace the conditional variance with Bregman information, a generalization of variance induced by an exponential family, and prove identifiability when the Bregman information is equal across variables.
+Our conditional risk differs from both.
+While Gao et al. (2020) measure uncertainty by variance alone, our criterion assumes a known noise density and uses its full shape.
+Unlike Rajendran et al. (2021), we do not require an exponential family and cover densities such as Student-t and Cauchy.
+We also study both top-down and bottomup recursions, while both of these works use only the top-down direction.
+Our work sits between the Gaussian and non-Gaussian regimes.
+Like the variance-based methods, it learns the ordering by a recursion over nodewise regressions; like the LiNGAM family, it identifies the DAG under non-Gaussian noise, including heavy-tailed noise with no finite variance.
+The price is the constraint on the scale of noise variables.
+3 NOTATION
+For a positive integer d, let [d] = {1, . . . , d}.
+We consider a directed acyclic graph G = (V, E) with vertex set V = [d], where each vertex i is associated with a random variable Xi, and an edge set E ⊂V × V , where (j, i) ∈E denotes the directed edge j →i.
+For a vertex i, we write PA (i), CH (i), AN (i), and DE (i) for its sets of parents, children, ancestors, and descendants in G, respectively.
+The non-descendants of i are V \ (DE (i) ∪{i}), i.e., the vertices other than i that cannot be reached from i by a directed path.
+A vertex with no parents is a source (or root) and a vertex with no children is a sink (or terminal vertex); every DAG contains at least one of each.
+A permutation t = (t1, . . . , td) of [d] is a topological ordering of G if every parent precedes its child: writing t−1 (i) for the position of vertex i, t−1 (j) < t−1 (i) whenever j ∈PA (i).
+Acyclicity guarantees that at least one such ordering exists, though it need not be unique.
+We study the linear structural equation model (1) where X = (X1, . . . , Xd)⊤, the matrix Λ ∈Rd×d has Λij̸ = 0 if and only if j ∈PA(i), and N = (N1, . . . , Nd)⊤is a vector of i.i.d. noise variables with location zero.
+Acyclicity of G is equivalent to the existence of a permutation matrix P such that P ΛP ⊤ is strictly lower triangular.
+Writing B = I −Λ, which is invertible under acyclicity, the model implies X = B−1N; when the noise has variance σ2 the precision matrix of X is Ω= Σ−1 = B⊤D−1B, where D = σ2I.
+The goal of structure learning is to recover G (equivalently, the support of Λ) from the samples of X.
+4 GENERALIZED ORDERING-BASED LEARNING VIA CONDITIONAL RISKS
+The variance-based methods reviewed in Section 2 all rest, in one form or another, on the fact that under the equal-variance assumption, conditional variances reveal the topological order.
+In this section we first recall this fact and then show that neither direction actually depends on the conditional variance.
+Replacing squared error with the objective matched to the (known) noise distribution yields a family of conditional risks that support the same recursive strategies, in both directions, while using the full noise density rather than only second moments.
+4.1 Conditional Variance and Least Squares
+For a subset S ⊂[d] and i /∈S, the linear conditional variance of Xi given XS admits the variational form
+For jointly Gaussian variables this statistic coincides with the conditional variance, but in general is only the linear conditional variance.
+Under equal noise variances, this statistic helps us recognize variable ordering from both ends.
+From the top: if S is an ancestral set, i.e., closed under taking parents, a remaining variable attains Varlin(Xi | XS) = σ2 if all its parents lie in S, and exceeds σ2 otherwise; recursively selecting the minimizer is the top-down method.
+From the bottom, the relevant fact is the following restatement of Proposition 2 from Ghoshal and Honorio (2018).
+Lemma 1 (Sinks maximize the full-conditional variance).
+Consider the model (1) with mutually independent noises of common variance σ2.
+For every i ∈[d], so that Varlin(Xi | X−i) = σ2 if i is a sink and Varlin(Xi | X−i) ≤σ2/(1 + b2 min) < σ2 otherwise, where bmin = min(i,j)∈E |Λji|.
+For proofs, see Appendix A.
+This fact uses just two properties of the variance functional:
+(i) a regression whose covariates are non-descendants, and whose covariate set contains the parents, leaves a pure-noise residual, and no linear predictor can do better; and
+(ii) when a variable is regressed on a set containing its children, the children carry information about its noise, and the objective registers this by dropping strictly below the pure-noise value.
+Property
+(i) generalizes to any density with finite entropy, and
+(ii) generalizes only under a regularity condition.
+4.2 Conditional Risks
+Throughout this section, the noise variables N1, . . . , Nd are assumed independent and identically distributed, each with known density f; this equal-distribution assumption is the natural generalization of the equal-variance assumption of Peters and B¨uhlmann (2014), to which it reduces when f is Gaussian.
+Let ρf = −log f denote the associated negative log-likelihood loss.
+This lets us inform the conditional risk objective (4) with our knowledge of the noise density, while the conditional variance objective (2) remains only second-moment informed.
+Definition 2 (Conditional risk).
+For S ⊂[d] and i /∈

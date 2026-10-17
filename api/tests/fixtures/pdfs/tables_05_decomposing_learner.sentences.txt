@@ -1,0 +1,88 @@
+Decomposing A Neural Learner
+Bi, Zelong Department of Mathematics & Statistics
+University of New South Wales High St Kensington NSW 2052 Australia
+Abstract
+Neural learners for classification and regression are often criticized as black boxes.
+We propose a probabilistic decomposition of neural learners that accounts for heterogeneous predictability across the feature space.
+A training procedure combining the EM algorithm, stochastic gradient descent, and maximum likelihood estimation is developed to jointly learn the predictable component and an inputdependent reliability score.
+We show that the optimal decomposed learner recovers the response distribution within the predictable component, while the reliability score characterizes the predictability of individual observations.
+We further extend the framework to incorporate localized feature transformations.
+Experiments on synthetic and real-world datasets demonstrate the effectiveness of the proposed framework.
+1 Introduction
+The success of modern machine learning in fields such as image processing [Krizhevsky et al., 2012] and large language models [Vaswani et al., 2017] can be traced back to developments in neural networks in the 1990s, when neural networks in their simplest form, multilayer perceptrons (MLPs), were first used for supervised learning tasks such as regression and classification Murtagh [1991].
+From the perspective of the universal approximation theorem [Cybenko, 1989], if the features and response variable x and y are related through an appropriate functional relationship, such that E[y | x] or p(y | x) is some function f(x), then the neural learner can be viewed as learning to approximate the underlying function f.
+(a) Heterogeneous feature space
+(b) Accuracy by region
+(c) High reliability instances
+Figure 1:
+(a) Labeled dataset across the feature space.
+(b) Accuracy of a neural classifier in different regions.
+(c) High-reliability instances (in green, with p(z = 1 | x) > 0.5) identified by our model.
+A common criticism of neural learners is that, despite their strong predictive performance, the structure learned is often difficult to interpret or inspect, contributing to their characterization as black-box models [Rudin, 2019].
+One aspect of the learned information that is particularly important but largely hidden in the standard formulation is where in the feature space the relationship between y and x exists.
+The feature space need not be homogeneous in this respect: in some regions, y may depend strongly on x, whereas in others, they can be independent.
+For example, in Figure 1a, the relationship between x and y appears strong in the central region but absent elsewhere.
+The absence of a relationship is itself informative.
+When x and y are independent in a region, a well-trained neural learner may correctly learn a constant function, but this does not reveal that x provides no predictive information or indicate that the resulting prediction is unsupported by the available features.
+As shown in Figure 1b, an overall accuracy of 74% by a neural classifier can arise from substantially different accuracies across regions, such information is not available in the common way it is trained and used.
+Explicitly modelling such structure can therefore provide a more informative characterization of the data and improve the transparency of neural learners without sacrificing predictive performance, which can be very useful when assessing their deployment in critical applications.
+In this manuscript, we propose a novel framework that improves the interpretability of neural learners by decomposing its predication.
+For each instance, we introduce a latent binary variable z ∈{0, 1} indicating whether a relationship between x and y is present.
+We define the reliability score as w(x) = p(z = 1 | x), which is assumed to be a smooth function of x.
+By interpreting z as an indicator of predictability, the conditional distribution of y can be decomposed as where prand(y) := p(y | x, z = 0), since y is independent of x when z = 0.
+As illustrated in Figure 1c, the reliability score can be learned by a separate neural network in a principled manner, resulting in the learner network identifying the predictable component p(y | x, z = 1) instead.
+The proposed framework applies to both regression and classification, can be trained efficiently with probabilistic guarantees, and can be extended to incorporate supervised feature transformations that preserve locality.
+Our main contributions are as follows:
+1. We propose a probabilistic framework that explicitly decomposes the conditional distribution of the response into predictable and unpredictable components through an input-dependent reliability score.
+The reliability score quantifies the local presence of a predictive relationship between the features and response and is learned by a separate neural network.
+The proposed decomposition improves the interpretability of neural learners by explicitly modeling and learning both the reliability structure and the predictive component, while retaining the capability of a naive neural learner.
+2. We develop a principled training procedure that combines the expectation–maximization (EM) algorithm [Dempster et al., 1977] with stochastic gradient descent (SGD; Rumelhart et al. [1986]) and maximum likelihood estimation (MLE) to jointly learn the reliability function and the predictive component.
+Experiments on both synthetic and real-world datasets demonstrate the effectiveness of the proposed model and training procedure in uncovering meaningful structures from the data that can facilitate decision-making and feature selection.
+3. We show that the framework can be naturally extended with supervised feature transformation networks, allowing the learned representation to be optimized jointly with the final supervised task.
+When the feature–response relationship exhibits meaningful local structure, such as under the manifold hypothesis [Meil˘a and Zhang, 2024], the framework can further split the problem into a collection of local models.
+Each local model can nevertheless be trained using the entire dataset, with observations appropriately weighted according to the corresponding probabilistic structure.
+For the remainder of the article, Section 2 introduces related work and relevant background, Section 3 describes the properties, training, and extensions of our model, Section 4 presents the experimental results, and Section 6 concludes the article.
+Additional materials are provided in the appendix.
+2 Related Work
+Our proposed framework is related to several existing approaches in statistics and machine learning.
+In particular, similarities arise from the use of latent mixture components, feature-dependent weighting, and iterative optimization.
+We review representative approaches from these areas and clarify how their objectives and interpretations differ from those of our framework.
+2.1 Noisy Labels
+Classification with noisy labels considers settings in which observed response labels are contaminated or corrupted.
+Robust estimation in the presence of such contamination has been studied since the development of robust statistics [Copas, 1988], and this line of research has continued with the development of modern machine learning [Natarajan et al., 2013, Scott et al., 2013].
+In contrast, although heteroscedasticity is well studied in regression, it primarily concerns variation in the conditional variance of the response given x, rather than variation in the predictability of the response itself.
+Our framework adopts a different modeling perspective.
+Rather than interpreting poorly explained responses as corrupted observations, we allow the degree of predictability to vary across the feature space.
+An unpredictable response may therefore be perfectly valid, but simply not be explainable from the available features.
+Moreover, whereas existing approaches to noisy labels often rely on heuristic procedures [Han et al., 2018] or prespecified parametric models of label corruption [Patrini et al., 2017], our framework uses neural networks to flexibly model reliability and incorporates the distinction between predictable and unpredictable components directly into a unified probabilistic model.
+2.2 Reliability and Feature-dependent Weights
+The reliability score p(z = 1 | x) in our framework is a natural measure of the trustworthiness of the model prediction.
+Various approaches have been proposed in the past to quantify the predictability or reliability of a learner’s output.
+These include measures such as the Bayes error [Ishida et al., 2022], which characterizes the intrinsic predictability of a task, as well as neural networks trained to produce task-oriented selection or confidence scores, such as the selection function in SelectiveNet [Geifman and El-Yaniv, 2019].
+In contrast, our framework encodes reliability into the probabilistic model structure, and seeks to learn it directly.
+As we will demonstrate, the (posterior) reliability score also serves as a weight for training the classification or regression network, allowing it to uncover the distribution of the predictable component within the overall distribution of y.
+Although assigning different weights to instances during training is common, such weights are often defined heuristically without probabilistic guarantees.
+The use of input-dependent weights is also superficially related to mixture models [Jacobs et al., 1991, Huang and Yao, 2012, Xue and Yao, 2022], where weights determine the contribution of different local predictive models based on the input.
+In our framework, however, the weights have a different meaning: we have one single model and the input-dependent reliability score represents the local probability that the response is predictable from the available features.
+2.3 EM-based Training with Neural Networks
+The training of neural networks embedded within probabilistic models has long been investigated, particularly in the Bayesian literature [MacKay, 1992, Neal, 2012].
+Since our model involves latent variables, its training should naturally combine the EM algorithm with SGD (with MLE also involved).
+Similar combinations have appeared in previous work [Ng and McLachlan, 2004, Lathuilière et al., 2018], although the specific procedures vary according to the underlying probabilistic models.
+Details of our training procedure are presented in Sections 3.2.
+3 Our Framework
+In this section, we provide details of our framework, including the model specification and properties, training procedure, and its extension to enable localized feature transformations supervised by the target tasks.
+Figure 2: Overall architecture of our framework.
+3.1 Basic Structure and Properties
+Figure 2 illustrates the overall architecture of our framework, which, according to Equation 1, seeks to model variation in predictability across the feature space.
+In addition to the neural network used for classification or regression (the learner), we employ a separate neural network to learn the reliability score w(x) = p(z = 1 | x).
+Throughout this work, we use MLPs with a single hidden layer of 64 neurons for both networks, leaving the exploration of more complex architectures for future work.
+We also recognize that different regions of the feature space may benefit from more carefully tuned local models, particularly in terms of feature transformation, the extension will be discussed in Section 3.3.
+For a neural classifier, the conditional distributions of the response, p(y | x, z = 1) and prand(y), are simply class probabilities.
+For a neural regressor, we further model these conditional distributions as Gaussian, i.e., where f, µ0, σ2 0 and σ2 1 are unknown functions and parameters.
+In other words, when z = 1, we have E[y | x, z = 1] = f(x), whereas when z = 0, y is independent of x and behaves like white noise.
+Notice that in both cases, we have
+(y)1−z, (3) hence, the joint log-density of y and z can be obtained as which is naturally decomposed into three components corresponding to the reliability network, the learner network, and the estimation of the distribution of the unpredictable component, respectively.
+Ideally, according to Equation 4, if the latent variable z is known, the learner network should be trained on instances with z = 1, which should lead to it learn the distribution of the predictable component p(y | x, z = 1).
+However, since z is not observable, as we will demonstrate in Section 3.2, the empirical learner target used in training is actually the log likelihood of the clean component weighted by the posterior reliability
+The good thing is, assuming that training converges to the optimum, this procedure also leads the learner to recover the predictable component of the response, which is precisely the distribution the learner is intended to model.
+See Appendix A for the proofs of the following results.

@@ -1,0 +1,98 @@
+Markov Chain Convergence in Kernel-Induced Geometry
+Oleksii Kachaiev1, Luc Brogat-Motte2, Silvia Villa1, Lorenzo Rosasco2,3
+1MaLGa center, DIMA, Università degli Studi di Genova, Genoa, Italy
+2SAIL Unit, Istituto Italiano di Tecnologia, Genoa, Italy
+3MaLGa Center, DIBRIS, Università degli Studi di Genova, Genoa, Italy
+Abstract
+We study the convergence of Markov chains in the geometry induced by Hilbertian embeddings associated with positive definite kernels, also called Maximum Mean Discrepancy (MMD).
+Under a contraction assumption in the kernel-induced geometry, and a standard spectral gap assumption, we establish non-asymptotic, high-probability bounds for the convergence of the empirical occupation measure to the invariant measure.
+The obtained bounds separate the roles of the two conditions: the spectral gap determines the effective sample size in the leading term, while the kernel contraction enters only through a linear correction.
+As an application, we study one-step prediction of dynamical systems from a single trajectory, deriving fast learning rates for a nonlinear least-squares estimator.
+The rates highlight the interplay between mixing properties in the kernel-induced geometry and the classical source and capacity conditions used in the analysis of least-squares.
+1 Introduction
+Let (Xt)t≥0 be a Markov chain on X with transition kernel P.
+Its empirical occupation measure up to time T is
+This random probability measure records the proportion of time spent by the trajectory in each measurable set.
+An important question in the analysis of Markov chains (and, more broadly, of dynamical systems) is whether there exists a probability measure π such that bµT →π as T →∞.
+Such a limit, when it exists, describes the statistical behavior of trajectories over long times (Eckmann and Ruelle, 1985; Young, 2002).
+For example, if (Xt)t≥0 are independent random variables on a separable metric space X with common law π, the empirical law of large numbers gives, almost surely, for every bounded continuous test function f.
+For general Markov chains, however, convergence to a deterministic limiting measure is not automatic.
+For classical conditions ensuring almost-sure convergence of bµT as in (2), see, e.g. , Meyn and Tweedie (2012).
+To quantify the discrepancy between bµT and π, we need to choose a distance on the space of probability measures.
+A flexible framework is provided by integral probability metrics (IPMs), dF(µ, ν) := sup where F is a class of measurable test functions integrable with respect to the measures under consideration.
+The choice of F determines which differences between probability measures are detected, and hence the notion of convergence being studied.
+For example, the class of measurable functions satisfying ∥f∥∞≤1 gives the total variation norm, while the class of 1-Lipschitz functions gives the Wasserstein distance W1 on probability measures with finite first moments.
+Further examples and general properties of IPMs can be found in Müller (1997) and Rachev et al. (2013).
+Our aim is to obtain non-asymptotic bounds on dF(bµT , π), for suitable choices of F, with explicit dependence on the trajectory length T.
+Such bounds are useful in sampling, where they quantify the error incurred when approximating a target distribution by a finite trajectory of a Markov chain (Roberts and Rosenthal, 2004; Joulin and Ollivier, 2010).
+Related questions also arise in the analysis of stochastic optimization algorithms through their interpretation as Markov chains (Dieuleveut et al., 2020; Yu et al., 2021).
+Non-asymptotic bounds have been studied in several probability metrics.
+For uniformly ergodic Markov chains on countable state spaces, bounds in total variation follow from the concentration and moment inequalities of Paulin (2015).
+Bounds in W1 under suitable contractivity assumptions have been obtained by Boissard (2011); Kloeckner (2020); Riekert (2022).
+For Wp, Fournier and Guillin (2015) establish moment bounds for empirical measures of independent samples and Markov chains.
+Related bounds for occupation measures of continuous-time ergodic Markov processes are obtained by Schilling et al. (2025) under Wasserstein contractivity or functional inequalities, together with moment assumptions on the limiting measure.
+In this work, we consider IPMs obtained from reproducing kernel Hilbert space (RKHS), known as maximum mean discrepancies (MMD).
+Let k : X× X →R be a measurable positive-definite kernel with separable RKHS H, and let ϕ(x) := k(x, ·) be its canonical feature map.
+Taking F to be the unit ball of H in (3), Hilbert-space duality gives whenever the two Bochner integrals exist; see, e.g., Smola et al. (2007); Gretton et al. (2012).
+The same construction applies to any measurable feature map ϕ : X →H into a separable Hilbert space, subject to the same integrability requirement.
+The resulting discrepancy is the MMD associated with the kernel k(x, y) = ⟨ϕ (x), ϕ (y)⟩H.
+We develop this feature-map formulation in Section 3.
+When the feature map is uniformly bounded, that is, supx∈X∥ϕ(x)∥H < ∞, the discrepancy is well defined for all probability measures, including empirical occupation measures.
+For independent observations with common law π, MMDϕ(bµT , π) admits bounds of order T −1/2, both in expectation and at each fixed confidence level (Gretton et al., 2012).
+For dependent observations, Chérief- Abdellatif and Alquier (2022) obtain high-probability bounds under weak-dependence assumptions in their analysis of minimum-MMD estimators.
+More recently, Wolfer and Alquier (2025) derive such bounds for stationary φ- and β-mixing sequences.
+Contributions.
+Our first contribution is a non-asymptotic high-probability bound for empirical occupation measures of Markov chains on a general state space.
+Assume that the chain is stationary, has an absolute L2(π) spectral gap 1−ρ > 0, and satisfies the following uniform geometric relaxation condition: for some C < ∞and θ ∈[0, 1).
+Then, for every T ≥1 and δ ∈(0, 1), with probability at least 1 −δ,
+T , (6) where τrel := (1 −ρ)−1, τθ := C/(1 −θ), and ∥ϕ∥2 π := ∥ϕ(x)∥2 R Hπ(dx); the implicit constant is universal.
+The leading term depends on the spectral gap and the second moment of the feature map, while the relaxation constants C and θ enter only through the T −1 term.
+We extend this bound to initial laws ν ≪π with dν/dπ ∈Lp(π) for some p > 1, leaving the leading term unchanged; see Theorems 3.3 and 3.6.
+We also give sufficient conditions for (5).
+Our second contribution concerns kernel ridge regression (KRR) for learning the one-step prediction function of a real-valued Markov chain from a single trajectory.
+The relevant MMD geometry arises from the covariance fluctuations controlling estimator stability.
+Writing Σ and bΣ for the population and empirical covariance operators, and denoting Σλ := Σ + λI, we have where Φλ(x) := Σ−1/2 λ λ [ϕ(x) ⊗ϕ(x)]Σ−1/2 λ .
+We obtain relaxation bounds in this λ-dependent geometry from contraction in a fixed Hilbert scale associated with the covariance-feature kernel K(x, y) = k(x, y)2.
+For stationary trajectories, under the spectral and Hilbert-scale assumptions, and classical source and capacity conditions of Theorem 4.4, we obtain
+For every δ ∈(0, 1), this bound holds with probability at least 1 −δ for each sufficiently large T, up to logarithmic factors in 1/δ.
+Here, r ∈[1/2, 1] is the source exponent and p = 1/b ∈(0, 1) is the capacity exponent, characterized by N(λ) ≲λ−p.
+The rate matches the classical source–capacity exponent for i.i.d. KRR (Caponnetto and De Vito, 2007), with explicit dependence on the chain in the finite-sample bounds.
+By incorporating source and capacity information, this sharpens the T −1/2 excess-risk rate of Kachaiev et al. (2026), however, under different assumptions.
+Our work considers only stationary initialization while relaxing uniform ergodicity in total variation to absolute spectral gap, and the Hilbert-scale contraction described above.
+Structure of the paper.
+Section 2 collects background on Markov operators, martingales, integral probability metrics, and spectral gaps, together with preliminary results used throughout the paper.
+Section 3 introduces uniform MMD relaxation and presents the occupation measure bounds, followed by sufficient conditions and examples based on metric comparison and contraction in kernel-induced Hilbert scales.
+Section 4 applies these results to KRR and derives the learning guarantees.
+The proofs, together with the concentration inequalities they rely on, are collected in Appendix A; Appendix B contains the Fourier computations for the torus examples, including the verification of all assumptions of Theorem 4.4 for a noisy doubling map.
+2 Background and preliminaries
+Tools and notation.
+Let (X, d) be a Polish space endowed with Borel σ-algebra B(X).
+Let P(X) be a space of probability measures on (X, B(X)).
+In the context where X is a normed space, P2(X) denotes the subset of probability measures on X with finite second moment, i.e., R ∥x∥2 µ(dx) < ∞.
+Define diam(X) := supx,y∈Xd(x, y).
+Let (Xt)t≥0 be a Markov process taking values in (X, B(X)), with associated Markov transition kernel P : X× B(X) →[0, 1].
+Assume that P admits an invariant probability measure π ∈P(X), that is, πP = π, where, for µ ∈P(X), we write µP for the probability measure
+The process (Xt)t≥0 is called stationary if X0 ∼π.
+We also use the notation P n(x, ·) := δxP n for n ≥0.
+Recall that for a fixed T > 0, denotes empirical occupation measure.
+For a measure µ and a measurable function f : X →R, let µ(f) := R f dµ.
+Let L2(π) denote the Hilbert space of square-integrable functions f : X →R, endowed with the inner product ⟨f, g⟩π := π(fg).
+Denote the subspace of π-centered functions by L2 0(π) :=  f ∈L2(π) : π(f) = 0 .
+For a separable Hilbert space Y, we let L2(X, B(X), π; Y), abbreviated L2(π; Y), denote the Bochner space of strongly B(X)-measurable and Bochner square-integrable maps f : X →Y with
+Denote by L(H1, H2) be the space of bounded linear operators between two separable Hilbert spaces H1 and H2, and L(H1) when H1 = H2.
+For A ∈L(H1), denote the operator norm by |||A|||H1 := ∥A∥H1→H1.
+Let L2(H1, H2) be the space of Hilbert–Schmidt operators, and L2(H1) when H1 = H2, equipped with the norm ∥A∥2 L2(H1,H2) = P i ∥Aei∥2 H2, where {ei}i is any orthonormal basis of H1.
+We denote by Id the d × d identity matrix.
+Martingales.
+Let (Ft)t≥0 be a filtration.
+A sequence of H-valued random variables (dt)t≥1 is called a martingale difference sequence with respect to (Ft)t if dt is Ft-measurable and for every t ≥1, E[dt | Ft−1] = 0.
+Setting M0 := 0 and MT := PT t=1 dt define an H-valued martingale.
+Its predictable quadratic variation is where Ej[·] := E[· | Fj].
+For background on martingales and martingale difference sequences, we refer to Hall and Heyde (1980); Williams (1991).
+Integral probability metrics.
+Let F be a class of measurable real-valued functions on X.
+For µ, ν ∈P(X) such that the integrals below are well defined, the integral probability metric (IPM) generated by F is
+The choice of F determines the geometry on the space of probability measures.
+In particular, for the class the corresponding IPM is the total variation distance:
+Suppose that (X, d) is a bounded space, i.e., diam(X) < ∞.
+Fix x0 ∈X and consider the anchored Lipschitz class

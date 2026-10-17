@@ -1,0 +1,39 @@
+NIST Special Publication 800-53
+Revision 5
+Security and Privacy Controls for Information Systems and Organizations
+JOINT TASK FORCE
+NIST Special Publication 800-53
+Revision 5
+Security and Privacy Controls for Information Systems and Organizations
+JOINT TASK FORCE
+September 2020
+INCLUDES UPDATES AS OF 12-10-2020; SEE PAGE XVII
+Authority
+This publication has been developed by NIST to further its statutory responsibilities under the Federal Information Security Modernization Act (FISMA), 44 U.S.C. § 3551 et seq. , Public Law (P.L.) 113-283.
+NIST is responsible for developing information security standards and guidelines, including minimum requirements for federal information systems.
+Such information security standards and guidelines shall not apply to national security systems without the express approval of the appropriate federal officials exercising policy authority over such systems.
+This guideline is consistent with the requirements of the Office of Management and Budget (OMB) Circular A-130.
+Nothing in this publication should be taken to contradict the standards and guidelines made mandatory and binding on federal agencies by the Secretary of Commerce under statutory authority.
+Nor should these guidelines be interpreted as altering or superseding the existing authorities of the Secretary of Commerce, OMB Director, or any other federal official.
+This publication may be used by nongovernmental organizations on a voluntary basis and is not subject to copyright in the United States.
+Attribution would, however, be appreciated by NIST.
+National Institute of Standards and Technology Special Publication 800-53, Revision 5
+Natl. Inst. Stand. Technol. Spec. Publ. 800-53, Rev. 5, 492 pages (September 2020)
+CODEN: NSPUE2
+Comments on this publication may be submitted to:
+National Institute of Standards and Technology Attn: Computer Security Division, Information Technology Laboratory
+100 Bureau Drive (Mail Stop 8930) Gaithersburg, MD 20899-8930 Email: sec-cert@nist.gov
+All comments are subject to release under the Freedom of Information Act (FOIA) [FOIA96].
+Reports on Computer Systems Technology
+The National Institute of Standards and Technology (NIST) Information Technology Laboratory (ITL) promotes the U.S. economy and public welfare by providing technical leadership for the Nation’s measurement and standards infrastructure.
+ITL develops tests, test methods, reference data, proof of concept implementations, and technical analyses to advance the development and productive use of information technology (IT).
+ITL’s responsibilities include the development of management, administrative, technical, and physical standards and guidelines for the costeffective security of other than national security-related information in federal information systems.
+The Special Publication 800-series reports on ITL’s research, guidelines, and outreach efforts in information systems security and privacy and its collaborative activities with industry, government, and academic organizations.
+Abstract
+This publication provides a catalog of security and privacy controls for information systems and organizations to protect organizational operations and assets, individuals, other organizations, and the Nation from a diverse set of threats and risks, including hostile attacks, human errors, natural disasters, structural failures, foreign intelligence entities, and privacy risks.
+The controls are flexible and customizable and implemented as part of an organization-wide process to manage risk.
+The controls address diverse requirements derived from mission and business needs, laws, executive orders, directives, regulations, policies, standards, and guidelines.
+Finally, the consolidated control catalog addresses security and privacy from a functionality perspective (i.e., the strength of functions and mechanisms provided by the controls) and from an assurance perspective (i.e., the measure of confidence in the security or privacy capability provided by the controls).
+Addressing functionality and assurance helps to ensure that information technology products and the systems that rely on those products are sufficiently trustworthy.
+Keywords
+Assurance; availability; computer security; confidentiality; control; cybersecurity; FISMA; information security; information system; integrity; personally identifiable information; Privacy Act; privacy controls; privacy functions; privacy requirements; Risk Management Framework; security controls; security functions; security requirements; system; system security.

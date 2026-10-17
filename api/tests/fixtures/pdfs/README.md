@@ -26,3 +26,22 @@ scanned_03 ← report_01, scanned_04 ← tables_03, scanned_05 ← tables_04. Th
 until the OCR fallback lands in M4: OCR text will differ from the born-digital text, so these
 files will need a second hand-correction against OCR output then. The golden test skips the
 scanned class while `ocr_available()` is False.
+
+## Sentence-boundary truth (M2)
+
+Each text fixture (the 15 non-`scanned` ones) has a `name.sentences.txt`: one sentence per line,
+prose types only (heading, body, list, caption, footnote; D12), in reading order. It is derived
+from `name.expected.jsonl` with only the line breaks moved, so its word stream (`golden_util.words`)
+is identical to the expected file's prose; `tests/test_syn_boundaries.py` asserts this.
+
+The breaks were produced by a scripted candidate pass over the expected segments, then a review
+of every candidate change against the text (log: `_agent/results/258_boundary_review.md`):
+merges after abbreviations (`et seq.`, `Natl.`/`Inst.`/`Stand.`/`Technol.`/`Spec.`/`Publ.`, `Eq.`,
+`e.g.`, ...), before lowercase starts and closing brackets/quotes, inside unclosed `(`, and after a
+bare section number (`2.1.`); splits where two sentences shared one line. Rejected candidates are
+true sentence ends (for example "... in Appendix C." or "... function of x.").
+
+`tests/boundary_util.py` scores a sentence list against this truth: boundaries are word indices
+after which a sentence ends, the two word streams are aligned with the word-level edit script, and
+precision/recall/F1 are computed over boundaries. The M2 measurement prints a table and the mean;
+thresholds are set separately and are not asserted yet.

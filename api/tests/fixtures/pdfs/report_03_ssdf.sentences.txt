@@ -1,0 +1,49 @@
+NIST Special Publication 800-218
+Secure Software Development Framework (SSDF) Version 1.1:
+Recommendations for Mitigating the Risk of Software Vulnerabilities
+Murugiah Souppaya
+Karen Scarfone
+Donna Dodson
+NIST Special Publication 800-218
+Secure Software Development Framework (SSDF) Version 1.1:
+Recommendations for Mitigating the Risk of Software Vulnerabilities
+Murugiah Souppaya Computer Security Division Information Technology Laboratory
+Karen Scarfone Scarfone Cybersecurity
+Clifton, VA
+Donna Dodson* * Former NIST employee; all work for this publication was done while at NIST.
+February 2022
+Authority
+This publication has been developed by NIST in accordance with its statutory responsibilities under the Federal Information Security Modernization Act (FISMA) of 2014, 44 U.S.C. § 3551 et seq. , Public Law (P.L.) 113-283.
+NIST is responsible for developing information security standards and guidelines, including minimum requirements for federal information systems, but such standards and guidelines shall not apply to national security systems without the express approval of appropriate federal officials exercising policy authority over such systems.
+This guideline is consistent with the requirements of the Office of Management and Budget (OMB) Circular A-130.
+Nothing in this publication should be taken to contradict the standards and guidelines made mandatory and binding on federal agencies by the Secretary of Commerce under statutory authority.
+Nor should these guidelines be interpreted as altering or superseding the existing authorities of the Secretary of Commerce, Director of the OMB, or any other federal official.
+This publication may be used by nongovernmental organizations on a voluntary basis and is not subject to copyright in the United States.
+Attribution would, however, be appreciated by NIST.
+National Institute of Standards and Technology Special Publication 800-218
+Natl. Inst. Stand. Technol. Spec. Publ. 800-218, 36 pages (February 2022)
+CODEN: NSPUE2
+Certain commercial entities, equipment, or materials may be identified in this document in order to describe an experimental procedure or concept adequately.
+Such identification is not intended to imply recommendation or endorsement by NIST, nor is it intended to imply that the entities, materials, or equipment are necessarily the best available for the purpose.
+There may be references in this publication to other publications currently under development by NIST in accordance with its assigned statutory responsibilities.
+The information in this publication, including concepts and methodologies, may be used by federal agencies even before the completion of such companion publications.
+Thus, until each publication is completed, current requirements, guidelines, and procedures, where they exist, remain operative.
+For planning and transition purposes, federal agencies may wish to closely follow the development of these new publications by NIST.
+Submit comments on this publication to: ssdf@nist.gov
+National Institute of Standards and Technology Attn: Computer Security Division, Information Technology Laboratory
+100 Bureau Drive (Mail Stop 8930) Gaithersburg, MD 20899-8930
+All comments are subject to release under the Freedom of Information Act (FOIA).
+Reports on Computer Systems Technology
+The Information Technology Laboratory (ITL) at the National Institute of Standards and Technology (NIST) promotes the U.S. economy and public welfare by providing technical leadership for the Nation’s measurement and standards infrastructure.
+ITL develops tests, test methods, reference data, proof of concept implementations, and technical analyses to advance the development and productive use of information technology.
+ITL’s responsibilities include the development of management, administrative, technical, and physical standards and guidelines for the cost-effective security and privacy of other than national security-related information in federal information systems.
+The Special Publication 800-series reports on ITL’s research, guidelines, and outreach efforts in information system security, and its collaborative activities with industry, government, and academic organizations.
+Abstract
+Few software development life cycle (SDLC) models explicitly address software security in detail, so secure software development practices usually need to be added to each SDLC model to ensure that the software being developed is well-secured.
+This document recommends the Secure Software Development Framework (SSDF) – a core set of high-level secure software development practices that can be integrated into each SDLC implementation.
+Following such practices should help software producers reduce the number of vulnerabilities in released software, reduce the potential impact of the exploitation of undetected or unaddressed vulnerabilities, and address the root causes of vulnerabilities to prevent future recurrences.
+Because the framework provides a common vocabulary for secure software development, software acquirers can also use it to foster communications with suppliers in acquisition processes and other management activities.
+Keywords
+secure software development; Secure Software Development Framework (SSDF); secure software development practices; software acquisition; software development; software development life cycle (SDLC); software security.
+Trademark Information
+All registered trademarks or trademarks belong to their respective organizations.

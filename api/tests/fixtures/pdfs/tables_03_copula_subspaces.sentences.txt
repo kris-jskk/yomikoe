@@ -1,0 +1,124 @@
+COPULA ACTIVE SUBSPACES II: ERROR DECOMPOSITION, A POSTERIORI ESTIMATION, AND SHARPNESS OF THE BOUNDS∗
+JOSHUA CHEN† AND PETER JAN VAN LEEUWEN‡
+Abstract.
+The Copula Active Subspaces (Cas) method of Part I estimates a non-Gaussian observation-noise density πn from residual samples.
+Its KL divergence DKL(πn ∥bπn) admits an exact decomposition into marginal, projection and reduced-density terms and bounds the posterior KL divergence averaged over the true predictive distribution.
+We derive a priori bounds for these terms, together with estimates or bounds from residual samples.
+Weighted nearest-neighbour entropy estimates are used for the marginal and reduced-density terms, with asymptotic standard errors in exact rank coordinates.
+For the projection error, the score is fitted on one subsample, and its mean squared magnitude outside the retained subspace is estimated on the other.
+Corrections for score and rank-transform errors then give a theoretical upper bound with probability at least 1−δ.
+Tests on three known noise laws in dimension d = 20 use the estimated rank transform.
+In 11 of 12 combinations of example and sample size, the sum of the two estimated terms and the trace bound exceeds the reference divergence after averaging over the estimated models.
+In these tests, score-estimation error is the largest contribution to looseness.
+The overestimate from the Gaussian log-Sobolev inequality alone is at most a factor of 1.98.
+Key words.
+copula, active subspace, score matching, dimension reduction, Hermite polynomials, Bayesian inference problems, non-Gaussian observation error
+MSC codes.
+62G07, 62G20, 62H05, 62B10, 60E15, 62F15
+1. Introduction.
+Approximating the observation-noise density changes the posterior in a Bayesian inference problem.
+The noise-density KL divergence bounds the resulting posterior KL divergence, averaged over the true predictive distribution.
+Part I [10] estimates a non-Gaussian noise density πn from residual samples, and tests the estimate against known noise laws.
+Such a comparison is unavailable in applications.
+We therefore consider the error of the Cas estimate bπn, estimating its individual contributions from the residual samples.
+The decomposition in Proposition 2.1 assigns one error term to each estimation step of Cas: (1.1) equals Emarg + Eproj + Edens.
+The marginal term Emarg consists of d one-dimensional divergences and two corrections; Edens is a divergence between r-dimensional laws.
+For the projection error Eproj, the rank-r reduction admits a bound in terms of the copula-score variance outside the retained subspace.
+This is the Gaussian-reference bound of certified dimension reduction [36].
+A direct entropy estimate of (1.1) would involve the differential entropy of πn in dimension d.
+For densities supported on [0, 1]d in Lipschitz balls of smoothness s = 2, the minimax root-mean-square error has order (N log N)−2/(d+2) + N −1/2 [19, Thm. 1].
+∗This is Part II of a two-part work.
+The companion paper Copula Active Subspaces I: A Score- Covariance Method for Reduced-Order Non-Gaussian Density Estimation defines the estimator analyzed here.
+Funding: This work was supported by the Consortium for Advanced Data Assimilation Research and Education (CADRE), funded by NOAA under grant 2007893.
+†Department of Atmospheric Science, Colorado State University, Fort Collins, CO 80523 (Joshua.Chen@colostate.edu).
+‡Department of Atmospheric Science, Colorado State University, Fort Collins, CO 80523 (Peter.vanLeeuwen@colostate.edu).
+The decomposition reduces the required entropy calculations to dimensions 1 and r.
+No entropy estimate is needed for the bound on Eproj.
+The a priori bounds in Section 3 depend on the rank r, the multi-index sets and the sample size N.
+Normalizing the fitted joint density introduces a correction in the marginal bound.
+The bound minus this correction tends to zero as N →∞, under the stated assumptions on the marginal estimates and rank-transform error.
+The bounds on Eproj and Edens keep approximation, regularization and constraint terms that do not vanish as N →∞.
+In the examples of Section 6, Eproj is the largest term for N ≥12,500, and the Gaussian log-Sobolev bound overestimates it by a factor between 1.64 and 1.98.
+We also apply gradient descent to the tighter bound of [24].
+The subspace moves by ∥sin Θ∥F ≤0.0004 from the top-r eigenbasis of C used by Cas.
+Most of the remaining looseness of the a priori bound on these examples is due to the Hermite truncation of the score (Subsection 6.4).
+For the a posteriori analysis in Section 4, we estimate Emarg and Edens by weighted nearest-neighbour entropy estimators.
+Under the stated assumptions these attain the parametric rate in exact rank-Gaussianized coordinates.
+To bound Eproj, we fit the score and rank transform on half of the sample.
+The other half estimates the mean squared magnitude of the fitted score outside the retained subspace.
+Under the stated assumptions, a theoretical upper bound for this quantity holds with probability at least 1 −δ.
+It becomes a bound on Eproj after adding corrections for errors in the score estimate and rank transform.
+The increment between two nested multi-index sets estimates the Hermite truncation error under a saturation assumption.
+It does not estimate the sampling or regularization errors.
+Section 2 defines the estimator and decomposes its error.
+The three numerical examples are reported in Section 6.
+2. The estimator and its exact error decomposition.
+The two stages of Cas estimate the density πn of the noise n ∈Rd from N residual samples (Part I [10], Algorithm 3.1).
+For marginal densities πi with CDFs Fi, the componentwise map Z (x)i := Φ−1(Fi (xi)) produces standard Gaussian marginals (2.1), with Φ the standard normal CDF.
+The transformed noise Z := Z(n) has law πZ.
+Replacing Fi by the rank-based bFi of Part I defines b Z.
+The marginal densities are estimated separately by Gaussian-kernel estimates bπi [31].
+Let γk denote the standard Gaussian density on Rk.
+The copula density is cZ := πZ/γd.
+Its score S := ∇log cZ has second-moment matrix C := EπZ[SS⊤] (2.2), referred to as the score covariance.
+With eigenvalues ordered as λ1(C) ≥· · · ≥λd(C), a top-r eigenbasis V C r spans the copula active subspace.
+Stage 1 fits the copula score by Hermite score matching [22] in the span of the gradients of multivariate Hermite polynomials Hα.
+The polynomials are orthonormal in L2(γd) and indexed by Λ := ΛK1,q1.
+The set ΛK,q contains indices with 1 ≤ |α|1 ≤K and at most q nonzero entries, except for the linear indices ei (3.2).
+This fit defines bS := ∇P α∈Λ bθd αHα (3.3), with coefficient vector bθd := (bθd α)α∈Λ.
+From the empirical second-moment matrix b C of bS (3.5), we choose a top-r eigenbasis bV C r .
+The superscript distinguishes this basis from a principal-component basis of Z.
+A basis Vr ∈St(r, Rd) and its orthonormal completion V⊥separate the retained coordinates U := V ⊤ r Z from the discarded coordinates W := V ⊤ ⊥Z.
+The conditional law of W given U is denoted by πW |U.
+Define the reduced factor cU r := πU/γr and its logarithm Lr := log cU r .
+Part I (Subsection 2.1) uses this factor to define the reduced model πn(x; Vr) := cU r (V ⊤ r Z(x)) Q i πi(xi) (2.4).
+For the fitted estimator, we use Vr = bV C r in these definitions.
+Stage 2 uses the multi-index set Λr := ΛK2,q2 in r variables to fit Lr(u; bθr) := P α∈Λr bθr αHα(u).
+The coefficient vector bθr := (bθr α)α∈Λr solves the regularized and constrained score-matching problem (3.9).
+The Gram matrix b Ar, right-hand side bbr and centering matrix b B have population counterparts A⋆, b⋆and B⋆, respectively, in exact coordinates.
+Dividing the exponential by bZr := Eγr[eLr(·;bθr)] produces the reduced factor bcU r := eLr(·;bθr)/ bZr and the normalized density bπU := bcU r γr.
+Composing this factor with the fitted rank transform and multiplying by the marginal estimates requires another normalization, by bZcomp.
+Thus the joint estimate (3.1) takes the form with copula factor bcZ(z) := bcU r ( bV C⊤ r z).
+The normalizing constant bZcomp equals 1 when each bFi is the distribution function of bπi.
+In Cas, b Z uses the empirical distribution functions and the bπi are kernel density estimates, so this condition fails.
+In the notation of Part I, bZcomp = bZn/ bZr, since bcU r already includes the factor bZ−1 r .
+The normalizing constants are evaluated by quasi-Monte Carlo (Appendix G).
+Hats denote estimates and unhatted symbols their exact counterparts.
+The symbols Gr(r, Rd) and St(r, Rd) denote the Grassmann and Stiefel manifolds [1], and Θ(V , V ′) is the vector of principal angles between the spans of two bases [8].
+Marginal assumption.
+Throughout we assume (M): Eπn[| log(πi/bπi)|] < ∞for every i, and E[P i DKL(πi ∥bπi)] = O( √ d (log N)K2/2N −1/2).
+The expectation is taken over repeated estimation samples.
+The assumed rate requires the marginal density error to decay at least as fast as the rank-transform contribution under (T) (Subsection 3.1).
+We do not derive this rate for the Gaussian-kernel estimates.
+Proposition 2.1 (Decomposition of the KL divergence by estimation stage).
+Let bπn be the estimator above, with U := bV C⊤ r Z.
+Under Assumption 2.1 of Part I and the integrability condition of (M), every term below is finite and, for each realization of the estimation sample, (2.1) where RN := Eπn[log bcZ(Z)]−Eπn[log bcZ( b Z)] is the difference between the expected log copula factors evaluated at the exact and estimated rank transforms.
+The normalizing constant bZcomp is defined above, and Eproj = EπU [DKL(πW |U ∥γd−r)].
+Appendix A proves this decomposition at the estimated basis bV C r , without the eigenbasis of C.
+Neither RN nor log bZcomp has a prescribed sign, so Emarg can be negative.
+3. A priori error bounds.
+3.1. The marginals.
+For a fixed dictionary of degree K2 we assume the moment bounds (T), (3.1) where the outer expectation is over the estimation sample and the inner one over a fresh residual.
+A mean-value bound for the polynomial bLr and the Cauchy–Schwarz inequality give E|RN| = O( √ d (log N)K2/2N −1/2) (Appendix A).
+Combining this with (M) gives and Emarg −log bZcomp = Op( √ d (log N)K2/2N −1/2).
+The constants depend on d and the dictionary.
+We compute the remaining correction log bZcomp for each estimate and do not bound it a priori.
+3.2. The subspace.
+The Stage-1 bounds follow from the next inequality, in which S′ is an arbitrary score field.
+Proposition 3.1 (Stage-1 bounds).
+Let bV C r be the estimated Stage-1 basis of (3.5) and b Pr := bV C r bV C⊤ r .
+Under Assumption 2.1 of Part I, for every score field S′ ∈L2(πZ; Rd) with second-moment matrix C′ := EπZ[S′S′⊤],
+For S′ = S, the score-error term in (3.3) vanishes.
+Squaring the remaining inequality and dividing by two yields the oracle bound
+The oracle bound uses half the trace of C over the discarded subspace.
+For comparison, let P C r := V C r V C⊤ r project onto the top-r eigenspace of C.
+Subtracting and adding the trace at this projector separates the rank and suboptimality contributions: where the rank term is fixed by C and r.
+The remaining term ∆subopt is of order ∥sin Θ( bV C r , V C r )∥2 F .
+It is zero whenever span( bV C r ) = span(V C r ), and only in this case if λr(C) > λr+1(C).
+To prove Proposition 3.1, apply the triangle inequality in L2(πZ; Rd) to the Gaussian-reference bound (2.5) of Part I (Appendix A).
+This bound is [36, Cor. 2.10] specialized to a standard Gaussian reference.
+In the score-ratio-matching stability result of [5, Thm. 3.3], the divergence at the top-r eigenspace of C′ is bounded by ∥S −S′∥2 L2(πZ) + P i>r λi(C′).
+This follows from (3.3) at that eigenprojector after applying (a + b)2 ≤2a2 + 2b2.
+Our bound retains the square root and applies to the estimated projector b Pr.
+Projecting S onto the gradient space FΛ in L2(πZ) defines SΛ, its second-moment matrix CΛ, and the top-r projector P Λ⋆ r .
+Because b C is computed from the penalized

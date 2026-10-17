@@ -1,0 +1,118 @@
+How Well Do Prior-Data Fitted Networks Amortize
+Bayesian Inference?
+Manuel Hülskamp Julius Kobialka Emanuel Sommer Thomas Nagler David Rügamer LMU Munich and Munich Center for Machine Learning
+Abstract
+Prior-data fitted networks (PFNs) are trained to approximate the Bayesian posterior predictive distribution (PPD) of a synthetic prior, yet results about the approximation quality are surprisingly thin.
+Taking an empirical risk minimization perspective, we decompose the deployment error of PFNs into prior, context, and amortization error, and measure the latter against a reference PPD under a realistic prior.
+Results show that PFNs generally recover the targeted PPD very well.
+Nevertheless, we find that parts of the residual amortization error persist, especially in rare settings under the prior pretraining distribution, even when scaling the model size, which manifests in disagreement between independently pretrained PFNs and leaves uncertainty about the predictor at inference time.
+As a remedy, we study multiple types of Bayesian model averages and find that these can consistently reduce this uncertainty and improve predictions up to full-size TabICLv2 models.
+1 INTRODUCTION
+Prior-data fitted networks (PFNs) have emerged as powerful foundation models for tabular data (Müller et al., 2021; Hollmann et al., 2025).
+By learning to approximate Bayesian posterior predictive distributions (PPDs) via in-context learning (Brown et al., 2020) during pretraining, they perform inference on new downstream datasets in a single forward pass.
+Given their success, many works have proposed strategies to improve predictive performance, scale to larger datasets, or transfer the approach to other tasks (Qu et al., 2026; Zhang et al., 2025b; den Breejen et al., 2024; Thomas et al., 2024; Xu et al., 2025; Liu and Ye, 2025; Ma et al., 2026; Robertson et al., 2025; Balazadeh Meresht et al., 2025).
+The Bayesian interpretation is central to this success.
+A PFN is trained on datasets drawn from a synthetic prior, and its training objective is minimized by the PPD of that prior.
+Figure 1: Decomposition of the deployment error of a PFN (Proposition 2).
+This paper studies the amortization error, the only term controlled by pretraining, which splits into optimization, estimation, and approximation error (Eq. (8)).
+The context and prior error support this analysis: the context error is incurred even by the exact PPD, and the prior error arises when the deployment tasks differ from the prior (see Section 3.3).
+In other words, a PFN is trained to minimize its risk under its own prior, and the PPD is the optimal predictor there.
+Surprisingly, the evidence that trained PFNs closely track the PPD they amortize is thin and mostly focused on whether transformers can do Bayesian inference at all via the PPD (Müller et al., 2021) and not how well they recover it.
+Moreover, pretraining is typically reduced to first-order optimization of a single network, on the grounds that effectively unlimited synthetic data should remove any uncertainty about the outcome.
+Whether this holds is a question about amortization uncertainty.
+Existing work on uncertainty in PFNs (Nagler and Rügamer, 2025; Fortini et al., 2026) studies the uncertainty that remains for a fixed network at inference time and is, by construction, blind to it.
+Furthermore, when PFNs are deployed on real data, the model likely faces a different distribution of tasks, and the optimal predictor changes with it.
+Hence, deployment is a distribution shift from the pretraining prior to the real-world task distribution, which further complicates the error source analysis of deployed PFNs.
+Our Contribution In this work, we make the following contributions to study the sources of error and uncertainty in PFNs with a focus on amortization:
+1. A decomposition of the error of any PFN under a deployment distribution, splitting into prior, context and amortization error.
+2. A study of the amortization error of PFNs under its training prior, including a comparison to a realistic reference PPD (Section 2).
+3. An extended investigation of the amortization error of PFNs under a deployment task distribution (Section 3).
+4. An analysis of approximate Bayesian model averages over PFN weights (Section 4): Deep ensembles consistently improve predictions, whereas sampling and variational learning add little.
+2 AMORTIZATION ERROR
+2.1 Setup
+Following Nagler (2023), a task is a law p over (X, Y ) ∈ X × Y with covariate law pX and conditional p(y | x), and a dataset Dn = {(Xi, Yi)}n i=1 consisting of n independent and identically distributed (iid) draws from it.
+A PFN assumes a prior Π over pairs (p, N) of a task and a context size, whose marginal over N is the size distribution Ψ.
+Given (p, N=n), the context is Dn ∼p⊗n, and the PFN targets the posterior predictive distribution (PPD)
+At deployment, pairs follow a different distribution Π′ with size marginal Ψ′.
+In the following, we study PFNs through the lens of risk minimization.
+Risks average over a task, a context Dn ∼p⊗n and an independent query (X, Y ) ∼p.
+We write Ep[·] := EDn∼p⊗nE(X,Y )∼p[·] for a fixed pair (p, n) and EΠ[·] := E(p,N)∼ΠEp[·] when the pair is drawn as well, likewise for Π′.
+Random variables are capitalized.
+2.2 Risk Under a Task Distribution
+A PFN with parameters θ ∈Θ is a measurable map qθ : (x, Dn) 7→qθ(· | x, Dn) into the distributions on Y.
+Deployed on Π′, its risk under the log loss is
+The following proposition characterizes the optimal predictor under an arbitrary task distribution.
+Proposition 1.
+Let RΠ′(πΠ′) be finite.
+Then for every predictor q, with equality if and only if q = πΠ′ almost surely under Π′.
+In particular, πΠ′ is the unique minimizer of RΠ′ and RΠ′(πΠ′), the Bayes risk of Π′, is the lowest risk any predictor can attain on Π′.
+The proof is given in Appendix B.1.
+A PFN qθ is pretrained on the population objective
+With Π′ = Π, Proposition 1 thus gives the pretraining objective: a PFN is trained to minimize its risk under its own prior, the minimizer over all predictors is πΠ (Müller et al., 2021), and the excess risk
+(5) is the amortization error.
+This error is the distance, in expected KL, of the network from the PPD it is supposed to amortize.
+In practice, Eq. (4) is approximated by empirical risk minimization over M datasets D(j) whose task and size (pj, nj) are drawn from the prior, optimized with first-order stochastic gradient methods such that, in general, we have no guarantee how close we get to the target πΠ.
+Figure 1 places the amortization error among the two other sources of error of a deployed PFN: the context error, incurred even by πΠ because a finite context leaves the task uncertain, and the prior error, incurred because real tasks follow Π′̸ = Π.
+We focus on the former and work towards its precise relation to the other two in Proposition 2.
+As a first step, we propose how to analyse the amortization error for a tractable but realistic reference prior in the following section.
+2.3 Measuring Amortization Error
+Measuring AΠ(q) = EΠ[DKL(πΠ∥q)] directly requires knowledge of the true PPD, which is intractable for the priors used by current tabular foundation models.
+The evidence that trained PFNs closely track the PPD they amortize comes from Müller et al. (2021, 2024).
+The considered settings are low-dimensional compared to current structural causal model (SCM) prior (Qu et al., 2026; Hollmann et al., 2025), none use a current PFN architecture at scale, and only small context sizes are considered.
+Figure 2: Comparison of PPD approximation quality to MCMC reference on a classification task across both Gaussian and TabICL prior feature distributions (SCM prior).
+The labeling mechanism is a Bayesian neural network with two hidden layers with 16 neurons each, and the large TabICL variant is trained on these priors from scratch.
+The PFN approximates the ground-truth PPD provided by the MCMC reference very well across different context sizes (Figure inspired by Müller et al., 2021).
+Each point is the risk on datasets of context size n; Ψ is the size distribution of pretraining.
+Furthermore, the MCMC reference performed worse than the PFN under consideration.
+To fill this gap, we measure the amortization error not only in the setting introduced in Müller et al. (2021) with standard Gaussian features but also in a considerably more realistic setting by keeping the covariate generator of a state-of-the-art synthetic prior, so that the context tables have the marginal structure of current SCM priors (mixed feature types, correlations, non-Gaussian marginals).
+We replace the random mechanism mapping covariates to targets by a Bayesian neural network (BNN) fw defining the likelihood y | x, w ∼p(y | fw(x)) with w drawn from a Gaussian prior, analogous to the BNN prior introduced in Hollmann et al. (2023).
+Because the covariate generator and w are drawn independently, this prior factorizes.
+Conditioning on x∗leaves the posterior over w unchanged, and the PPD reduces to
+Making use of recent advances in both MCMC algorithm development (Robnik and Seljak, 2024) as well as sampling-based inference for BNNs (Sommer et al., 2025, 2026), we compare the prediction of PFNs against the PPD they are trained to amortize to obtain an empirical lower bound on the approximation error.
+MCMC yields a reference ˆπΠ against which DKL(ˆπΠ∥q) can be computed for each pair (x∗, Dn).
+In Fig. 2, we plot the aggregate NLL of a PFN against a largebudget MCMC reference.
+In the inset plots, it is visible that the MCMC reference, where 24 MCMC chains are sampled per task, still dominates the PFN, however, the amortization gap appears small and mostly dependent on what datasets are probable under the prior (deviations at small context settings for Ψ uniform vs. deviations at large context settings for Ψ loguniform).
+Details are given in Appendix C.
+While this approach is sufficient to study the general capabilities of transformers to approximate the PPD and measure quantitatively how good the approximation is in terms of the amortization error, two aspects complicate the analysis once we move to productiongrade synthetic priors and deployment on real-world datasets: We cannot compute the reference PPD, and deployment under a distribution Π′ different from the training distribution Π introduces a distribution shift (see Appendix C).
+The following studies these problems in more detail.
+3 AMORTIZATION ERROR UNDER DEPLOYMENT
+3.1 Amortization Error Without a Reference
+Beyond tractable priors, we cannot compute a reference PPD, and the amortization error has to be studied without an (approximate) ground-truth.
+Viewing the PFN with parameters ˆθ via empirical risk minimization, the amortization error splits into three components where ˜θM minimizes the empirical risk for M training samples and θ∗= arg minθ∈Θ L(θ), i.e., minimizes the population risk (4).
+The estimation error is the part that classical learning theory ties to the number of pretraining datasets M and expects to decrease at a 1/M rate (Nagler, 2023).
+This is where PFNs profit from effectively unlimited synthetic data.
+The approximation error is a property of the hypothesis class and is reduced only by enlarging it, which extensive work on architectures attempts (Qu et al., 2026; Grinsztajn et al., 2025; Kong et al., 2026).
+The optimization error is a consequence of the optimizer and for overparameterized networks trained on a non-convex risk, it is not guaranteed to decrease with model size or training duration.
+To confirm that the estimation error vanishes as expected, we can study K models that share all optimizer settings but differ in seed and training data, at several scales M1 < · · · < ML, and compute where θref is a reference checkpoint with Mref ≫ML.
+Averaging over the K runs cancels the zero-mean optimization noise of individual runs.
+3.2 Shared & Removable Amortization Error
+Optimization and approximation error cannot be isolated in the same way, since neither ˜θM nor θ∗nor πΠ is tractable.
+What is observable is the functional spread across K independently trained ensemble members q1, . . . , qK with identical M, model size, and optimizer settings.
+We measure this spread by the generalized Jensen–Shannon divergence d AU JSD between the members’ predictive distributions and by the pairwise argmax disagreement rate d AU dis, both averaged over test points (definitions in Appendix D).
+Neither requires labels.
+The following classical identity (Cover and Thomas, 2006) connects this spread to predictive performance.
+Lemma 1.
+For any distribution p on Y and predictors q1, . . . , qK with mixture ¯q = 1 K PK k=1 qk, where ∆p := Ey∼p  log ¯q(y) −1 PK k=1 log qk(y)  ≥0, with equality if and only if all qk agree p-almost everywhere.
+∆p is the averaging gain, i.e., the amount by which the mixture improves on its average member in expected log loss under p.
+Applied with p = πΠ, Lemma 1 splits the amortization error itself:
+Corollary 1.
+For PFNs q1, . . . , qK with mixture ¯q,
+Thus, the average amortization error of K PFNs splits into two parts that differ in what can be observed without the PPD.
+The first, AΠ(¯q), is the error the members have in common as they jointly deviate from πΠ, which cannot be measured without a reference as in Section 2.3.
+The second term is the part of the amortization error that differs between the members and does not require a reference to compute.
+It equals the log-loss gain 1 K P k RΠ(qk) −RΠ(¯q) of the mixture over its average member, which can be estimated on datasets drawn from the prior, and it vanishes if and only if the members agree.
+The disagreement metrics d AU JSD and d AU dis are therefore label-free probes of this visible part, and blind to the shared one.
+Revisiting Eq. (8), if the estimation error vanishes at the expected rate while disagreement persists, the remaining amortization error is consistent with optimization error, possibly combined with residual approximation error: independent runs reach functionally distinct solutions that more data does not reconcile.
+To test whether the removable part is driven to zero by the usual scaling levers, we study d EE and both disagreement metrics along two axes, the number of pretraining datasets M (data axis) and the model size (capacity axis).
+Results are depicted in Fig. 3.
+Under Π′̸ = Π, Proposition 1 says that the optimal predictor is πΠ′, not the πΠ the PFN was trained towards.
+Deploying a PFN on real data is thus a distribution shift from Π to Π′.
+The next result makes its cost explicit and reconciles in what sense model averaging can be beneficial.
+3.3 Decomposing the Deployment Error
+If the PFN training on Π does not perfectly align with the deployment distribution Π′, this difference needs to be taken into account.
+To locate the deployment pairs (p, n) relative to the prior, the Lebesgue decomposition splits the deployment distribution uniquely into a part the prior can express ˜Π, and a part Π′ ⊥it cannot, with density ˜rΠ = d˜Π/dΠ on the absolutely continuous part.
+The weight λ ∈[0, 1] is the fraction of deployment pairs reachable by reweighting the prior.
+The singular part Π′ ⊥lives on pairs to which Π assigns probability zero, and no reweighting reaches it.
+These include tasks the prior cannot generate as well as context sizes outside the pretraining range.
+As a baseline for the deployment risk, let HΠ′ := EΠ′[−log p(Y | X)] be the expected conditional entropy of the deployment tasks, i.e., the risk of an oracle that knows each task p and predicts with p(y | x).
+The excess risk of a PFN over this oracle then splits as follows.

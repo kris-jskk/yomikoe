@@ -1,0 +1,132 @@
+Sparse Autoencoders for Mechanistic Interpretability in NLP: A Critical Survey of Recoverability, Interpretability, and Utility
+Salima Lamsiyah Adelaide Danilov Oleksandr Marchenko Breneur Aria Nourbakhsh Department of Computer Science (DCS), University of Luxembourg
+Correspondence:
+Abstract
+Sparse autoencoders (SAEs) have emerged as a promising approach to mechanistic interpretability by decomposing language-model activations into sparse, potentially interpretable features.
+However, differences in design assumptions, evaluation objectives, and experimental settings complicate conclusions about their effectiveness.
+We present a critical survey of 138 studies on SAEs in natural language processing.
+Our contributions are fourfold: (1) we propose a task-grounded taxonomy connecting dictionary design, feature operations, and NLP functions; (2) we examine how sparsity allocation, geometry, data coverage, and inference affect feature recoverability; (3) we assess evidence for semantic interpretability, mechanistic faithfulness, and behavioral utility; and (4) we synthesize findings across multilingual processing, retrieval, reasoning, classification, and behavioral regulation, highlighting the roles of objectives, baselines, supervision, and intervention pipelines.
+Through comparative analyses of published results, we reconcile apparent disagreements, identify unresolved questions, and propose directions for more rigorous evaluation.
+An anonymous research register1 accompanies the survey.
+1 Introduction
+Sparse autoencoders encode model activations as sparse coefficients over a learned dictionary of feature directions (Cunningham et al., 2024).
+They make it possible to inspect concepts, compare representations, and intervene on internal variables at a finer granularity than whole layers or attention heads.
+Sparse interpretable sentence embeddings provide an earlier precedent (Trifonov et al., 2018); transformer studies established useful feature decompositions (Bricken et al., 2023; Cunningham et al., 2024); subsequent work scaled dictionaries and released reusable resources (Templeton et al., 2024; Gao et al., 2025; He et al., 2024b).
+The scientific opportunity is now broader: can these coordinates explain how language is represented and processed, and can that understanding improve NLP systems?
+Answering this question requires separating four outcomes.
+Recoverability concerns whether an encoding procedure recovers the target latent structure, where that structure is specified.
+Semantic interpretability concerns whether a feature description makes discriminating predictions about activations or effects.
+Mechanistic faithfulness concerns whether an explanation identifies computations the original model uses.
+Behavioral utility concerns success on a stated task with its competing objectives.
+These outcomes can agree, but their definitions do not imply agreement.
+Consider language identity.
+Multilingual feature analyses use it to distinguish language-associated representations (Deng et al., 2025); language steering seeks to induce a chosen output language (Gurgurov et al., 2026); LangSAE removes it from pooled embeddings to improve multilingual retrieval (Kim et al., 2026).
+Grouping these studies simply as multilingual SAE applications hides an objective-dependent reversal: information useful for generation can be a nuisance for semantic retrieval.
+Conversely, grouping only by encoder architecture does not reveal this distinction at all.
+Existing surveys provide complementary perspectives on SAEs and mechanistic interpretability.
+Shu et al. (2025) synthesize SAE architectures, training procedures, feature explanations, evaluation methods, and applications.
+Mueller et al. (2026a) organize NLP mechanistic interpretability around causal mediators and search methods, examining which computational units and analytical procedures support explanation, hypothesis testing, and model editing.
+Zhang et al. (2026a) connect localization and steering to improvements in alignment, capability, and efficiency, including SAE features, task-specific metrics, and checks for unintended effects.
+Building on these foundations, our survey examines how SAE construction and use jointly shape the comparability and interpretation of NLP findings.
+This motivates three research questions.
+RQ1: Which design assumptions change what an SAE can recover?
+We compare allocation, geometry, data coverage, and inference under their stated objectives and theoretical assumptions (Section 3).
+RQ2: What evidence distinguishes an interpretable or useful feature from a faithful mechanism?
+We examine semantic tests, intervention controls, and counterexamples using a claimspecific rubric (Section 4).
+RQ3: Why do NLP studies reach different conclusions about SAE usefulness?
+We compare task objectives, supervision, and control pipelines, and reanalyse selected within-study results (Section 5).
+Our taxonomy organizes SAE studies by dictionary design, feature operation, and NLP function.
+Our multi-label register and comparative analyses support a task-grounded synthesis that clarifies apparent disagreements and identifies unresolved questions.
+2 Scope and Organizing Framework
+We survey SAE methods for language-model analysis and NLP system construction, including relevant speech and multimodal extensions.
+Corpus selection and coding are detailed in Appendix A.
+Three facets and their qualifiers.
+For study s, we record T(s) = (Ds, Os, Fs; Zs) (Figure 1).
+Dictionary design Ds describes how features are obtained or constrained: sparsity allocation, geometry, coverage and objectives, inference and activation sites, or functional alternatives.
+Feature operation Os describes their use: characterize representations, predict or diagnose outcomes, trace dependencies, or edit model behavior and construct systems.
+NLP function Fs specifies the evaluation target, covering linguistic distinctions, knowledge and retrieval, reasoning and adaptation, behavioral regulation, text analytics, speech and multimodal analysis, and general enabling research.
+The facets interact: a task can shape dictionary training, while dictionary structure can enable particular operations.
+Qualifiers Zs retain model/version, activation site, data, supervision, feature selection, and intervention protocol.
+Together, the upper boxes and central band in Figure 1 expose differences in experimental settings that may explain apparent disagreements.
+Claim-dependent evidence.
+The taxonomy identifies comparable studies; the evidence framework assesses their claims.
+In the lower row of Figure 1, claims about feature recoverability, semantic interpretability, mechanistic faithfulness, and behavioral utility require different tests and controls.
+In particular, demonstrating the utility of SAE-derived features in a classifier, retriever, or controller does not necessarily establish the computations performed by the original model.
+The operational definitions, study assignments, and cross-dimensional analyses are provided in Appendix B.
+3 Dictionary Design and Recoverability
+RQ1 asks which design assumptions determine what an SAE can recover.
+For an NLP researcher seeking a grammatical distinction, an unsuccessful feature search leaves several explanations open: the chosen representation, the dictionary’s constraints, the training data, or the encoding procedure.
+We compare methods by which of these limitations they address.
+For activation h ∈Rd, an encoder produces z = fθ(h) ∈Rm and a decoder reconstructs ˆh = b + Dz.
+A common objective is
+This objective rewards reconstruction and sparsity; recovering a specified latent structure is a separate endpoint.
+Synthetic studies can compare against a known generating dictionary, whereas languagemodel studies must validate the proposed feature interpretation.
+3.1 Defining the structure to be recovered
+The activation site determines the starting object.
+Residual streams contain accumulated information; attention and MLP outputs characterize component contributions.
+Transcoders instead approximate a component’s input–output map (Dunefsky et al., 2024; Paulo et al., 2025).
+Layer transfer, shared dictionaries, and routing change training cost and parameter reuse (Ghilardi et al., 2024, 2025; Shi et al., 2025); comparisons still need to establish what structure is preserved across sites.
+Figure 1: Three facets jointly define a comparison (top), interpreted alongside its experimental settings (middle).
+Complementary evidence targets assess what the findings support (bottom).
+Arrows show how the facets inform study comparison and claim assessment; the tests are illustrative and tailored to the claim.
+Within a site, the question is how that structure should be represented.
+Splitting distributes a concept across latents, while absorption allows a specialized latent to carry a broader property (Chanin et al., 2025); neither supports equating an inactive coordinate with absent information.
+Subspace (Engels et al., 2025; Dalili and Mahdavi, 2026) and manifold approaches (Bhalla et al., 2026a) model structure beyond individual directions.
+Nested scales (Bussmann et al., 2025), parent–child gates (Muchane et al., 2025), and Kronecker factorization (Kurochkin et al., 2025) impose different forms of organization across features.
+Temporal smoothness (Bhalla et al., 2026b) and predictablecontext/novelty separation (Lubana et al., 2026) instead organize variation over sequences.
+These choices change the candidate unit of analysis: their NLP value depends on whether the resulting directions, groups, or temporal features capture the distinction under study.
+3.2 Allocating sparse capacity
+Once the target is specified, allocation determines which features can participate in each reconstruction.
+An ℓ1 penalty encourages sparsity but also shrinks amplitudes.
+Gated SAEs separate selection from magnitude estimation, while JumpReLU learns activation thresholds (Rajamanoharan et al., 2024a,b).
+TopK fixes the number of retained coordinates per input (Gao et al., 2025); Batch- TopK distributes a budget across a batch and estimates an inference-time threshold (Bussmann et al., 2024).
+Top-AFA selects counts through a quasiorthogonality approximation (Lee et al., 2025), AdaptiveK uses a learned complexity signal (Yao et al., 2026), and Group Bias Adaptation (GBA) targets activation-frequency coverage (Chen et al., 2026b).
+These allocation rules make different assumptions about inputs, geometry, and feature frequency.
+The results show why allocation cannot be ranked by reconstruction alone.
+BatchTopK improves reconstruction over TopK, but its Gemma- 2-2B comparison with JumpReLU is mixed for downstream cross-entropy degradation (Bussmann et al., 2024).
+In GBA’s variable-sparsity synthetic experiment, TopK recovery falls from 98.4% at K = 20 to 23.4% at K = 50; full versus misspecified frequency coverage gives GBA 100% versus 3.9% recovery (Chen et al., 2026b).
+These rates use alignment threshold 0.9 and 128 generating features.
+They demonstrate sensitivity to allocation and coverage assumptions under known ground truth, rather than an NLP ranking.
+Comparisons should match average sparsity, data, and insertion protocol; decoder normalization must also be recorded because it changes coefficient scales (Appendix C).
+3.3 Separating coverage from inference error
+Even a suitable representation and budget cannot resolve every failure.
+Specialized sampling and tilted risk improve access to rare concepts (Muhamed et al., 2025b), changing the training distribution and emphasis of the objective.
+Weighted SAEs analyze recovery and reweighting under an idealized tied-weight model (Cui et al., 2026); those assumptions delimit the result’s applicability to languagemodel activations.
+Locally amortized inference addresses a different limitation: a shared encoder can leave an optimization gap relative to per-input sparse coding (Sun et al., 2026).
+Improving that approximation does not establish that the reference codes are the intended linguistic features.
+Thus data coverage, the learning objective, and encoding accuracy require separate comparisons.
+Answer to RQ1.
+Recoverability has separable bottlenecks: the representation and its geometry, sparse allocation, training coverage, and inference.
+The evidence supports diagnosing the suspected bottleneck while matching the remaining conditions.
+Reconstruction, recovery against a specified reference, and behavioral preservation should remain separate endpoints.
+Technical comparisons and assumptions are detailed in Appendix C.
+4 From Features to Explanations and Mechanisms
+Recovering sparse features leaves their explanatory role unresolved.
+RQ2 asks what distinguishes a meaningful or useful feature from a faithful account of model computation.
+A feature may predict sentiment, support sentiment steering, or mediate the model’s own sentiment decision; these claims require different tests.
+Table 1 organizes support for a specified claim and evaluation setting.
+Appendix D develops the assessment rules through worked claims and a causal counterexample.
+4.1 Testing the feature’s meaning
+A feature description is a hypothesis about its behavior.
+Input-oriented descriptions predict what elicits activation; output-oriented descriptions predict contributions to generation (Gur-Arieh et al., 2025).
+Automated explanation (Paulo et al., 2024), agentic testing (Han et al., 2026), and counterexample-guided revision (Ma et al., 2025) make these hypotheses testable on held-out positives and hard negatives.
+The critical question is whether the description discriminates the intended property from alternatives.
+Descriptive collision tests whether one explanation also fits unrelated features (McCann, 2026); contrastive stories, semantic/functional neighborhoods, and conceptseparability tests examine complementary aspects of specificity (Gulko et al., 2025; Mercorio et al., 2025; Fereidouni et al., 2026; Härle et al., 2025).
+The controls must preserve what the claim says should remain invariant.
+A grammatical feature should track the specified contrast across appropriate lexical controls; a lexical feature need not survive word substitution.
+Adversarial inputs test the limits of a description (Li et al., 2026a), while randomized SAE components and randomized host models challenge different sources of apparent interpretability (Korznikov et al., 2026; Heap et al., 2026).
+In the latter comparison, similar aggregate scores in several tested settings show that those metrics need not distinguish learned computations from structure present without training (Heap et al., 2026).
+Cross-run consistency asks whether features recur across learned dictionaries (Song et al., 2026); recurrence alone does not validate their meaning.
+4.2 Testing predictive and causal effects
+A useful predictor need not identify a variable the source model uses.
+For a known target, SAE probes should be compared with supervised probes on the original activations, given matched information (Kantamneni et al., 2025; Makelov et al., 2025).
+For control, direct activation directions provide an alternative (Gurgurov et al., 2026).
+These comparisons test the benefit of the SAE representation for the chosen objective.
+A reusable feature vocabulary can still support exploratory discovery beyond a predefined prediction task (Peng et al., 2025).
+Interventions test what changes when a feature is edited.
+Their effects must be separated from damage introduced by reconstruction.
+With error e = h −(b + Dz), an error-preserving edit is
+Replacing h with b + Dz′ also removes e, so the measured effect combines the feature edit with reconstruction error.
+Retaining e isolates the decoded change but does not ensure that the edited activation lies within the model’s natural distribution.
+Null edits, matched-magnitude controls, naturally occurring replacement values, and off-target measurements test distinct alternatives.
+A controlled effect supports a causal claim about the manipulation; explaining the unmodified computation requires further evidence.
