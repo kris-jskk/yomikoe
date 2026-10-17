@@ -31,7 +31,7 @@ v1 ships a working reader for born-digital and scanned PDFs with at least 6 voic
 - Mobile native apps (web app must work on a phone browser, that is enough)
 - Summaries, chat-with-PDF, mind maps
 - Multi-user accounts, sharing, billing
-- Non-PDF formats (EPUB, DOCX, web pages); keep the ingestion interface open for them
+- Non-PDF formats (EPUB, DOCX, web pages); keep the ingestion interface open for them (revisited 2026-10-17: SRC-1 to SRC-4, M6)
 
 **Success metrics**
 
@@ -82,7 +82,7 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | ING-6 | P1 | Normalize text for speech: numbers, currency, dates, URLs → domain spoken with dot ("shopping dot com", e-mail "name at host dot com"), citations like \[12\], common abbreviations; acronym pronunciation decided in the backend with a lexicon and overrides, in context: a collocation ("TED talk") or the document's own definition ("Transferable Erosion Deposit (TED)", stored per document at ingestion) changes the reading |
 | ING-7 | P1 | Tables read as row-by-row prose with a spoken cue ("Table 2, 3 rows"); equations read as a cue ("equation") not symbol soup |
 | ING-8 | P1 | Build a table of contents from headings for navigation |
-| ING-9 | P2 | Ingestion interface accepts EPUB, DOCX, HTML through the same block schema |
+| ING-9 | P2 | Ingestion interface accepts EPUB, DOCX, HTML through the same block schema; see SRC-1, promoted 2026-10-17 |
 
 **Synthesis (SYN)**
 
@@ -148,6 +148,19 @@ Added 2026-10-17 (M5). Extends the pronunciation layer the Kokoro backend alread
 | TERM-3 | P1 | Citations: numeric clusters "[12, 14]" stay dropped (ING-6); author–year citations "(Smith et al., 2019)" are spoken as "Smith et al. 2019" or skipped, by a PLAY-8-style toggle; "et al." is spoken "et al" (already); a surname before "et al." is pronounced through TERM-1 |
 | TERM-4 | P1 | Academic abbreviations spoken by expansion: i.e., e.g., cf., w.r.t., resp., s.t., iff, w.l.o.g., viz., et seq., ibid., op. cit.; the expansion table is configurable |
 | TERM-5 | P2 | Code identifiers and file names in computer-science papers (snake_case, camelCase, dotted.paths) spoken as their words |
+
+**Sources (SRC)**
+
+Added 2026-10-17 (user direction: read the books and documents the user already has in other apps). Proposed for M6, after M5; not M5 scope.
+
+| ID | Pri | Requirement |
+| --- | --- | --- |
+| SRC-1 | P1 | Import EPUB, DOCX, HTML, Markdown and plain text through the same block schema as PDF (promotes ING-9 from P2 to P1) |
+| SRC-2 | P1 | Import several files at once by drag-drop or folder pick, and on macOS read the local Apple Books library folder for DRM-free books (sideloaded EPUB and PDF only) |
+| SRC-3 | P2 | Cloud sources (iCloud Drive, Google Drive, Dropbox) through their file pickers or APIs; the Files app on iOS through the standard picker |
+| SRC-4 | P2 | Kindle: narrate what Amazon exposes to the user, the notes and highlights export ("My Clippings.txt" and the notebook export), not the books |
+
+DRM boundary: purchased Kindle titles and purchased Apple Books titles are encrypted (Amazon has no content API; Apple uses FairPlay). HearNarro never removes DRM, so those titles are out of scope in every milestone.
 
 **Evals (EVAL)**
 
@@ -292,9 +305,9 @@ v1 runs on one laptop (8 GB RAM, no GPU) and must feel instant; everything else 
 ## Milestones
 
 ```
-M1 Ingest + skeleton  -->  M2 Synthesis + stream  -->  M3 Reader UI  -->  M4 Library + polish  -->  M5 Academic reading
-Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate: 300-page soak       Gate: 10 formula pages,
-parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up         spoken-maths score >= 0.90
+M1 Ingest + skeleton  -->  M2 Synthesis + stream  -->  M3 Reader UI  -->  M4 Library + polish  -->  M5 Academic reading         -->  M6 Sources and formats (proposed)
+Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate: 300-page soak       Gate: 10 formula pages,          Gate: EPUB/DOCX re-exports within
+parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up         spoken-maths score >= 0.90       0.02 of PDF EVAL-1; Apple Books EPUB opens
 ```
 
 M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments. The score is word-level (D14): word-sequence edit distance over the ordered prose, ≥ 0.95 per PDF (scanned fixtures at a 0.85 floor, D35) and ≥ 0.97 mean; the sentence-level score is printed as a diagnostic only.
@@ -314,8 +327,9 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
    (b) a spoken-mathematics score defined like D14 (word-sequence edit distance over the spoken text, lowercased, punctuation stripped) ≥ 0.90 per text-layer fixture, ≥ 0.75 for the scanned one, mean ≥ 0.92;
    (c) EVAL-4 extended with MATH and TERM categories and no new failures against the M4 baseline;
    (d) a tier-1 listening sheet (EVAL-9) on 10 formula sentences across 2 voices with pronunciation errors counted.
+6. M6 Sources and formats (proposed 2026-10-17, after M5; user direction: read the books and documents the user already has in Apple Books, Kindle, cloud drives and other apps). Scope: SRC-1 to SRC-3 and LIB changes for multi-format rows (file type shown in LIB-1); SRC-4 if cheap. DRM-protected titles are out of scope (see the DRM boundary under Sources). Gate: the 15 text fixtures re-exported as EPUB and DOCX parse to the same prose at an EVAL-1 score within 0.02 of the PDF score, and one DRM-free Apple Books EPUB opens from the library folder.
 
-After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export, ING-9 more formats.
+After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export (ING-9 more formats is now M6, SRC-1).
 
 ## Open questions and risks
 
@@ -349,5 +363,7 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 - [ ] `DELETE /documents/{id}` does not cancel synthesis lookahead already running for that document, so a job in flight could recreate a file under `audio/{id}/` after the delete; not tested (`_agent/drafts/m4-1-build-lib.md`)
 - [ ] M4 gate clause 3 (Docker): `docker compose up --build`, then `GET /documents` returns 200 and the app loads at `/`, to be run by the user on a machine with a container runtime (`docs/DOCKER.md`)
 - [ ] OCR of mathematics: Tesseract misreads inline and display maths on scanned_04/05; equation detection on OCR blocks or a maths-capable engine is MATH-6, after M5 (D35, `_agent/results/591_golden_scanned_after.txt`)
-- [ ] M5: which maths-to-speech approach, and under what licence? Survey pending in `_agent/research/m5-math-speech-options.md` (D37 decides from it); added 2026-10-17
+- [ ] M5: which maths-to-speech approach, and under what licence? Survey done 2026-10-17 (`_agent/research/m5-math-speech-options.md`, licence evidence `_agent/results/607_math_speech_licences.md`), recommendation pending user confirmation (D37): own rule engine over pdfplumber glyphs first; MathCAT (MIT) or Speech Rule Engine (Apache-2.0, needs Node) as an optional MathML layer later; for scanned pages only the Pix2Text MFR weights (MIT on Hugging Face) or UniMERNet (Apache-2.0 code, weights licence unverified) are candidates; excluded: Nougat weights (CC-BY-NC), pix2tex weights (reported CC BY-NC-SA, unverified) and the pix2text package (AGPL-3.0 via doclayout-yolo)
 - [ ] M5: do equation crops (MATH-5) need word boxes stored? Block bboxes are stored in `blocks` rows (the bbox of the block's first source fragment, `docs/CODE_MAP_M1.md`); word boxes are not; added 2026-10-17
+- [ ] M6: iOS has no share target for web apps, so "open in HearNarro" from another iOS app needs a native shell or the Files picker (SRC-3); see the phone-browser question above on iOS background playback; added 2026-10-17
+- [ ] M6: is the Apple Books folder path (`~/Library/Containers/com.apple.BKAgentService/Data/Documents/iBooks/Books`) stable across macOS versions? Unverified; added 2026-10-17

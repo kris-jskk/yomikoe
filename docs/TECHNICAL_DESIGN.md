@@ -375,6 +375,8 @@ M5 "Academic reading" (PRD, Milestones item 5) follows the user's decision of 20
 
 **D37, structure from the glyphs first.** PDFs do not carry LaTeX source, so the structure of an expression has to be recovered. The first attempt is dependency-free and uses what stage 1 already keeps per glyph: math font names (`CMMI`, `CMSY`, `CMEX`, `MSBM` and the others in the stage 2 equation row), the superscript flag, baseline offsets (sub- and superscripts), stacked bboxes (a fraction is a numerator over a rule over a denominator), and large operators from `CMEX` (∑ ∏ ∫ with limits above and below). An image-to-LaTeX model is a later option behind a flag, and only if its code and weights are licence-clean under the project rule; the survey in `_agent/research/m5-math-speech-options.md` decides which, if any. The scanned path (no glyphs) uses the MATH-1 fallback until MATH-6. Alternative rejected: requiring LaTeX source, which PDFs do not carry.
 
+D37 survey result (2026-10-17, still proposed; `_agent/research/m5-math-speech-options.md`, licence evidence `_agent/results/607_math_speech_licences.md`): own rule engine over glyphs first; MathCAT (MIT) or Speech Rule Engine (Apache-2.0, needs Node) as an optional MathML layer later; for scanned pages only the Pix2Text MFR weights (MIT on Hugging Face) or UniMERNet (Apache-2.0 code, weights licence unverified) are candidates; excluded: Nougat weights (CC-BY-NC), pix2tex weights (reported CC BY-NC-SA, unverified) and the pix2text package (AGPL-3.0 via doclayout-yolo).
+
 ## Testing strategy (D11)
 
 Four kinds of test, each tied to a milestone gate; the gate tests are written before the code they gate, and CI runs everything but the benchmark on every push.
