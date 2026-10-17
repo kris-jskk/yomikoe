@@ -5,9 +5,19 @@ Import them directly: ``from tests.conftest import make_block, make_page, make_s
 
 from __future__ import annotations
 
+import dataclasses
+import functools
+import threading
+import time
 from collections.abc import Sequence
+from pathlib import Path
 
-from hearnarro.ingestion.models import BBox, Block, BlockType, Line, Page, Span
+import pytest
+
+from hearnarro.ingestion.models import BBox, Block, BlockType, Line, Page, Segment, Span
+from hearnarro.synthesis.backend import SynthResult, Voice
+from hearnarro.synthesis.cache import AudioEntry
+from hearnarro.synthesis.fake import FakeBackend
 
 
 def union(boxes: Sequence[BBox]) -> BBox:
@@ -93,3 +103,152 @@ def make_page(
         has_text_layer=has_text_layer,
         figure_bboxes=list(figure_bboxes),
     )
+
+
+# ---------------------------------------------------------------------------------------
+# M2 synthesis helpers (SYN-1..SYN-6). Test doubles for the SynthesisService's collaborators:
+# a spying FakeBackend, an in-memory AudioCache and an in-memory SegmentRepo, plus the 50
+# fixture sentences the timestamp invariants run over (ingested, not hand-written).
+# Import them directly: ``from tests.conftest import SpyBackend, ...``.
+# ---------------------------------------------------------------------------------------
+
+PDF_FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
+SYNTH_FIXTURE_STEMS = ("report_01_zero_trust", "academic_01_seahelm_audio")
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers", "model: needs a real TTS model; skipped unless HEARNARRO_TEST_MODEL=1"
+    )
+
+
+class SpyBackend:
+    """FakeBackend that records every call; optional per-call delay and per-text failure."""
+
+    def __init__(self, delay_s: float = 0.0, fail_texts: set[str] | None = None) -> None:
+        self.inner = FakeBackend()
+        self.name = self.inner.name
+        self.delay_s = delay_s
+        self.fail_texts = fail_texts or set()
+        self.calls: list[tuple[str, str, float, str]] = []  # text, voice, speed, thread
+        self._lock = threading.Lock()
+
+    def voices(self) -> list[Voice]:
+        return self.inner.voices()
+
+    def speed_range(self) -> tuple[float, float]:
+        return self.inner.speed_range()
+
+    def synthesize(self, text: str, voice_id: str, speed: float) -> SynthResult:
+        with self._lock:
+            self.calls.append((text, voice_id, speed, threading.current_thread().name))
+        if self.delay_s:
+            time.sleep(self.delay_s)
+        if text in self.fail_texts or "*" in self.fail_texts:
+            raise RuntimeError("spy backend: induced failure")
+        return self.inner.synthesize(text, voice_id, speed)
+
+    @property
+    def texts(self) -> list[str]:
+        with self._lock:
+            return [c[0] for c in self.calls]
+
+
+class InMemoryCache:
+    """Duck-typed AudioCache: same methods, entries in a dict, bytes kept alongside."""
+
+    def __init__(self) -> None:
+        self.entries: dict[tuple[int, str, float, str], AudioEntry] = {}
+        self.audio: dict[tuple[int, str, float, str], bytes] = {}
+        self.failures: dict[tuple[int, str, float, str], str] = {}
+
+    @staticmethod
+    def key(segment_id: int, voice_id: str, speed: float, backend: str):
+        return (segment_id, voice_id, round(speed, 1), backend)
+
+    async def get(self, segment_id: int, voice_id: str, speed: float, backend: str):
+        return self.entries.get(self.key(segment_id, voice_id, speed, backend))
+
+    async def put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry:
+        k = self.key(entry.segment_id, entry.voice_id, entry.speed, entry.backend)
+        stored = dataclasses.replace(
+            entry, status="ready", path=Path(f"mem/{entry.segment_id}/{k[1]}_{k[2]:.1f}")
+        )
+        self.entries[k] = stored
+        self.audio[k] = audio_bytes
+        return stored
+
+    async def mark_failed(
+        self, segment_id: int, voice_id: str, speed: float, backend: str, reason: str
+    ) -> None:
+        k = self.key(segment_id, voice_id, speed, backend)
+        self.failures[k] = reason
+        self.entries[k] = AudioEntry(
+            segment_id, voice_id, speed, backend, "failed", None, "", 0, []
+        )
+
+    def ready_ids(self) -> set[int]:
+        return {k[0] for k, e in self.entries.items() if e.status == "ready"}
+
+
+class MemorySegmentRepo:
+    """Duck-typed SegmentRepo over a list of Segments."""
+
+    def __init__(self, segments: list[Segment]) -> None:
+        self.by_id = {s.id: s for s in segments}
+
+    async def get_segment(self, segment_id: int) -> Segment | None:
+        return self.by_id.get(segment_id)
+
+    async def segments_from(self, document_id: int, from_order: int, limit: int) -> list[Segment]:
+        rows = sorted(
+            (
+                s
+                for s in self.by_id.values()
+                if s.document_id == document_id and s.order >= from_order
+            ),
+            key=lambda s: s.order,
+        )
+        return rows[:limit]
+
+
+@functools.cache
+def synth_fixture_segments() -> tuple[Segment, ...]:
+    """All segments of report_01 (document 1) and academic_01 (document 2), via ``ingest()``.
+    Ids are ``document_id * 10_000 + order`` so they are unique and contiguous per document."""
+    from hearnarro.ingestion.pipeline import ingest
+
+    out: list[Segment] = []
+    for doc_id, stem in enumerate(SYNTH_FIXTURE_STEMS, start=1):
+        for seg in ingest(PDF_FIXTURES / f"{stem}.pdf", document_id=doc_id).segments:
+            out.append(dataclasses.replace(seg, id=doc_id * 10_000 + seg.order, document_id=doc_id))
+    return tuple(out)
+
+
+def fifty_fixture_sentences() -> list[Segment]:
+    """25 segments with at least one word from each fixture, in reading order (SYN-1)."""
+    picked: list[Segment] = []
+    for doc_id in (1, 2):
+        segs = [s for s in synth_fixture_segments() if s.document_id == doc_id]
+        picked += [s for s in segs if s.normalized_text.split()][:25]
+    assert len(picked) == 50
+    return picked
+
+
+def make_service(
+    backend: object | None = None,
+    *,
+    lookahead: int = 0,
+    segments: list[Segment] | None = None,
+    cache: InMemoryCache | None = None,
+):
+    """SynthesisService over the fixture segments, an InMemoryCache and WavEncoder.
+    Returns (service, backend, cache). The caller awaits ``service.shutdown()``."""
+    from hearnarro.synthesis.encode import WavEncoder
+    from hearnarro.synthesis.service import SynthesisService
+
+    backend = backend if backend is not None else SpyBackend()
+    cache = cache if cache is not None else InMemoryCache()
+    repo = MemorySegmentRepo(list(segments if segments is not None else synth_fixture_segments()))
+    service = SynthesisService(backend, WavEncoder(), cache, repo, lookahead=lookahead)  # type: ignore[arg-type]
+    return service, backend, cache
