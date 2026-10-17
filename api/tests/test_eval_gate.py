@@ -101,3 +101,129 @@ def test_e0_compare_flags_one_lowered_example(run_result: tuple[dict, Path]) -> 
     flagged = {(r["suite"], r["id"]) for r in result["regressions"]}
     assert flagged == {("EVAL-1", target["id"])}
     assert result["suites"]["EVAL-1"]["examples"][target["id"]]["score"] == pytest.approx(-0.02)
+
+
+# --- E1: EVAL-3 clean-text rates and EVAL-4 speech form (D31, D32, D33) ---------------------
+
+EVAL3_COUNT = sum(1 for e in ENTRIES if e["class"] != "scanned")
+EVAL4_CATEGORIES = {
+    "cardinal",
+    "decimal_percent",
+    "year_date",
+    "time",
+    "money",
+    "unit",
+    "ordinal",
+    "phone_id_range",
+    "abbreviation",
+    "acronym_spelled",
+    "acronym_spoken",
+    "mixed_edge",
+    "table_cue",
+    "equation_cue",
+}
+
+
+@pytest.fixture(scope="module")
+def all_run(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
+    from hearnarro.evals.runner import run
+
+    record, _ = run(["all"], out_dir=tmp_path_factory.mktemp("runs_all"), tier=0)
+    return record
+
+
+def test_eval3_eval4_registered_tier0_with_direction() -> None:
+    from hearnarro.evals.suites import SUITES, direction
+
+    assert SUITES["EVAL-3"].TIER == 0 and SUITES["EVAL-4"].TIER == 0
+    assert direction("EVAL-3") == "lower"
+    assert direction("EVAL-4") == "higher"
+    assert direction("EVAL-1") == direction("EVAL-2") == "higher"
+
+
+def test_eval_all_tier0_runs_four_suites_under_60s(all_run: dict[str, Any]) -> None:
+    assert set(all_run["suites"]) == {"EVAL-1", "EVAL-2", "EVAL-3", "EVAL-4"}
+    assert all_run["seconds"] < 60
+    assert all_run["suites"]["EVAL-3"]["direction"] == "lower"
+
+
+def test_eval3_rates_per_1000_words(all_run: dict[str, Any]) -> None:
+    suite = all_run["suites"]["EVAL-3"]
+    examples = suite["examples"]
+    assert len(examples) == EVAL3_COUNT == 15
+    names = set(examples[0]["checks"])
+    assert {"dangling_hyphens", "ligature_artifacts", "midsentence_breaks"} <= names
+    for ex in examples:
+        assert ex["words"] > 0 and set(ex["checks"]) == names
+        for c in ex["checks"].values():
+            assert c["rate"] == pytest.approx(c["count"] * 1000 / ex["words"])
+        assert ex["total_rate"] == pytest.approx(sum(c["rate"] for c in ex["checks"].values()))
+        assert ex["score"] == ex["total_rate"]
+    agg = suite["aggregate"]
+    for name in names:
+        mean = sum(ex["checks"][name]["rate"] for ex in examples) / len(examples)
+        assert agg["mean_rate"][name] == pytest.approx(mean)
+    assert agg["total_mean_rate"] == pytest.approx(
+        sum(ex["total_rate"] for ex in examples) / len(examples)
+    )
+
+
+def test_eval3_compare_treats_increase_as_regression(all_run: dict[str, Any]) -> None:
+    from hearnarro.evals.store import compare
+
+    base = {"run_id": "a", "suites": {"EVAL-3": copy.deepcopy(all_run["suites"]["EVAL-3"])}}
+    worse, better = copy.deepcopy(base), copy.deepcopy(base)
+    worse["run_id"], better["run_id"] = "b", "c"
+    target = worse["suites"]["EVAL-3"]["examples"][0]
+    target["total_rate"] += 2.0
+    target["score"] += 2.0
+    better["suites"]["EVAL-3"]["examples"][1]["total_rate"] = 0.0
+    better["suites"]["EVAL-3"]["examples"][1]["score"] = 0.0
+    assert {r["id"] for r in compare(base, worse)["regressions"]} == {target["id"]}
+    assert compare(base, better)["regressions"] == []
+
+
+def test_eval4_dataset_shape() -> None:
+    from hearnarro.evals.suites import eval4_speech_form
+
+    rows = eval4_speech_form.load_pairs()
+    assert len(rows) >= 300
+    assert len({r["id"] for r in rows}) == len(rows)
+    for r in rows:
+        assert {"id", "category", "text", "expected"} <= set(r)
+        assert set(r) <= {"id", "category", "text", "expected", "note", "block"}
+        assert r["text"].strip() and r["expected"].strip()
+    by_cat: dict[str, int] = {}
+    for r in rows:
+        by_cat[r["category"]] = by_cat.get(r["category"], 0) + 1
+    assert EVAL4_CATEGORIES <= set(by_cat)
+    assert all(n >= 15 for n in by_cat.values()), by_cat
+
+
+def test_eval4_spoken_uses_the_app_path() -> None:
+    """Ingestion normalization (ING-6/7) then the backend's acronym decision (SYN-4)."""
+    from hearnarro.evals.suites.eval4_speech_form import spoken
+
+    assert spoken("Read the PDF from NASA.") == "Read the P D F from NASA."
+    assert spoken("See shopping.com now.") == "See shopping dot com now."
+    assert spoken("x = √(a² + b²)          (12)", block="equation") == "Equation 12."
+    assert spoken("Name | Role\nAda | Analyst", block="table").startswith("Table 1, 2 rows.")
+
+
+def test_eval4_examples_and_aggregate(all_run: dict[str, Any]) -> None:
+    from hearnarro.evals.suites import eval4_speech_form
+
+    suite = all_run["suites"]["EVAL-4"]
+    examples = suite["examples"]
+    assert len(examples) == len(eval4_speech_form.load_pairs())
+    for ex in examples:
+        assert {"id", "class", "exact", "partial", "score", "actual"} <= set(ex)
+        assert isinstance(ex["exact"], bool)
+        assert 0.0 <= ex["partial"] <= 1.0
+        assert not ex["exact"] or ex["partial"] == 1.0
+    agg = suite["aggregate"]
+    assert agg["accuracy"] == pytest.approx(sum(e["exact"] for e in examples) / len(examples))
+    assert agg["partial_mean"] == pytest.approx(
+        sum(e["partial"] for e in examples) / len(examples)
+    )
+    assert set(agg["by_category"]) == {e["class"] for e in examples} >= EVAL4_CATEGORIES
