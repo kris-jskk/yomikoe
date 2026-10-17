@@ -108,3 +108,43 @@ def test_syn3_kokoro_native_speed_range_scales_duration() -> None:
     assert 2.8 <= slow / fast <= 4.2  # spike 275: 11.55 s / 3.33 s = 3.47
     with pytest.raises(ValueError):
         _backend().synthesize(SENTENCE, "af_heart", 2.5)
+
+
+ONSET_SENTENCES = [
+    "On the other hand, we’re also taught from a young age to finish your books.",
+    "Weight pruning removes parameters from a trained network to reduce its size.",
+    "That split is what lets the reader start playback before the rest is ready.",
+]
+
+
+def _first_word_onset(result) -> tuple[float, float, int]:
+    """(onset ms: first sample above -35 dBFS, RMS over the first word's timestamp window,
+    the first word's start ms). The window, not a fixed 100 ms: at 2.0 a short word's first
+    100 ms already includes the next word's stop closure."""
+    import numpy as np
+
+    x = np.frombuffer(result.audio, dtype="<i2").astype(np.float64) / 32768.0
+    loud = np.flatnonzero(np.abs(x) > 10 ** (-35 / 20))
+    onset = loud[0] * 1000 / result.sample_rate if len(loud) else float("inf")
+    start = result.timestamps[0].start_ms
+    end = result.timestamps[0].end_ms
+    window = x[start * result.sample_rate // 1000 : end * result.sample_rate // 1000]
+    return onset, float(np.sqrt(np.mean(window**2))), start
+
+
+@pytest.mark.model
+@pytest.mark.parametrize("text", ONSET_SENTENCES)
+def test_syn3_kokoro_first_word_not_clipped_at_fast_native_speeds(text: str) -> None:
+    """At 2.0 the model's ~250 ms dead start swallowed the first word once BOS shrank with
+    speed (results 343). The first word must be audible at its timestamp at every speed."""
+    import torch
+
+    torch.manual_seed(0)  # the decoder draws noise; fix it so the margins are reproducible
+    _, ref_rms, _ = _first_word_onset(_backend().synthesize(text, "af_heart", 1.0))
+    for speed in (1.0, 1.5, 2.0):
+        torch.manual_seed(0)
+        result = _backend().synthesize(text, "af_heart", speed)
+        _check_invariants(text, result)
+        onset, rms, start = _first_word_onset(result)
+        assert onset <= start + 60, f"speed {speed}: onset {onset:.0f} ms, first word {start} ms"
+        assert rms >= 0.5 * ref_rms, f"speed {speed}: first-word RMS {rms:.4f} vs {ref_rms:.4f}"

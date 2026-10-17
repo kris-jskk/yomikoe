@@ -21,6 +21,14 @@ Word timestamps (contract for ``SynthResult.timestamps``):
 - a word whose tokens all have empty phonemes (e.g. a lone symbol) gets a zero-length interval
   at the previous word's end (0 for the first word);
 - times are clamped so that starts and ends never decrease, start <= end, end <= duration.
+
+Speed and the leading BOS token (SYN-3, D6): the model renders its first ~250-330 ms as
+near-silence whatever is scheduled there, and Kokoro's own forward divides every predicted
+duration by ``speed``, BOS included. At 2.0 the BOS shrinks from ~325 to ~175 ms and the
+first word falls into that dead start (onset 73-112 ms after the word's start, first word
+25-46 dB quieter; results 343). ``_infer`` therefore runs the model with the BOS duration
+never shorter than its speed-1.0 value; every other token is divided by ``speed`` as before.
+Speeds <= 1.0 are unchanged.
 """
 
 from __future__ import annotations
@@ -286,6 +294,37 @@ class KokoroBackend:
         with self._lock:
             return self._synthesize(text, voice_id, speed)
 
+    def _infer(self, ps: str, ref_s: Any, speed: float) -> tuple[np.ndarray, np.ndarray]:
+        """``KModel.forward_with_tokens`` with one change: the BOS duration is floored at its
+        speed-1.0 value (module docstring). Returns (float32 audio, pred_dur per input id)."""
+        torch, m = self._torch, self._model
+        ids = [m.vocab[p] for p in ps if p in m.vocab]
+        if len(ids) + 2 > m.context_length:
+            raise ValueError(f"phoneme chunk too long: {len(ids) + 2} > {m.context_length}")
+        input_ids = torch.LongTensor([[0, *ids, 0]]).to(m.device)
+        ref_s = ref_s.to(m.device)
+        n = input_ids.shape[-1]
+        lengths = torch.full((1,), n, device=m.device, dtype=torch.long)
+        text_mask = torch.zeros((1, n), dtype=torch.bool, device=m.device)  # no padding
+        with torch.inference_mode():
+            bert_dur = m.bert(input_ids, attention_mask=(~text_mask).int())
+            d_en = m.bert_encoder(bert_dur).transpose(-1, -2)
+            s = ref_s[:, 128:]
+            d = m.predictor.text_encoder(d_en, s, lengths, text_mask)
+            x, _ = m.predictor.lstm(d)
+            raw = torch.sigmoid(m.predictor.duration_proj(x)).sum(axis=-1).squeeze(0)
+            duration = raw / speed
+            duration[0] = torch.maximum(duration[0], raw[0])  # BOS: never shorter than at 1.0
+            pred_dur = torch.round(duration).clamp(min=1).long()
+            indices = torch.repeat_interleave(torch.arange(n, device=m.device), pred_dur)
+            aln = torch.zeros((n, indices.shape[0]), device=m.device)
+            aln[indices, torch.arange(indices.shape[0])] = 1
+            aln = aln.unsqueeze(0)
+            f0, noise = m.predictor.F0Ntrain(d.transpose(-1, -2) @ aln, s)
+            asr = m.text_encoder(input_ids, lengths, text_mask) @ aln
+            audio = m.decoder(asr, f0, noise, ref_s[:, :128]).squeeze()
+        return audio.cpu().numpy().astype(np.float32), pred_dur.cpu().numpy()
+
     def _synthesize(self, text: str, voice_id: str, speed: float) -> SynthResult:
         pack = self._pack(voice_id)
         _, tokens = self._g2p_for(british=voice_id[0] == "b")(text)
@@ -299,9 +338,8 @@ class KokoroBackend:
             if not ps:
                 timed += [_Timed(t.text, None, None) for t in chunk]
                 continue
-            out = self._model(ps, pack[len(ps) - 1], speed, return_output=True)
-            audio = out.audio.numpy().astype(np.float32)
-            frames = np.concatenate([[0], np.cumsum(out.pred_dur.numpy())])  # frames before id k
+            audio, pred_dur = self._infer(ps, pack[len(ps) - 1], speed)
+            frames = np.concatenate([[0], np.cumsum(pred_dur)])  # frames before id k
             for t, span in zip(chunk, spans, strict=True):
                 if span is None:
                     timed.append(_Timed(t.text, None, None))

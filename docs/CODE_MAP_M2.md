@@ -540,9 +540,12 @@ builds the vendored `KModel` and the US `G2P` (spaCy `en_core_web_sm`); the GB `
 voice pack (`voices/<id>.pt`, same revision) load on first use. `voices()` lists 10 voices
 (`af_heart` first; af/am en-US, bf/bm en-GB; gender from the second letter); `speed_range()` is
 `(0.5, 2.0)`. `synthesize` runs under a lock: G2P → tokens, phonemes filtered to Kokoro's vocab,
-chunks of ≤ 510 phonemes cut at sentence then clause punctuation, one `KModel` call per chunk
-with `pack[len(ps) - 1]`, and token times from `pred_dur` (25 ms frames; a token spans its own
-phoneme characters). `kokoro.pipeline` is never imported, which also avoids upstream
+chunks of ≤ 510 phonemes cut at sentence then clause punctuation, one model call per chunk
+with `pack[len(ps) - 1]` through `KokoroBackend._infer` (the vendored `forward_with_tokens` with
+one change: the BOS duration is never shorter than its speed-1.0 value, so at 1.5-2.0 the first
+word is not swallowed by the model's ~250-330 ms near-silent start; bit-identical at speeds
+≤ 1.0, results 343-348), and token times from that `pred_dur` (25 ms frames; a token spans its
+own phoneme characters). `kokoro.pipeline` is never imported, which also avoids upstream
 `join_timestamps`' misalignment after empty-phoneme tokens (spike 274).
 
 Word rule: one `WordTimestamp` per whitespace-delimited word of the input, `(char_start,
@@ -552,8 +555,8 @@ be non-decreasing and ≤ duration. OOV words (misaki returns no phonemes): `_OO
 camel case and a possessive `'s`, looks pieces up in misaki's gold/silver lexicon, else predicts
 ARPAbet with the vendored g2p_en GRU and maps it to Kokoro IPA (`arpabet_to_kokoro`), else spells
 the letters; one `WARNING` per OOV word naming the phonemes and the method. Tests:
-`test_kokoro_backend.py` (pure helpers always; model tests `@pytest.mark.model`),
-`test_syn_gate.py` (smoke and gate), `test_compat_num2words.py`.
+`test_kokoro_backend.py` (pure helpers always; model tests `@pytest.mark.model`, including
+`test_syn3_kokoro_first_word_not_clipped_at_fast_native_speeds`), `test_syn_gate.py` (smoke and gate), `test_compat_num2words.py`.
 
 ### `api/hearnarro/routes/`
 
