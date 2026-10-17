@@ -1,26 +1,26 @@
 # M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c
 for a fixed dictionary of degree k sub 2 we assume the moment bounds t,
-equation 3.1: e of the norm of theta hat sup r squared equals o of 1, e e sub pi sub n of 1 plus the norm of z plus the norm of z hat, to the 2 times k sub 2 minus 1, times the norm of z hat minus z squared, equals o of the fraction d times log n to the k sub 2 over n, end fraction.
+equation 3.1: e of the norm of theta hat to the r squared equals o of 1, e e sub pi sub n of 1 plus the norm of z plus the norm of z hat, to the 2 times k sub 2 minus 1, times the norm of z hat minus z squared, equals o of the fraction d times log n to the k sub 2 over n, end fraction.
 a mean-value bound for the polynomial l hat sub r and the cauchy-schwarz inequality give e of the absolute value of r sub n equals o of the square root of d times log n to the k sub 2 over 2 times n to the minus 1 half appendix a.
 equation 3.2: e of e sub marg minus log z hat sub comp equals o of the square root of d times log n to the k sub 2 over 2 times n to the minus 1 half,
 and e sub marg minus log z hat sub comp equals o sub p of the square root of d times log n to the k sub 2 over 2 times n to the minus 1 half.
 the constants depend on d and the dictionary.
 we compute the remaining correction log z hat sub comp for each estimate and do not bound it a priori.
 the stage-1 bounds follow from the next inequality, in which s prime is an arbitrary score field.
-let v hat sub r sup c be the estimated stage-1 basis of equation 3.5 and p hat sub r is defined as v hat sub r sup c v hat sub r sup c transpose.
-under assumption 2.1 of part i, for every score field s prime in l 2 of pi sub z; r to the d with second-moment matrix c prime is defined as e sub pi sub z of s prime s prime transpose,
-equation 3.3: the square root of 2 e sub proj is less than or equal to the norm of s minus s prime sub l 2 of pi sub z plus the square root of the trace of i minus p hat sub r times c prime.
+let v hat sub r, to the c be the estimated stage-1 basis of equation 3.5 and p hat sub r is defined as v hat sub r, to the c v hat sub r, to the c transpose.
+under assumption 2.1 of part i, for every score field s prime in l squared of pi sub z; r to the d with second-moment matrix c prime is defined as e sub pi sub z of s prime s prime transpose,
+equation 3.3: the square root of 2 e sub proj is less than or equal to the norm of s minus s prime sub l squared of pi sub z plus the square root of the trace of i minus p hat sub r times c prime.
 for s prime equals s, the score-error term in equation 3.3 vanishes.
-equation 3.4: e sub proj equals d sub k l of pi sub n parallel pi sub n of dot; v hat sub r sup c, is less than or equal to c sub 1 is defined as 1 half the trace of i minus p hat sub r times c,
+equation 3.4: e sub proj equals d sub k l of pi sub n parallel pi sub n of dot; v hat sub r, to the c, is less than or equal to c sub 1 is defined as 1 half the trace of i minus p hat sub r times c,
 the oracle bound uses half the trace of c over the discarded subspace.
-let p sub r sup c is defined as v sub r sup c v sub r sup c transpose project onto the top-r eigenspace of c.
-equation 3.5: c sub 1 equals 1 half the sum over i greater than r of lambda sub i of c, rank, plus 1 half the trace of p sub r sup c c minus the trace of p hat sub r c, delta sub subopt is greater than or equal to 0,
+let p sub r, to the c is defined as v sub r, to the c v sub r, to the c transpose project onto the top-r eigenspace of c.
+equation 3.5: c sub 1 equals 1 half the sum over i greater than r of lambda sub i of c, rank, plus 1 half the trace of p sub r, to the c c minus the trace of p hat sub r c, capital delta sub subopt is greater than or equal to 0,
 where the rank term is fixed by c and r.
-the remaining term delta sub subopt is of order the norm of sine capital theta of v hat sub r sup c, v sub r sup c, sub f, squared.
-it is zero whenever span of v hat sub r sup c equals span of v sub r sup c, and only in this case if lambda sub r of c is greater than lambda sub r plus 1 of c.
-to prove proposition 3.1, apply the triangle inequality in l 2 of pi sub z; r to the d to the gaussian-reference bound 2.5 of part i appendix a.
-in the score-ratio-matching stability result of 5, theorem 3.3, the divergence at the top-r eigenspace of c prime is bounded by the norm of s minus s prime sub l 2 of pi sub z, squared, plus the sum over i greater than r of lambda sub i of c prime.
+the remaining term capital delta sub subopt is of order the norm of sine capital theta of v hat sub r, to the c, v sub r, to the c, sub f, squared.
+it is zero whenever span of v hat sub r, to the c equals span of v sub r, to the c, and only in this case if lambda sub r of c is greater than lambda sub r plus 1 of c.
+to prove proposition 3.1, apply the triangle inequality in l squared of pi sub z; r to the d to the gaussian-reference bound 2.5 of part i appendix a.
+in the score-ratio-matching stability result of 5, theorem 3.3, the divergence at the top-r eigenspace of c prime is bounded by the norm of s minus s prime sub l squared of pi sub z, squared, plus the sum over i greater than r of lambda sub i of c prime.
 this follows from equation 3.3 at that eigenprojector after applying a plus b squared is less than or equal to 2 a squared plus 2 b squared.
 our bound retains the square root and applies to the estimated projector p hat sub r.
-projecting s onto the gradient space f sub capital lambda in l 2 of pi sub z defines s sub capital lambda, its second-moment matrix c sub capital lambda, and the top-r projector p sub r sup capital lambda star.
+projecting s onto the gradient space f sub capital lambda in l squared of pi sub z defines s sub capital lambda, its second-moment matrix c sub capital lambda, and the top-r projector p sub r, to the capital lambda star.
 because c hat is computed from the penalized

@@ -6,13 +6,13 @@ we also use the notation p to the n of x, dot is defined as delta sub x p to the
 recall that for a fixed t is greater than 0,
 equation 11: mu hat sub t is defined as 1 over t the sum from t equals 0 to t minus 1 of delta sub x sub t
 for a measure mu and a measurable function f from x to r, let mu of f is defined as the integral of f d mu.
-let l 2 of pi denote the hilbert space of square-integrable functions f from x to r, endowed with the inner product the inner product of f and g sub pi is defined as pi of f g.
-denote the subspace of pi-centered functions by l 2 sub 0 of pi is defined as the set of f in l 2 of pi such that pi of f equals 0.
-for a separable hilbert space y, we let l 2 of x, b of x, pi; y, abbreviated l 2 of pi; y, denote the bochner space of strongly b of x-measurable and bochner square-integrable maps f from x to y with
-equation 12: the norm of f sub pi, squared, is defined as the norm of f sub l 2 of pi; y, squared, equals the integral of the norm of f of x sub y, squared, pi of d x is less than infinity.
+let l squared of pi denote the hilbert space of square-integrable functions f from x to r, endowed with the inner product the inner product of f and g sub pi is defined as pi of f g.
+denote the subspace of pi-centered functions by l squared sub 0 of pi is defined as the set of f in l squared of pi such that pi of f equals 0.
+for a separable hilbert space y, we let l squared of x, b of x, pi; y, abbreviated l squared of pi; y, denote the bochner space of strongly b of x-measurable and bochner square-integrable maps f from x to y with
+equation 12: the norm of f sub pi, squared, is defined as the norm of f sub l squared of pi; y, squared, equals the integral of the norm of f of x sub y, squared, pi of d x is less than infinity.
 denote by l of h sub 1, h sub 2 be the space of bounded linear operators between two separable hilbert spaces h sub 1 and h sub 2, and l of h sub 1 when h sub 1 equals h sub 2.
 for a in l of h sub 1, denote the operator norm by the operator norm of a sub h sub 1 is defined as the norm of a sub h sub 1 to h sub 1.
-let l 2 of h sub 1, h sub 2 be the space of hilbert-schmidt operators, and l 2 of h sub 1 when h sub 1 equals h sub 2, equipped with the norm the norm of a sub l 2 of h sub 1, h sub 2, squared, equals the sum over i of the norm of a e sub i sub h sub 2, squared, where the set of e sub i sub i is any orthonormal basis of h sub 1.
+let l squared of h sub 1, h sub 2 be the space of hilbert-schmidt operators, and l squared of h sub 1 when h sub 1 equals h sub 2, equipped with the norm the norm of a sub l squared of h sub 1, h sub 2, squared, equals the sum over i of the norm of a e sub i sub h sub 2, squared, where the set of e sub i sub i is any orthonormal basis of h sub 1.
 we denote by i sub d the d times d identity matrix.
 let f sub t for t greater than or equal to 0 be a filtration.
 a sequence of h-valued random variables d sub t for t greater than or equal to 1 is called a martingale difference sequence with respect to f sub t sub t if d sub t is f sub t-measurable and for every t is greater than or equal to 1, e of d sub t given f sub t minus 1 equals 0.
