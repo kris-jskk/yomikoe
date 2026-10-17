@@ -44,7 +44,8 @@ def scorecard(record: dict[str, Any], comparison: dict[str, Any] | None = None) 
             delta = f"{deltas[key]:+.4f}" if key in deltas else ""
             lines.append(f"| {key} | {_fmt(value)} | {delta} |")
         if suite["examples"]:
-            worst = min(suite["examples"], key=lambda e: e["score"])
+            pick = max if suite.get("direction") == "lower" else min
+            worst = pick(suite["examples"], key=lambda e: e["score"])
             lines += ["", f"worst: {worst['id']} ({worst['class']}) {worst['score']:.4f}"]
     if comparison is not None:
         lines += lines_for_compare(comparison)

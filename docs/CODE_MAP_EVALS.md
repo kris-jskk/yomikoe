@@ -1,4 +1,4 @@
-# HearNarro evals code map: runner, run records, compare (E0)
+# HearNarro evals code map: runner, run records, compare (E0, E1)
 
 This document explains how the eval layer works end to end and what every file under
 `api/hearnarro/evals/` does. It is written for an engineer who has read `docs/PRD.md`,
@@ -18,6 +18,32 @@ store, compare/report and the two tier-0 suites that wrap scorers which already 
 D31: an eval is a scored test with the threshold removed and the per-example score kept. The gate
 tests (`api/tests/test_ing4_reading_order_golden.py`, `api/tests/test_syn_boundaries.py`) keep
 their thresholds and remain the only merge blockers; evals are the trend line above the floor.
+
+### Phase E1 (2026-10-17)
+
+E1 adds the two remaining tier-0 suites and a `direction` per suite:
+
+- **EVAL-3 Clean text** (ING-1..6): every check of `hearnarro.quality.check_pdf` on the 15 text
+  fixtures, count and rate per 1 000 segment words, `total_rate` = sum of rates. Lower is better
+  (`DIRECTION = "lower"`); `store.compare` flags a rise of more than 1 per 1 000 words.
+- **EVAL-4 Speech form** (ING-6, ING-7, SYN-4): 302 authored pairs in
+  `api/hearnarro/evals/data/speech_form.jsonl` (14 categories, 20–24 each), written text →
+  what a careful narrator says, authored from the PRD rules and not from the normalizer's output.
+  `spoken()` runs the app's own path: `merge_blocks` → `split_sentences` (which calls `normalize`
+  and builds the ING-7 cues) → per segment `caps_fold_spans` and `decide` from
+  `hearnarro.synthesis.acronyms`, in the order of `KokoroBackend._tokens`. Spelled acronyms are
+  rendered as letters ("P D F"). Exact match on canonical words plus partial credit
+  (1 − word edit distance / expected words).
+
+Gate: 7 tests appended to `api/tests/test_eval_gate.py`; red `_agent/results/561_e1_gate_red.txt`
+(7 failed), green `_agent/results/562_e1_gate_green.txt` (12 passed). Related tests
+`_agent/results/565_e1_tests.txt` (374 passed); ruff `_agent/results/564_e1_ruff.txt`.
+
+Tier-0 record `evals/runs/2026-10-17_0a00123.json` (console `_agent/results/563_e1_tier0_run.txt`,
+13.3 s wall for EVAL-1..4): EVAL-3 total mean rate 2.5847 per 1 000 words (duplicate_runs 1.68,
+midsentence_breaks 0.87); EVAL-4 accuracy 0.2748, partial mean 0.7099. Numbers, dates, times,
+money, units and phone/range pairs score 0 exact: digits reach the voice as digits and are read by
+misaki's G2P, which tier 0 does not model.
 
 ### The gate
 
@@ -104,14 +130,17 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 | `__init__.py` | Package docstring (D31–D34) | none | none | implemented |
 | `__main__.py` | argparse CLI: `run`, `compare` | `main` | stdout; records via `store` | tested (by hand, `556`) |
 | `runner.py` | Runs the selected suites and writes one record | `run(suite_ids, out_dir=None, tier=0) -> (record, path)` | `git rev-parse`; fixtures via suites; record via `store` | tested (gate) |
-| `store.py` | Record files, `latest.json` pointer, compare per D33 | `DEFAULT_RUNS_DIR`, `LATEST`, `TOLERANCE`, `DEFAULT_TOLERANCE`, `write_record`, `read_record`, `compare` | `evals/runs/*.json` | tested (gate) |
-| `report.py` | Markdown scorecard | `scorecard(record, comparison=None)`, `lines_for_compare(comparison)` | none | tested (by hand, `556`) |
+| `store.py` | Record files, `latest.json` pointer, compare per D33; honours suite `direction` and compares nested example metrics under dotted keys (E1) | `DEFAULT_RUNS_DIR`, `LATEST`, `TOLERANCE`, `DEFAULT_TOLERANCE`, `write_record`, `read_record`, `compare` | `evals/runs/*.json` | tested (gate) |
+| `report.py` | Markdown scorecard; the worst example is the highest score for a lower-is-better suite | `scorecard(record, comparison=None)`, `lines_for_compare(comparison)` | none | tested (by hand, `556`) |
 | `scorers.py` | Pure scoring functions moved from `api/tests/golden_util.py` (D12/D14 word score, char-mass guard) and `api/tests/boundary_util.py` (boundary alignment, P/R/F1) | `PROSE_TYPES`, `CHAR_MASS_TOLERANCE`, `PUNCTUATION`, `norm`, `seq_levenshtein`, `prose_only`, `excluded_actual_texts`, `words`, `word_score`, `char_mass_ratio`, `char_mass_balanced`, `sentence_words`, `boundaries`, `align_boundaries`, `prf` | none | tested (`test_golden_util.py`, `test_boundary_util.py`, gate) |
-| `suites/__init__.py` | Suite registry | `SUITES`, `select(ids, tier)` | none | tested (gate) |
-| `suites/_fixtures.py` | Fixture manifest, expected rows, truth sentences, one cached ingest per PDF | `FIXTURES`, `manifest`, `expected_rows`, `truth_sentences`, `ingested` | `api/tests/fixtures/pdfs/` (manifest, `*.pdf`, `*.expected.jsonl`, `*.sentences.txt`) | tested (gate) |
+| `suites/__init__.py` | Suite registry (EVAL-1..4) | `SUITES`, `select(ids, tier)`, `direction(suite_id)` | none | tested (gate) |
+| `suites/_fixtures.py` | Fixture manifest, expected rows, truth sentences, one cached ingest per PDF | `FIXTURES`, `manifest`, `expected_rows`, `truth_sentences`, `ingest_result`, `ingested` | `api/tests/fixtures/pdfs/` (manifest, `*.pdf`, `*.expected.jsonl`, `*.sentences.txt`) | tested (gate) |
 | `suites/eval1_order.py` | EVAL-1: 20 fixtures (scanned skipped without tesseract); score = `word_score`; `char_mass_ok` per example | `ID`, `TITLE`, `TIER`, `dataset`, `score`, `aggregate` (mean, min, by_class) | via `_fixtures` | tested (gate) |
 | `suites/eval2_boundaries.py` | EVAL-2: 15 non-scanned fixtures; precision, recall, F1; score = F1 | `ID`, `TITLE`, `TIER`, `dataset`, `score`, `aggregate` (mean_f1, min_recall) | via `_fixtures` | tested (gate) |
-| `data/` | `speech_form.jsonl`, `listening_rubric.md` (EVAL-4, EVAL-9) | n/a | n/a | planned |
+| `suites/eval3_clean.py` | EVAL-3: 15 text fixtures; per check count and rate per 1 000 words; score = `total_rate`; `DIRECTION = "lower"` | `ID`, `TITLE`, `TIER`, `DIRECTION`, `dataset`, `score`, `aggregate` (mean_rate per check, total_mean_rate) | `hearnarro.quality.check_pdf`; word count from `_fixtures.ingest_result` | tested (gate) |
+| `suites/eval4_speech_form.py` | EVAL-4: the dataset below through the app's text-to-voice path; exact and partial per pair | `ID`, `TITLE`, `TIER`, `DIRECTION`, `DATA`, `load_pairs`, `spoken(text, block)`, `canonical`, `dataset`, `score`, `aggregate` (accuracy, partial_mean, by_category) | `data/speech_form.jsonl`; calls `ingestion.merge`, `ingestion.segment`, `ingestion.acronyms`, `synthesis.acronyms`, `synthesis.lexicon_overrides` | tested (gate) |
+| `data/speech_form.jsonl` | 302 pairs: `id`, `category`, `text`, `expected`, optional `note`, optional `block` (`heading`, `table`: rows by line, cells by ` \| `; `equation`) | n/a | n/a | tested (gate: shape, ≥ 15 per category) |
+| `data/listening_rubric.md` | EVAL-9 form | n/a | n/a | planned |
 
 ### Test helpers and tests
 
@@ -119,11 +148,11 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 | --- | --- | --- |
 | `api/tests/golden_util.py` | Re-exports the reading-order scorers from `hearnarro.evals.scorers` (no logic) | tested (`554`) |
 | `api/tests/boundary_util.py` | Re-exports the boundary scorers (including `_alignment`) from `hearnarro.evals.scorers` | tested (`554`) |
-| `api/tests/test_eval_gate.py` | E0 gate: record shape, aggregates, compare zero/one-regression cases | tested (`553`) |
+| `api/tests/test_eval_gate.py` | E0 gate: record shape, aggregates, compare zero/one-regression cases; E1: registry direction, `all` under 60 s, EVAL-3 rates, lower-is-better compare, EVAL-4 dataset shape, app path, aggregates | tested (`553`, `562`) |
 
 ### `evals/runs/` (repo root)
 
-Committed JSON records, one per run, plus `latest.json`. Baseline: `2026-10-17_eadaef6.json`.
+Committed JSON records, one per run, plus `latest.json`. Baseline: `2026-10-17_eadaef6.json` (EVAL-1, EVAL-2); first four-suite record: `2026-10-17_0a00123.json`.
 
 ## Data structures
 
@@ -140,7 +169,14 @@ suites   {"EVAL-1": {title†, tier†, seconds†,
           "EVAL-2": {title†, tier†, seconds†,
                      examples: [{id, class, score (= f1), precision, recall, f1}],
                      skipped†: [],
-                     aggregate: {mean_f1, min_recall}}}
+                     aggregate: {mean_f1, min_recall}},
+          "EVAL-3": {title, tier, direction†: "lower", seconds,
+                     examples: [{id, class, words, checks: {name: {count, rate}},
+                                 total_count, total_rate, score (= total_rate)}],
+                     aggregate: {mean_rate: {name: rate}, total_mean_rate}},
+          "EVAL-4": {title, tier, direction†: "higher", seconds,
+                     examples: [{id, class (= category), exact, partial, score (= partial), actual}],
+                     aggregate: {accuracy, partial_mean, by_category: {category: accuracy}}}}
 ```
 
 Compare result: `{baseline, candidate, suites: {id: {aggregate: {key: Δ}, examples: {id: {field: Δ}}}},
@@ -155,6 +191,19 @@ regressions: [{suite, id, reason, metrics: {field: {baseline, candidate, delta}}
 3. `--tier` filters only `all`; suites named explicitly run whatever their tier.
 4. `report.py` emits markdown only; the HTML scorecard in spec 3.4 is not written yet.
 5. `commit` is `HEAD` at run time; uncommitted changes in the working tree are not recorded.
+6. (E1) Every suite record carries `direction` (`higher` / `lower`), not in spec 3.4; compare uses
+   it, falling back to the registry for records written before E1.
+7. (E1) EVAL-3 tolerance is 1.0 for rates and counts alike (spec 3.5 says "1 error for counts");
+   a rate is per 1 000 words, so a one-count rise in a long fixture is below the tolerance.
+8. (E1) EVAL-3 reports all 12 `run_checks` results (the 11 of the quality docstring plus the
+   informational `chapter_number_segments`).
+9. (E1) EVAL-4 at tier 0 uses `decide(..., in_lexicon=False)`: misaki's lexicon (rule 4) is not
+   loaded (misaki's English module also fails to import here without `num2words`), so the
+   heuristic decides where the backend would consult the lexicon; misaki's number reading is not
+   modelled either. Spec 3.4 places `data/` under `api/hearnarro/evals/`; the brief's
+   `evals/data/` is read as that path.
+10. (E1) The dataset is 302 pairs in 14 categories; table and equation pairs set `block` so they go
+    through the ING-7 block path rather than plain normalization.
 
 ## How to run
 
@@ -164,5 +213,5 @@ From `api/`: `.venv/bin/python -m hearnarro.evals run all` (or `run EVAL-1 EVAL-
 
 ## Open items
 
-- EVAL-3..9 suites, `data/`, the HTML scorecard (spec 3.3, 3.4).
+- EVAL-5..9 suites, `data/listening_rubric.md`, the HTML scorecard (spec 3.3, 3.4).
 - EVAL-1 scanned class needs tesseract on this machine (5 fixtures skipped in the baseline).

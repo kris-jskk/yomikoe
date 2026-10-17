@@ -32,14 +32,17 @@ def truth_sentences(name: str) -> list[str]:
 
 
 @cache
-def ingested(name: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    """(prose segment texts, excluded texts for the D14 guard) of one ``ingest()`` call.
-
-    Cached so EVAL-1 and EVAL-2 parse each PDF once per process.
-    """
+def ingest_result(name: str) -> Any:
+    """The ``IngestResult`` of one ``ingest()`` call, cached so EVAL-1..3 parse a PDF once."""
     from hearnarro.ingestion.pipeline import ingest
 
-    result = ingest(FIXTURES / f"{name}.pdf", document_id=0, ocr=True)
+    return ingest(FIXTURES / f"{name}.pdf", document_id=0, ocr=True)
+
+
+@cache
+def ingested(name: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """(prose segment texts, excluded texts for the D14 guard) of the cached ingest."""
+    result = ingest_result(name)
     block_type = {b.id: b.type for b in result.blocks}
     prose, _ = prose_only((block_type[s.block_id], s.text) for s in result.segments)
     excluded = excluded_actual_texts(result.blocks, result.segments)

@@ -223,7 +223,5 @@ def test_eval4_examples_and_aggregate(all_run: dict[str, Any]) -> None:
         assert not ex["exact"] or ex["partial"] == 1.0
     agg = suite["aggregate"]
     assert agg["accuracy"] == pytest.approx(sum(e["exact"] for e in examples) / len(examples))
-    assert agg["partial_mean"] == pytest.approx(
-        sum(e["partial"] for e in examples) / len(examples)
-    )
+    assert agg["partial_mean"] == pytest.approx(sum(e["partial"] for e in examples) / len(examples))
     assert set(agg["by_category"]) == {e["class"] for e in examples} >= EVAL4_CATEGORIES

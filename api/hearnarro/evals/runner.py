@@ -68,6 +68,7 @@ def run(
         record["suites"][module.ID] = {
             "title": module.TITLE,
             "tier": module.TIER,
+            "direction": getattr(module, "DIRECTION", "higher"),
             "examples": examples,
             "skipped": skipped,
             "aggregate": module.aggregate(examples),

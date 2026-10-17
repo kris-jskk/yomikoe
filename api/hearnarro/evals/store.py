@@ -14,8 +14,9 @@ from typing import Any
 # The repo-root evals/runs/ (api/hearnarro/evals/store.py -> parents[3] is the repo root).
 DEFAULT_RUNS_DIR = Path(__file__).resolve().parents[3] / "evals" / "runs"
 LATEST = "latest.json"
-# D33: an example regresses when a 0..1 score falls by more than this (per suite).
-TOLERANCE: dict[str, float] = {"EVAL-1": 0.01, "EVAL-2": 0.01}
+# D33: an example regresses when a 0..1 score falls by more than this (per suite); EVAL-3 is
+# junk per 1 000 words (lower is better), so a rise of more than 1 is a regression there.
+TOLERANCE: dict[str, float] = {"EVAL-1": 0.01, "EVAL-2": 0.01, "EVAL-3": 1.0, "EVAL-4": 0.01}
 DEFAULT_TOLERANCE = 0.01
 _EPS = 1e-9
 
@@ -54,6 +55,10 @@ def _flatten(agg: dict[str, Any], prefix: str = "") -> dict[str, float]:
     return out
 
 
+def _bools(example: dict[str, Any]) -> dict[str, bool]:
+    return {k: v for k, v in example.items() if isinstance(v, bool)}
+
+
 def compare(baseline: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
     """Deltas (candidate - baseline) per suite and the regressions list (D33).
 
@@ -61,7 +66,12 @@ def compare(baseline: dict[str, Any], candidate: dict[str, Any]) -> dict[str, An
     "examples": {example_id: {metric: delta}}}}, "regressions": [...]}``. A regression is one
     entry per example: a numeric metric fell by more than the suite tolerance, a boolean check
     went from true to false, or the example is missing from the candidate ("new failure").
+    A suite whose record (or registry entry) says ``direction: "lower"`` regresses when a
+    metric rises by more than the tolerance instead. Nested example metrics (EVAL-3's
+    ``checks.<name>.rate``) are compared under dotted keys.
     """
+    from hearnarro.evals.suites import direction
+
     suites: dict[str, Any] = {}
     regressions: list[dict[str, Any]] = []
     for sid, base in baseline["suites"].items():
@@ -69,6 +79,7 @@ def compare(baseline: dict[str, Any], candidate: dict[str, Any]) -> dict[str, An
         if cand is None:
             continue
         tol = TOLERANCE.get(sid, DEFAULT_TOLERANCE)
+        sign = -1.0 if base.get("direction", direction(sid)) == "lower" else 1.0
         base_agg, cand_agg = _flatten(base["aggregate"]), _flatten(cand["aggregate"])
         agg_delta = {k: cand_agg[k] - v for k, v in base_agg.items() if k in cand_agg}
         cand_ex = {e["id"]: e for e in cand["examples"]}
@@ -82,11 +93,12 @@ def compare(baseline: dict[str, Any], candidate: dict[str, Any]) -> dict[str, An
                 continue
             deltas: dict[str, float] = {}
             fell: dict[str, dict[str, Any]] = {}
-            for metric, value in ex.items():
-                new = other.get(metric)
+            flat_new = _flatten(other)
+            for metric, value in {**_flatten(ex), **_bools(ex)}.items():
+                new = flat_new.get(metric, other.get(metric))
                 if _is_number(value) and _is_number(new):
                     deltas[metric] = new - value
-                    if new - value < -tol - _EPS:
+                    if sign * (new - value) < -tol - _EPS:
                         fell[metric] = {"baseline": value, "candidate": new, "delta": new - value}
                 elif value is True and new is False:
                     fell[metric] = {"baseline": True, "candidate": False, "delta": None}

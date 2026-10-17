@@ -1,0 +1,3623 @@
+{
+  "run_id": "2026-10-17_0a00123",
+  "commit": "0a00123",
+  "date": "2026-10-17T10:49:02Z",
+  "config": {
+    "backend": "fake",
+    "speed": 1.0,
+    "tesseract": false,
+    "python": "3.11.16",
+    "tier": 0
+  },
+  "suites": {
+    "EVAL-1": {
+      "title": "Order",
+      "tier": 0,
+      "direction": "higher",
+      "examples": [
+        {
+          "id": "academic_01_seahelm_audio",
+          "class": "academic",
+          "score": 0.9919443427316001,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_02_memduet",
+          "class": "academic",
+          "score": 0.9912376779846659,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_03_pruned_reasoning",
+          "class": "academic",
+          "score": 0.9963269054178145,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_04_legislative_xml",
+          "class": "academic",
+          "score": 0.9839373970345964,
+          "char_mass_ok": true
+        },
+        {
+          "id": "academic_05_sparse_autoencoders",
+          "class": "academic",
+          "score": 0.9958100558659218,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_01_pfn_bayes",
+          "class": "tables",
+          "score": 0.9787150177374853,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_02_non_gaussian_sem",
+          "class": "tables",
+          "score": 0.9877064925086438,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_03_copula_subspaces",
+          "class": "tables",
+          "score": 0.9710444674250258,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_04_markov_kernel",
+          "class": "tables",
+          "score": 0.9756373937677054,
+          "char_mass_ok": true
+        },
+        {
+          "id": "tables_05_decomposing_learner",
+          "class": "tables",
+          "score": 0.9989479221462388,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_01_zero_trust",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_02_patch_mgmt",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_03_ssdf",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_04_rmf",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        },
+        {
+          "id": "report_05_controls",
+          "class": "report",
+          "score": 1.0,
+          "char_mass_ok": true
+        }
+      ],
+      "skipped": [
+        {
+          "id": "scanned_01_seahelm_audio",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        },
+        {
+          "id": "scanned_02_pruned_reasoning",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        },
+        {
+          "id": "scanned_03_zero_trust",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        },
+        {
+          "id": "scanned_04_copula_subspaces",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        },
+        {
+          "id": "scanned_05_markov_kernel",
+          "class": "scanned",
+          "reason": "OCR unavailable (tesseract)"
+        }
+      ],
+      "aggregate": {
+        "mean": 0.99142051150798,
+        "min": 0.9710444674250258,
+        "by_class": {
+          "academic": 0.9918512758069198,
+          "report": 1.0,
+          "tables": 0.9824102587170198
+        }
+      },
+      "seconds": 7.96
+    },
+    "EVAL-2": {
+      "title": "Boundaries",
+      "tier": 0,
+      "direction": "higher",
+      "examples": [
+        {
+          "id": "academic_01_seahelm_audio",
+          "class": "academic",
+          "score": 0.9702970297029704,
+          "precision": 0.9671052631578947,
+          "recall": 0.9735099337748344,
+          "f1": 0.9702970297029704
+        },
+        {
+          "id": "academic_02_memduet",
+          "class": "academic",
+          "score": 0.9375,
+          "precision": 0.9051724137931034,
+          "recall": 0.9722222222222222,
+          "f1": 0.9375
+        },
+        {
+          "id": "academic_03_pruned_reasoning",
+          "class": "academic",
+          "score": 0.9821428571428571,
+          "precision": 0.9734513274336283,
+          "recall": 0.990990990990991,
+          "f1": 0.9821428571428571
+        },
+        {
+          "id": "academic_04_legislative_xml",
+          "class": "academic",
+          "score": 0.9620253164556961,
+          "precision": 0.9421487603305785,
+          "recall": 0.9827586206896551,
+          "f1": 0.9620253164556961
+        },
+        {
+          "id": "academic_05_sparse_autoencoders",
+          "class": "academic",
+          "score": 0.9887640449438202,
+          "precision": 0.9777777777777777,
+          "recall": 1.0,
+          "f1": 0.9887640449438202
+        },
+        {
+          "id": "tables_01_pfn_bayes",
+          "class": "tables",
+          "score": 0.9176470588235295,
+          "precision": 0.8540145985401459,
+          "recall": 0.9915254237288136,
+          "f1": 0.9176470588235295
+        },
+        {
+          "id": "tables_02_non_gaussian_sem",
+          "class": "tables",
+          "score": 0.9317269076305221,
+          "precision": 0.8923076923076924,
+          "recall": 0.9747899159663865,
+          "f1": 0.9317269076305221
+        },
+        {
+          "id": "tables_03_copula_subspaces",
+          "class": "tables",
+          "score": 0.935361216730038,
+          "precision": 0.8848920863309353,
+          "recall": 0.9919354838709677,
+          "f1": 0.935361216730038
+        },
+        {
+          "id": "tables_04_markov_kernel",
+          "class": "tables",
+          "score": 0.9282296650717703,
+          "precision": 0.8738738738738738,
+          "recall": 0.9897959183673469,
+          "f1": 0.9282296650717703
+        },
+        {
+          "id": "tables_05_decomposing_learner",
+          "class": "tables",
+          "score": 0.9832402234636871,
+          "precision": 0.967032967032967,
+          "recall": 1.0,
+          "f1": 0.9832402234636871
+        },
+        {
+          "id": "report_01_zero_trust",
+          "class": "report",
+          "score": 0.98989898989899,
+          "precision": 0.98,
+          "recall": 1.0,
+          "f1": 0.98989898989899
+        },
+        {
+          "id": "report_02_patch_mgmt",
+          "class": "report",
+          "score": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        {
+          "id": "report_03_ssdf",
+          "class": "report",
+          "score": 0.98989898989899,
+          "precision": 0.98,
+          "recall": 1.0,
+          "f1": 0.98989898989899
+        },
+        {
+          "id": "report_04_rmf",
+          "class": "report",
+          "score": 0.9876543209876543,
+          "precision": 0.975609756097561,
+          "recall": 1.0,
+          "f1": 0.9876543209876543
+        },
+        {
+          "id": "report_05_controls",
+          "class": "report",
+          "score": 0.9873417721518987,
+          "precision": 0.975,
+          "recall": 1.0,
+          "f1": 0.9873417721518987
+        }
+      ],
+      "skipped": [],
+      "aggregate": {
+        "mean_f1": 0.9661152261934948,
+        "min_recall": 0.9722222222222222
+      },
+      "seconds": 1.35
+    },
+    "EVAL-3": {
+      "title": "Clean text",
+      "tier": 0,
+      "direction": "lower",
+      "examples": [
+        {
+          "id": "academic_01_seahelm_audio",
+          "class": "academic",
+          "words": 2971,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 2,
+              "rate": 0.6731740154830024
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 2,
+          "total_rate": 0.6731740154830024,
+          "score": 0.6731740154830024
+        },
+        {
+          "id": "academic_02_memduet",
+          "class": "academic",
+          "words": 1861,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 2,
+              "rate": 1.07469102632993
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 2,
+          "total_rate": 1.07469102632993,
+          "score": 1.07469102632993
+        },
+        {
+          "id": "academic_03_pruned_reasoning",
+          "class": "academic",
+          "words": 2324,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 0,
+          "total_rate": 0.0,
+          "score": 0.0
+        },
+        {
+          "id": "academic_04_legislative_xml",
+          "class": "academic",
+          "words": 2476,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 2,
+              "rate": 0.8077544426494345
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 2,
+          "total_rate": 0.8077544426494345,
+          "score": 0.8077544426494345
+        },
+        {
+          "id": "academic_05_sparse_autoencoders",
+          "class": "academic",
+          "words": 2170,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 1,
+              "rate": 0.4608294930875576
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 1,
+          "total_rate": 0.4608294930875576,
+          "score": 0.4608294930875576
+        },
+        {
+          "id": "tables_01_pfn_bayes",
+          "class": "tables",
+          "words": 2610,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 9,
+              "rate": 3.4482758620689657
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 9,
+          "total_rate": 3.4482758620689657,
+          "score": 3.4482758620689657
+        },
+        {
+          "id": "tables_02_non_gaussian_sem",
+          "class": "tables",
+          "words": 2652,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 12,
+              "rate": 4.524886877828054
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 12,
+          "total_rate": 4.524886877828054,
+          "score": 4.524886877828054
+        },
+        {
+          "id": "tables_03_copula_subspaces",
+          "class": "tables",
+          "words": 2010,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 1,
+              "rate": 0.4975124378109453
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 1,
+          "total_rate": 0.4975124378109453,
+          "score": 0.4975124378109453
+        },
+        {
+          "id": "tables_04_markov_kernel",
+          "class": "tables",
+          "words": 1901,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 1,
+              "rate": 0.5260389268805892
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 3,
+              "rate": 1.5781167806417675
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 4,
+          "total_rate": 2.1041557075223567,
+          "score": 2.1041557075223567
+        },
+        {
+          "id": "tables_05_decomposing_learner",
+          "class": "tables",
+          "words": 1942,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 0,
+          "total_rate": 0.0,
+          "score": 0.0
+        },
+        {
+          "id": "report_01_zero_trust",
+          "class": "report",
+          "words": 755,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 2,
+              "rate": 2.6490066225165565
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 2,
+          "total_rate": 2.6490066225165565,
+          "score": 2.6490066225165565
+        },
+        {
+          "id": "report_02_patch_mgmt",
+          "class": "report",
+          "words": 834,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 5,
+              "rate": 5.995203836930456
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 5,
+          "total_rate": 5.995203836930456,
+          "score": 5.995203836930456
+        },
+        {
+          "id": "report_03_ssdf",
+          "class": "report",
+          "words": 737,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 3,
+              "rate": 4.07055630936228
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 3,
+          "total_rate": 4.07055630936228,
+          "score": 4.07055630936228
+        },
+        {
+          "id": "report_04_rmf",
+          "class": "report",
+          "words": 690,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 4,
+              "rate": 5.797101449275362
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 4,
+          "total_rate": 5.797101449275362,
+          "score": 5.797101449275362
+        },
+        {
+          "id": "report_05_controls",
+          "class": "report",
+          "words": 600,
+          "checks": {
+            "dangling_hyphens": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "ligature_artifacts": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "single_letter_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "chapter_number_segments": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "tracked_lines": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "leader_dots": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "midsentence_breaks": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "toc_leak": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "punctuation_only": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "duplicate_runs": {
+              "count": 4,
+              "rate": 6.666666666666667
+            },
+            "title_filename_like": {
+              "count": 0,
+              "rate": 0.0
+            },
+            "empty_text_document": {
+              "count": 0,
+              "rate": 0.0
+            }
+          },
+          "total_count": 4,
+          "total_rate": 6.666666666666667,
+          "score": 6.666666666666667
+        }
+      ],
+      "skipped": [],
+      "aggregate": {
+        "mean_rate": {
+          "dangling_hyphens": 0.0,
+          "ligature_artifacts": 0.0,
+          "single_letter_segments": 0.03506926179203928,
+          "chapter_number_segments": 0.0,
+          "tracked_lines": 0.0,
+          "leader_dots": 0.0,
+          "midsentence_breaks": 0.8710160623933105,
+          "toc_leak": 0.0,
+          "punctuation_only": 0.0,
+          "duplicate_runs": 1.6785689923167548,
+          "title_filename_like": 0.0,
+          "empty_text_document": 0.0
+        },
+        "total_mean_rate": 2.584654316502104
+      },
+      "seconds": 3.88
+    },
+    "EVAL-4": {
+      "title": "Speech form",
+      "tier": 0,
+      "direction": "higher",
+      "examples": [
+        {
+          "id": "cardinal_01",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.8571428571428572,
+          "score": 0.8571428571428572,
+          "actual": "There were 12 people in the room."
+        },
+        {
+          "id": "cardinal_02",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The survey covered 1,200 households."
+        },
+        {
+          "id": "cardinal_03",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "We trained for 300 epochs."
+        },
+        {
+          "id": "cardinal_04",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The city has 45,000 residents."
+        },
+        {
+          "id": "cardinal_05",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "It cost them 7 lives."
+        },
+        {
+          "id": "cardinal_06",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The dataset has 1,000,000 rows."
+        },
+        {
+          "id": "cardinal_07",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.7142857142857143,
+          "score": 0.7142857142857143,
+          "actual": "Only 3 of the 20 samples passed."
+        },
+        {
+          "id": "cardinal_08",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The model has 175 layers."
+        },
+        {
+          "id": "cardinal_09",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "She wrote 101 letters."
+        },
+        {
+          "id": "cardinal_10",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.5555555555555556,
+          "score": 0.5555555555555556,
+          "actual": "A total of 2,048 tokens fit."
+        },
+        {
+          "id": "cardinal_11",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.9090909090909091,
+          "score": 0.9090909090909091,
+          "actual": "The bridge is 0 meters from the shore at low tide."
+        },
+        {
+          "id": "cardinal_12",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "They counted 99 birds."
+        },
+        {
+          "id": "cardinal_13",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.7142857142857143,
+          "score": 0.7142857142857143,
+          "actual": "We read 15 papers and 8 books."
+        },
+        {
+          "id": "cardinal_14",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.8333333333333334,
+          "score": 0.8333333333333334,
+          "actual": "The temperature dropped by 4 points."
+        },
+        {
+          "id": "cardinal_15",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "There are 365 days in a year."
+        },
+        {
+          "id": "cardinal_16",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The archive holds 12,500 images."
+        },
+        {
+          "id": "cardinal_17",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Group 2 finished first."
+        },
+        {
+          "id": "cardinal_18",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "He sold 60 copies."
+        },
+        {
+          "id": "cardinal_19",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The index rose to 1,024."
+        },
+        {
+          "id": "cardinal_20",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Around 50 volunteers joined."
+        },
+        {
+          "id": "cardinal_21",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.7142857142857143,
+          "score": 0.7142857142857143,
+          "actual": "The loss fell by -3 units."
+        },
+        {
+          "id": "cardinal_22",
+          "class": "cardinal",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "We ran 10 trials."
+        },
+        {
+          "id": "decimal_percent_01",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "Accuracy rose by 5 percent."
+        },
+        {
+          "id": "decimal_percent_02",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The rate was 3.5 percent."
+        },
+        {
+          "id": "decimal_percent_03",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "Pi is about 3.14."
+        },
+        {
+          "id": "decimal_percent_04",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "The score was 0.92."
+        },
+        {
+          "id": "decimal_percent_05",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "Only 12.5 percent responded."
+        },
+        {
+          "id": "decimal_percent_06",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Growth hit 100 percent."
+        },
+        {
+          "id": "decimal_percent_07",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The p-value was 0.05."
+        },
+        {
+          "id": "decimal_percent_08",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "The error fell to 1.2 percent."
+        },
+        {
+          "id": "decimal_percent_09",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "A ratio of 2.5 was observed."
+        },
+        {
+          "id": "decimal_percent_10",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Unemployment is 4 percent."
+        },
+        {
+          "id": "decimal_percent_11",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "We kept 75 percent of the data."
+        },
+        {
+          "id": "decimal_percent_12",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The weight decay was 0.01."
+        },
+        {
+          "id": "decimal_percent_13",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "Turnout reached 67.3 percent."
+        },
+        {
+          "id": "decimal_percent_14",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "The coefficient is 1.05."
+        },
+        {
+          "id": "decimal_percent_15",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Prices rose 5 to 10 percent."
+        },
+        {
+          "id": "decimal_percent_16",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Recall was .85 on the test set."
+        },
+        {
+          "id": "decimal_percent_17",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The margin is 0.5 percent."
+        },
+        {
+          "id": "decimal_percent_18",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.8333333333333334,
+          "score": 0.8333333333333334,
+          "actual": "About 30 percent of users left."
+        },
+        {
+          "id": "decimal_percent_19",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.4444444444444444,
+          "score": 0.4444444444444444,
+          "actual": "The learning rate was 0.001."
+        },
+        {
+          "id": "decimal_percent_20",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "Inflation was 2.1 percent last year."
+        },
+        {
+          "id": "decimal_percent_21",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "Sales fell 0.3 percent in May."
+        },
+        {
+          "id": "decimal_percent_22",
+          "class": "decimal_percent",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "The mean was 4.75."
+        },
+        {
+          "id": "year_date_01",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The war ended in 1945."
+        },
+        {
+          "id": "year_date_02",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "She was born in 1999."
+        },
+        {
+          "id": "year_date_03",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The law passed in 2021."
+        },
+        {
+          "id": "year_date_04",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "It opened in 2005."
+        },
+        {
+          "id": "year_date_05",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.7142857142857143,
+          "score": 0.7142857142857143,
+          "actual": "By 2000 the town had grown."
+        },
+        {
+          "id": "year_date_06",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "The company was founded in 1887."
+        },
+        {
+          "id": "year_date_07",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Music of the 1990s changed."
+        },
+        {
+          "id": "year_date_08",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.5555555555555556,
+          "score": 0.5555555555555556,
+          "actual": "The meeting is on May 3, 2021."
+        },
+        {
+          "id": "year_date_09",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "He arrived on 3 May 2021."
+        },
+        {
+          "id": "year_date_10",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.4444444444444444,
+          "score": 0.4444444444444444,
+          "actual": "The release date is 2026-10-17."
+        },
+        {
+          "id": "year_date_11",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "The deadline was January 15."
+        },
+        {
+          "id": "year_date_12",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "It happened on July 4, 1776."
+        },
+        {
+          "id": "year_date_13",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The paper appeared in 2010."
+        },
+        {
+          "id": "year_date_14",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.5555555555555556,
+          "score": 0.5555555555555556,
+          "actual": "The data run from 1990 to 2020."
+        },
+        {
+          "id": "year_date_15",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The tower dates from 1066."
+        },
+        {
+          "id": "year_date_16",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "On 1 January 2000 the clocks reset."
+        },
+        {
+          "id": "year_date_17",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "The 2010s were turbulent."
+        },
+        {
+          "id": "year_date_18",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "The census of 1901 counted them."
+        },
+        {
+          "id": "year_date_19",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "It was signed on March 12, 2019."
+        },
+        {
+          "id": "year_date_20",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.4545454545454546,
+          "score": 0.4545454545454546,
+          "actual": "The survey ran in 2023 and 2024."
+        },
+        {
+          "id": "year_date_21",
+          "class": "year_date",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "The ruins date to 500 B C."
+        },
+        {
+          "id": "time_01",
+          "class": "time",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The train leaves at 10:30."
+        },
+        {
+          "id": "time_02",
+          "class": "time",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "We met at 9:05."
+        },
+        {
+          "id": "time_03",
+          "class": "time",
+          "exact": false,
+          "partial": 0.8333333333333334,
+          "score": 0.8333333333333334,
+          "actual": "Doors open at 7 p.m."
+        },
+        {
+          "id": "time_04",
+          "class": "time",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "The call is at 3 15 p.m."
+        },
+        {
+          "id": "time_05",
+          "class": "time",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Lunch is at 12:00."
+        },
+        {
+          "id": "time_06",
+          "class": "time",
+          "exact": false,
+          "partial": 0.8571428571428572,
+          "score": 0.8571428571428572,
+          "actual": "The shift starts at 6 a.m."
+        },
+        {
+          "id": "time_07",
+          "class": "time",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The flight lands at 14:45."
+        },
+        {
+          "id": "time_08",
+          "class": "time",
+          "exact": false,
+          "partial": 0.7142857142857143,
+          "score": 0.7142857142857143,
+          "actual": "Wake up at 5 30 a.m."
+        },
+        {
+          "id": "time_09",
+          "class": "time",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "It ran from 9:00 to 17:00."
+        },
+        {
+          "id": "time_10",
+          "class": "time",
+          "exact": false,
+          "partial": 0.375,
+          "score": 0.375,
+          "actual": "The talk is 11:20–12:00."
+        },
+        {
+          "id": "time_11",
+          "class": "time",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The store closes at 8 45 p.m."
+        },
+        {
+          "id": "time_12",
+          "class": "time",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Meet me at 4:10."
+        },
+        {
+          "id": "time_13",
+          "class": "time",
+          "exact": false,
+          "partial": 0.8571428571428572,
+          "score": 0.8571428571428572,
+          "actual": "The alarm rang at 6 a.m."
+        },
+        {
+          "id": "time_14",
+          "class": "time",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The race began at 10:02."
+        },
+        {
+          "id": "time_15",
+          "class": "time",
+          "exact": false,
+          "partial": 0.7142857142857143,
+          "score": 0.7142857142857143,
+          "actual": "Check in by 2 30 p.m."
+        },
+        {
+          "id": "time_16",
+          "class": "time",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The bus came at 7:50."
+        },
+        {
+          "id": "time_17",
+          "class": "time",
+          "exact": false,
+          "partial": 0.8571428571428572,
+          "score": 0.8571428571428572,
+          "actual": "The webinar starts at 1 p.m."
+        },
+        {
+          "id": "time_18",
+          "class": "time",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "Midnight is 00:00."
+        },
+        {
+          "id": "time_19",
+          "class": "time",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The film runs 1:45 long."
+        },
+        {
+          "id": "time_20",
+          "class": "time",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The meeting moved to 3:30."
+        },
+        {
+          "id": "time_21",
+          "class": "time",
+          "exact": false,
+          "partial": 0.875,
+          "score": 0.875,
+          "actual": "The museum opens at 10 a.m. daily."
+        },
+        {
+          "id": "time_22",
+          "class": "time",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Dinner is served at 7 30 p.m."
+        },
+        {
+          "id": "money_01",
+          "class": "money",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "The ticket costs $5."
+        },
+        {
+          "id": "money_02",
+          "class": "money",
+          "exact": false,
+          "partial": 0.4444444444444444,
+          "score": 0.4444444444444444,
+          "actual": "He paid $5.50 for coffee."
+        },
+        {
+          "id": "money_03",
+          "class": "money",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "Rent is £800 a month."
+        },
+        {
+          "id": "money_04",
+          "class": "money",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "The fine was €20."
+        },
+        {
+          "id": "money_05",
+          "class": "money",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "Revenue reached $1.5 billion."
+        },
+        {
+          "id": "money_06",
+          "class": "money",
+          "exact": false,
+          "partial": 0.375,
+          "score": 0.375,
+          "actual": "The grant was $250,000."
+        },
+        {
+          "id": "money_07",
+          "class": "money",
+          "exact": false,
+          "partial": 0.33333333333333337,
+          "score": 0.33333333333333337,
+          "actual": "A coffee is $3.99."
+        },
+        {
+          "id": "money_08",
+          "class": "money",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "They raised $2 million."
+        },
+        {
+          "id": "money_09",
+          "class": "money",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "The book costs £12."
+        },
+        {
+          "id": "money_10",
+          "class": "money",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Tickets start at $10."
+        },
+        {
+          "id": "money_11",
+          "class": "money",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The budget is €3.2 million."
+        },
+        {
+          "id": "money_12",
+          "class": "money",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "The stamp costs 50¢."
+        },
+        {
+          "id": "money_13",
+          "class": "money",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The deal was worth $40bn."
+        },
+        {
+          "id": "money_14",
+          "class": "money",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "She earned ¥5,000."
+        },
+        {
+          "id": "money_15",
+          "class": "money",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "Each share rose by $0.25."
+        },
+        {
+          "id": "money_16",
+          "class": "money",
+          "exact": false,
+          "partial": 0.36363636363636365,
+          "score": 0.36363636363636365,
+          "actual": "The house sold for $1,250,000."
+        },
+        {
+          "id": "money_17",
+          "class": "money",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "The fee is $100 per year."
+        },
+        {
+          "id": "money_18",
+          "class": "money",
+          "exact": false,
+          "partial": 0.25,
+          "score": 0.25,
+          "actual": "Lunch was $12.75."
+        },
+        {
+          "id": "money_19",
+          "class": "money",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The prize is £1 million."
+        },
+        {
+          "id": "money_20",
+          "class": "money",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "Costs rose to U S$300."
+        },
+        {
+          "id": "money_21",
+          "class": "money",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The repair cost $75."
+        },
+        {
+          "id": "money_22",
+          "class": "money",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "Wages rose to £9.50 an hour."
+        },
+        {
+          "id": "unit_01",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The trail is 5 km long."
+        },
+        {
+          "id": "unit_02",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.8333333333333334,
+          "score": 0.8333333333333334,
+          "actual": "It was 40 degrees Celsius outside."
+        },
+        {
+          "id": "unit_03",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "The bag weighs 10 kg."
+        },
+        {
+          "id": "unit_04",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "Latency was 3 ms."
+        },
+        {
+          "id": "unit_05",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "The file is 5 G B."
+        },
+        {
+          "id": "unit_06",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.375,
+          "score": 0.375,
+          "actual": "The car reached 100 km/h."
+        },
+        {
+          "id": "unit_07",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "Add 250 ml of water."
+        },
+        {
+          "id": "unit_08",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The board is 2 m wide."
+        },
+        {
+          "id": "unit_09",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The screw is 4 mm long."
+        },
+        {
+          "id": "unit_10",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.625,
+          "score": 0.625,
+          "actual": "Water boils at 212 degrees Fahrenheit."
+        },
+        {
+          "id": "unit_11",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The chip runs at 3.2 GHz."
+        },
+        {
+          "id": "unit_12",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "The lamp draws 60 W."
+        },
+        {
+          "id": "unit_13",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The road climbs 300 ft."
+        },
+        {
+          "id": "unit_14",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "She ran 26.2 miles."
+        },
+        {
+          "id": "unit_15",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Use 2 tsp of salt."
+        },
+        {
+          "id": "unit_16",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "The battery is 5,000 mAh."
+        },
+        {
+          "id": "unit_17",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "The angle is 90 degrees."
+        },
+        {
+          "id": "unit_18",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "The parcel weighs 3 lb."
+        },
+        {
+          "id": "unit_19",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "Memory use was 512 M B."
+        },
+        {
+          "id": "unit_20",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The plot covers 2 km²."
+        },
+        {
+          "id": "unit_21",
+          "class": "unit",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The link runs at 10 Mbps."
+        },
+        {
+          "id": "ordinal_01",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.8333333333333334,
+          "score": 0.8333333333333334,
+          "actual": "She came 1st in the race."
+        },
+        {
+          "id": "ordinal_02",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "This is the 2nd edition."
+        },
+        {
+          "id": "ordinal_03",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "He finished 3rd."
+        },
+        {
+          "id": "ordinal_04",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "The 4th chapter is long."
+        },
+        {
+          "id": "ordinal_05",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "It is the 21st century."
+        },
+        {
+          "id": "ordinal_06",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.7142857142857143,
+          "score": 0.7142857142857143,
+          "actual": "The 100th visitor won a prize."
+        },
+        {
+          "id": "ordinal_07",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "Her 11th birthday was fun."
+        },
+        {
+          "id": "ordinal_08",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "The 12th juror spoke."
+        },
+        {
+          "id": "ordinal_09",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "The 13th floor is missing."
+        },
+        {
+          "id": "ordinal_10",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "He was the 22nd president."
+        },
+        {
+          "id": "ordinal_11",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "The 33rd meeting was short."
+        },
+        {
+          "id": "ordinal_12",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "This is our 50th year."
+        },
+        {
+          "id": "ordinal_13",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "The 19th century saw change."
+        },
+        {
+          "id": "ordinal_14",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "She placed 5th overall."
+        },
+        {
+          "id": "ordinal_15",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "The 8th item is missing."
+        },
+        {
+          "id": "ordinal_16",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "It was his 1,000th game."
+        },
+        {
+          "id": "ordinal_17",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Henry VIII had six wives."
+        },
+        {
+          "id": "ordinal_18",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "Read the 9th line again."
+        },
+        {
+          "id": "ordinal_19",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The 101st airborne landed."
+        },
+        {
+          "id": "ordinal_20",
+          "class": "ordinal",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "World War two ended."
+        },
+        {
+          "id": "ordinal_21",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.7142857142857143,
+          "score": 0.7142857142857143,
+          "actual": "The 2nd and 3rd rows are empty."
+        },
+        {
+          "id": "ordinal_22",
+          "class": "ordinal",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Today is the 31st."
+        },
+        {
+          "id": "phone_id_range_01",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.2222222222222222,
+          "score": 0.2222222222222222,
+          "actual": "Call 5 5 5, 0 1 2 3 today."
+        },
+        {
+          "id": "phone_id_range_02",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "See pp. 10 to 12."
+        },
+        {
+          "id": "phone_id_range_03",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Read pages 1 to 10."
+        },
+        {
+          "id": "phone_id_range_04",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "Ages 18 to 25 were sampled."
+        },
+        {
+          "id": "phone_id_range_05",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The war lasted 1914 to 1918."
+        },
+        {
+          "id": "phone_id_range_06",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.09090909090909094,
+          "score": 0.09090909090909094,
+          "actual": "Call 5 5 5, 8 6 7, 5 3 0 9."
+        },
+        {
+          "id": "phone_id_range_07",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.0625,
+          "score": 0.0625,
+          "actual": "The I S B N is 978-0-12-345678-9."
+        },
+        {
+          "id": "phone_id_range_08",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "Room 204 is free."
+        },
+        {
+          "id": "phone_id_range_09",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Flight B A 117 departs."
+        },
+        {
+          "id": "phone_id_range_10",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "Use version 2.0."
+        },
+        {
+          "id": "phone_id_range_11",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "Dial 911 now."
+        },
+        {
+          "id": "phone_id_range_12",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.4444444444444444,
+          "score": 0.4444444444444444,
+          "actual": "The zip code is 90210."
+        },
+        {
+          "id": "phone_id_range_13",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Chapters 3 to 5 cover methods."
+        },
+        {
+          "id": "phone_id_range_14",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "Order number 4471 shipped."
+        },
+        {
+          "id": "phone_id_range_15",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Rows 5 to 8 are blank."
+        },
+        {
+          "id": "phone_id_range_16",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.33333333333333337,
+          "score": 0.33333333333333337,
+          "actual": "The case is No. 22 to 1043."
+        },
+        {
+          "id": "phone_id_range_17",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.16666666666666663,
+          "score": 0.16666666666666663,
+          "actual": "Ext. 4410 answers."
+        },
+        {
+          "id": "phone_id_range_18",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Items 1 to 3 are new."
+        },
+        {
+          "id": "phone_id_range_19",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.2142857142857143,
+          "score": 0.2142857142857143,
+          "actual": "Text 07700 900123 for help."
+        },
+        {
+          "id": "phone_id_range_20",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.4545454545454546,
+          "score": 0.4545454545454546,
+          "actual": "The years 2001 to 2005 were calm."
+        },
+        {
+          "id": "phone_id_range_21",
+          "class": "phone_id_range",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "See figures 2 to 4."
+        },
+        {
+          "id": "abbreviation_01",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Dr. Smith arrived late."
+        },
+        {
+          "id": "abbreviation_02",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Mr. Jones left early."
+        },
+        {
+          "id": "abbreviation_03",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Mrs. Patel won."
+        },
+        {
+          "id": "abbreviation_04",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Use fruit, e.g. apples."
+        },
+        {
+          "id": "abbreviation_05",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Bring tools, i.e. a hammer."
+        },
+        {
+          "id": "abbreviation_06",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Pens, paper, etc. are provided."
+        },
+        {
+          "id": "abbreviation_07",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "It was Smith vs. Jones."
+        },
+        {
+          "id": "abbreviation_08",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "See Fig. 3 for details."
+        },
+        {
+          "id": "abbreviation_09",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Prof. Lee teaches here."
+        },
+        {
+          "id": "abbreviation_10",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The weight is approx. 5 kg."
+        },
+        {
+          "id": "abbreviation_11",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "See Eq. 2 above."
+        },
+        {
+          "id": "abbreviation_12",
+          "class": "abbreviation",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Smith et al found this."
+        },
+        {
+          "id": "abbreviation_13",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Item No. 5 is gone."
+        },
+        {
+          "id": "abbreviation_14",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.33333333333333337,
+          "score": 0.33333333333333337,
+          "actual": "Compare Sec. 4."
+        },
+        {
+          "id": "abbreviation_15",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.8571428571428572,
+          "score": 0.8571428571428572,
+          "actual": "The meeting is in Jan. next year."
+        },
+        {
+          "id": "abbreviation_16",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Sgt. Ortiz reported in."
+        },
+        {
+          "id": "abbreviation_17",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.6,
+          "score": 0.6,
+          "actual": "Results differ, cf. Table 2."
+        },
+        {
+          "id": "abbreviation_18",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "Martin Luther King Jr. spoke."
+        },
+        {
+          "id": "abbreviation_19",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Acme Inc. filed suit."
+        },
+        {
+          "id": "abbreviation_20",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "See vol. 3 of the series."
+        },
+        {
+          "id": "abbreviation_21",
+          "class": "abbreviation",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "Gen. Grant rode north."
+        },
+        {
+          "id": "acronym_spelled_01",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The F B I opened a case."
+        },
+        {
+          "id": "acronym_spelled_02",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Save it as a P D F."
+        },
+        {
+          "id": "acronym_spelled_03",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The C E O resigned."
+        },
+        {
+          "id": "acronym_spelled_04",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Plug in the U S B cable."
+        },
+        {
+          "id": "acronym_spelled_05",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The A P I returns JSON."
+        },
+        {
+          "id": "acronym_spelled_06",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The C P U was idle."
+        },
+        {
+          "id": "acronym_spelled_07",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The B B C reported it."
+        },
+        {
+          "id": "acronym_spelled_08",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "He moved to the U K."
+        },
+        {
+          "id": "acronym_spelled_09",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Write the query in S Q L."
+        },
+        {
+          "id": "acronym_spelled_10",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The H T M L page loaded."
+        },
+        {
+          "id": "acronym_spelled_11",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The W H O issued guidance."
+        },
+        {
+          "id": "acronym_spelled_12",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Her M B A took two years."
+        },
+        {
+          "id": "acronym_spelled_13",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The N F L season began."
+        },
+        {
+          "id": "acronym_spelled_14",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The D N A sample matched."
+        },
+        {
+          "id": "acronym_spelled_15",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Ask the H R team."
+        },
+        {
+          "id": "acronym_spelled_16",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The E U voted today."
+        },
+        {
+          "id": "acronym_spelled_17",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Check the U R L first."
+        },
+        {
+          "id": "acronym_spelled_18",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "She works at I B M."
+        },
+        {
+          "id": "acronym_spelled_19",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The G P U ran hot."
+        },
+        {
+          "id": "acronym_spelled_20",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Download both P D Fs."
+        },
+        {
+          "id": "acronym_spelled_21",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The C E O's letter was short."
+        },
+        {
+          "id": "acronym_spelled_22",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "An L L M wrote the draft."
+        },
+        {
+          "id": "acronym_spelled_23",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The S A T score was high."
+        },
+        {
+          "id": "acronym_spelled_24",
+          "class": "acronym_spelled",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The Transferable Erosion Deposit (T E D) grew. The T E D was measured."
+        },
+        {
+          "id": "acronym_spoken_01",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "NASA launched a probe."
+        },
+        {
+          "id": "acronym_spoken_02",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "UNESCO named the site."
+        },
+        {
+          "id": "acronym_spoken_03",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "NATO met in Brussels."
+        },
+        {
+          "id": "acronym_spoken_04",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "UNICEF sent aid."
+        },
+        {
+          "id": "acronym_spoken_05",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "She watched a TED talk."
+        },
+        {
+          "id": "acronym_spoken_06",
+          "class": "acronym_spoken",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The laptop has 16 G B of RAM."
+        },
+        {
+          "id": "acronym_spoken_07",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "FIFA changed the rules."
+        },
+        {
+          "id": "acronym_spoken_08",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "OPEC cut output."
+        },
+        {
+          "id": "acronym_spoken_09",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Send it ASAP."
+        },
+        {
+          "id": "acronym_spoken_10",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The SWAT team arrived."
+        },
+        {
+          "id": "acronym_spoken_11",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The data is stored as JSON."
+        },
+        {
+          "id": "acronym_spoken_12",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "NIST published a standard."
+        },
+        {
+          "id": "acronym_spoken_13",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "FEMA sent trailers."
+        },
+        {
+          "id": "acronym_spoken_14",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The AIDS crisis began."
+        },
+        {
+          "id": "acronym_spoken_15",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "She works for NAFTA reform."
+        },
+        {
+          "id": "acronym_spoken_16",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The image is a GIF."
+        },
+        {
+          "id": "acronym_spoken_17",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "IKEA opened a store."
+        },
+        {
+          "id": "acronym_spoken_18",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "He went SCUBA diving."
+        },
+        {
+          "id": "acronym_spoken_19",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The patient had a CAT scan."
+        },
+        {
+          "id": "acronym_spoken_20",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Enter your PIN code."
+        },
+        {
+          "id": "acronym_spoken_21",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "OSHA fined the firm."
+        },
+        {
+          "id": "acronym_spoken_22",
+          "class": "acronym_spoken",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "The LASER cut steel."
+        },
+        {
+          "id": "mixed_edge_01",
+          "class": "mixed_edge",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Visit example dot com today."
+        },
+        {
+          "id": "mixed_edge_02",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.375,
+          "score": 0.375,
+          "actual": "Email for help."
+        },
+        {
+          "id": "mixed_edge_03",
+          "class": "mixed_edge",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "See shop dot example dot com slash cart."
+        },
+        {
+          "id": "mixed_edge_04",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "Read § 3 first."
+        },
+        {
+          "id": "mixed_edge_05",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "See §§ 4 to 6."
+        },
+        {
+          "id": "mixed_edge_06",
+          "class": "mixed_edge",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "As shown in, it works."
+        },
+        {
+          "id": "mixed_edge_07",
+          "class": "mixed_edge",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Prior work agrees."
+        },
+        {
+          "id": "mixed_edge_08",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "COVID-19 spread quickly."
+        },
+        {
+          "id": "mixed_edge_09",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "Salt & pepper were added."
+        },
+        {
+          "id": "mixed_edge_10",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.7142857142857143,
+          "score": 0.7142857142857143,
+          "actual": "She rated it 8 out of 10."
+        },
+        {
+          "id": "mixed_edge_11",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.75,
+          "score": 0.75,
+          "actual": "If x equals 5 then y equals 10."
+        },
+        {
+          "id": "mixed_edge_12",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.5714285714285714,
+          "score": 0.5714285714285714,
+          "actual": "The shop is open 24/7."
+        },
+        {
+          "id": "mixed_edge_13",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "It weighs ~5 kg."
+        },
+        {
+          "id": "mixed_edge_14",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "The error is ±2 percent."
+        },
+        {
+          "id": "mixed_edge_15",
+          "class": "mixed_edge",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Part two"
+        },
+        {
+          "id": "mixed_edge_16",
+          "class": "mixed_edge",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Chapter four"
+        },
+        {
+          "id": "mixed_edge_17",
+          "class": "mixed_edge",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "two. Making Money"
+        },
+        {
+          "id": "mixed_edge_18",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "Happiness equals Health + Wealth"
+        },
+        {
+          "id": "mixed_edge_19",
+          "class": "mixed_edge",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "A long-term plan is needed."
+        },
+        {
+          "id": "mixed_edge_20",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.5555555555555556,
+          "score": 0.5555555555555556,
+          "actual": "The score was 95 out of 100."
+        },
+        {
+          "id": "mixed_edge_21",
+          "class": "mixed_edge",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Pages 3 to 7 are torn."
+        },
+        {
+          "id": "mixed_edge_22",
+          "class": "mixed_edge",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Return on Investment times Time"
+        },
+        {
+          "id": "table_cue_01",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 3 rows. Region, Users, Growth. Europe, Many, Fast. Asia, Few, Slow."
+        },
+        {
+          "id": "table_cue_02",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 2 rows. Name, Role. Ada, Analyst."
+        },
+        {
+          "id": "table_cue_03",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 3 rows. Model, Score. Base, High. Large, Higher."
+        },
+        {
+          "id": "table_cue_04",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 4 rows. City, Country. Paris, France. Rome, Italy. Lima, Peru."
+        },
+        {
+          "id": "table_cue_05",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 2 rows. Fruit, Color. Apple, Red."
+        },
+        {
+          "id": "table_cue_06",
+          "class": "table_cue",
+          "exact": false,
+          "partial": 0.5789473684210527,
+          "score": 0.5789473684210527,
+          "actual": "Table 1, 3 rows. Region, Users, Growth. Europe, 1200, 4 percent. Asia, 900, 7 percent."
+        },
+        {
+          "id": "table_cue_07",
+          "class": "table_cue",
+          "exact": false,
+          "partial": 0.3076923076923077,
+          "score": 0.3076923076923077,
+          "actual": "Table 1, 1 row. Year, Total."
+        },
+        {
+          "id": "table_cue_08",
+          "class": "table_cue",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "Table 1, 3 rows. Method, Accuracy. Baseline, 0.81. Ours, 0.92."
+        },
+        {
+          "id": "table_cue_09",
+          "class": "table_cue",
+          "exact": false,
+          "partial": 0.6666666666666667,
+          "score": 0.6666666666666667,
+          "actual": "Table 1, 3 rows. Item, Price. Tea, $3. Cake, $5."
+        },
+        {
+          "id": "table_cue_10",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 4 rows. Step, Action. One, Mix. Two, Bake. Three, Cool."
+        },
+        {
+          "id": "table_cue_11",
+          "class": "table_cue",
+          "exact": false,
+          "partial": 0.6923076923076923,
+          "score": 0.6923076923076923,
+          "actual": "Table 1, 3 rows. Team, Wins, Losses. Red, 10, 2. Blue, 7, 5."
+        },
+        {
+          "id": "table_cue_12",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 3 rows. Language, Family. Hindi, Indo-European. Tamil, Dravidian."
+        },
+        {
+          "id": "table_cue_13",
+          "class": "table_cue",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "Table 1, 3 rows. Planet, Moons. Earth, 1. Mars, 2."
+        },
+        {
+          "id": "table_cue_14",
+          "class": "table_cue",
+          "exact": false,
+          "partial": 0.5,
+          "score": 0.5,
+          "actual": "Table 1, 3 rows. Dataset, Size. Small, 10 M B. Large, 2 G B."
+        },
+        {
+          "id": "table_cue_15",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 3 rows. Author, Title. Austen, Emma. Eliot, Middlemarch."
+        },
+        {
+          "id": "table_cue_16",
+          "class": "table_cue",
+          "exact": false,
+          "partial": 0.4,
+          "score": 0.4,
+          "actual": "Table 1, 4 rows. Metric, Value. Precision, 0.9. Recall, 0.8. F1, 0.85."
+        },
+        {
+          "id": "table_cue_17",
+          "class": "table_cue",
+          "exact": false,
+          "partial": 0.4285714285714286,
+          "score": 0.4285714285714286,
+          "actual": "Table 1, 2 rows. Name, Score. Alice, 9."
+        },
+        {
+          "id": "table_cue_18",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 3 rows. Country, Capital. Japan, Tokyo. Kenya, Nairobi."
+        },
+        {
+          "id": "table_cue_19",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 3 rows. Task, Owner, Due. Draft, Sam, Monday. Review, Kim, Friday."
+        },
+        {
+          "id": "table_cue_20",
+          "class": "table_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Table 1, 3 rows. Unit, Symbol. meter, m. second, s."
+        },
+        {
+          "id": "equation_cue_01",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation."
+        },
+        {
+          "id": "equation_cue_02",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 3."
+        },
+        {
+          "id": "equation_cue_03",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 12."
+        },
+        {
+          "id": "equation_cue_04",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation."
+        },
+        {
+          "id": "equation_cue_05",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 1."
+        },
+        {
+          "id": "equation_cue_06",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation."
+        },
+        {
+          "id": "equation_cue_07",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 4."
+        },
+        {
+          "id": "equation_cue_08",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 7."
+        },
+        {
+          "id": "equation_cue_09",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation."
+        },
+        {
+          "id": "equation_cue_10",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 2."
+        },
+        {
+          "id": "equation_cue_11",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation."
+        },
+        {
+          "id": "equation_cue_12",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 5."
+        },
+        {
+          "id": "equation_cue_13",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 10."
+        },
+        {
+          "id": "equation_cue_14",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation."
+        },
+        {
+          "id": "equation_cue_15",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 8."
+        },
+        {
+          "id": "equation_cue_16",
+          "class": "equation_cue",
+          "exact": true,
+          "partial": 1.0,
+          "score": 1.0,
+          "actual": "Equation 6."
+        },
+        {
+          "id": "equation_cue_17",
+          "class": "equation_cue",
+          "exact": false,
+          "partial": 0.8333333333333334,
+          "score": 0.8333333333333334,
+          "actual": "Here α is the learning rate."
+        },
+        {
+          "id": "equation_cue_18",
+          "class": "equation_cue",
+          "exact": false,
+          "partial": 0.8571428571428572,
+          "score": 0.8571428571428572,
+          "actual": "We set λ to a small value."
+        },
+        {
+          "id": "equation_cue_19",
+          "class": "equation_cue",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "The mean μ is known."
+        },
+        {
+          "id": "equation_cue_20",
+          "class": "equation_cue",
+          "exact": false,
+          "partial": 0.8,
+          "score": 0.8,
+          "actual": "The loss is below ε."
+        }
+      ],
+      "skipped": [],
+      "aggregate": {
+        "accuracy": 0.27483443708609273,
+        "partial_mean": 0.7098887313356642,
+        "by_category": {
+          "abbreviation": 0.047619047619047616,
+          "acronym_spelled": 1.0,
+          "acronym_spoken": 0.9545454545454546,
+          "cardinal": 0.0,
+          "decimal_percent": 0.0,
+          "equation_cue": 0.8,
+          "mixed_edge": 0.4090909090909091,
+          "money": 0.0,
+          "ordinal": 0.045454545454545456,
+          "phone_id_range": 0.0,
+          "table_cue": 0.55,
+          "time": 0.0,
+          "unit": 0.0,
+          "year_date": 0.0
+        }
+      },
+      "seconds": 0.04
+    }
+  },
+  "seconds": 13.22
+}

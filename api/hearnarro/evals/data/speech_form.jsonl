@@ -1,0 +1,302 @@
+{"id": "cardinal_01", "category": "cardinal", "text": "There were 12 people in the room.", "expected": "There were twelve people in the room."}
+{"id": "cardinal_02", "category": "cardinal", "text": "The survey covered 1,200 households.", "expected": "The survey covered one thousand two hundred households."}
+{"id": "cardinal_03", "category": "cardinal", "text": "We trained for 300 epochs.", "expected": "We trained for three hundred epochs."}
+{"id": "cardinal_04", "category": "cardinal", "text": "The city has 45,000 residents.", "expected": "The city has forty-five thousand residents."}
+{"id": "cardinal_05", "category": "cardinal", "text": "It cost them 7 lives.", "expected": "It cost them seven lives."}
+{"id": "cardinal_06", "category": "cardinal", "text": "The dataset has 1,000,000 rows.", "expected": "The dataset has one million rows."}
+{"id": "cardinal_07", "category": "cardinal", "text": "Only 3 of the 20 samples passed.", "expected": "Only three of the twenty samples passed."}
+{"id": "cardinal_08", "category": "cardinal", "text": "The model has 175 layers.", "expected": "The model has one hundred seventy-five layers."}
+{"id": "cardinal_09", "category": "cardinal", "text": "She wrote 101 letters.", "expected": "She wrote one hundred one letters."}
+{"id": "cardinal_10", "category": "cardinal", "text": "A total of 2,048 tokens fit.", "expected": "A total of two thousand forty-eight tokens fit."}
+{"id": "cardinal_11", "category": "cardinal", "text": "The bridge is 0 meters from the shore at low tide.", "expected": "The bridge is zero meters from the shore at low tide."}
+{"id": "cardinal_12", "category": "cardinal", "text": "They counted 99 birds.", "expected": "They counted ninety-nine birds."}
+{"id": "cardinal_13", "category": "cardinal", "text": "We read 15 papers and 8 books.", "expected": "We read fifteen papers and eight books."}
+{"id": "cardinal_14", "category": "cardinal", "text": "The temperature dropped by 4 points.", "expected": "The temperature dropped by four points."}
+{"id": "cardinal_15", "category": "cardinal", "text": "There are 365 days in a year.", "expected": "There are three hundred sixty-five days in a year."}
+{"id": "cardinal_16", "category": "cardinal", "text": "The archive holds 12,500 images.", "expected": "The archive holds twelve thousand five hundred images."}
+{"id": "cardinal_17", "category": "cardinal", "text": "Group 2 finished first.", "expected": "Group two finished first."}
+{"id": "cardinal_18", "category": "cardinal", "text": "He sold 60 copies.", "expected": "He sold sixty copies."}
+{"id": "cardinal_19", "category": "cardinal", "text": "The index rose to 1,024.", "expected": "The index rose to one thousand twenty-four."}
+{"id": "cardinal_20", "category": "cardinal", "text": "Around 50 volunteers joined.", "expected": "Around fifty volunteers joined."}
+{"id": "cardinal_21", "category": "cardinal", "text": "The loss fell by -3 units.", "expected": "The loss fell by minus three units."}
+{"id": "cardinal_22", "category": "cardinal", "text": "We ran 10 trials.", "expected": "We ran ten trials."}
+{"id": "decimal_percent_01", "category": "decimal_percent", "text": "Accuracy rose by 5%.", "expected": "Accuracy rose by five percent."}
+{"id": "decimal_percent_02", "category": "decimal_percent", "text": "The rate was 3.5%.", "expected": "The rate was three point five percent."}
+{"id": "decimal_percent_03", "category": "decimal_percent", "text": "Pi is about 3.14.", "expected": "Pi is about three point one four."}
+{"id": "decimal_percent_04", "category": "decimal_percent", "text": "The score was 0.92.", "expected": "The score was zero point nine two."}
+{"id": "decimal_percent_05", "category": "decimal_percent", "text": "Only 12.5% responded.", "expected": "Only twelve point five percent responded."}
+{"id": "decimal_percent_06", "category": "decimal_percent", "text": "Growth hit 100%.", "expected": "Growth hit one hundred percent."}
+{"id": "decimal_percent_07", "category": "decimal_percent", "text": "The p-value was 0.05.", "expected": "The p value was zero point zero five."}
+{"id": "decimal_percent_08", "category": "decimal_percent", "text": "The error fell to 1.2%.", "expected": "The error fell to one point two percent."}
+{"id": "decimal_percent_09", "category": "decimal_percent", "text": "A ratio of 2.5 was observed.", "expected": "A ratio of two point five was observed."}
+{"id": "decimal_percent_10", "category": "decimal_percent", "text": "Unemployment is 4 percent.", "expected": "Unemployment is four percent."}
+{"id": "decimal_percent_11", "category": "decimal_percent", "text": "We kept 75% of the data.", "expected": "We kept seventy-five percent of the data."}
+{"id": "decimal_percent_12", "category": "decimal_percent", "text": "The weight decay was 0.01.", "expected": "The weight decay was zero point zero one."}
+{"id": "decimal_percent_13", "category": "decimal_percent", "text": "Turnout reached 67.3%.", "expected": "Turnout reached sixty-seven point three percent."}
+{"id": "decimal_percent_14", "category": "decimal_percent", "text": "The coefficient is 1.05.", "expected": "The coefficient is one point zero five."}
+{"id": "decimal_percent_15", "category": "decimal_percent", "text": "Prices rose 5–10%.", "expected": "Prices rose five to ten percent."}
+{"id": "decimal_percent_16", "category": "decimal_percent", "text": "Recall was .85 on the test set.", "expected": "Recall was point eight five on the test set."}
+{"id": "decimal_percent_17", "category": "decimal_percent", "text": "The margin is 0.5%.", "expected": "The margin is zero point five percent."}
+{"id": "decimal_percent_18", "category": "decimal_percent", "text": "About 30% of users left.", "expected": "About thirty percent of users left."}
+{"id": "decimal_percent_19", "category": "decimal_percent", "text": "The learning rate was 0.001.", "expected": "The learning rate was zero point zero zero one."}
+{"id": "decimal_percent_20", "category": "decimal_percent", "text": "Inflation was 2.1% last year.", "expected": "Inflation was two point one percent last year."}
+{"id": "decimal_percent_21", "category": "decimal_percent", "text": "Sales fell 0.3% in May.", "expected": "Sales fell zero point three percent in May."}
+{"id": "decimal_percent_22", "category": "decimal_percent", "text": "The mean was 4.75.", "expected": "The mean was four point seven five."}
+{"id": "year_date_01", "category": "year_date", "text": "The war ended in 1945.", "expected": "The war ended in nineteen forty-five."}
+{"id": "year_date_02", "category": "year_date", "text": "She was born in 1999.", "expected": "She was born in nineteen ninety-nine."}
+{"id": "year_date_03", "category": "year_date", "text": "The law passed in 2021.", "expected": "The law passed in twenty twenty-one."}
+{"id": "year_date_04", "category": "year_date", "text": "It opened in 2005.", "expected": "It opened in two thousand five."}
+{"id": "year_date_05", "category": "year_date", "text": "By 2000 the town had grown.", "expected": "By two thousand the town had grown."}
+{"id": "year_date_06", "category": "year_date", "text": "The company was founded in 1887.", "expected": "The company was founded in eighteen eighty-seven."}
+{"id": "year_date_07", "category": "year_date", "text": "Music of the 1990s changed.", "expected": "Music of the nineteen nineties changed."}
+{"id": "year_date_08", "category": "year_date", "text": "The meeting is on May 3, 2021.", "expected": "The meeting is on May third, twenty twenty-one."}
+{"id": "year_date_09", "category": "year_date", "text": "He arrived on 3 May 2021.", "expected": "He arrived on the third of May twenty twenty-one."}
+{"id": "year_date_10", "category": "year_date", "text": "The release date is 2026-10-17.", "expected": "The release date is October seventeenth, twenty twenty-six."}
+{"id": "year_date_11", "category": "year_date", "text": "The deadline was January 15.", "expected": "The deadline was January fifteenth."}
+{"id": "year_date_12", "category": "year_date", "text": "It happened on July 4, 1776.", "expected": "It happened on July fourth, seventeen seventy-six."}
+{"id": "year_date_13", "category": "year_date", "text": "The paper appeared in 2010.", "expected": "The paper appeared in twenty ten."}
+{"id": "year_date_14", "category": "year_date", "text": "The data run from 1990 to 2020.", "expected": "The data run from nineteen ninety to twenty twenty."}
+{"id": "year_date_15", "category": "year_date", "text": "The tower dates from 1066.", "expected": "The tower dates from ten sixty-six."}
+{"id": "year_date_16", "category": "year_date", "text": "On 1 January 2000 the clocks reset.", "expected": "On the first of January two thousand the clocks reset."}
+{"id": "year_date_17", "category": "year_date", "text": "The 2010s were turbulent.", "expected": "The twenty tens were turbulent."}
+{"id": "year_date_18", "category": "year_date", "text": "The census of 1901 counted them.", "expected": "The census of nineteen oh one counted them."}
+{"id": "year_date_19", "category": "year_date", "text": "It was signed on March 12, 2019.", "expected": "It was signed on March twelfth, twenty nineteen."}
+{"id": "year_date_20", "category": "year_date", "text": "The survey ran in 2023 and 2024.", "expected": "The survey ran in twenty twenty-three and twenty twenty-four."}
+{"id": "year_date_21", "category": "year_date", "text": "The ruins date to 500 BC.", "expected": "The ruins date to five hundred B C."}
+{"id": "time_01", "category": "time", "text": "The train leaves at 10:30.", "expected": "The train leaves at ten thirty."}
+{"id": "time_02", "category": "time", "text": "We met at 9:05.", "expected": "We met at nine oh five."}
+{"id": "time_03", "category": "time", "text": "Doors open at 7 p.m.", "expected": "Doors open at seven p m."}
+{"id": "time_04", "category": "time", "text": "The call is at 3:15 pm.", "expected": "The call is at three fifteen p m."}
+{"id": "time_05", "category": "time", "text": "Lunch is at 12:00.", "expected": "Lunch is at twelve o'clock."}
+{"id": "time_06", "category": "time", "text": "The shift starts at 6 a.m.", "expected": "The shift starts at six a m."}
+{"id": "time_07", "category": "time", "text": "The flight lands at 14:45.", "expected": "The flight lands at fourteen forty-five."}
+{"id": "time_08", "category": "time", "text": "Wake up at 5:30 am.", "expected": "Wake up at five thirty a m."}
+{"id": "time_09", "category": "time", "text": "It ran from 9:00 to 17:00.", "expected": "It ran from nine o'clock to seventeen hundred."}
+{"id": "time_10", "category": "time", "text": "The talk is 11:20–12:00.", "expected": "The talk is eleven twenty to twelve o'clock."}
+{"id": "time_11", "category": "time", "text": "The store closes at 8:45 p.m.", "expected": "The store closes at eight forty-five p m."}
+{"id": "time_12", "category": "time", "text": "Meet me at 4:10.", "expected": "Meet me at four ten."}
+{"id": "time_13", "category": "time", "text": "The alarm rang at 6:00 a.m.", "expected": "The alarm rang at six a m."}
+{"id": "time_14", "category": "time", "text": "The race began at 10:02.", "expected": "The race began at ten oh two."}
+{"id": "time_15", "category": "time", "text": "Check in by 2:30 p.m.", "expected": "Check in by two thirty p m."}
+{"id": "time_16", "category": "time", "text": "The bus came at 7:50.", "expected": "The bus came at seven fifty."}
+{"id": "time_17", "category": "time", "text": "The webinar starts at 1 pm.", "expected": "The webinar starts at one p m."}
+{"id": "time_18", "category": "time", "text": "Midnight is 00:00.", "expected": "Midnight is zero hundred hours."}
+{"id": "time_19", "category": "time", "text": "The film runs 1:45 long.", "expected": "The film runs one hour forty-five long."}
+{"id": "time_20", "category": "time", "text": "The meeting moved to 3:30.", "expected": "The meeting moved to three thirty."}
+{"id": "time_21", "category": "time", "text": "The museum opens at 10 a.m. daily.", "expected": "The museum opens at ten a m daily."}
+{"id": "time_22", "category": "time", "text": "Dinner is served at 7:30 p.m.", "expected": "Dinner is served at seven thirty p m."}
+{"id": "money_01", "category": "money", "text": "The ticket costs $5.", "expected": "The ticket costs five dollars."}
+{"id": "money_02", "category": "money", "text": "He paid $5.50 for coffee.", "expected": "He paid five dollars and fifty cents for coffee."}
+{"id": "money_03", "category": "money", "text": "Rent is £800 a month.", "expected": "Rent is eight hundred pounds a month."}
+{"id": "money_04", "category": "money", "text": "The fine was €20.", "expected": "The fine was twenty euros."}
+{"id": "money_05", "category": "money", "text": "Revenue reached $1.5 billion.", "expected": "Revenue reached one point five billion dollars."}
+{"id": "money_06", "category": "money", "text": "The grant was $250,000.", "expected": "The grant was two hundred fifty thousand dollars."}
+{"id": "money_07", "category": "money", "text": "A coffee is $3.99.", "expected": "A coffee is three dollars and ninety-nine cents."}
+{"id": "money_08", "category": "money", "text": "They raised $2 million.", "expected": "They raised two million dollars."}
+{"id": "money_09", "category": "money", "text": "The book costs £12.", "expected": "The book costs twelve pounds."}
+{"id": "money_10", "category": "money", "text": "Tickets start at $10.", "expected": "Tickets start at ten dollars."}
+{"id": "money_11", "category": "money", "text": "The budget is €3.2 million.", "expected": "The budget is three point two million euros."}
+{"id": "money_12", "category": "money", "text": "The stamp costs 50¢.", "expected": "The stamp costs fifty cents."}
+{"id": "money_13", "category": "money", "text": "The deal was worth $40bn.", "expected": "The deal was worth forty billion dollars."}
+{"id": "money_14", "category": "money", "text": "She earned ¥5,000.", "expected": "She earned five thousand yen."}
+{"id": "money_15", "category": "money", "text": "Each share rose by $0.25.", "expected": "Each share rose by twenty-five cents."}
+{"id": "money_16", "category": "money", "text": "The house sold for $1,250,000.", "expected": "The house sold for one million two hundred fifty thousand dollars."}
+{"id": "money_17", "category": "money", "text": "The fee is $100 per year.", "expected": "The fee is one hundred dollars per year."}
+{"id": "money_18", "category": "money", "text": "Lunch was $12.75.", "expected": "Lunch was twelve dollars and seventy-five cents."}
+{"id": "money_19", "category": "money", "text": "The prize is £1 million.", "expected": "The prize is one million pounds."}
+{"id": "money_20", "category": "money", "text": "Costs rose to US$300.", "expected": "Costs rose to three hundred U S dollars."}
+{"id": "money_21", "category": "money", "text": "The repair cost $75.", "expected": "The repair cost seventy-five dollars."}
+{"id": "money_22", "category": "money", "text": "Wages rose to £9.50 an hour.", "expected": "Wages rose to nine pounds fifty an hour."}
+{"id": "unit_01", "category": "unit", "text": "The trail is 5 km long.", "expected": "The trail is five kilometers long."}
+{"id": "unit_02", "category": "unit", "text": "It was 40°C outside.", "expected": "It was forty degrees Celsius outside."}
+{"id": "unit_03", "category": "unit", "text": "The bag weighs 10 kg.", "expected": "The bag weighs ten kilograms."}
+{"id": "unit_04", "category": "unit", "text": "Latency was 3 ms.", "expected": "Latency was three milliseconds."}
+{"id": "unit_05", "category": "unit", "text": "The file is 5 GB.", "expected": "The file is five gigabytes."}
+{"id": "unit_06", "category": "unit", "text": "The car reached 100 km/h.", "expected": "The car reached one hundred kilometers per hour."}
+{"id": "unit_07", "category": "unit", "text": "Add 250 ml of water.", "expected": "Add two hundred fifty milliliters of water."}
+{"id": "unit_08", "category": "unit", "text": "The board is 2 m wide.", "expected": "The board is two meters wide."}
+{"id": "unit_09", "category": "unit", "text": "The screw is 4 mm long.", "expected": "The screw is four millimeters long."}
+{"id": "unit_10", "category": "unit", "text": "Water boils at 212°F.", "expected": "Water boils at two hundred twelve degrees Fahrenheit."}
+{"id": "unit_11", "category": "unit", "text": "The chip runs at 3.2 GHz.", "expected": "The chip runs at three point two gigahertz."}
+{"id": "unit_12", "category": "unit", "text": "The lamp draws 60 W.", "expected": "The lamp draws sixty watts."}
+{"id": "unit_13", "category": "unit", "text": "The road climbs 300 ft.", "expected": "The road climbs three hundred feet."}
+{"id": "unit_14", "category": "unit", "text": "She ran 26.2 miles.", "expected": "She ran twenty-six point two miles."}
+{"id": "unit_15", "category": "unit", "text": "Use 2 tsp of salt.", "expected": "Use two teaspoons of salt."}
+{"id": "unit_16", "category": "unit", "text": "The battery is 5,000 mAh.", "expected": "The battery is five thousand milliamp hours."}
+{"id": "unit_17", "category": "unit", "text": "The angle is 90°.", "expected": "The angle is ninety degrees."}
+{"id": "unit_18", "category": "unit", "text": "The parcel weighs 3 lb.", "expected": "The parcel weighs three pounds."}
+{"id": "unit_19", "category": "unit", "text": "Memory use was 512 MB.", "expected": "Memory use was five hundred twelve megabytes."}
+{"id": "unit_20", "category": "unit", "text": "The plot covers 2 km².", "expected": "The plot covers two square kilometers."}
+{"id": "unit_21", "category": "unit", "text": "The link runs at 10 Mbps.", "expected": "The link runs at ten megabits per second."}
+{"id": "ordinal_01", "category": "ordinal", "text": "She came 1st in the race.", "expected": "She came first in the race."}
+{"id": "ordinal_02", "category": "ordinal", "text": "This is the 2nd edition.", "expected": "This is the second edition."}
+{"id": "ordinal_03", "category": "ordinal", "text": "He finished 3rd.", "expected": "He finished third."}
+{"id": "ordinal_04", "category": "ordinal", "text": "The 4th chapter is long.", "expected": "The fourth chapter is long."}
+{"id": "ordinal_05", "category": "ordinal", "text": "It is the 21st century.", "expected": "It is the twenty-first century."}
+{"id": "ordinal_06", "category": "ordinal", "text": "The 100th visitor won a prize.", "expected": "The one hundredth visitor won a prize."}
+{"id": "ordinal_07", "category": "ordinal", "text": "Her 11th birthday was fun.", "expected": "Her eleventh birthday was fun."}
+{"id": "ordinal_08", "category": "ordinal", "text": "The 12th juror spoke.", "expected": "The twelfth juror spoke."}
+{"id": "ordinal_09", "category": "ordinal", "text": "The 13th floor is missing.", "expected": "The thirteenth floor is missing."}
+{"id": "ordinal_10", "category": "ordinal", "text": "He was the 22nd president.", "expected": "He was the twenty-second president."}
+{"id": "ordinal_11", "category": "ordinal", "text": "The 33rd meeting was short.", "expected": "The thirty-third meeting was short."}
+{"id": "ordinal_12", "category": "ordinal", "text": "This is our 50th year.", "expected": "This is our fiftieth year."}
+{"id": "ordinal_13", "category": "ordinal", "text": "The 19th century saw change.", "expected": "The nineteenth century saw change."}
+{"id": "ordinal_14", "category": "ordinal", "text": "She placed 5th overall.", "expected": "She placed fifth overall."}
+{"id": "ordinal_15", "category": "ordinal", "text": "The 8th item is missing.", "expected": "The eighth item is missing."}
+{"id": "ordinal_16", "category": "ordinal", "text": "It was his 1,000th game.", "expected": "It was his one thousandth game."}
+{"id": "ordinal_17", "category": "ordinal", "text": "Henry VIII had six wives.", "expected": "Henry the Eighth had six wives."}
+{"id": "ordinal_18", "category": "ordinal", "text": "Read the 9th line again.", "expected": "Read the ninth line again."}
+{"id": "ordinal_19", "category": "ordinal", "text": "The 101st airborne landed.", "expected": "The one hundred first airborne landed."}
+{"id": "ordinal_20", "category": "ordinal", "text": "World War II ended.", "expected": "World War two ended."}
+{"id": "ordinal_21", "category": "ordinal", "text": "The 2nd and 3rd rows are empty.", "expected": "The second and third rows are empty."}
+{"id": "ordinal_22", "category": "ordinal", "text": "Today is the 31st.", "expected": "Today is the thirty-first."}
+{"id": "phone_id_range_01", "category": "phone_id_range", "text": "Call 555-0123 today.", "expected": "Call five five five, oh one two three today."}
+{"id": "phone_id_range_02", "category": "phone_id_range", "text": "See pp. 10-12.", "expected": "See pages ten to twelve."}
+{"id": "phone_id_range_03", "category": "phone_id_range", "text": "Read pages 1–10.", "expected": "Read pages one to ten."}
+{"id": "phone_id_range_04", "category": "phone_id_range", "text": "Ages 18-25 were sampled.", "expected": "Ages eighteen to twenty-five were sampled."}
+{"id": "phone_id_range_05", "category": "phone_id_range", "text": "The war lasted 1914–1918.", "expected": "The war lasted nineteen fourteen to nineteen eighteen."}
+{"id": "phone_id_range_06", "category": "phone_id_range", "text": "Call (555) 867-5309.", "expected": "Call five five five, eight six seven, five three oh nine."}
+{"id": "phone_id_range_07", "category": "phone_id_range", "text": "The ISBN is 978-0-12-345678-9.", "expected": "The ISBN is nine seven eight, oh, one two, three four five six seven eight, nine."}
+{"id": "phone_id_range_08", "category": "phone_id_range", "text": "Room 204 is free.", "expected": "Room two oh four is free."}
+{"id": "phone_id_range_09", "category": "phone_id_range", "text": "Flight BA 117 departs.", "expected": "Flight B A one seventeen departs."}
+{"id": "phone_id_range_10", "category": "phone_id_range", "text": "Use version 2.0.", "expected": "Use version two point oh."}
+{"id": "phone_id_range_11", "category": "phone_id_range", "text": "Dial 911 now.", "expected": "Dial nine one one now."}
+{"id": "phone_id_range_12", "category": "phone_id_range", "text": "The zip code is 90210.", "expected": "The zip code is nine oh two one oh."}
+{"id": "phone_id_range_13", "category": "phone_id_range", "text": "Chapters 3 - 5 cover methods.", "expected": "Chapters three to five cover methods."}
+{"id": "phone_id_range_14", "category": "phone_id_range", "text": "Order number 4471 shipped.", "expected": "Order number four four seven one shipped."}
+{"id": "phone_id_range_15", "category": "phone_id_range", "text": "Rows 5–8 are blank.", "expected": "Rows five to eight are blank."}
+{"id": "phone_id_range_16", "category": "phone_id_range", "text": "The case is No. 22-1043.", "expected": "The case is number twenty-two, ten forty-three."}
+{"id": "phone_id_range_17", "category": "phone_id_range", "text": "Ext. 4410 answers.", "expected": "Extension four four one oh answers."}
+{"id": "phone_id_range_18", "category": "phone_id_range", "text": "Items 1-3 are new.", "expected": "Items one to three are new."}
+{"id": "phone_id_range_19", "category": "phone_id_range", "text": "Text 07700 900123 for help.", "expected": "Text oh seven seven oh oh, nine oh oh one two three for help."}
+{"id": "phone_id_range_20", "category": "phone_id_range", "text": "The years 2001-2005 were calm.", "expected": "The years two thousand one to two thousand five were calm."}
+{"id": "phone_id_range_21", "category": "phone_id_range", "text": "See figures 2–4.", "expected": "See figures two to four."}
+{"id": "abbreviation_01", "category": "abbreviation", "text": "Dr. Smith arrived late.", "expected": "Doctor Smith arrived late."}
+{"id": "abbreviation_02", "category": "abbreviation", "text": "Mr. Jones left early.", "expected": "Mister Jones left early."}
+{"id": "abbreviation_03", "category": "abbreviation", "text": "Mrs. Patel won.", "expected": "Missus Patel won."}
+{"id": "abbreviation_04", "category": "abbreviation", "text": "Use fruit, e.g. apples.", "expected": "Use fruit, for example apples."}
+{"id": "abbreviation_05", "category": "abbreviation", "text": "Bring tools, i.e. a hammer.", "expected": "Bring tools, that is a hammer."}
+{"id": "abbreviation_06", "category": "abbreviation", "text": "Pens, paper, etc. are provided.", "expected": "Pens, paper, et cetera are provided."}
+{"id": "abbreviation_07", "category": "abbreviation", "text": "It was Smith vs. Jones.", "expected": "It was Smith versus Jones."}
+{"id": "abbreviation_08", "category": "abbreviation", "text": "See Fig. 3 for details.", "expected": "See Figure three for details."}
+{"id": "abbreviation_09", "category": "abbreviation", "text": "Prof. Lee teaches here.", "expected": "Professor Lee teaches here."}
+{"id": "abbreviation_10", "category": "abbreviation", "text": "The weight is approx. 5 kg.", "expected": "The weight is approximately five kilograms."}
+{"id": "abbreviation_11", "category": "abbreviation", "text": "See Eq. 2 above.", "expected": "See Equation two above."}
+{"id": "abbreviation_12", "category": "abbreviation", "text": "Smith et al. found this.", "expected": "Smith et al found this."}
+{"id": "abbreviation_13", "category": "abbreviation", "text": "Item No. 5 is gone.", "expected": "Item number five is gone."}
+{"id": "abbreviation_14", "category": "abbreviation", "text": "Compare Sec. 4.", "expected": "Compare Section four."}
+{"id": "abbreviation_15", "category": "abbreviation", "text": "The meeting is in Jan. next year.", "expected": "The meeting is in January next year."}
+{"id": "abbreviation_16", "category": "abbreviation", "text": "Sgt. Ortiz reported in.", "expected": "Sergeant Ortiz reported in."}
+{"id": "abbreviation_17", "category": "abbreviation", "text": "Results differ, cf. Table 2.", "expected": "Results differ, compare Table two."}
+{"id": "abbreviation_18", "category": "abbreviation", "text": "Martin Luther King Jr. spoke.", "expected": "Martin Luther King Junior spoke."}
+{"id": "abbreviation_19", "category": "abbreviation", "text": "Acme Inc. filed suit.", "expected": "Acme Incorporated filed suit."}
+{"id": "abbreviation_20", "category": "abbreviation", "text": "See vol. 3 of the series.", "expected": "See volume three of the series."}
+{"id": "abbreviation_21", "category": "abbreviation", "text": "Gen. Grant rode north.", "expected": "General Grant rode north."}
+{"id": "acronym_spelled_01", "category": "acronym_spelled", "text": "The FBI opened a case.", "expected": "The F B I opened a case."}
+{"id": "acronym_spelled_02", "category": "acronym_spelled", "text": "Save it as a PDF.", "expected": "Save it as a P D F."}
+{"id": "acronym_spelled_03", "category": "acronym_spelled", "text": "The CEO resigned.", "expected": "The C E O resigned."}
+{"id": "acronym_spelled_04", "category": "acronym_spelled", "text": "Plug in the USB cable.", "expected": "Plug in the U S B cable."}
+{"id": "acronym_spelled_05", "category": "acronym_spelled", "text": "The API returns JSON.", "expected": "The A P I returns JSON."}
+{"id": "acronym_spelled_06", "category": "acronym_spelled", "text": "The CPU was idle.", "expected": "The C P U was idle."}
+{"id": "acronym_spelled_07", "category": "acronym_spelled", "text": "The BBC reported it.", "expected": "The B B C reported it."}
+{"id": "acronym_spelled_08", "category": "acronym_spelled", "text": "He moved to the UK.", "expected": "He moved to the U K."}
+{"id": "acronym_spelled_09", "category": "acronym_spelled", "text": "Write the query in SQL.", "expected": "Write the query in S Q L."}
+{"id": "acronym_spelled_10", "category": "acronym_spelled", "text": "The HTML page loaded.", "expected": "The H T M L page loaded."}
+{"id": "acronym_spelled_11", "category": "acronym_spelled", "text": "The WHO issued guidance.", "expected": "The W H O issued guidance."}
+{"id": "acronym_spelled_12", "category": "acronym_spelled", "text": "Her MBA took two years.", "expected": "Her M B A took two years."}
+{"id": "acronym_spelled_13", "category": "acronym_spelled", "text": "The NFL season began.", "expected": "The N F L season began."}
+{"id": "acronym_spelled_14", "category": "acronym_spelled", "text": "The DNA sample matched.", "expected": "The D N A sample matched."}
+{"id": "acronym_spelled_15", "category": "acronym_spelled", "text": "Ask the HR team.", "expected": "Ask the H R team."}
+{"id": "acronym_spelled_16", "category": "acronym_spelled", "text": "The EU voted today.", "expected": "The E U voted today."}
+{"id": "acronym_spelled_17", "category": "acronym_spelled", "text": "Check the URL first.", "expected": "Check the U R L first."}
+{"id": "acronym_spelled_18", "category": "acronym_spelled", "text": "She works at IBM.", "expected": "She works at I B M."}
+{"id": "acronym_spelled_19", "category": "acronym_spelled", "text": "The GPU ran hot.", "expected": "The G P U ran hot."}
+{"id": "acronym_spelled_20", "category": "acronym_spelled", "text": "Download both PDFs.", "expected": "Download both P D Fs."}
+{"id": "acronym_spelled_21", "category": "acronym_spelled", "text": "The CEO's letter was short.", "expected": "The C E O's letter was short."}
+{"id": "acronym_spelled_22", "category": "acronym_spelled", "text": "An LLM wrote the draft.", "expected": "An L L M wrote the draft."}
+{"id": "acronym_spelled_23", "category": "acronym_spelled", "text": "The SAT score was high.", "expected": "The S A T score was high."}
+{"id": "acronym_spelled_24", "category": "acronym_spelled", "text": "The Transferable Erosion Deposit (TED) grew. The TED was measured.", "expected": "The Transferable Erosion Deposit T E D grew. The T E D was measured.", "note": "a document definition makes a short acronym an initialism (ING-6)"}
+{"id": "acronym_spoken_01", "category": "acronym_spoken", "text": "NASA launched a probe.", "expected": "NASA launched a probe."}
+{"id": "acronym_spoken_02", "category": "acronym_spoken", "text": "UNESCO named the site.", "expected": "UNESCO named the site."}
+{"id": "acronym_spoken_03", "category": "acronym_spoken", "text": "NATO met in Brussels.", "expected": "NATO met in Brussels."}
+{"id": "acronym_spoken_04", "category": "acronym_spoken", "text": "UNICEF sent aid.", "expected": "UNICEF sent aid."}
+{"id": "acronym_spoken_05", "category": "acronym_spoken", "text": "She watched a TED talk.", "expected": "She watched a TED talk."}
+{"id": "acronym_spoken_06", "category": "acronym_spoken", "text": "The laptop has 16 GB of RAM.", "expected": "The laptop has sixteen gigabytes of RAM."}
+{"id": "acronym_spoken_07", "category": "acronym_spoken", "text": "FIFA changed the rules.", "expected": "FIFA changed the rules."}
+{"id": "acronym_spoken_08", "category": "acronym_spoken", "text": "OPEC cut output.", "expected": "OPEC cut output."}
+{"id": "acronym_spoken_09", "category": "acronym_spoken", "text": "Send it ASAP.", "expected": "Send it ASAP."}
+{"id": "acronym_spoken_10", "category": "acronym_spoken", "text": "The SWAT team arrived.", "expected": "The SWAT team arrived."}
+{"id": "acronym_spoken_11", "category": "acronym_spoken", "text": "The data is stored as JSON.", "expected": "The data is stored as JSON."}
+{"id": "acronym_spoken_12", "category": "acronym_spoken", "text": "NIST published a standard.", "expected": "NIST published a standard."}
+{"id": "acronym_spoken_13", "category": "acronym_spoken", "text": "FEMA sent trailers.", "expected": "FEMA sent trailers."}
+{"id": "acronym_spoken_14", "category": "acronym_spoken", "text": "The AIDS crisis began.", "expected": "The AIDS crisis began."}
+{"id": "acronym_spoken_15", "category": "acronym_spoken", "text": "She works for NAFTA reform.", "expected": "She works for NAFTA reform."}
+{"id": "acronym_spoken_16", "category": "acronym_spoken", "text": "The image is a GIF.", "expected": "The image is a GIF."}
+{"id": "acronym_spoken_17", "category": "acronym_spoken", "text": "IKEA opened a store.", "expected": "IKEA opened a store."}
+{"id": "acronym_spoken_18", "category": "acronym_spoken", "text": "He went SCUBA diving.", "expected": "He went SCUBA diving."}
+{"id": "acronym_spoken_19", "category": "acronym_spoken", "text": "The patient had a CAT scan.", "expected": "The patient had a CAT scan."}
+{"id": "acronym_spoken_20", "category": "acronym_spoken", "text": "Enter your PIN code.", "expected": "Enter your PIN code."}
+{"id": "acronym_spoken_21", "category": "acronym_spoken", "text": "OSHA fined the firm.", "expected": "OSHA fined the firm."}
+{"id": "acronym_spoken_22", "category": "acronym_spoken", "text": "The LASER cut steel.", "expected": "The LASER cut steel."}
+{"id": "mixed_edge_01", "category": "mixed_edge", "text": "Visit www.example.com today.", "expected": "Visit example dot com today."}
+{"id": "mixed_edge_02", "category": "mixed_edge", "text": "Email jane@example.org for help.", "expected": "Email jane at example dot org for help."}
+{"id": "mixed_edge_03", "category": "mixed_edge", "text": "See https://shop.example.com/cart.", "expected": "See shop dot example dot com slash cart."}
+{"id": "mixed_edge_04", "category": "mixed_edge", "text": "Read § 3 first.", "expected": "Read section three first."}
+{"id": "mixed_edge_05", "category": "mixed_edge", "text": "See §§ 4–6.", "expected": "See sections four to six."}
+{"id": "mixed_edge_06", "category": "mixed_edge", "text": "As shown in [12], it works.", "expected": "As shown in, it works.", "note": "citations are dropped (ING-6)"}
+{"id": "mixed_edge_07", "category": "mixed_edge", "text": "Prior work [3, 4] agrees.", "expected": "Prior work agrees."}
+{"id": "mixed_edge_08", "category": "mixed_edge", "text": "COVID-19 spread quickly.", "expected": "COVID nineteen spread quickly."}
+{"id": "mixed_edge_09", "category": "mixed_edge", "text": "Salt & pepper were added.", "expected": "Salt and pepper were added."}
+{"id": "mixed_edge_10", "category": "mixed_edge", "text": "She rated it 8/10.", "expected": "She rated it eight out of ten."}
+{"id": "mixed_edge_11", "category": "mixed_edge", "text": "If x = 5 then y = 10.", "expected": "If x equals five then y equals ten."}
+{"id": "mixed_edge_12", "category": "mixed_edge", "text": "The shop is open 24/7.", "expected": "The shop is open twenty-four seven."}
+{"id": "mixed_edge_13", "category": "mixed_edge", "text": "It weighs ~5 kg.", "expected": "It weighs about five kilograms."}
+{"id": "mixed_edge_14", "category": "mixed_edge", "text": "The error is ±2%.", "expected": "The error is plus or minus two percent."}
+{"id": "mixed_edge_15", "category": "mixed_edge", "text": "PART II", "expected": "Part two", "block": "heading"}
+{"id": "mixed_edge_16", "category": "mixed_edge", "text": "CHAPTER IV", "expected": "Chapter four", "block": "heading"}
+{"id": "mixed_edge_17", "category": "mixed_edge", "text": "II. Making Money", "expected": "Two. Making Money", "block": "heading"}
+{"id": "mixed_edge_18", "category": "mixed_edge", "text": "Happiness = Health + Wealth", "expected": "Happiness equals Health plus Wealth"}
+{"id": "mixed_edge_19", "category": "mixed_edge", "text": "A long-term plan is needed.", "expected": "A long term plan is needed."}
+{"id": "mixed_edge_20", "category": "mixed_edge", "text": "The score was 95/100.", "expected": "The score was ninety-five out of one hundred."}
+{"id": "mixed_edge_21", "category": "mixed_edge", "text": "Pages 3—7 are torn.", "expected": "Pages three to seven are torn."}
+{"id": "mixed_edge_22", "category": "mixed_edge", "text": "Return on Investment * Time", "expected": "Return on Investment times Time"}
+{"id": "table_cue_01", "category": "table_cue", "text": "Region | Users | Growth\nEurope | Many | Fast\nAsia | Few | Slow", "expected": "Table 1, 3 rows. Region, Users, Growth. Europe, Many, Fast. Asia, Few, Slow.", "block": "table"}
+{"id": "table_cue_02", "category": "table_cue", "text": "Name | Role\nAda | Analyst", "expected": "Table 1, 2 rows. Name, Role. Ada, Analyst.", "block": "table"}
+{"id": "table_cue_03", "category": "table_cue", "text": "Model | Score\nBase | High\nLarge | Higher", "expected": "Table 1, 3 rows. Model, Score. Base, High. Large, Higher.", "block": "table"}
+{"id": "table_cue_04", "category": "table_cue", "text": "City | Country\nParis | France\nRome | Italy\nLima | Peru", "expected": "Table 1, 4 rows. City, Country. Paris, France. Rome, Italy. Lima, Peru.", "block": "table"}
+{"id": "table_cue_05", "category": "table_cue", "text": "Fruit | Color\nApple | Red", "expected": "Table 1, 2 rows. Fruit, Color. Apple, Red.", "block": "table"}
+{"id": "table_cue_06", "category": "table_cue", "text": "Region | Users | Growth\nEurope | 1200 | 4%\nAsia | 900 | 7%", "expected": "Table 1, 3 rows. Region, Users, Growth. Europe, one thousand two hundred, four percent. Asia, nine hundred, seven percent.", "block": "table"}
+{"id": "table_cue_07", "category": "table_cue", "text": "Year | Total\n2020 | 15\n2021 | 18", "expected": "Table 1, 3 rows. Year, Total. twenty twenty, fifteen. twenty twenty-one, eighteen.", "block": "table", "note": "rows of numbers are still rows of the table (PRD ING-7: row-by-row prose)"}
+{"id": "table_cue_08", "category": "table_cue", "text": "Method | Accuracy\nBaseline | 0.81\nOurs | 0.92", "expected": "Table 1, 3 rows. Method, Accuracy. Baseline, zero point eight one. Ours, zero point nine two.", "block": "table"}
+{"id": "table_cue_09", "category": "table_cue", "text": "Item | Price\nTea | $3\nCake | $5", "expected": "Table 1, 3 rows. Item, Price. Tea, three dollars. Cake, five dollars.", "block": "table"}
+{"id": "table_cue_10", "category": "table_cue", "text": "Step | Action\nOne | Mix\nTwo | Bake\nThree | Cool", "expected": "Table 1, 4 rows. Step, Action. One, Mix. Two, Bake. Three, Cool.", "block": "table"}
+{"id": "table_cue_11", "category": "table_cue", "text": "Team | Wins | Losses\nRed | 10 | 2\nBlue | 7 | 5", "expected": "Table 1, 3 rows. Team, Wins, Losses. Red, ten, two. Blue, seven, five.", "block": "table"}
+{"id": "table_cue_12", "category": "table_cue", "text": "Language | Family\nHindi | Indo-European\nTamil | Dravidian", "expected": "Table 1, 3 rows. Language, Family. Hindi, Indo European. Tamil, Dravidian.", "block": "table"}
+{"id": "table_cue_13", "category": "table_cue", "text": "Planet | Moons\nEarth | 1\nMars | 2", "expected": "Table 1, 3 rows. Planet, Moons. Earth, one. Mars, two.", "block": "table"}
+{"id": "table_cue_14", "category": "table_cue", "text": "Dataset | Size\nSmall | 10 MB\nLarge | 2 GB", "expected": "Table 1, 3 rows. Dataset, Size. Small, ten megabytes. Large, two gigabytes.", "block": "table"}
+{"id": "table_cue_15", "category": "table_cue", "text": "Author | Title\nAusten | Emma\nEliot | Middlemarch", "expected": "Table 1, 3 rows. Author, Title. Austen, Emma. Eliot, Middlemarch.", "block": "table"}
+{"id": "table_cue_16", "category": "table_cue", "text": "Metric | Value\nPrecision | 0.9\nRecall | 0.8\nF1 | 0.85", "expected": "Table 1, 4 rows. Metric, Value. Precision, zero point nine. Recall, zero point eight. F one, zero point eight five.", "block": "table"}
+{"id": "table_cue_17", "category": "table_cue", "text": "Name | Score\n1.0 | 2.5\nAlice | 9", "expected": "Table 1, 3 rows. Name, Score. one point oh, two point five. Alice, nine.", "block": "table", "note": "a row of numbers is data the listener needs (PRD ING-7)"}
+{"id": "table_cue_18", "category": "table_cue", "text": "Country | Capital\nJapan | Tokyo\nKenya | Nairobi", "expected": "Table 1, 3 rows. Country, Capital. Japan, Tokyo. Kenya, Nairobi.", "block": "table"}
+{"id": "table_cue_19", "category": "table_cue", "text": "Task | Owner | Due\nDraft | Sam | Monday\nReview | Kim | Friday", "expected": "Table 1, 3 rows. Task, Owner, Due. Draft, Sam, Monday. Review, Kim, Friday.", "block": "table"}
+{"id": "table_cue_20", "category": "table_cue", "text": "Unit | Symbol\nmeter | m\nsecond | s", "expected": "Table 1, 3 rows. Unit, Symbol. meter, m. second, s.", "block": "table"}
+{"id": "equation_cue_01", "category": "equation_cue", "text": "∑ᵢ αᵢ xᵢ ≤ β\nλ = ∂f/∂x", "expected": "Equation.", "block": "equation"}
+{"id": "equation_cue_02", "category": "equation_cue", "text": "f(x) = ∫ g(t) dt          (3)", "expected": "Equation 3.", "block": "equation"}
+{"id": "equation_cue_03", "category": "equation_cue", "text": "x = √(a² + b²)          (12)", "expected": "Equation 12.", "block": "equation"}
+{"id": "equation_cue_04", "category": "equation_cue", "text": "∑ λᵢ ≥ 0", "expected": "Equation.", "block": "equation"}
+{"id": "equation_cue_05", "category": "equation_cue", "text": "E = mc²          (1)", "expected": "Equation 1.", "block": "equation"}
+{"id": "equation_cue_06", "category": "equation_cue", "text": "L(θ) = −∑ y log p(y|x)", "expected": "Equation.", "block": "equation"}
+{"id": "equation_cue_07", "category": "equation_cue", "text": "∇·E = ρ/ε₀          (4)", "expected": "Equation 4.", "block": "equation"}
+{"id": "equation_cue_08", "category": "equation_cue", "text": "P(A|B) = P(B|A)P(A)/P(B)          (7)", "expected": "Equation 7.", "block": "equation"}
+{"id": "equation_cue_09", "category": "equation_cue", "text": "a² + b² = c²", "expected": "Equation.", "block": "equation"}
+{"id": "equation_cue_10", "category": "equation_cue", "text": "∂u/∂t = α ∂²u/∂x²          (2)", "expected": "Equation 2.", "block": "equation"}
+{"id": "equation_cue_11", "category": "equation_cue", "text": "y = Wx + b", "expected": "Equation.", "block": "equation"}
+{"id": "equation_cue_12", "category": "equation_cue", "text": "σ(z) = 1/(1 + e^−z)          (5)", "expected": "Equation 5.", "block": "equation"}
+{"id": "equation_cue_13", "category": "equation_cue", "text": "‖x‖₂ ≤ 1          (10)", "expected": "Equation 10.", "block": "equation"}
+{"id": "equation_cue_14", "category": "equation_cue", "text": "H = −∑ p log p", "expected": "Equation.", "block": "equation"}
+{"id": "equation_cue_15", "category": "equation_cue", "text": "∫₀^∞ e^−x dx = 1          (8)", "expected": "Equation 8.", "block": "equation"}
+{"id": "equation_cue_16", "category": "equation_cue", "text": "μ = (1/n) ∑ xᵢ          (6)", "expected": "Equation 6.", "block": "equation"}
+{"id": "equation_cue_17", "category": "equation_cue", "text": "Here α is the learning rate.", "expected": "Here alpha is the learning rate.", "note": "an inline Greek letter is spoken by name"}
+{"id": "equation_cue_18", "category": "equation_cue", "text": "We set λ to a small value.", "expected": "We set lambda to a small value.", "note": "an inline Greek letter is spoken by name"}
+{"id": "equation_cue_19", "category": "equation_cue", "text": "The mean μ is known.", "expected": "The mean mu is known.", "note": "an inline Greek letter is spoken by name"}
+{"id": "equation_cue_20", "category": "equation_cue", "text": "The loss is below ε.", "expected": "The loss is below epsilon.", "note": "an inline Greek letter is spoken by name"}
