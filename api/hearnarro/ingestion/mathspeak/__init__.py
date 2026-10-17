@@ -39,7 +39,9 @@ __all__ = [
     "char_map_errors",
     "coalesce_spans",
     "glyph_spans",
+    "join_spans",
     "math_segments",
+    "rewrite_prose",
     "speak_segment",
     "speak_span",
 ]
@@ -101,7 +103,7 @@ def _speak(
             continue
         edits.append((s, e, spoken))
         entries.append(entry)
-    for s, e, spoken in rewrite_references(text) + rewrite_units(text):
+    for s, e, spoken in rewrite_references(text) + rewrite_units(text) + rewrite_prose(text):
         if not any(s < b and a < e for a, b, _ in edits):
             edits.append((s, e, spoken))
     edits.sort()
@@ -117,9 +119,15 @@ def _speak(
 
     for s, e, spoken in edits:
         plain(pos, s)
+        if out and out[-1][-1:].isalnum() and spoken[:1].isalnum():
+            out.append(" ")  # "in" + "P(X)": spoken maths never glues onto the prose before it
+            cmap.append(s - 1)
         length, n = e - s, len(spoken)
         out.append(spoken)
         cmap.extend(s + min(length - 1, k * length // n) for k in range(n))
+        if e < len(text) and text[e].isalnum() and spoken[-1:].isalnum():
+            out.append(" ")  # nor onto the prose after it ("x bar" + "is")
+            cmap.append(e)
         pos = e
     plain(pos, len(text))
     return "".join(out), cmap, entries
@@ -166,15 +174,20 @@ def apply_mathspeak(
             )
         if getattr(block, "type", None) not in ("table", "code"):
             local = coalesce_spans(seg.text, local)
-            local.extend(glyph_spans(seg.text, local))
-        if not local and not rewrite_references(seg.text) and not rewrite_units(seg.text):
+            local = join_spans(seg.text, [*local, *glyph_spans(seg.text, local)])
+        if (
+            not local
+            and not rewrite_references(seg.text)
+            and not rewrite_units(seg.text)
+            and not rewrite_prose(seg.text)
+        ):
             continue
         seg.normalized_text, seg.char_map, entries = _speak(seg.text, local, profile)
         seg.math_json = entries or None
 
 
 _TOKEN = re.compile(r"\S+")
-_GAP_TOKEN = re.compile(r"[()\[\]{}|,;=+\-−·]*[A-Za-z0-9]?[()\[\]{}|,;=+\-−·]*")
+_GAP_TOKEN = re.compile(r"[()\[\]{}|,;:=+\-−·]*[A-Za-z0-9]?[()\[\]{}|,;:=+\-−·]*")
 _BRACKETS = set("()[]{}|")
 _PAIRS = {"(": ")", "[": "]", "{": "}"}
 
@@ -304,6 +317,154 @@ def _grow(text: str, sp: MathSpan, floor: int) -> MathSpan:
 
 
 _EDGE_PUNCT = ".,;:!?"
+_ASCII_OPS = {"=", ":=", "+", "<", ">", "<=", ">="}
+_LIGHT = re.compile(r"[A-Za-z]|\d+(?:\.\d+)?|:=|[:=+<>|−-]")
+_MACRON = re.compile(r"[A-Za-z]¯")
+_SAME_GLYPH = {"∆": "Δ", "µ": "μ"}
+_OPS_AT_EDGE = set("=<>+−-∈∉→≤≥≠≈∼≡⊂⊆⊃⊇∪∩×·↦⇒⇔:")
+
+
+def join_spans(text: str, spans: Sequence[MathSpan]) -> list[MathSpan]:
+    """Inline spans that touch or sit one maths gap apart joined into one, whatever carries runs:
+    a font span, a content span and a glyph span of one formula ("x = µ + ( #" and "ofSTDEV)(σ",
+    "i*_t" and "=" and "min{…}") read as one expression (MATH-2). A part without runs joins as an
+    upright run of its text. Then each inline span takes the text glued to it with no space when
+    its edge is an operator or relation ("∈" + "P(X)", "≥" + "1", ":" + "=")."""
+    out: list[MathSpan] = []
+    for sp in sorted(spans, key=lambda x: x.start):
+        prev = out[-1] if out else None
+        if (
+            prev is not None
+            and not sp.display
+            and not prev.display
+            and prev.end <= sp.start
+            and _maths_gap(text[prev.end : sp.start])
+        ):
+            out[-1] = _merge(text, prev, sp)
+            continue
+        out.append(sp)
+    out = [
+        _glue(text, sp, out[i - 1].end if i else 0, out[i + 1].start if i + 1 < len(out) else None)
+        for i, sp in enumerate(out)
+    ]
+    return [
+        _reach(text, sp, out[i - 1].end if i else 0, out[i + 1].start if i + 1 < len(out) else None)
+        for i, sp in enumerate(out)
+    ]
+
+
+_LIGHT_BEFORE = re.compile(r"(?:(?<=\s)|^)(?:[A-Za-z]|:) $")
+_NOUN_AFTER = re.compile(r"^ ?[A-Za-z][^\s]*")
+_LIGHT_AFTER = re.compile(r"^ (?:[A-Za-z]|\d+)(?=[\s.,;]|$)")
+
+
+def _reach(text: str, sp: MathSpan, floor: int, ceil: int | None) -> MathSpan:
+    """An inline span that starts (ends) with an operator or relation takes the single letters
+    and colons set one space before (after) it in the text font: "f : X" + "→ ℝ" is "f from x to
+    r", "t" + "≥ 1" (MATH-2)."""
+    if sp.display:
+        return sp
+    s, e = sp.start, sp.end
+    raw = text[s:e]
+    if not raw.strip():
+        return sp
+    limit = len(text) if ceil is None else ceil
+    j, k = s, e
+    if raw.lstrip()[0] in _OPS_AT_EDGE:
+        while j - floor >= 2 and (m := _LIGHT_BEFORE.search(text[max(floor, j - 3) : j])):
+            j -= len(m.group(0))
+    if raw.rstrip()[-1] in _OPS_AT_EDGE and raw[-1:] != " ":
+        if m := _LIGHT_AFTER.match(text[k:limit]):
+            k += len(m.group(0))
+    elif raw.rstrip()[-1] == "#" and (m := _NOUN_AFTER.match(text[k:limit])):
+        tail = m.group(0)  # "( #" + " ofSTDEV)(s)": the number sign takes its noun
+        while tail.count(")") > tail.count("(") and tail.endswith(")"):
+            tail = tail[:-1]
+        k += len(tail)
+    if j == s and k == e:
+        return sp
+    if not sp.runs:
+        return replace(sp, start=j, end=k)
+    tmpl = _template(sp.runs)
+    runs = list(sp.runs)
+    if j < s:
+        runs.insert(0, _gap_run(tmpl, text[j:s]))
+    if k > e:
+        runs.append(_gap_run(tmpl, text[e:k]))
+    return replace(sp, start=j, end=k, runs=runs)
+
+
+def _merge(text: str, a: MathSpan, b: MathSpan) -> MathSpan:
+    if not a.runs and not b.runs:
+        return replace(a, end=b.end)
+    tmpl = _template(a.runs or b.runs)
+    left = a.runs or [_gap_run(tmpl, text[a.start : a.end])]
+    right = b.runs or [_gap_run(tmpl, text[b.start : b.end])]
+    gap = text[a.end : b.start]
+    middle = [_gap_run(tmpl, gap)] if gap else []
+    return replace(a, end=b.end, runs=[*left, *middle, *right])
+
+
+def _glue(text: str, sp: MathSpan, floor: int, ceil: int | None) -> MathSpan:
+    if sp.display:
+        return sp
+    s, e = sp.start, sp.end
+    while e > s and text[e - 1].isspace():
+        e -= 1
+    while s < e and text[s].isspace():
+        s += 1
+    if s >= e or e != sp.end or s != sp.start:
+        return sp
+    limit = len(text) if ceil is None else ceil
+    k = e
+    if text[e - 1] in _OPS_AT_EDGE and e < limit and (text[e].isalnum() or text[e] == "("):
+        while k < limit and not text[k].isspace():
+            k += 1
+        while k > e and text[k - 1] in _EDGE_PUNCT:
+            k -= 1
+        tail = text[e:k]
+        for o, c in _PAIRS.items():
+            while tail.count(c) > tail.count(o) and tail.endswith(c):
+                tail = tail[:-1]
+        k = e + len(tail)
+    j = s
+    if text[s] in _OPS_AT_EDGE and s > floor and not text[s - 1].isspace():
+        while j > floor and not text[j - 1].isspace() and s - j < 3:
+            j -= 1
+        if j > floor and not text[j - 1].isspace():
+            j = s  # a longer word glued on is prose, not a letter of the formula
+    if j == s and k == e:
+        return sp
+    if not sp.runs:
+        return replace(sp, start=j, end=k)
+    tmpl = _template(sp.runs)
+    runs = list(sp.runs)
+    if j < s:
+        runs.insert(0, _gap_run(tmpl, text[j:s]))
+    if k > e:
+        runs.append(_gap_run(tmpl, text[e:k]))
+    return replace(sp, start=j, end=k, runs=runs)
+
+
+_NUMBER_SIGN = re.compile(r"#\s*(of\s*)?([A-Za-z]+)")
+_PRODUCT = re.compile(r"(?<=\w)\)\((?=\w)")
+_CAMEL_WORD = re.compile(r"([a-z]{2,})([A-Z]{2,}s?)")
+
+
+def rewrite_prose(text: str) -> list[tuple[int, int, str]]:
+    """Maths shorthand in prose (spec §3c, 2026-10-17): "#" before a noun is "number of"
+    ("# of STDEVs", "#ofSTDEVs" "number of stdevs"), and ")(" between two bracketed groups is
+    "times" ("(#ofSTDEVs)(standard deviation)")."""
+    edits: list[tuple[int, int, str]] = []
+    for m in _NUMBER_SIGN.finditer(text):
+        word = m.group(2)
+        camel = _CAMEL_WORD.fullmatch(word)
+        if camel and not m.group(1) and camel.group(1) == "of":
+            word = camel.group(2)
+        edits.append((m.start(), m.end(), f"number of {word.lower()}"))
+    for m in _PRODUCT.finditer(text):
+        edits.append((m.start(), m.end(), ") times ("))
+    return edits
 
 
 def glyph_spans(text: str, spans: Sequence[MathSpan] = ()) -> list[MathSpan]:
@@ -312,9 +473,9 @@ def glyph_spans(text: str, spans: Sequence[MathSpan] = ()) -> list[MathSpan]:
     ("prior Π", "θ ∈Θ") has no math-font run for ``merge_blocks`` to mark (MATH-2, MATH-3).
     Sentence punctuation and an unmatched bracket at either end stay with the prose; a token the
     unit or reference rewrites already cover is left to them."""
-    out: list[MathSpan] = []
     taken = [(a, b) for a, b, _ in rewrite_units(text) + rewrite_references(text)]
     taken += [(sp.start, sp.end) for sp in spans]
+    toks: list[tuple[int, int, str]] = []  # (start, end, kind) kind "core" / "light" / ""
     for m in _TOKEN.finditer(text):
         s, e = m.start(), m.end()
         while e > s and text[e - 1] in _EDGE_PUNCT:
@@ -327,10 +488,40 @@ def glyph_spans(text: str, spans: Sequence[MathSpan] = ()) -> list[MathSpan]:
         if tok[0] in "([" and tok.count(tok[0]) > tok.count(")" if tok[0] == "(" else "]"):
             s += 1
         if s >= e or any(s < b and a < e for a, b in taken):  # units ("10 μm") stay MATH-3
+            toks.append((s, e, ""))
             continue
-        if any(not c.isascii() and name_of(c) for c in text[s:e]):
-            out.append(MathSpan(s, e, False, []))
+        word = text[s:e]
+        if _MACRON.match(word):
+            toks.append((s, s + 2, "core"))  # x¯ in a text font: "x bar", the rest is prose
+        elif word in _ASCII_OPS or any(
+            not c.isascii() and name_of(_SAME_GLYPH.get(c, c)) for c in word
+        ):
+            toks.append((s, e, "core"))
+        elif _LIGHT.fullmatch(word):
+            toks.append((s, e, "light"))
+        else:
+            toks.append((s, e, ""))
+    out: list[MathSpan] = []
+    i = 0
+    while i < len(toks):
+        if toks[i][2] != "core":
+            i += 1
+            continue
+        a = b = i
+        while a > 0 and toks[a - 1][2] == "light" and _clean_edge(text, toks[a - 1]):
+            a -= 1
+        while b + 1 < len(toks) and toks[b + 1][2] in ("light", "core"):
+            b += 1
+            if not _clean_edge(text, toks[b]):
+                break
+        out.append(MathSpan(toks[a][0], toks[b][1], False, []))
+        i = b + 1
     return out
+
+
+def _clean_edge(text: str, tok: tuple[int, int, str]) -> bool:
+    """A neighbour token joins a glyph span only when no sentence punctuation follows it."""
+    return tok[1] >= len(text) or text[tok[1]] not in _EDGE_PUNCT
 
 
 def math_segments(result: Any) -> list[Any]:

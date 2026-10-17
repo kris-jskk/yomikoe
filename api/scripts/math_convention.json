@@ -24,7 +24,8 @@
     "∘": "composed with",
     "!": "factorial",
     "′": "prime",
-    "″": "double prime"
+    "″": "double prime",
+    "#": "number of"
   },
   "relations": {
     "=": "equals",
@@ -79,6 +80,7 @@
     "| or : (set-builder)": "such that",
     "| ... | (paired)": "the absolute value of",
     "‖ ... ‖ (paired)": "the norm of",
+    "||| ... ||| (paired)": "the operator norm of",
     "⟨ a, b ⟩": "the inner product of a and b",
     "{a, b}": "the set a, b",
     "{x : P}": "the set of x such that P"
@@ -136,6 +138,8 @@
   },
   "functions": {
     "f(x) (single letter f)": "f of x",
+    "(μP)(A) (a parenthesized product of letters with a capital, then a group)": "mu p of a",
+    "ofSTDEV, STDEV (a camel or five-plus-capital identifier)": "of stdev, stdev",
     "sin": "sine",
     "cos": "cosine",
     "tan": "tangent",

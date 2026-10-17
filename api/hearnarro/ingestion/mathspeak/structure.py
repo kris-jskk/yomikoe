@@ -103,6 +103,7 @@ _SAME = {
     "–": "−",  # an en dash between operands, as text fonts set minus
 }  # fmt: skip
 _POWER = re.compile(r"\*\*\s*(\d+(?:\.\d+)?|[A-Za-z])")
+_CAMEL = re.compile(r"([a-z]{2,})([A-Z]{2,}s?)")
 _MATH_FONTS = ("cmmi", "cmsy", "cmex", "msbm", "msam", "cmbsy", "eufm", "rsfs", "math", "italic")
 
 
@@ -147,7 +148,13 @@ def _lex(text: str, words: bool = False) -> list[_Tok]:
             while j < len(text) and text[j].isascii() and text[j].isalpha():
                 j += 1
             run = text[i:j]
-            if run in WORDS:
+            camel = _CAMEL.fullmatch(run)
+            if camel:
+                # "ofSTDEV": a word and an acronym set as one italic identifier read as words
+                out.extend(_Tok("name", g.lower()) for g in camel.groups() if g)
+            elif len(run) >= 5 and run.isupper():
+                out.append(_Tok("name", run.lower()))  # STDEV: an identifier, not five letters
+            elif run in WORDS:
                 out.append(_Tok("word", run))
             elif len(run) <= 4 and run[0].isupper() and run.lower() in WORDS:
                 out.append(_Tok("word", run.lower()))  # Tr, Var as set in papers
@@ -158,6 +165,9 @@ def _lex(text: str, words: bool = False) -> list[_Tok]:
             i = j
         elif text.startswith("...", i):
             out.append(_Tok("dots", "…"))
+            i += 3
+        elif text.startswith("|||", i):
+            out.append(_Tok("tbar", "|||"))  # the operator norm |||A|||
             i += 3
         elif text.startswith(":=", i):
             out.append(_Tok("op", ":="))
@@ -208,6 +218,8 @@ def _char_tok(ch: str) -> _Tok:
         return _Tok("close", ch)
     if ch == "|":
         return _Tok("bar", ch)
+    if ch == "#":
+        return _Tok("op", ch)  # "# of x": the number of x
     if ch in "‖∥":
         return _Tok("dbar", ch)
     if ch in BIGOPS:
@@ -287,6 +299,9 @@ class _Parser:
             elif t.kind == "accent" and node.kind != "op":
                 self.pos += 1
                 node = Node("accent", [node], t.text)
+            elif t.kind == "open" and t.text == "(" and _operator_group(node):
+                self.pos += 1
+                node = Node("apply", [node, self.group(t.text)])  # (μP)(A) "mu p of a"
             elif t.kind == "open" and _applies(node) and not self._product(node):
                 self.pos += 1
                 node = Node("apply", [node, self.group(t.text)])
@@ -336,13 +351,22 @@ class _Parser:
         if t.kind in ("bar", "dbar"):
             # a norm also opens after a letter (E‖x‖); a single ∥ inside D(p ∥ q) has no closer
             operand_start = (
-                prev is None or prev.kind == "op" or (t.kind == "dbar" and prev.kind != "group")
+                prev is None
+                or prev.kind in ("op", "limop", "sum", "prod", "int")
+                or (t.kind == "dbar" and prev.kind != "group")
+                or (prev.kind in ("var", "greek") and self._closes_flat(t.kind))
             )
             if operand_start and self._has_closer(t.kind):
                 inner = self.row(stop={t.kind})
                 self.pos += 1
                 return Node("abs" if t.kind == "bar" else "norm", [inner])
             return Node("op", [], "|" if t.kind == "bar" else "∥")
+        if t.kind == "tbar":
+            if self._has_closer("tbar"):
+                inner = self.row(stop={"tbar"})
+                self.pos += 1
+                return Node("opnorm", [inner])
+            return Node("op", [], "∥")
         if t.kind == "bigop":
             return Node(BIGOPS[t.text], [None, None], t.text)
         if t.kind == "sqrt":
@@ -363,6 +387,24 @@ class _Parser:
         nxt = self.toks[self.pos + 1] if self.pos + 1 < len(self.toks) else None
         return node.kind == "var" and nxt is not None and nxt.kind == "word"
 
+    def _closes_flat(self, kind: str) -> bool:
+        """``E|R_n|``: after a letter a bar opens an absolute value only when its closer comes
+        before any relation or conditional bar of the enclosing group, so ``p(y | x)`` and
+        ``E[D | F]`` keep "given"."""
+        depth = 0
+        for t in self.toks[self.pos :]:
+            if t.kind == "open":
+                depth += 1
+            elif t.kind == "close":
+                if depth == 0:
+                    return False
+                depth -= 1
+            elif depth == 0 and t.kind == kind:
+                return True
+            elif depth == 0 and t.kind == "op" and t.text in RELATIONS:
+                return False
+        return False
+
     def _has_closer(self, kind: str) -> bool:
         depth = 0
         for t in self.toks[self.pos :]:
@@ -382,6 +424,19 @@ def _applies(node: Node) -> bool:
     while node.kind in ("sub", "sup", "prime", "accent") and node.children:
         node = node.children[0]  # type: ignore[assignment]
     return node.kind in ("var", "greek", "word", "name")
+
+
+def _operator_group(node: Node) -> bool:
+    """``(μP)``: a parenthesized product of two or three letters, one a Latin capital, is an
+    operator (a measure composed with a kernel), so a group after it is its argument."""
+    if node.kind != "group" or node.text != "()" or node.children[0] is None:
+        return False
+    kids = [c for c in node.children[0].children if c is not None]
+    return (
+        2 <= len(kids) <= 3
+        and all(c.kind in ("var", "greek") for c in kids)
+        and any(c.kind == "var" and c.text.isupper() for c in kids)
+    )
 
 
 def _attach(base: Node, script: str, row: Node) -> Node:
@@ -604,6 +659,9 @@ def _row_tokens(pieces: list[Piece]) -> list[_Tok]:
             out.append(_Tok("script", text, script, _lex(text, words)))
         else:
             out.extend(_lex(text, words))
+    for i in range(len(out) - 1, 0, -1):  # ":" and "=" set in two runs are one ":="
+        if out[i].kind == "op" and out[i].text == "=" and out[i - 1].text == ":":
+            out[i - 1 : i + 1] = [_Tok("op", ":=")]
     return out
 
 
@@ -650,7 +708,9 @@ def parse(span: MathSpan, text: str | None = None, *, partial: bool = False) -> 
 
 
 def _parse(span: MathSpan, text: str | None) -> Node | None:
-    rows = _runs_rows(span) if span.runs else ([[(cmex_text(text), "", "")]] if text else [])
+    # a span without runs (a content or glyph span) is text-font maths: a lower-case run of three
+    # or more letters is a word or label ("∆subopt"), as in an upright run
+    rows = _runs_rows(span) if span.runs else ([[(cmex_text(text), "", "text")]] if text else [])
     if not rows:
         return None
     if len(rows) > 2 and _Lenient.on and _matrix(rows) is None:

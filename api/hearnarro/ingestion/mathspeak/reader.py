@@ -94,7 +94,16 @@ class _Reader:
                 words.append(_NUMERIC_FRACTIONS[(it.text, nxt.text)])
                 prev, i = nxt, i + 3
                 continue
-            if it.kind == "op":
+            if it.kind == "op" and it.text == "#":
+                words.append("number of")  # "# of x" / "#x": the number of x (§3c, 2026-10-17)
+                after = items[i + 1] if i + 1 < len(items) else None
+                if after is not None and after.kind == "name" and after.text == "of":
+                    prev, i = after, i + 2
+                    continue
+                if [n.text for n in items[i + 1 : i + 3] if n.kind == "var"] == ["o", "f"]:
+                    prev, i = items[i + 2], i + 3  # "# of x" with "of" lexed as two letters
+                    continue
+            elif it.kind == "op":
                 words.append(self.op(it.text, items[i + 1 :], colon_seen, limit, setbuilder))
                 colon_seen = colon_seen or it.text == ":"
             else:
@@ -126,7 +135,7 @@ class _Reader:
                 if n.kind == "op" and n.text in (":", "|"):
                     break
                 ahead.append(n)
-            maps = any(n.kind == "op" and n.text == "→" for n in ahead)
+            maps = any(n.kind == "op" and n.text in ("→", "↦") for n in ahead)
             return "from" if maps else "such that"
         if sym == "→":
             return "to" if colon_seen else "approaches"
@@ -212,6 +221,8 @@ class _Reader:
             return ["the absolute value of", *self.row(kids[0])]
         if k == "norm":
             return ["the norm of", *self.row(kids[0])]
+        if k == "opnorm":
+            return ["the operator norm of", *self.row(kids[0])]
         if k == "matrix":
             words = ["the matrix with rows:"]
             for r, row in enumerate(c for c in kids if c is not None):
@@ -253,10 +264,22 @@ class _Reader:
         ):
             return self.family(base.children[0], base.children[1], script)
         words = self.item(base, limit=limit) if base is not None else []
-        if base is not None and base.kind in ("group", "apply", "abs", "norm", "interval", "sub"):
+        if base is not None and base.kind in (
+            "group",
+            "apply",
+            "abs",
+            "norm",
+            "opnorm",
+            "interval",
+            "sub",
+        ):
             words.append(",")  # a comma closes a group (or a subscript) before a power
         flat = _flat(script)
         kids = [c for c in (script.children if script else []) if c is not None]
+        if len(kids) > 1 and kids[0].kind in ("op", "prime") and kids[0].text in ("′", "″"):
+            # s^{′⊤}: primes set in the exponent come first, "s prime transpose"
+            mark = "double prime" if kids[0].text == "″" else "prime"
+            return [*words, mark, *self.sup(None, Node("row", list(kids[1:])), limit)]
         if flat == "2":
             return [*words, "squared"]
         if flat == "3":

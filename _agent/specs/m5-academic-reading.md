@@ -462,6 +462,16 @@ this section (and `math_convention.json`) by the supervisor, not in either file.
 (2026-10-17: table completed in phase 1, task m5-p1-convention; the earlier one-paragraph convention is
 subsumed. Expected texts aligned, changes listed in `_agent/results/670_convention_changes.md`.)
 
+Additions (append-only, one dated line each; task m5-p3g-reader-2):
+
+- (2026-10-17) `#` before a noun is "number of" (`# of X`, `#X`, `#ofSTDEVs` "number of stdevs"); a following "of" is not repeated.
+- (2026-10-17) A paired `|||·|||` is "the operator norm of" (`|||A|||_{H}` "the operator norm of a sub h").
+- (2026-10-17) A parenthesized product of two or three letters holding a Latin capital, followed by a group, is an operator applied to it: `(μP)(A)` "mu p of a"; any other `)(` is "times" (`(a + b)(c)`, prose `(#ofSTDEVs)(standard deviation)`).
+- (2026-10-17) A camel identifier (`ofSTDEV`) reads as its words and a run of five or more capitals (`STDEV`) as one lower-case word, not letter by letter; in text-font maths with no font runs a lower-case run of three or more letters is a word (`∆subopt` "capital delta subopt").
+- (2026-10-17) Primes set in an exponent are read before the rest of it: `s^{′⊤}` "s prime transpose".
+- (2026-10-17) After a letter, a bar opens "the absolute value of" when its closing bar comes before any relation of the same group (`E|R_n|` "e the absolute value of r sub n"); otherwise it stays "given".
+- (2026-10-17) A colon before `↦` reads "from", as before `→` (`q : (x, d) ↦ y` "q from x, d maps to y").
+
 ### 3d. Code listings (ING-10)
 
 - Classify: `_classify` (`classify.py`) gains a `code` rule placed just before the `_is_equation`
