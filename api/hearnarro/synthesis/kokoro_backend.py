@@ -39,7 +39,11 @@ possessive/plural ("CEO's", "PDFs") is decided on its letters and the voiced suf
 last letter token ("O's", "Fs"). A mixed-case token ending in 2+ capitals ("OpenAI", "xAI";
 ``split_camel_acronym``) becomes a word-part token ("Open": lexicon, cmudict, g2p_en; primary
 stress made secondary) followed by the capital run decided as above ("A", "I's"); the pieces
-fold back into one WordTimestamp like spelled letters. Each
+fold back into one WordTimestamp like spelled letters. A caps-context token whose folded word
+is in no lexicon tier gets the same treatment when ``split_caps_compound`` finds a lexicon prefix
+and a 2-3 capital tail that ``decide`` spells ("OPENAI" -> "OPEN" + "A", "I"; "NAVIER" is not split
+because "ER" would be spoken); an unfolded acronym candidate ("n J OPENAI") is tried the same way
+unless an override or the document's definitions name it. Each
 (document, token) decision is logged once at INFO.
 
 Word timestamps (contract for ``SynthResult.timestamps``):
@@ -76,6 +80,8 @@ import numpy as np
 from hearnarro.synthesis import cmudict, lexicon_overrides
 from hearnarro.synthesis.acronyms import (
     RESPELL,
+    SPELLED,
+    SPOKEN,
     Decision,
     caps_fold_spans,
     decide,
@@ -83,6 +89,7 @@ from hearnarro.synthesis.acronyms import (
     is_acronym,
     spell_phonemes,
     split_camel_acronym,
+    split_caps_compound,
     split_suffix,
     suffix_phonemes,
 )
@@ -466,19 +473,35 @@ class KokoroBackend:
         def in_lexicon(w: str) -> bool:
             return w.lower() in lex.golds or w.lower() in lex.silvers
 
+        def known(w: str) -> bool:  # any lexicon tier: misaki gold/silver, cmudict
+            return bool(look(w) or g2p.fallback._cmu(w))
+
         definitions = context.acronyms if context else {}
+
+        def compound(w: str) -> tuple[str, str] | None:  # "OPENAI" -> ("OPEN", "AI")
+            if w in SPOKEN or w in SPELLED or w in definitions:
+                return None
+            sp = split_caps_compound(w, known)
+            tail_spoken = (
+                sp and decide(sp[1], definitions=definitions, in_lexicon=in_lexicon).spoken
+            )
+            return None if not sp or tail_spoken else sp  # "NAVIER" -> "NAVI" + "ER": no
+
         out: list[Any] = []
         for i, t in enumerate(tokens):
-            head = ""
-            word, suffix = (t.text, "") if is_acronym(t.text) else split_suffix(t.text) or ("", "")
-            if not word and (camel := split_camel_acronym(t.text)):
+            head, word, suffix = "", "", ""
+            if (c := compound(t.text)) and (id(t) in (folded or ()) or is_acronym(t.text)):
+                head, word = c
+            elif id(t) in (folded or ()):
+                out.append(t)
+                continue
+            elif is_acronym(t.text):
+                word = t.text
+            elif sp := split_suffix(t.text):
+                word, suffix = sp
+            elif camel := split_camel_acronym(t.text):
                 head, word, suffix = camel
-            if (
-                not word
-                or id(t) in (folded or ())
-                or lexicon_overrides.lookup(t.text)
-                or lexicon_overrides.lookup(word)
-            ):
+            if not word or lexicon_overrides.lookup(t.text) or lexicon_overrides.lookup(word):
                 out.append(t)
                 continue
             if head:  # "OpenAI": the word part as its own token, then the capital run below

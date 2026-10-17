@@ -85,3 +85,37 @@ def test_syn1_camel_acronym_one_timestamp_per_word() -> None:
     assert [t.word for t in result.timestamps] == text.split()
     assert all(text[t.char_start : t.char_end] == t.word for t in result.timestamps)
     assert all(t.end_ms > t.start_ms for t in result.timestamps)
+
+
+@pytest.mark.parametrize(
+    ("token", "split"),
+    [("OPENAI", ("OPEN", "AI")), ("FORMAT", None), ("NVIDIA", None), ("ERIC'S", None)],
+)
+def test_syn4_split_caps_compound(token: str, split: tuple[str, str] | None) -> None:
+    from hearnarro.synthesis.acronyms import split_caps_compound
+
+    known = {"open", "format", "eric"}.__contains__
+    assert split_caps_compound(token, lambda w: known(w.lower())) == split
+
+
+@pytest.mark.model
+def test_syn4_caps_compound_openai_is_open_then_spelled_a_i() -> None:
+    tokens = _tokens("OPENAI")
+    assert [t.text for t in tokens] == ["OPEN", "A", "I"]
+    assert "".join(t.phonemes for t in tokens) == "ˌOpᵊnˌAˈI"
+
+
+@pytest.mark.model
+@pytest.mark.parametrize("word", ["FORMAT", "NVIDIA", "NAVIER"])
+def test_syn4_caps_compound_known_or_unsplittable_word_unchanged(word: str) -> None:
+    tokens = _tokens(word)
+    assert [t.text for t in tokens] == [word]
+    plain = _backend()._g2p_for(british=False)(word.capitalize())[1]
+    assert tokens[0].phonemes == plain[0].phonemes
+
+
+@pytest.mark.model
+def test_syn4_caps_compound_outside_caps_context() -> None:
+    tokens = _tokens("n≥J OPENAI")
+    assert [t.text for t in tokens][-3:] == ["OPEN", "A", "I"]
+    assert "".join(t.phonemes for t in tokens[-3:]) == "ˌOpᵊnˌAˈI"
