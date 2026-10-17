@@ -5,7 +5,11 @@
 import type { Page } from '@playwright/test'
 import { expect, getSegments, test, type Api, type Segment } from './fixtures'
 
-test.skip(({ browserName }) => browserName !== 'chromium', 'M3 gate is asserted on Chromium only')
+// WebKit/Firefox run only when HEARNARRO_E2E_ALL_ENGINES=1 (reported, not asserted, in M3).
+test.skip(
+  ({ browserName }) => browserName !== 'chromium' && !process.env.HEARNARRO_E2E_ALL_ENGINES,
+  'M3 gate is asserted on Chromium only',
+)
 test.describe.configure({ timeout: 90_000 })
 
 type Hn = {
@@ -147,21 +151,31 @@ test('PLAY-4: a speed change mid-play restarts the current sentence at the new s
 }) => {
   const segs = await getSegments(api)
   await openAndPlay(page, api)
-  await page.waitForFunction(() => {
-    const h = window.__hearnarro
-    return !!h && h.firstStartAt != null && h.now() - h.firstStartAt >= 2
-  })
-  // Record every (order, token) activation from here on, so a 40 ms word is not missed.
-  await page.evaluate(() => {
-    const seen: string[] = []
-    ;(window as unknown as { __seen: string[] }).__seen = seen
-    new MutationObserver(() => {
-      const w = document.querySelector<HTMLElement>('.w.active')
-      const seg = w?.closest<HTMLElement>('.seg')
-      if (w && seg) seen.push(`${seg.dataset.order}:${w.dataset.i}`)
-    }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] })
-  })
-  const order = (await activeOrder(page))!
+  // Land the speed change inside a long sentence: wait until the active segment has at least 20
+  // tokens and the active token index is in 1..4, then, in the same evaluate, read the order and
+  // start recording every (order, token) activation so a 40 ms word is not missed.
+  const order = (await (
+    await page.waitForFunction(
+      () => {
+        const w = document.querySelector<HTMLElement>('.w.active')
+        const seg = w?.closest<HTMLElement>('.seg')
+        if (!w || !seg) return null
+        const i = Number(w.dataset.i)
+        // i >= 1 so the restart shows up as a transition to token 0 (from 0 to 0 is no mutation).
+        if (seg.querySelectorAll('.w').length < 20 || i < 1 || i >= 5) return null
+        const seen: string[] = []
+        ;(window as unknown as { __seen: string[] }).__seen = seen
+        new MutationObserver(() => {
+          const a = document.querySelector<HTMLElement>('.w.active')
+          const sg = a?.closest<HTMLElement>('.seg')
+          if (a && sg) seen.push(`${sg.dataset.order}:${a.dataset.i}`)
+        }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] })
+        return Number(seg.dataset.order)
+      },
+      undefined,
+      { timeout: 30_000, polling: 'raf' },
+    )
+  ).jsonValue()) as number
   const current = segs.find((s) => s.order === order)!
   const next = segs.find((s) => s.order === order + 1)!
   const before = audioRequests.length
