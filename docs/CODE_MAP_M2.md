@@ -696,6 +696,7 @@ FakeBackend's 80 ms per word.
 | `HEARNARRO_KOKORO_REVISION` | none | Hugging Face revision hash; required when the backend is `kokoro` |
 | `HEARNARRO_LOOKAHEAD` | `5` | Segments kept ahead (SYN-5); integer ≥ 0 |
 | `HEARNARRO_DATA_DIR` | `./data` | Root for the database, PDFs and audio (shared with M1) |
+| `HEARNARRO_AUDIO_FORMAT` | `wav` (D16; not yet read by `settings.py`) | `opus` selects `OpusEncoder` |
 | `HEARNARRO_TEST_MODEL` | unset | `1` enables `@pytest.mark.model` tests |
 | `HF_HOME` | Hub default | Where model weights are cached |
 
@@ -799,8 +800,31 @@ scale math; stretch length; ratio bounds; API validation 0.5 to 3.0 in 0.1 steps
 The project rule: every dependency and model in v1 is Apache-2.0, MIT or BSD (CLAUDE.md). The
 state below is from the dependency survey (`_agent/results/253_m2_dependency_survey.md`, a
 reading of package pages, no installs) and the Kokoro install spike
-(`_agent/results/273_spike_install_and_licences.txt`, a scratch venv). Nothing here is a final
-decision; the supervisor decides.
+(`_agent/results/273_spike_install_and_licences.txt`, a scratch venv).
+
+**Decided while this document was being written.** Commit `298ee2f` (after `9b68eb0`) added
+"Amendments 2026-10-16 after the licensing spike" to `_agent/specs/m2-synthesis-interfaces.md`:
+
+- **D15, Kokoro runtime without the GPL chain.** `kokoro` (Apache-2.0) on PyTorch CPU, model
+  `hexgrad/Kokoro-82M` pinned at `f3ff3571791e39611d31c381e3a41a3af07b4987` and fetched with
+  `hf_hub_download(revision=...)`. Never install `misaki[en]`, `phonemizer`, `phonemizer-fork`,
+  `espeakng-loader`, `espeak-ng` or `num2words`. The backend builds its own pipeline over `KModel`
+  + `misaki.en.G2P` so `kokoro.pipeline` is never imported; a shim module
+  `hearnarro.synthesis.compat.num2words` (planned; not present at read time) is registered in
+  `sys.modules` before misaki is imported; out-of-vocabulary words get a `g2p_en` (Apache-2.0)
+  fallback with letter spelling last. Model and spaCy model load in the lifespan on the synthesis
+  thread. The amendment also reports spike timings from results 273–279; this document has not
+  opened those files and does not repeat the numbers.
+- **D16, container.** `WavEncoder` is the M2 default. `OpusEncoder` via `opuscodec` (Apache-2.0,
+  Ogg Opus) is optional behind `HEARNARRO_AUDIO_FORMAT=opus` (not yet read by `settings.py`).
+  No ffmpeg anywhere; Safari decode of Ogg Opus is checked in M3.
+- **D17, stretch.** `audiotsm` (MIT, numpy) WSOLA in-process, ratio ≤ 1.5; D6's ffmpeg `atempo`
+  is replaced.
+- **Licence policy.** Non-copyleft OSI licences (PSF-2.0, ISC, MPL-2.0 at file level, BSL-1.0,
+  Zlib, CC0, Unlicense) are acceptable for transitive components; copyleft and non-commercial
+  terms stay excluded. A licence-check script is to move into `api/scripts/check_licences.py`.
+
+The survey background below explains why those choices were made.
 
 **Kokoro runtime.**
 
@@ -843,9 +867,9 @@ WSOLA in numpy; ffmpeg `atempo` if ffmpeg is allowed. `librosa` 1.0 needs Python
 
 | Decision | Module that changes | What stays fixed |
 | --- | --- | --- |
-| `kokoro` vs `kokoro-onnx`, phonemizer, shims | `kokoro_backend.py` (and packaging) | `TTSBackend`; the service, routes and tests |
-| Opus library vs ffmpeg vs WAV | `encode.py` (`OpusEncoder`, `default_encoder`) | `AudioEncoder`; `media_type`/`ext` flow through the cache path and `Content-Type` |
-| `atempo` vs WSOLA vs `audiotsm` | `stretch.py` | `stretch_pcm`/`scale_timestamps` signatures |
+| `kokoro` vs `kokoro-onnx`, phonemizer, shims (D15: `kokoro` + own pipeline + `compat/num2words`) | `kokoro_backend.py`, `compat/` (and packaging) | `TTSBackend`; the service, routes and tests |
+| Opus library vs ffmpeg vs WAV (D16: WAV default, `opuscodec` opt-in) | `encode.py` (`OpusEncoder`, `default_encoder`), `settings.py` | `AudioEncoder`; `media_type`/`ext` flow through the cache path and `Content-Type` |
+| `atempo` vs WSOLA vs `audiotsm` (D17: `audiotsm`) | `stretch.py` | `stretch_pcm`/`scale_timestamps` signatures |
 
 If an encoder or stretch implementation turns out to be a subprocess rather than in-process
 code, it can be awaited with `asyncio.create_subprocess_exec` from the service instead of
@@ -970,4 +994,5 @@ lookahead come from the environment through `load_settings()`.
 | Header-size limit for `X-Timestamps` on long sentences (sidecar JSON is the PRD's alternative) | `routes/audio.py` | measure in phase 2 |
 | Deleting a document's audio files (rows cascade; files do not) | LIB-4 | M4 |
 | PRD SYN-6 says "keyed by (segment hash, voice, speed)"; the design and DDL key by `segment_id` and backend | `docs/PRD.md` | supervisor (PRD sync) |
-| Technical Design D9 assumes an ONNX session; the spike uses `kokoro` + torch | `docs/TECHNICAL_DESIGN.md` | supervisor, after the backend decision |
+| `hearnarro/synthesis/compat/num2words`, `HEARNARRO_AUDIO_FORMAT` in settings, `api/scripts/check_licences.py` (D15, D16, spec amendment) | `synthesis/compat/`, `settings.py`, `api/scripts/` | phase 3 |
+| Technical Design D9 assumes an ONNX session; D15 uses `kokoro` + torch | `docs/TECHNICAL_DESIGN.md` | supervisor, after the backend decision |
