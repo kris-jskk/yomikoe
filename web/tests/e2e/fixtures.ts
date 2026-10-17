@@ -30,6 +30,10 @@ export type Segment = {
 export type DocumentSummary = {
   id: number
   status: string
+  title?: string
+  page_count?: number | null
+  progress?: number
+  position?: { segment_id: number | null; offset_ms: number } | null
   sections: { id: number; title: string; level: number; first_segment_id: number }[]
   settings: { voice_id: string | null; speed: number | null } | null
 }
@@ -61,7 +65,56 @@ export function getDocument(api: Api): Promise<DocumentSummary> {
   return getJson(`${api.apiBase}/documents/${api.documentId}`)
 }
 
-export const test = base.extend<{ audioRequests: RequestLog }, { api: Api }>({
+export function listDocuments(apiBase: string): Promise<DocumentSummary[]> {
+  return getJson(`${apiBase}/documents`)
+}
+
+async function sendJson(method: string, url: string, body: unknown): Promise<void> {
+  const r = await fetch(url, {
+    method,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!r.ok) throw new Error(`${method} ${url} -> ${r.status}: ${await r.text()}`)
+}
+
+/** M4 server defaults (api/tests/test_lib_gate.py): no voice, speed 1.25. */
+export const DEFAULT_GLOBAL_SETTINGS = { default_voice_id: null, default_speed: 1.25 }
+
+/**
+ * Put the shared document and the global defaults back to a never-opened state (no position,
+ * no per-document settings), so specs that save position or settings do not leak into others.
+ */
+export async function resetState(api: Api): Promise<void> {
+  await sendJson('PATCH', `${api.apiBase}/documents/${api.documentId}`, {
+    position: null,
+    settings: { voice_id: null, speed: null },
+  })
+  await sendJson('PUT', `${api.apiBase}/settings`, DEFAULT_GLOBAL_SETTINGS)
+}
+
+/** Upload a fixture PDF from api/tests/fixtures/pdfs and wait until it is ready. */
+export async function uploadPdf(apiBase: string, name: string): Promise<Api> {
+  const pdf = path.join(API_DIR, 'tests/fixtures/pdfs', name)
+  const form = new FormData()
+  form.append('file', new Blob([fs.readFileSync(pdf)], { type: 'application/pdf' }), name)
+  const up = await fetch(`${apiBase}/documents`, { method: 'POST', body: form })
+  if (up.status !== 202 && up.status !== 200) throw new Error(`upload ${name} -> ${up.status}`)
+  const { id } = (await up.json()) as { id: number }
+  const t1 = Date.now()
+  for (;;) {
+    const doc = await getDocument({ apiBase, documentId: id })
+    if (doc.status === 'ready') return { apiBase, documentId: id }
+    if (doc.status === 'failed') throw new Error(`document ${id} (${name}) failed`)
+    if (Date.now() - t1 > 60_000) throw new Error(`document ${id} (${name}) not ready after 60 s`)
+    await sleep(250)
+  }
+}
+
+/** Every PATCH /documents/{id} body the page sends, in order. */
+export type PatchLog = { documentId: number; body: Record<string, unknown>; at: number }[]
+
+export const test = base.extend<{ audioRequests: RequestLog; patches: PatchLog }, { api: Api }>({
   api: [
     // eslint-disable-next-line no-empty-pattern
     async ({}, provide) => {
@@ -138,6 +191,21 @@ export const test = base.extend<{ audioRequests: RequestLog }, { api: Api }>({
     page.on('request', (req) => {
       if (new URL(req.url()).pathname.startsWith('/audio/'))
         log.push({ url: req.url(), at: Date.now() })
+    })
+    await provide(log)
+  },
+  patches: async ({ page }, provide) => {
+    const log: PatchLog = []
+    page.on('request', (req) => {
+      const m = /^\/documents\/(\d+)$/.exec(new URL(req.url()).pathname)
+      if (req.method() !== 'PATCH' || !m) return
+      let body: Record<string, unknown> = {}
+      try {
+        body = (req.postDataJSON() as Record<string, unknown>) ?? {}
+      } catch {
+        /* keepalive beacons may carry no JSON body */
+      }
+      log.push({ documentId: Number(m[1]), body, at: Date.now() })
     })
     await provide(log)
   },
