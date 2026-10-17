@@ -6,6 +6,9 @@ import {
   chainStart,
   findActiveWord,
   isScrollKey,
+  isSelfScroll,
+  centreDistance,
+  SELF_SCROLL_MS,
   locate,
   mapTimestampsToTokens,
   nextPlayable,
@@ -266,5 +269,35 @@ describe('PLAY-3 isScrollKey: only document-scrolling keys outside controls stop
   it('other keys do not', () => {
     expect(isScrollKey('Enter', 'BODY')).toBe(false)
     expect(isScrollKey('Tab', 'BODY')).toBe(false)
+  })
+})
+
+describe("PLAY-2 isSelfScroll: only the engine's own scrolls keep follow mode on", () => {
+  it("a scroll inside the self-scroll window is the engine's own", () => {
+    expect(isSelfScroll(1000, 1000 + SELF_SCROLL_MS)).toBe(true)
+    expect(isSelfScroll(2199, 2200)).toBe(true)
+  })
+  it('a scroll after the window (find box, scrollbar, gesture) is not', () => {
+    expect(isSelfScroll(2200, 2200)).toBe(false)
+    expect(isSelfScroll(5000, 2200)).toBe(false)
+  })
+  it("with no programmatic scroll ever started, every scroll is the reader's", () => {
+    expect(isSelfScroll(10, 0)).toBe(false)
+  })
+  it("inside the window, a scroll toward the target is the engine's own", () => {
+    expect(isSelfScroll(1000, 2200, 120, 300)).toBe(true)
+    expect(isSelfScroll(1000, 2200, 1.5, 1)).toBe(true) // sub-pixel jitter at the centre
+  })
+  it("inside the window, a jump away from the target (find box mid-scroll) is the reader's", () => {
+    expect(isSelfScroll(1000, 2200, 950, 120)).toBe(false)
+  })
+})
+
+describe('PLAY-2 centreDistance: how far the target is from block:center', () => {
+  const vh = 800
+  it('0 when centred, absolute px otherwise', () => {
+    expect(centreDistance({ top: 380, bottom: 420 }, vh)).toBe(0)
+    expect(centreDistance({ top: 383, bottom: 423 }, vh)).toBe(3)
+    expect(centreDistance({ top: -300, bottom: -260 }, vh)).toBe(680)
   })
 })

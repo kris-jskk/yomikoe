@@ -94,7 +94,10 @@ browser            App/DocView            client.ts                 API (Vite pr
    controls (`schedule.ts` → `isScrollKey`). `Reader` registers `<article class="reader">` through
    `player.registerReaderEl` → `engine.attachReader(el)`, which puts the passive `wheel`/`touchmove`
    listeners on the reading column itself, so scrolling the Toc list never stops follow mode. The same effect listens for `scroll` (capture)
-   to refresh the "Back to reading" arrow while not following.
+   to refresh the "Back to reading" arrow while not following. Every `engine.scrollTo` opens a self-scroll window (`selfScrollUntil = now + 1200 ms`, ended early by
+   `scrollend` or by the target sitting within 2 px of centre for two events); a page `scroll` event outside it, or one inside it that moves
+   the target away from centre (`schedule.ts` → `isSelfScroll`, `centreDistance`), turns follow mode off, so the find box, the scrollbar and
+   missed gestures stop following while navigate/advance/Back-to-reading scrolls do not (wheel/touchmove/keydown listeners kept).
 3. **Load data.** `src/App.tsx` → `DocView` effect → `Promise.all([getDocument, getAllSegments,
    getVoices])` in `src/api/client.ts`. `getAllSegments(id, onPage?, signal?)` follows `next_from`
    with `limit=500` until null and throws `ApiError` if `next_from` does not advance; returns
