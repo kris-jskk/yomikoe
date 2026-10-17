@@ -10,7 +10,7 @@ export interface ReaderProps {
   segments: Segment[]
   sections: Section[]
   registerSegmentEl: (id: number, el: HTMLElement | null, tokens?: Token[]) => void
-  /** The reading column element; the player listens for wheel/touchmove on it (auto-scroll cooldown). */
+  /** The reading column element; the player listens for wheel/touchmove on it (stops follow mode). */
   registerReaderEl?: (el: HTMLElement | null) => void
   onSeek: (segmentId: number, tokenIndex?: number) => void
 }

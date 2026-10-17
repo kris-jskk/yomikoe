@@ -10,12 +10,14 @@ import { initialState, reduce, type PlayerEvent, type PlayerState } from './mach
 import {
   chainStart,
   findActiveWord,
+  followHint,
   isScrollKey,
   locate,
   nextPlayable,
   onFetchFailure,
   mapTimestampsToTokens,
   shouldAutoScroll,
+  type FollowHint,
   type MappedTimestamp,
   type ScrollReason,
   type ScheduleEntryView,
@@ -57,6 +59,8 @@ export interface HearnarroHooks {
   firstStartAt: number | null
   now: () => number
   readonly entries: ScheduleEntryView[]
+  /** Follow mode (PLAY-2): false after scroll input in the reading column until a navigation. */
+  readonly following: boolean
 }
 
 /** `window` with the test hooks (the e2e spec declares the same field globally). */
@@ -67,8 +71,14 @@ export interface Player {
   dispatch: (e: PlayerEvent) => void
   /** Reader registers each segment's element and its tokens (from `tokenize(text)`) on mount. */
   registerSegmentEl: (id: number, el: HTMLElement | null, tokens?: Token[]) => void
-  /** Reader registers its reading column: wheel/touchmove inside it arm the auto-scroll cooldown. */
+  /** Reader registers its reading column: wheel/touchmove inside it stop follow mode. */
   registerReaderEl: (el: HTMLElement | null) => void
+  /** True while the advance scrolls the highlighted sentence into view (follow mode, PLAY-2). */
+  following: boolean
+  /** Where the highlight is while not following: 'up' above the viewport, 'down' below, null in view. */
+  followHint: FollowHint
+  /** "Back to reading": centre the current segment now and follow again. */
+  resumeFollowing: () => void
   /** Play from the current position, or resume (creates the AudioContext inside the gesture). */
   play: () => void
   pause: () => void
@@ -116,8 +126,9 @@ export class PlayerEngine {
     key: '',
   }
   lastPos = 0
-  /** performance.now() of the last scroll input in the reading column (null: none yet). */
-  lastInput: number | null = null
+  /** Follow mode: the advance scrolls only while true; scroll input clears it, navigation sets it. */
+  following = true
+  hint: FollowHint = null
   /** Set by an explicit navigation; the next render scrolls to `state.current` with 'navigate'. */
   navPending = false
   private readerEl: HTMLElement | null = null
@@ -125,10 +136,16 @@ export class PlayerEngine {
   readonly hooks: HearnarroHooks
   private readonly dispatch: (e: PlayerEvent) => void
   private readonly onClip: (s: ClipStats) => void
+  private readonly onFollow: (following: boolean, hint: FollowHint) => void
 
-  constructor(dispatch: (e: PlayerEvent) => void, onClip: (s: ClipStats) => void) {
+  constructor(
+    dispatch: (e: PlayerEvent) => void,
+    onClip: (s: ClipStats) => void,
+    onFollow: (following: boolean, hint: FollowHint) => void = () => {},
+  ) {
     this.dispatch = dispatch
     this.onClip = onClip
+    this.onFollow = onFollow
     const hooks = { firstStartAt: null, now: () => this.ctx?.currentTime ?? 0 }
     Object.defineProperty(hooks, 'entries', {
       enumerable: true,
@@ -139,6 +156,7 @@ export class PlayerEngine {
           durationSec: e.durationSec,
         })),
     })
+    Object.defineProperty(hooks, 'following', { enumerable: true, get: () => this.following })
     this.hooks = hooks as HearnarroHooks
   }
 
@@ -147,13 +165,44 @@ export class PlayerEngine {
     this.state = state
   }
 
+  /** Scroll input in the reading column (or a page-scroll key): stop following. */
   noteInput() {
-    this.lastInput = performance.now()
+    this.setFollowing(false)
   }
 
-  /** An explicit navigation was requested: the next render scrolls to its target. */
+  /** An explicit navigation was requested: follow again; the next render scrolls to its target. */
   markNavigate() {
     this.navPending = true
+    this.setFollowing(true)
+  }
+
+  /** "Back to reading": follow again and centre the current segment immediately. */
+  resumeFollowing() {
+    this.setFollowing(true)
+    const id = this.state.current?.segmentId ?? this.startedId
+    if (id !== null) this.scrollTo(id, 'navigate')
+  }
+
+  setFollowing(f: boolean) {
+    if (this.following === f) return
+    this.following = f
+    this.hint = null
+    if (!f) this.computeHint()
+    this.onFollow(this.following, this.hint)
+  }
+
+  /** Recompute the "Back to reading" arrow from the highlighted segment's rect (not following only). */
+  updateHint() {
+    if (this.following) return
+    const before = this.hint
+    this.computeHint()
+    if (this.hint !== before) this.onFollow(this.following, this.hint)
+  }
+
+  private computeHint() {
+    const id = this.state.current?.segmentId
+    const el = this.active.seg ?? (id !== undefined ? this.segEls.get(id) : undefined) ?? null
+    this.hint = followHint(el ? el.getBoundingClientRect() : null, window.innerHeight)
   }
 
   /** Consume the pending navigation flag. */
@@ -386,6 +435,8 @@ export class PlayerEngine {
         segEl.classList.add('active')
         segEl.dataset.active = 'true'
       }
+      this.active.seg = segEl
+      this.updateHint()
     }
     const w =
       segEl && tokenIndex !== null
@@ -449,10 +500,10 @@ export class PlayerEngine {
     }
   }
 
-  /** Scroll `segmentId` to the centre: always for 'navigate', outside the cooldown for 'advance'. */
+  /** Scroll `segmentId` to the centre: always for 'navigate', only while following for 'advance'. */
   scrollTo(segmentId: number, reason: ScrollReason) {
     const el = this.segEls.get(segmentId)
-    if (!el || !shouldAutoScroll(reason, this.lastInput, performance.now())) return
+    if (!el || !shouldAutoScroll(reason, this.following)) return
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
     el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' })
   }
@@ -471,7 +522,14 @@ export class PlayerEngine {
 export function usePlayer(): Player {
   const [state, dispatch] = useReducer(reduce, initialState)
   const [lastClip, setLastClip] = useState<ClipStats | null>(null)
-  const [engine] = useState(() => new PlayerEngine(dispatch, setLastClip))
+  const [follow, setFollow] = useState<{ following: boolean; hint: FollowHint }>({
+    following: true,
+    hint: null,
+  })
+  const [engine] = useState(
+    () =>
+      new PlayerEngine(dispatch, setLastClip, (following, hint) => setFollow({ following, hint })),
+  )
 
   useLayoutEffect(() => {
     engine.sync(state)
@@ -483,7 +541,8 @@ export function usePlayer(): Player {
 
   // instrumentation hooks (always set; the gate reads them). Wheel/touchmove are tracked on the reading
   // column (attachReader); keydown stays on window because keyboard page scrolling has no element
-  // target, but only scroll keys outside form controls count, so Toc/button keys never arm it.
+  // target, but only scroll keys outside form controls count, so Toc/button keys never stop following.
+  // Any scroll while not following refreshes the "Back to reading" arrow.
   useEffect(() => {
     const w = hookWindow()
     w.__hearnarro = engine.hooks
@@ -491,9 +550,12 @@ export function usePlayer(): Player {
       const t = e.target instanceof HTMLElement ? e.target.tagName : null
       if (isScrollKey(e.key, t)) engine.noteInput()
     }
+    const onScroll = () => engine.updateHint()
     window.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true })
     return () => {
       window.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', onScroll, { capture: true })
       engine.attachReader(null)
       engine.dispose()
       if (w.__hearnarro === engine.hooks) delete w.__hearnarro
@@ -585,11 +647,16 @@ export function usePlayer(): Player {
     [engine],
   )
 
+  const resumeFollowing = useCallback(() => engine.resumeFollowing(), [engine])
+
   return {
     state,
     dispatch: userDispatch,
     registerSegmentEl,
     registerReaderEl,
+    following: follow.following,
+    followHint: follow.hint,
+    resumeFollowing,
     play,
     pause,
     seekTo,

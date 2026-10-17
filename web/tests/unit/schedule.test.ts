@@ -10,7 +10,7 @@ import {
   mapTimestampsToTokens,
   nextPlayable,
   onFetchFailure,
-  SCROLL_COOLDOWN_MS,
+  followHint,
   shouldAutoScroll,
   tokenize,
   type MappedTimestamp,
@@ -221,28 +221,38 @@ describe('PLAY-5: empty clips and skipped segments', () => {
   })
 })
 
-describe('PLAY-3 shouldAutoScroll: navigation always scrolls, the advance respects the cooldown', () => {
-  it('navigate scrolls even right after reading-column input', () => {
-    expect(shouldAutoScroll('navigate', 1000, 1000)).toBe(true)
-    expect(shouldAutoScroll('navigate', 1000, 1001)).toBe(true)
-    expect(shouldAutoScroll('navigate', null, 0)).toBe(true)
+describe('PLAY-2/PLAY-3 shouldAutoScroll: navigation always scrolls, the advance only while following', () => {
+  it('navigate scrolls whether or not the reader is following', () => {
+    expect(shouldAutoScroll('navigate', true)).toBe(true)
+    expect(shouldAutoScroll('navigate', false)).toBe(true)
   })
-  it('advance scrolls when there was no input', () => {
-    expect(shouldAutoScroll('advance', null, 0)).toBe(true)
+  it('advance scrolls while following', () => {
+    expect(shouldAutoScroll('advance', true)).toBe(true)
   })
-  it('advance is suppressed within the cooldown, inclusive of its edge', () => {
-    expect(SCROLL_COOLDOWN_MS).toBe(3000)
-    expect(shouldAutoScroll('advance', 1000, 1000)).toBe(false)
-    expect(shouldAutoScroll('advance', 1000, 4000)).toBe(false)
-    expect(shouldAutoScroll('advance', 1000, 4001)).toBe(true)
-  })
-  it('honours a custom cooldown', () => {
-    expect(shouldAutoScroll('advance', 0, 500, 400)).toBe(true)
-    expect(shouldAutoScroll('advance', 0, 300, 400)).toBe(false)
+  it('advance does not scroll once the reader has scrolled away (no time limit)', () => {
+    expect(shouldAutoScroll('advance', false)).toBe(false)
   })
 })
 
-describe('PLAY-3 isScrollKey: only document-scrolling keys outside controls arm the cooldown', () => {
+describe('PLAY-2 followHint: the arrow on "Back to reading" points at the highlight', () => {
+  const vh = 800
+  it('up when the segment lies wholly above the viewport', () => {
+    expect(followHint({ top: -300, bottom: -20 }, vh)).toBe('up')
+    expect(followHint({ top: -40, bottom: 0 }, vh)).toBe('up')
+  })
+  it('down when the segment lies wholly below the viewport', () => {
+    expect(followHint({ top: 900, bottom: 960 }, vh)).toBe('down')
+    expect(followHint({ top: 800, bottom: 840 }, vh)).toBe('down')
+  })
+  it('null when any part is in view, or there is no segment', () => {
+    expect(followHint({ top: 100, bottom: 140 }, vh)).toBeNull()
+    expect(followHint({ top: -20, bottom: 10 }, vh)).toBeNull()
+    expect(followHint({ top: 790, bottom: 830 }, vh)).toBeNull()
+    expect(followHint(null, vh)).toBeNull()
+  })
+})
+
+describe('PLAY-3 isScrollKey: only document-scrolling keys outside controls stop following', () => {
   it('scroll keys on the page count', () => {
     for (const k of ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '])
       expect(isScrollKey(k, 'BODY')).toBe(true)
