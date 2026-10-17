@@ -149,7 +149,7 @@ The browser never touches a model or the PDF; it asks the API for parsed segment
 | Text normalization | Custom rules | No off-the-shelf library covers citations and tech vocabulary; `num2words` (LGPL) is not used (D15) |
 | TTS v1 | Kokoro-82M via vendored model code on PyTorch CPU, GPL-free (D15) | Apache-2.0, \~50 voices (10 exposed in v1), native speed parameter, word timings from predicted durations; the `kokoro` package is not installed because its `misaki[en]` extras are GPL/LGPL |
 | TTS v2 | Fish Speech or Qwen3-TTS behind the same interface | Higher quality, needs a GPU |
-| Time-stretch fallback | WSOLA in process (D17) | Only above the model's native speed range (2.1–3.0x); numpy, no extra dependency, pitch kept |
+| Time-stretch fallback | WSOLA in process (D17) | Only above the model's native speed range (2.05–3.0x); numpy, no extra dependency, pitch kept |
 | Audio format | PCM 24 kHz internally; WAV per segment by default, Ogg Opus optional (D16); browser matrix in M3 | WAV needs no dependency and decodes everywhere via decodeAudioData; Ogg Opus at 48 kbps (`opuscodec`, Apache-2.0, `opus` extra) is 6–8x smaller (42 KB vs 276 KB for a 5.75 s sentence) |
 | Storage | SQLite + local filesystem | Single-user v1; swap to Postgres + S3 when multi-user |
 | Job queue | In-process asyncio task queue | No Redis until there is more than one worker |
