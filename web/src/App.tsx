@@ -1,5 +1,6 @@
 // Hash router (spec §3): "#/" -> Picker, "#/doc/{id}" -> Reader + Toc + PlayerBar.
 
+import { DEFAULT_SPEED } from './player/machine'
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { getAllSegments, getDocument, getVoices } from './api/client'
 import type { DocumentDetail, Segment, Voice } from './api/types'
@@ -50,7 +51,7 @@ function DocView({ documentId }: { documentId: number }) {
           orderedIds: segments.map((s) => s.id),
           sectionStarts: sections.map((s) => s.first_segment_id),
           voice: doc.settings?.voice_id ?? voices[0]?.id ?? '',
-          speed: doc.settings?.speed ?? 1.0,
+          speed: doc.settings?.speed ?? DEFAULT_SPEED,
           // the API may return a position object with null fields for a never-played document
           position:
             doc.position && doc.position.segment_id != null && orderedHas(segments, doc.position)

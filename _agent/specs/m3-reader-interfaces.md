@@ -202,8 +202,15 @@ wins; a timestamp with no overlap is dropped). The active token is the one of th
 with `start_ms <= elapsedMs`; between words (after a timestamp's `end_ms`, before the next `start_ms`) the
 previous token stays highlighted.
 
-**Auto-scroll:** on segment change, `scrollIntoView({block:'center', behavior:'smooth'})` unless a
-`wheel`/`touchmove`/`keydown` was seen in the last 3 s. `prefers-reduced-motion` → `behavior:'auto'`.
+**Auto-scroll (amended 2026-10-17 after the index-click report):** an explicit navigation (Toc entry, word or
+sentence click, sentence/section skip buttons, Play from the saved position or after the end) always scrolls its
+target segment to the centre straight away, whatever the user scrolled just before. The automatic advance during
+playback scrolls only when no `wheel`/`touchmove` inside the reading column and no page-scroll key outside a form
+control was seen in the last 3 s (`shouldAutoScroll(reason, lastInputAt, now)` in `schedule.ts`).
+`prefers-reduced-motion` → `behavior:'auto'`.
+
+**Default speed (user decision 2026-10-17):** `DEFAULT_SPEED = 1.25` in `machine.ts`, used when the document has
+no saved speed (the server stores NULL for "use the global default"; LIB-3 makes it a setting in M4).
 
 **Click to seek (PLAY-3):** a click on `.w` dispatches `SEEK{segmentId, offsetMs = start_ms of the token's
 first mapped timestamp if the clip is known, else 0}`; a click elsewhere in `.seg` dispatches `SEEK{segmentId, 0}`.

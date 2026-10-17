@@ -50,6 +50,9 @@ export type PlayerEvent =
   | { type: 'RETRY' }
   | { type: 'DISMISS' }
 
+/** Global default speed for a document with no saved setting (LIB-3 global default is M4; user chose 1.25 on 2026-10-17). */
+export const DEFAULT_SPEED = 1.25
+
 export const initialState: PlayerState = {
   status: 'idle',
   documentId: null,
@@ -57,7 +60,7 @@ export const initialState: PlayerState = {
   sectionStarts: [],
   current: null,
   voice: '',
-  speed: 1.0,
+  speed: DEFAULT_SPEED,
   generation: 0,
   error: null,
   firstAudio: null,
