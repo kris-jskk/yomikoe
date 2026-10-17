@@ -151,3 +151,13 @@ install is checked with the licence script from the spike (`lic_check.py`, to be
 - Stretch path caches both the native 2.0x file and the stretched file (as D6 says).
 - `app.py`: the backend is constructed on the synthesis thread (`run_in_executor`) during lifespan so the model load never blocks the event loop; shutdown waits ≤ 5 s for the in-flight job, then cancels.
 - PRD SYN-6 wording "segment hash" is read as "segment id" (D7 rationale); the PRD row is updated when M2 closes. Technical Design D9's "ONNX session" wording becomes "model session (PyTorch CPU, D15)" in the same update.
+
+## Amendment 2026-10-16 (D18): sentence-boundary gate thresholds
+
+After the splitter fix (results 285): mean P 0.942, R 0.991, F1 0.966; lowest fixture F1 0.9105
+(tables_01). The gate asserts, from now on: F1 ≥ 0.90 per fixture and mean F1 ≥ 0.95, recall ≥ 0.97
+per fixture. These pin the current state against regression; they are raised when the remaining
+false positives (block-boundary splits from stages 1–4) are addressed. Known truth artefacts to
+review later: academic_01 "in Proc." / "W. -Y.", academic_03 "No-Term." / ":". The golden's
+sentence-level diagnostic (D14) now reads lower because its expected side keeps the old splits; it
+stays printed, never asserted, and is dropped when the boundary gate replaces it fully.
