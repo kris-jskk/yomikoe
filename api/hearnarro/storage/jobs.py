@@ -109,6 +109,7 @@ def _write_result(
     }
     with conn:
         conn.execute("DELETE FROM segments WHERE document_id = ?", (document_id,))
+        conn.execute("DELETE FROM sections WHERE document_id = ?", (document_id,))
         conn.execute("DELETE FROM blocks WHERE document_id = ?", (document_id,))
         block_ids: dict[int, int] = {}
         for block in result.blocks:
@@ -122,24 +123,42 @@ def _write_result(
             )
             assert cur.lastrowid is not None
             block_ids[block.id] = cur.lastrowid
-        conn.executemany(
-            'INSERT INTO segments (document_id, block_id, section_id, "order", text, '
-            "normalized_text, char_start, char_end, char_map) "
-            "VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?)",
-            [
+        # ING-8 / D25: one section per heading block that has segments (level 1 in v1);
+        # each segment carries the latest section id (NULL before the first heading).
+        heading_text = {b.id: b.text for b in result.blocks if b.type == "heading"}
+        section_id: int | None = None
+        sectioned: set[int] = set()
+        for seg in sorted(result.segments, key=lambda s: s.order):
+            new_section = seg.block_id in heading_text and seg.block_id not in sectioned
+            if new_section:
+                sectioned.add(seg.block_id)
+                cur = conn.execute(
+                    "INSERT INTO sections (document_id, title, level, first_segment_id) "
+                    "VALUES (?, ?, 1, NULL)",
+                    (document_id, heading_text[seg.block_id]),
+                )
+                section_id = cur.lastrowid
+            cur = conn.execute(
+                'INSERT INTO segments (document_id, block_id, section_id, "order", text, '
+                "normalized_text, char_start, char_end, char_map) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     document_id,
                     block_ids[seg.block_id],
+                    section_id,
                     seg.order,
                     seg.text,
                     seg.normalized_text,
                     seg.char_start,
                     seg.char_end,
                     pack_char_map(seg.char_map),
+                ),
+            )
+            if new_section:
+                conn.execute(
+                    "UPDATE sections SET first_segment_id = ? WHERE id = ?",
+                    (cur.lastrowid, section_id),
                 )
-                for seg in result.segments
-            ],
-        )
         row = conn.execute("SELECT filename FROM documents WHERE id = ?", (document_id,)).fetchone()
         filename = row[0] if row and row[0] else "document.pdf"
         conn.execute(
