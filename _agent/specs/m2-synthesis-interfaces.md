@@ -141,3 +141,13 @@ non-copyleft licences (PSF-2.0, ISC, MPL-2.0 at file level, BSL-1.0, Zlib, CC0, 
 acceptable; copyleft (GPL, LGPL, AGPL, SSPL) and non-commercial terms remain excluded. Every
 install is checked with the licence script from the spike (`lic_check.py`, to be moved into
 `api/scripts/check_licences.py` and run in the test suite).
+
+## Amendments 2026-10-16 from the code-map review (docs/CODE_MAP_M2.md "Open items")
+
+- `AudioEntry` gains `document_id: int` (needed for the cache file path); `AudioCache.get/put` take it from the segment row.
+- `media_type` is not a column: it is derived from the cached file's extension (`.wav` → audio/wav, `.opus`/`.ogg` → audio/ogg); `AudioEntry.media_type` is filled at read time.
+- Failed rows: a `failed` row is retried once on the next explicit `GET` for that key (not by the lookahead queue); a second failure keeps the row failed until a `DELETE` of the document or a manual cache clear. The retry count lives in `timestamps_json` as `{"failures": n}` to avoid a migration.
+- Seek detection: the service tracks, per (document_id, voice_id, speed), the last requested order; a `GET` whose order is outside `[last, last + lookahead]` is a seek: clear that document's queue and refill from the new order. `prefetch()` is the explicit form the client may call.
+- Stretch path caches both the native 2.0x file and the stretched file (as D6 says).
+- `app.py`: the backend is constructed on the synthesis thread (`run_in_executor`) during lifespan so the model load never blocks the event loop; shutdown waits ≤ 5 s for the in-flight job, then cancels.
+- PRD SYN-6 wording "segment hash" is read as "segment id" (D7 rationale); the PRD row is updated when M2 closes. Technical Design D9's "ONNX session" wording becomes "model session (PyTorch CPU, D15)" in the same update.
