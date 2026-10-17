@@ -28,7 +28,6 @@ stripped, clamped at 0), the function the M5 gate test uses. Aggregate: mean, mi
 from __future__ import annotations
 
 import json
-import re
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -44,11 +43,6 @@ DIRECTION = "higher"
 DATA = Path(__file__).resolve().parents[1] / "data" / "math_speech.jsonl"
 CLASSES = ("display", "inline", "symbol", "reference", "fixture")
 FORMULA_CLASS = "formula"
-MATH_FONT = "CMMI10"
-TEXT_FONT = "Helvetica"
-SIZE = 10.0
-SCRIPT_SIZE = 7.0
-_MARKUP = re.compile(r"([_^])\{([^{}]*)\}")
 
 
 @cache
@@ -58,52 +52,12 @@ def load_pairs() -> tuple[dict[str, Any], ...]:
     return tuple(json.loads(line) for line in lines if line.strip())
 
 
-def _runs(text: str, math: bool) -> list[tuple[str, str, float, bool, float]]:
-    """(text, font, size, superscript, baseline shift) runs of one line piece."""
-    font = MATH_FONT if math else TEXT_FONT
-    out: list[tuple[str, str, float, bool, float]] = []
-    pos = 0
-    for m in _MARKUP.finditer(text):
-        if m.start() > pos:
-            out.append((text[pos : m.start()], font, SIZE, False, 0.0))
-        sup = m.group(1) == "^"
-        out.append((m.group(2), MATH_FONT, SCRIPT_SIZE, sup, -4.0 if sup else 3.0))
-        pos = m.end()
-    if pos < len(text):
-        out.append((text[pos:], font, SIZE, False, 0.0))
-    return out
-
-
 def _blocks(raw: str, block: str) -> list[Any]:
-    """One stage-1 ``Block`` of type ``block`` holding ``raw`` with span geometry (docstring)."""
-    from hearnarro.ingestion.models import BBox, Block, Line, Span
+    """One stage-1 ``Block`` holding ``raw`` with span geometry: the markup helper shared with the
+    mathspeak unit tests (``hearnarro.ingestion.mathspeak.markup``, docstring above)."""
+    from hearnarro.ingestion.mathspeak.markup import markup_blocks
 
-    lines: list[Line] = []
-    for i, row in enumerate(raw.split("\n")):
-        top = 200.0 + 14.0 * i
-        pieces: list[tuple[str, bool]] = (
-            [(row, True)]
-            if block == "equation"
-            else [(p, k % 2 == 1) for k, p in enumerate(row.split("$")) if p]
-        )
-        spans: list[Span] = []
-        x = 72.0
-        for piece, math in pieces:
-            for text, font, size, sup, shift in _runs(piece, math):
-                width = 0.5 * size * len(text)
-                box = BBox(x, top + shift, x + width, top + shift + size)
-                spans.append(Span(text, box, font, size, italic=font == MATH_FONT, superscript=sup))
-                x += width
-        if spans:
-            box = BBox(spans[0].bbox.x0, top, spans[-1].bbox.x1, top + 12.0)
-            lines.append(Line(spans, box))
-    box = BBox(
-        min(ln.bbox.x0 for ln in lines),
-        lines[0].bbox.y0,
-        max(ln.bbox.x1 for ln in lines),
-        lines[-1].bbox.y1,
-    )
-    return [Block(page=0, index=0, bbox=box, lines=lines, type=block)]  # type: ignore[arg-type]
+    return markup_blocks(raw, block)
 
 
 def _mathspeak() -> Any:
