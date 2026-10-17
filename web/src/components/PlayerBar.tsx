@@ -1,0 +1,121 @@
+// PlayerBar (spec §7, PLAY-1, PLAY-4): transport, voice, speed, status word and D19 stats readout.
+
+import type { Voice } from '../api/types'
+import type { Player } from '../player/usePlayer'
+
+export interface PlayerBarProps {
+  player: Player
+  voices: Voice[]
+}
+
+const SPEED_MIN = 0.5
+const SPEED_MAX = 3
+const SPEED_STEP = 0.05
+
+/** Snap a slider value to a 0.05 multiple in [0.5, 3.0]. */
+export function snapSpeed(v: number): number {
+  const snapped = Math.round(v / SPEED_STEP) * SPEED_STEP
+  return Math.min(SPEED_MAX, Math.max(SPEED_MIN, Number(snapped.toFixed(2))))
+}
+
+const ms = (x: number) => `${Math.round(x)} ms`
+
+export function PlayerBar({ player, voices }: PlayerBarProps) {
+  const { state, dispatch, play, pause, lastClip } = player
+  const playing = state.status === 'playing'
+  const fa = state.firstAudio
+  const first =
+    fa && fa.startedAt !== null ? `${((fa.startedAt - fa.requestedAt) / 1000).toFixed(2)} s` : '–'
+  return (
+    <div className="player-bar" role="region" aria-label="Player">
+      <div className="controls">
+        <button
+          type="button"
+          id="prev-section"
+          aria-label="Previous section"
+          onClick={() => dispatch({ type: 'SKIP_SECTION', by: -1 })}
+        >
+          ⏮
+        </button>
+        <button
+          type="button"
+          id="prev-sentence"
+          aria-label="Previous sentence"
+          onClick={() => dispatch({ type: 'SKIP', by: -1 })}
+        >
+          ◀
+        </button>
+        <button
+          type="button"
+          id="play-pause"
+          className="primary"
+          aria-label={playing ? 'Pause' : 'Play'}
+          onClick={playing ? pause : play}
+        >
+          {playing ? '❚❚' : '▶'}
+        </button>
+        <button
+          type="button"
+          id="next-sentence"
+          aria-label="Next sentence"
+          onClick={() => dispatch({ type: 'SKIP', by: 1 })}
+        >
+          ▶
+        </button>
+        <button
+          type="button"
+          id="next-section"
+          aria-label="Next section"
+          onClick={() => dispatch({ type: 'SKIP_SECTION', by: 1 })}
+        >
+          ⏭
+        </button>
+      </div>
+      <select
+        id="voice"
+        aria-label="Voice"
+        value={state.voice}
+        onChange={(e) => dispatch({ type: 'SET_VOICE', voice: e.target.value })}
+      >
+        {voices.map((v) => (
+          <option key={v.id} value={v.id}>
+            {v.name}
+          </option>
+        ))}
+      </select>
+      <span className="speed">
+        <input
+          id="speed"
+          type="range"
+          min={SPEED_MIN}
+          max={SPEED_MAX}
+          step={SPEED_STEP}
+          aria-label="Speed"
+          value={state.speed}
+          onChange={(e) =>
+            dispatch({ type: 'SET_SPEED', speed: snapSpeed(Number(e.target.value)) })
+          }
+        />{' '}
+        <span id="speed-value">{state.speed.toFixed(2)}x</span>
+      </span>
+      <span className="status" role="status" data-status={state.status} aria-live="polite">
+        {state.status}
+        {state.error ? `: ${state.error}` : ''}
+      </span>
+      {state.status === 'error' && (
+        <>
+          <button type="button" id="retry" onClick={() => dispatch({ type: 'RETRY' })}>
+            Retry
+          </button>
+          <button type="button" id="dismiss" onClick={() => dispatch({ type: 'DISMISS' })}>
+            Dismiss
+          </button>
+        </>
+      )}
+      <span className="stats" id="stats">
+        first audio {first} · fetch {lastClip ? ms(lastClip.fetchMs) : '–'} · decode{' '}
+        {lastClip ? ms(lastClip.decodeMs) : '–'} · format {lastClip?.mediaType || '–'}
+      </span>
+    </div>
+  )
+}

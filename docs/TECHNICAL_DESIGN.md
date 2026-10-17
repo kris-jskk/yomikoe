@@ -6,7 +6,7 @@ Companion to the PRD. The PRD says what v1 does; this doc says how, and records 
 
 ## Decision log
 
-Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm (D5, D7, D10) and the rest follow from the PRD's constraints. D12–D19 were added during M1 and M2. Each is argued in its section below.
+Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm (D5, D7, D10) and the rest follow from the PRD's constraints. D12–D19 were added during M1 and M2, D20–D25 during M3. Each is argued in its section below.
 
 | # | Decision | Recommendation | Status |
 | --- | --- | --- | --- |
@@ -14,21 +14,27 @@ Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm 
 | D2 | Reading order | Geometric: x-gap column detection per page, then top-to-bottom within column; no ML in v1 | Proposed |
 | D3 | Header/footer removal | Repetition across pages (same normalized text in same band on 3+ pages) plus page-number regex | Proposed |
 | D4 | Sentence splitting | pysbd on merged block text; keep char offsets back to the block | Proposed |
-| D5 | Audio delivery to browser | Per-segment HTTP fetch of encoded audio (WAV by default, Ogg Opus optional, D16) + Web Audio API scheduled buffers; no WebSocket, no MSE in v1 | **Decided 2026-10-15; PRD updated** |
+| D5 | Audio delivery to browser | Per-segment HTTP fetch of encoded audio (WAV by default, Ogg Opus optional, D16) + Web Audio API scheduled buffers; no WebSocket, no MSE in v1 | **Decided 2026-10-15; PRD updated; built in M3 (2026-10-17)** |
 | D6 | Speed | Kokoro native 0.5–2.0x; 2.1–3.0x synthesize at 2.0x then time-stretch in-process with a numpy WSOLA (ratio ≤ 1.5; D17 replaced ffmpeg `atempo`) | **Amended 2026-10-16 (D17)** |
 | D7 | Cache format | One file per (segment, voice, speed): WAV (24 kHz PCM16 mono) by default in M2; Ogg Opus via `opuscodec` behind `HEARNARRO_AUDIO_FORMAT=opus` (D16); no ffmpeg | **Decided 2026-10-15; amended 2026-10-16 (D16)** |
-| D8 | Highlight sync | Word spans in DOM; `requestAnimationFrame` loop reads AudioContext clock; binary search over timestamps | Proposed |
+| D8 | Highlight sync | Word spans in DOM; `requestAnimationFrame` loop reads AudioContext clock; binary search over timestamps | **Decided 2026-10-17; built in M3** |
 | D9 | Process model | One FastAPI process; ingestion in a `ProcessPoolExecutor`; synthesis in one dedicated thread with a single model session (PyTorch CPU, D15) | Proposed |
-| D10 | Frontend state | XState-style explicit player state machine vs. plain React reducer | **Decided 2026-10-15** |
+| D10 | Frontend state | XState-style explicit player state machine vs. plain React reducer | **Decided 2026-10-15 (plain `useReducer`); built in M3 (2026-10-17)** |
 | D11 | Fixture ground truth | `*.expected.jsonl` hand-corrected once, then golden; test asserts Levenshtein on segment order ≥ 0.95 | Proposed |
 | D12 | Golden comparison scope | Prose-only; figure text dropped; inline math joined; table/equation internals excluded until ING-7 | **Decided 2026-10-16** |
 | D13 | Extractor: pdfplumber + pypdfium2, replacing PyMuPDF (AGPL) | pdfplumber (MIT; pdfminer.six underneath) supplies glyphs, fonts, images, vector drawings and ruled tables; stage 1 groups glyphs into lines and blocks itself in content-stream order; pypdfium2 (Apache-2.0/BSD-3) renders pages for OCR. Supersedes the PyMuPDF part of D1 | **Decided 2026-10-16** |
 | D14 | Golden score granularity | Word-sequence edit distance over ordered prose; sentence-level printed as diagnostic; char-mass guard | **Decided 2026-10-16** |
 | D15 | Kokoro runtime without the GPL chain | `hexgrad/Kokoro-82M` pinned at `f3ff3571791e39611d31c381e3a41a3af07b4987`, fetched with `hf_hub_download(revision=...)`; Kokoro's Apache-2.0 model code vendored and run on PyTorch CPU; base `misaki.en.G2P` without extras, an own `num2words` shim (`inflect`), and a vendored g2p_en fallback for out-of-vocabulary words. Never installed: `kokoro`, `misaki[en]`, phonemizer, espeak-ng, `num2words` | **Decided 2026-10-16** |
-| D16 | Audio container | WAV (stdlib) per segment by default in M2; Ogg Opus at 48 kbps via `opuscodec` (Apache-2.0, in process) behind `HEARNARRO_AUDIO_FORMAT=opus` and the `opus` extra; media type from the file extension; browser decode matrix (Safari and Ogg Opus) in M3, a WebM muxer only if needed. Replaces the ffmpeg subprocess of D7's original plan | **Decided 2026-10-16** |
+| D16 | Audio container | WAV (stdlib) per segment by default in M2; Ogg Opus at 48 kbps via `opuscodec` (Apache-2.0, in process) behind `HEARNARRO_AUDIO_FORMAT=opus` and the `opus` extra; media type from the file extension; browser decode matrix (Safari and Ogg Opus) in M3, a WebM muxer only if needed. Replaces the ffmpeg subprocess of D7's original plan | **Decided 2026-10-16**; measured in M3 (decode matrix: WAV and Ogg Opus pass on Chromium, WebKit, Firefox under Playwright, `_agent/results/436`–`438`, `422`, `423`), user decision 2026-10-17: WAV stays the default until one play in the user's own Safari, carried to M4 |
 | D17 | Time-stretch | In-process numpy WSOLA, ratio ≤ 1.5, pitch kept, timestamps scaled by `1/ratio`; replaces ffmpeg `atempo` in D6 | **Decided 2026-10-16** |
 | D18 | Sentence-boundary gate | Boundary P/R/F1 over the aligned word stream against `<stem>.sentences.txt`: F1 ≥ 0.90 per fixture, mean F1 ≥ 0.95, recall ≥ 0.97 per fixture; raised when block-boundary false positives are fixed | **Decided 2026-10-16** |
-| D19 | The 0.5x time-to-first-audio gate | The M2 gate is measured on the spec sentence (passes at 0.5x); the benchmark reports the full distribution (some 200-character sentences exceed 2 s at 0.5x); M3 adds clause-level chunking of the first sentence at speeds < 1.0 and measures the wait in the player | **Decided 2026-10-16 (user)** |
+| D19 | The 0.5x time-to-first-audio gate | The M2 gate is measured on the spec sentence (passes at 0.5x); the benchmark reports the full distribution (some 200-character sentences exceed 2 s at 0.5x); M3 adds clause-level chunking of the first sentence at speeds < 1.0 and measures the wait in the player | **Decided 2026-10-16 (user)**; measured in M3 (browser first audio vs Kokoro, `_agent/results/445_first_audio_kokoro.txt`), user decision 2026-10-17: clause-level chunking of the first sentence at speeds below 1.0 deferred to M4; baselines `_agent/results/445_first_audio_kokoro.txt` (before the prefetch fix) and `452_first_audio_after.txt` (after): 0.5x cold mean 1883 ms, 1.0x 1423 ms, warm under 30 ms; script `web/scripts/measure_first_audio.mjs` |
+| D20 | Node toolchain | Node LTS from the official nodejs.org tarball, SHA-256 checked against `SHASUMS256.txt`, user-local in `~/.local/node` (no Homebrew, no sudo); exact pins and a committed `package-lock.json` | **Decided 2026-10-17 (supervisor); confirmed by the user 2026-10-17** |
+| D21 | Dev access to the API | The API stays CORS-free; Vite's dev server proxies `/documents`, `/audio`, `/voices` to `HEARNARRO_API` (default `127.0.0.1:8765`); FastAPI serves `web/dist` in M4 | **Decided 2026-10-17 (supervisor); confirmed by the user 2026-10-17** |
+| D22 | Browser gate scope | Playback gate asserted on Chromium in M3; WebKit and Firefox run the same tests with `HEARNARRO_E2E_ALL_ENGINES=1` and are reported | **Decided 2026-10-17 (supervisor); confirmed by the user 2026-10-17** |
+| D23 | Settings change while paused | Voice/speed changes while paused or idle update context only and apply at the next Play (a fresh schedule); while playing they restart the current sentence (PLAY-4) | **Decided 2026-10-17 (supervisor); confirmed by the user 2026-10-17** |
+| D24 | Pause | `AudioContext.suspend()` / `resume()`; the schedule is never rebuilt for pause/resume | **Decided 2026-10-17 (supervisor); confirmed by the user 2026-10-17** |
+| D25 | Sections in M3 | Derived in the client: each `heading` segment starts a section; the API's `sections` are used when non-empty; server-side TOC (ING-8) in M4 | **Decided 2026-10-17 (supervisor); confirmed by the user 2026-10-17** |
 
 ## Ingestion pipeline
 
@@ -313,6 +319,22 @@ The recommendation is a plain `useReducer` with a typed `(state, event) => state
 **Keyboard and Media Session (PLAY-6, PLAY-7).** A single `keydown` listener on `document` maps Space, ←, →, `+`, `-` to events; `navigator.mediaSession.setActionHandler` maps play/pause/nexttrack/previoustrack to the same events so lock-screen controls and keys share one path.
 
 **Styling.** Plain CSS modules, no component library; the reader is mostly text and the one hard requirement is a highlight that meets WCAG AA in both themes (`background: var(--hl)` with contrast checked in the fixture page).
+
+**As built in M3 (2026-10-17).** The reducer lives in `web/src/player/machine.ts` (5 states, 17 events, a `generation` counter that makes stale audio events no-ops); the audio side effects live in a `PlayerEngine` class inside `web/src/player/usePlayer.ts`, driven by one effect that rebuilds the schedule whenever the state enters `loading` with a new generation. The "Data flow" paragraph above (pages of 200 on scroll) is not built: M3 loads every segment up front in pages of 500 and renders them all; virtualised rendering is an M4 item with the soak test. Walkthroughs: `docs/CODE_MAP_M3.md`.
+
+## M3 decisions (D20–D25)
+
+**D20, Node without Homebrew.** The frontend needs Node and npm, and the project installs it without Homebrew and without sudo or global tools. `web/scripts/install_node.sh` downloads the Node LTS tarball (v24.22.0, darwin-arm64) and `SHASUMS256.txt` from nodejs.org, verifies the SHA-256, and extracts into `~/.local/node`; `web/scripts/env.sh` puts it on `PATH` and keeps Playwright's browsers in `~/.local/ms-playwright`. Versions are pinned exactly in `package.json` and locked in `package-lock.json`, and `api/scripts/check_licences.py --npm web` applies the licence policy to `node_modules` (production closure react, react-dom, scheduler; `_agent/results/440_licence_npm.txt`). Alternative rejected: Homebrew or nvm, which add a global tool for one runtime.
+
+**D21, Vite proxy, no CORS.** In development the browser talks only to Vite, which proxies `/documents`, `/audio` and `/voices` to the API (`web/vite.config.ts`, `HEARNARRO_API`), so the API needs no CORS middleware and the client builds only relative URLs (`web/src/api/client.ts`). In M4 FastAPI serves the built `web/dist` from the same origin, so production also needs no CORS. Alternative rejected: CORS on the API, which widens the local server's surface for no gain in a single-origin app.
+
+**D22, Chromium asserts the gate.** Headless Chromium runs the playback gate with `--autoplay-policy=no-user-gesture-required`; WebKit and Firefox run the same tests when `HEARNARRO_E2E_ALL_ENGINES=1` is set and are reported, not required, in M3, because headless audio-clock behaviour outside Chromium was untested when the gate was written (the spec's named risk, §8). On 2026-10-17 all three passed 9 of 9 (`_agent/results/436_e2e_chromium_gate.txt`, `437_e2e_webkit.txt`, `438_e2e_firefox.txt`); making WebKit and Firefox required is open for M4.
+
+**D23, settings changes while paused apply at the next Play.** While playing, a voice or speed change restarts the current sentence at the new settings (PLAY-4). While paused or idle, the reducer only updates `voice`/`speed`; `play()` sees that the settings key differs from the one the schedule was built with and dispatches `PLAY` (a fresh schedule from the current sentence) instead of `RESUME`. This avoids fetching and decoding audio the listener may never play while they move the slider. Changes made while a clip is loading are currently ignored (`docs/CODE_MAP_M3.md`, deviation 6).
+
+**D24, pause is `AudioContext.suspend()`.** Suspending the context freezes `currentTime` and every scheduled source together, so resume is sample-exact and the schedule, the prefetched clips and the highlight state are kept. Alternative rejected: stopping sources and rescheduling from the paused offset, which costs a rebuild and risks a click at the restart.
+
+**D25, sections derived client-side.** The `sections` table is never written in M1 or M2 (the phase 1 e2e probe saw 0 sections in every fixture; `_agent/specs/m3-reader-interfaces.md` §7 amendment), so the reader derives sections from segments of type `heading`: each starts a section titled by its text, and `sectionStarts` for `SKIP_SECTION` is their ordered ids (`deriveSections` in `web/src/components/Reader.tsx`). If `GET /documents/{id}` ever returns non-empty `sections`, they are used unchanged. The server-side TOC (ING-8) lands in M4.
 
 ## Testing strategy (D11)
 
