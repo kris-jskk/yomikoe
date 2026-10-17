@@ -41,6 +41,8 @@ v1 ships a working reader for born-digital and scanned PDFs with at least 6 voic
 | Highlight drift after 10 minutes of playback | < 1 word | Manual check on 5 documents |
 | Crash-free playback of a 300-page PDF | 100% | Soak test |
 
+Evals (EVAL-1 to EVAL-9, decided 2026-10-17; Technical Design D31–D34) produce the trend line for these metrics and for quality the gates do not measure: every run keeps its per-example scores in a committed record so two commits can be compared. The gate tests remain the floor and the only thing that blocks a merge.
+
 ## Users and use cases
 
 The first user is you: a technical reader working through long papers and reports who wants to listen while away from the screen. Design for that person first; the other personas below shape the interface but do not gate v1.
@@ -115,6 +117,22 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | LIB-3 | P0 | Per-document voice and speed remembered; a global default for new documents |
 | LIB-4 | P1 | Delete a document and its cached audio |
 | LIB-5 | P2 | Folders or tags |
+
+**Evals (EVAL)**
+
+Added 2026-10-17 (Technical Design D31–D34). An eval runs the system over a fixed dataset, scores every example and records the scores against the commit; it has no threshold and never fails a build. Tier 0 needs no model (seconds), tier 1 needs Kokoro or another tool on CPU (minutes, on demand), tier 2 is a human session. The ING/SYN/PLAY/LIB IDs in parentheses are what each eval measures.
+
+| ID | Requirement | Dataset | Scorer | Tier |
+| --- | --- | --- | --- | --- |
+| EVAL-1 | Reading order: is the prose in the right order? (ING-3, ING-4, ING-5) | 20 fixture PDFs, `*.expected.jsonl` | Word-sequence edit-distance score (D14) plus char-mass guard; mean, min, per class | 0 |
+| EVAL-2 | Sentence boundaries: are sentences split where a reader would pause? (ING-5, SYN-1) | 15 `*.sentences.txt` | Boundary precision, recall, F1 (D18); mean F1, min recall | 0 |
+| EVAL-3 | Clean text: how much junk reaches the voice? (ING-1 to ING-6) | Same 15 fixtures | Quality checklist counts per 1 000 words, per check and total | 0 |
+| EVAL-4 | Speech form: does the text sent to the voice read aloud correctly? (ING-6, ING-7, SYN-4) | `evals/data/speech_form.jsonl`, ~300 raw → spoken pairs (numbers, dates, units, ordinals, abbreviations, acronyms, table and equation cues) | Exact match on the spoken string, word edit distance as partial credit; accuracy per category | 0 |
+| EVAL-5 | Intelligibility: can the audio be understood? (SYN-1, SYN-4) | 50 fixture sentences | Round trip TTS → ASR (Whisper, MIT, dev-only) → word error rate vs the normalized input; mean, worst, per voice | 1 |
+| EVAL-6 | Sync: do the word timestamps match the audio? (SYN-1, PLAY-3) | Same 50 sentences | ASR word timings vs backend timestamps: mean absolute offset (ms), p95, share within 150 ms, per speed 0.5/1/2/3x | 1 |
+| EVAL-7 | Speed: how fast is synthesis on this machine? (SYN-5) | 20 bench sentences | `bench.py` time-to-first-audio p50/p95 and real-time factor | 1 |
+| EVAL-8 | OCR: how accurate is the scanned path? (ING-2) | 5 scanned fixtures | Character error rate vs expected text; mean, max | 1 |
+| EVAL-9 | Listening: does it sound good to a person? | 10 sentences × 2 voices | 1–5 rubric (naturalness, pronunciation errors counted, pacing) filled by a human; mean per voice, error count | 2 |
 
 ## Architecture and stack
 

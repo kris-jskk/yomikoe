@@ -6,7 +6,7 @@ Companion to the PRD. The PRD says what v1 does; this doc says how, and records 
 
 ## Decision log
 
-Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm (D5, D7, D10) and the rest follow from the PRD's constraints. D12–D19 were added during M1 and M2, D20–D25 during M3. Each is argued in its section below.
+Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm (D5, D7, D10) and the rest follow from the PRD's constraints. D12–D19 were added during M1 and M2, D20–D25 during M3, D31–D34 (the eval layer) during M4. Each is argued in its section below.
 
 | # | Decision | Recommendation | Status |
 | --- | --- | --- | --- |
@@ -35,6 +35,10 @@ Eleven decisions shaped v1 at the start (D1–D11); three were yours to confirm 
 | D23 | Settings change while paused | Voice/speed changes while paused or idle update context only and apply at the next Play (a fresh schedule); while playing they restart the current sentence (PLAY-4) | **Decided 2026-10-17 (supervisor); confirmed by the user 2026-10-17** |
 | D24 | Pause | `AudioContext.suspend()` / `resume()`; the schedule is never rebuilt for pause/resume | **Decided 2026-10-17 (supervisor); confirmed by the user 2026-10-17** |
 | D25 | Sections in M3 | Derived in the client: each `heading` segment starts a section; the API's `sections` are used when non-empty; server-side TOC (ING-8) in M4 | **Decided 2026-10-17 (supervisor); confirmed by the user 2026-10-17** |
+| D31 | What an eval is | A scored test with the threshold removed and the per-example score kept; the existing scorers (`api/tests/golden_util.py`, `api/tests/boundary_util.py`, `api/hearnarro/quality.py`, `api/scripts/bench.py`) are reused as-is; the eval layer adds only a runner, a store of run records and a compare/report step; gate tests keep their thresholds and stay the floor | **Decided 2026-10-17** |
+| D32 | Eval layout | `api/hearnarro/evals/` with `runner.py`, `store.py`, `report.py`, `scorers.py`, `suites/` (one module per EVAL-n) and `data/`; run records committed under `evals/runs/<date>_<shortsha>.json`; CLI `python -m hearnarro.evals` | **Decided 2026-10-17** |
+| D33 | Compare and regressions | `compare(baseline, candidate)` flags an example whose score fell by more than 0.01 (scores in 0..1), 10 % (timing) or 1 (counts), or that newly fails; a regression is a report line, not a test failure; gate tests alone block a merge | **Decided 2026-10-17** |
+| D34 | Eval scope limits | No LLM-as-judge (every scorer is deterministic or a human rubric); no user data (datasets are fixtures and committed sentence lists); Whisper (MIT) allowed as a development-only ASR dependency for EVAL-5/6, never shipped | **Decided 2026-10-17** |
 
 ## Ingestion pipeline
 
@@ -351,12 +355,44 @@ Four kinds of test, each tied to a milestone gate; the gate tests are written be
 | Playback (browser) | Playwright: load a 30-segment fixture, play 20 s, assert the highlighted word matches the expected word at three probe times; seek by click; change speed mid-play | Vite dev server + API with `FakeBackend` | M3 |
 | Benchmark | `scripts/bench.py`: time-to-first-audio and real-time factor for Kokoro on this machine, 20 sentences, printed as a table and written to `bench/<date>.json` | Real backend | M2, M4 |
 | Soak | 300-page PDF, play at 2x for 10 minutes with `FakeBackend`, assert no error state, memory growth < 50 MB | Generated PDF | M4 |
+| Evals (EVAL-1 to EVAL-9, D31) | The same scorers without thresholds, every per-example score kept in a run record and compared with a baseline; the trend line above the gates, never a failure | Fixtures, `evals/data/`, 50 fixture sentences, a human rubric | None (report only; D33) |
 
 **Making the ground truth.** Run stage 3 on each fixture, dump the segment order, hand-correct it once in an editor, commit as `expected.jsonl`. It is tedious for 20 PDFs (roughly a morning) and it is the single most valuable artifact in the repo: every later change to the parser is measured against it. Mark which five fixtures exercise two-column layout so the score can be reported per class.
 
 **`FakeBackend`.** Implements `TTSBackend`, returns 80 ms of silence per word with evenly spaced timestamps and no model download. Every test above M2's benchmark uses it, so CI needs no GPU, no Hub access and runs in under a minute. The real Kokoro backend has one smoke test, marked `@pytest.mark.model`, skipped unless `HEARNARRO_TEST_MODEL=1`.
 
-**What is not tested in v1.** Audio quality (subjective; the benchmark prints a path to listen to), OCR accuracy beyond "produced text for a scanned page", and iOS background playback (manual check in M3).
+**What is not tested in v1.** Audio quality (subjective; the benchmark prints a path to listen to), OCR accuracy beyond "produced text for a scanned page", and iOS background playback (manual check in M3). None of these is gated; from 2026-10-17 the first two are measured by evals rather than tests: intelligibility and timestamp sync by EVAL-5 and EVAL-6, OCR accuracy by EVAL-8 (character error rate, once tesseract is installed), and listening quality by the EVAL-9 human rubric.
+
+## Eval layer (D31–D34)
+
+Gates answer "is it good enough?"; evals answer "how good, and better or worse than last time?". The scores already computed by the gate tests were reduced to pass/fail and lost, so a fixture could drift from 0.99 to 0.96 inside a 0.95 floor unseen (EVAL-1). The loop:
+
+```
+dataset ──► system under test (at a commit, with a config) ──► output ──► scorer
+   ──► per-example scores ──► run record (JSON) ──► compare with baseline ──► scorecard
+                                                    (mean, worst, Δ per example, regressions flagged)
+```
+
+Record shape, one file per run under `evals/runs/` (D32):
+
+```json
+{"run_id":"2026-10-17_7f2f015","commit":"7f2f015","date":"2026-10-17T14:02:00Z",
+ "config":{"backend":"fake","speed":1.0,"tesseract":false},
+ "suites":{"EVAL-1":{"examples":[{"id":"arxiv_2401_01234","class":"academic","score":0.993}],
+                      "aggregate":{"mean":0.991,"min":0.962,"by_class":{"academic":0.988}}}}}
+```
+
+Run with `api/.venv/bin/python -m hearnarro.evals run all --tier 0` before and after a parser or normalizer change, `--tier 1` when touching synthesis or swapping a backend; a full tier 0 + 1 run is recorded at each milestone close, and a backend swap runs EVAL-5/6/7 once per backend on identical sentences.
+
+| Phase | Deliverable | Acceptance |
+| --- | --- | --- |
+| E0 Runner + store | Runner, store, EVAL-1 and EVAL-2 wrapped | One run record written; `compare` of two identical runs shows zero deltas |
+| E1 Fast suites | EVAL-3, EVAL-4 with its ~300-pair dataset | Tier 0 completes under 60 s; per-category accuracy printed |
+| E2 Model suites | EVAL-5, EVAL-6, EVAL-7 under `HEARNARRO_TEST_MODEL=1`; ASR dependency through the licence check | One tier-1 record on this machine; WER and sync offset per speed |
+| E3 Reporting | Markdown + HTML scorecard; baseline rule in CLAUDE.md | Scorecard linked from a milestone guide |
+| E4 Human + OCR | EVAL-9 rubric and ingestion; EVAL-8 once tesseract is present | One listening session recorded |
+
+Full design and rationale: `_agent/specs/evals-design.md`.
 
 ## Decisions needed before M1
 
