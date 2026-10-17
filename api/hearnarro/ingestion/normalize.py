@@ -3,6 +3,21 @@
 All-caps tokens are left as written: whether "TED" is spoken or "PDF" spelled is decided by
 the synthesis backend (``hearnarro.synthesis.acronyms``, SYN-4), which has a pronunciation
 lexicon and the document's acronym definitions (``hearnarro.ingestion.acronyms``).
+
+Phone numbers and clock hours (ING-6, user decision of 2026-10-17 after hearing sampler
+sentence 8, "Call 555-0123 between 9 and 5."): a phone number is spoken as digit groups, never
+as a dash range, and a clock hour is spoken with "a.m." / "p.m." The meridiem is written
+"a.m." / "p.m." because misaki reads "AM" as the word "am" and both dotted forms as letters
+(``_agent/results/557_am_pm_probe.txt``); a lexicon override for "am" would break the verb.
+When the meridiem is absent, it is inferred by a heuristic: in a segment containing a cue word
+(call, open, opens, hours, office, available, reach), "between H1 and H2" or "from H1 to H2"
+with H1 in 6..11 and H2 in 1..7, followed by the end of text, punctuation or a time word
+(every, each, daily, on, weekdays, weekends, except, local, time), becomes "H1 a.m. ... H2
+p.m.". Limits: the cue is looked for in the whole segment passed in, not a clause; a pair
+outside the bounds ("from 7 to 9", "between 12 and 1", evening hours "from 6 to 11") or
+followed by any other word ("from 9 to 5 Monday") is left as written; "from 9 a.m. to 5"
+(one side explicit) gets the explicit side only; a time written without a meridiem ("9:30")
+is not changed (misaki drops "9:30" as an unknown token; pre-existing).
 """
 
 from __future__ import annotations
@@ -71,6 +86,34 @@ _EQUALS = (
     rf"(?={_OPERAND}(?![\w=]|[.,]\d)))"
 )
 _EQUALS_WORDS = {"=": " equals ", "≠": " does not equal "}
+# A phone number: digit groups joined by "-" or "." ending in a group of 3-4 then 4 digits
+# ("555-0123", "1-800-555-0123", "555.123.4567"), or led by "+" or a parenthesised area code
+# where spaces also join groups ("+44 20 7946 0958", "(415) 555-0123"). Two plain groups need
+# exactly 3 then 4 digits, so "2019-2021" stays a range; a penultimate group of 3-4 digits
+# and a last group of 4 keep dates ("17-10-2026", "2026-10-17"), IPs and ISBNs out.
+_PHONE_PLAIN = r"(?:\d{1,4}(?:[-.]\d{1,4})*[-.]\d{3,4}|\d{3})[-.]\d{4}"
+_PHONE_INTL = r"\+\d{1,3}(?:[ .-]\d{1,4})*[ .-]\d{3,4}[ .-]\d{4}"
+_PHONE_PAREN = r"\(\d{1,4}\)[ .-]?\d{3,4}[ .-]\d{4}"
+_PHONE = (
+    rf"(?P<phone>(?:(?<![\w+]){_PHONE_INTL}|(?<![\w(]){_PHONE_PAREN}"
+    rf"|(?<![\w.,:/+-]){_PHONE_PLAIN})(?![\w-]|[.,:]\d))"
+)
+# A clock hour with a meridiem: "9am", "9 am", "9 a.m.", "9AM", "9:30pm", "12:00 PM".
+_CLOCK = (
+    r"(?P<clock>(?<![\w.,:/])(?P<hh>1[0-2]|0?[1-9])(?::(?P<mm>[0-5]\d))?"
+    r"(?P<csp>[ \t]?)(?P<mer>(?i:[ap]\.?m\.?))(?!\w))"
+)
+# An hour pair without a meridiem ("between 9 and 5", "from 8 to 4"); validated in code.
+_HOUR_FOLLOW = (
+    r"(?![.,:]?\d)(?=[ \t]*(?:$|[.;!?)]|,(?!\d)"
+    r"|(?i:every|each|daily|on|weekdays|weekends|except|local|time)\b))"
+)
+_HOUR_PAIR = (
+    r"(?P<hpair>\b(?P<pw>(?i:between|from))[ \t]+(?P<h1>\d{1,2})[ \t]+"
+    rf"(?P<mw>(?i:and|to))[ \t]+(?P<h2>\d{{1,2}}){_HOUR_FOLLOW})"
+)
+_HOUR_CUE = re.compile(r"\b(?:call|open|opens|hours|office|available|reach)\b", re.IGNORECASE)
+_PAIR_WORDS = {"between": "and", "from": "to"}
 # A rating, a small integer over 10 or 100 ("2/10", "95/100"), is spoken "out of"; misaki
 # reads "2/10" as "two ten". Kept narrow to stay clear of dates and fractions ("9/11", "1/2",
 # "10/12/2020", "24/7"): numerator 0..100 without a leading zero and not after a letter,
@@ -91,6 +134,9 @@ _PATTERN = re.compile(
     rf"|(?P<email>(?<![\w.+-])[A-Za-z0-9._%+-]+@{_LABEL}(?:\.{_LABEL})*\.[A-Za-z]{{2,}}\b)"
     rf"|(?P<domain>(?<![\w@./:-])(?:{_LABEL}\.)+(?:{_TLDS})(?![\w-]|\.\w)(?:/\S*)?)"
     rf"|(?P<roman>(?i:\b(?P<kw>{_STRUCTURAL})[ \t]+)(?P<num>{_ROMAN})\b(?![-'’]?\w))"
+    rf"|{_HOUR_PAIR}"
+    rf"|{_CLOCK}"
+    rf"|{_PHONE}"
     rf"|{_RATING}"
     rf"|{_RANGE}"
     rf"|{_EQUALS}"
@@ -170,12 +216,24 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
     A rating, an integer 0..100 (no leading zero, not after a letter, digit or "/") over
     exactly 10 or 100 (not followed by a word char or "/"), becomes "a out of b" with " out
     of " mapped onto the slash ("2/10" -> "2 out of 10"); "9/11", "1/2", "10/12/2020",
-    "24/7" and "km/h" are untouched. An asterisk with spaces or tabs and a non-space on both
+    "24/7" and "km/h" are untouched. A phone number (``_PHONE``) is spoken digit by digit,
+    each digit mapped to itself and the space after it mapped to that digit, each run of
+    separators becoming ", " mapped onto the run, "(" emitting nothing and "+" becoming
+    "plus " ("555-0123" -> "5 5 5, 0 1 2 3"). A clock hour with a meridiem becomes "H a.m." /
+    "H MM p.m." (":00" emits nothing, ":05" -> " oh 5"), the meridiem mapped onto the source
+    space and letters; an inferred pair (module docstring) maps each inserted " a.m." /
+    " p.m." onto the hour's last digit. Before a source ".", "a.m" / "p.m" is emitted without
+    its last dot so the sentence period completes it. An asterisk with spaces or tabs and a non-space on both
     sides on the same line becomes " times ", mapped onto the spaces and the asterisk; "**",
     "word*", "*word", "3*4" and a leading "* " bullet are untouched.
     """
     out: list[str] = []
     cmap: list[int] = []
+
+    def _meridiem(letter: str, source: str, end: int) -> str:
+        """ "a.m." / "p.m.", without the last dot when a source "." follows to complete it."""
+        dot_follows = not source.endswith(".") and text[end : end + 1] == "."
+        return f"{letter}.m" if dot_follows else f"{letter}.m."
 
     def emit(s: str, start: int, length: int) -> None:
         n = len(s)
@@ -267,6 +325,63 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
                 out.append(text[i])
                 cmap.append(i)
             emit(" to ", sep_start, end - sep_start)  # the second number is matched on its own
+        elif kind == "phone":
+            k = start
+            while k < end:
+                ch = text[k]
+                if ch == "+":
+                    emit("plus ", k, 1)
+                elif ch.isdigit():
+                    out.append(ch)
+                    cmap.append(k)
+                    if k + 1 < end and text[k + 1].isdigit():
+                        out.append(" ")
+                        cmap.append(k)
+                elif ch != "(":
+                    run = k
+                    while k + 1 < end and not text[k + 1].isdigit():
+                        k += 1
+                    if out and out[-1].isdigit():
+                        emit(", ", run, k + 1 - run)
+                k += 1
+        elif kind == "clock":
+            hh_end = m.end("hh")
+            for i in range(start, hh_end):
+                out.append(text[i])
+                cmap.append(i)
+            mm = m.group("mm")
+            if mm and mm != "00":
+                if mm[0] == "0":
+                    emit(" oh ", hh_end, 2)
+                    out.append(mm[1])
+                    cmap.append(hh_end + 2)
+                else:
+                    emit(" ", hh_end, 1)
+                    for i in range(hh_end + 1, hh_end + 3):
+                        out.append(text[i])
+                        cmap.append(i)
+            mer = m.group("mer")
+            sp = m.start("csp")
+            emit(" " + _meridiem(mer[0].lower(), mer, end), sp, end - sp)
+        elif kind == "hpair":
+            h1, h2 = int(m.group("h1")), int(m.group("h2"))
+            if (
+                _PAIR_WORDS[m.group("pw").lower()] == m.group("mw").lower()
+                and 6 <= h1 <= 11
+                and 1 <= h2 <= 7
+                and _HOUR_CUE.search(text)
+            ):
+                h1_end, h2_end = m.end("h1"), m.end("h2")
+                for i in range(start, h1_end):
+                    out.append(text[i])
+                    cmap.append(i)
+                emit(" a.m.", h1_end - 1, 1)
+                for i in range(h1_end, h2_end):
+                    out.append(text[i])
+                    cmap.append(i)
+                emit(" " + _meridiem("p", "", end), h2_end - 1, 1)
+            else:
+                suffix_start = start  # not an hour pair: copied as written
         elif kind == "rating":
             slash = m.start("rslash")
             for i in range(start, slash):

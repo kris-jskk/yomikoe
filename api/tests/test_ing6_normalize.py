@@ -317,7 +317,6 @@ def test_ing6_numeric_range_read_as_to(text: str, expected: str) -> None:
         "During COVID-19 we stayed in.",
         "A 3-D film.",
         "Let x-1 be small.",
-        "Call 555-1234-5678 now.",
         "Between 1.5-2 litres.",
         "Ran 9:00-10:00 daily.",
         "Code 12345-6789 here.",
@@ -520,3 +519,149 @@ def test_ing6_asterisk_char_map_round_trip() -> None:
     assert all(i in span for i in cmap[o : o + 7])  # " times " maps onto " * "
     assert cmap[:o] == list(range(o))
     assert cmap[o + 7 :] == list(range(text.index("("), len(text)))
+
+
+# Phone numbers (ING-6, user verdict 2026-10-17 on sampler sentence 8): digit groups, never a range.
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Call 555-0123 now.", "Call 5 5 5, 0 1 2 3 now."),
+        ("Call 1-800-555-0123.", "Call 1, 8 0 0, 5 5 5, 0 1 2 3."),
+        ("Call (415) 555-0123 today.", "Call 4 1 5, 5 5 5, 0 1 2 3 today."),
+        ("Ring +44 20 7946 0958.", "Ring plus 4 4, 2 0, 7 9 4 6, 0 9 5 8."),
+        ("Call 555-1234-5678 now.", "Call 5 5 5, 1 2 3 4, 5 6 7 8 now."),
+        ("Fax 555.123.4567 here.", "Fax 5 5 5, 1 2 3, 4 5 6 7 here."),
+        ("Ring +1-800-555-0123.", "Ring plus 1, 8 0 0, 5 5 5, 0 1 2 3."),
+    ],
+)
+def test_ing6_phone_number_read_as_digit_groups(text: str, expected: str) -> None:
+    out, cmap = normalize(text)
+    assert out == expected
+    assert len(cmap) == len(out)
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("See pages 10-12.", "See pages 10 to 12."),
+        ("From 2019-2021 it grew.", "From 2019 to 2021 it grew."),
+        ("Dated 17-10-2026 today.", "Dated 17-10-2026 today."),
+        ("Dated 2026-10-17 today.", "Dated 2026-10-17 today."),
+        ("Code 12345-6789 here.", "Code 12345-6789 here."),
+        ("IP 192.168.1.100 here.", "IP 192.168.1.100 here."),
+        ("ISBN 978-0-12-345678-9 here.", "ISBN 978-0-12-345678-9 here."),
+        ("Pi is 3.1415926 roughly.", "Pi is 3.1415926 roughly."),
+    ],
+)
+def test_ing6_phone_number_negative_cases(text: str, expected: str) -> None:
+    assert normalize(text)[0] == expected
+
+
+def test_ing6_phone_number_char_map_round_trip() -> None:
+    text = "Call 555-0123 now."
+    out, cmap = normalize(text)
+    assert out == "Call 5 5 5, 0 1 2 3 now."
+    start, end = text.index("555"), text.index(" now")
+    o, o_end = out.index("5"), out.index(" now")
+    assert cmap[:o] == list(range(start))
+    assert cmap[o_end:] == list(range(end, len(text)))
+    for k in range(o, o_end):
+        assert start <= cmap[k] < end
+        if out[k].isdigit():
+            assert text[cmap[k]] == out[k]  # every digit points at itself
+    dash = text.index("-")
+    sep = out.index(", ")
+    assert cmap[sep : sep + 2] == [dash, dash]
+    intl = "Ring +44 20 7946 0958."
+    out, cmap = normalize(intl)
+    assert cmap[out.index("plus") : out.index("plus") + 5] == [intl.index("+")] * 5
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+# Clock hours (ING-6, user verdict 2026-10-17): spoken with a.m. / p.m.
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Open at 9am.", "Open at 9 a.m."),
+        ("Open at 9 am today.", "Open at 9 a.m. today."),
+        ("Open at 9 a.m. today.", "Open at 9 a.m. today."),
+        ("Open at 9AM sharp.", "Open at 9 a.m. sharp."),
+        ("Back at 9:30pm we eat.", "Back at 9 30 p.m. we eat."),
+        ("Back at 10:05 AM we eat.", "Back at 10 oh 5 a.m. we eat."),
+        ("Done by 12:00 PM.", "Done by 12 p.m."),
+        ("Leave at 7 P.M., then.", "Leave at 7 p.m., then."),
+        ("Call between 9 and 5pm.", "Call between 9 and 5 p.m."),
+        ("Call 9-5pm daily.", "Call 9 to 5 p.m. daily."),
+    ],
+)
+def test_ing6_clock_hours_explicit_meridiem(text: str, expected: str) -> None:
+    out, cmap = normalize(text)
+    assert out == expected
+    assert len(cmap) == len(out)
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Call 555-0123 between 9 and 5.", "Call 5 5 5, 0 1 2 3 between 9 a.m. and 5 p.m."),
+        (
+            "Our office is open from 8 to 4; call 1-800-555-0123 or +44 20 7946 0958.",
+            (
+                "Our office is open from 8 a.m. to 4 p.m.; call 1, 8 0 0, 5 5 5, 0 1 2 3 or "
+                "plus 4 4, 2 0, 7 9 4 6, 0 9 5 8."
+            ),
+        ),
+        (
+            "Office hours: from 9 to 5 every weekday.",
+            "Office hours: from 9 a.m. to 5 p.m. every weekday.",
+        ),
+        (
+            "We are available between 10 and 6, Monday.",
+            "We are available between 10 a.m. and 6 p.m., Monday.",
+        ),
+    ],
+)
+def test_ing6_clock_hours_inferred_pair_with_cue(text: str, expected: str) -> None:
+    out, cmap = normalize(text)
+    assert out == expected
+    assert len(cmap) == len(out)
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "I am 9 years old.",
+        "In 2019 am I wrong?",
+        "He was 5 amazing times.",
+        "Rates rose between 3 and 5 percent.",
+        "It rose between 9 and 5.",
+        "Call between 3 and 5.",
+        "Call between 9 and 10.",
+        "The office has between 9 and 5 staff.",
+        "Call from 9 and 5.",
+        "Ran 9:00-10:00 daily.",
+    ],
+)
+def test_ing6_clock_hours_negative_cases(text: str) -> None:
+    assert normalize(text) == (text, list(range(len(text))))
+
+
+def test_ing6_clock_hours_char_map_round_trip() -> None:
+    text = "Open at 9am today."
+    out, cmap = normalize(text)
+    assert out == "Open at 9 a.m. today."
+    nine, am = text.index("9"), text.index("am")
+    o = out.index(" a.m.")
+    assert cmap[:o] == list(range(nine + 1))
+    assert all(am <= i < am + 2 for i in cmap[o : o + 5])
+    assert cmap[o + 5 :] == list(range(am + 2, len(text)))
+    pair = "Call between 9 and 5."
+    out, cmap = normalize(pair)
+    o = out.index(" a.m.")
+    assert cmap[o : o + 5] == [pair.index("9")] * 5  # inferred: maps onto the hour
+    o = out.index(" p.m")
+    assert cmap[o : o + 4] == [pair.index("5")] * 4
+    assert cmap[-1] == len(pair) - 1  # the sentence period completes "p.m."
