@@ -73,3 +73,30 @@ def test_environment_has_no_licence_violations() -> None:
         (r.name, r.verdict, r.licence) for r in bad if r.name.lower() not in KNOWN_VIOLATIONS
     ]
     assert not unexpected, f"licence violations: {unexpected}"
+
+
+_WEB = Path(__file__).resolve().parents[2] / "web"
+
+
+@pytest.mark.parametrize(
+    ("lic", "prod", "expected"),
+    [
+        ("MIT", True, "ok"),
+        ("BlueOak-1.0.0", True, "ok"),
+        ("0BSD", True, "ok"),
+        ("CC-BY-4.0", False, "ok"),
+        ("CC-BY-4.0", True, "proprietary"),
+        ("GPL-3.0", False, "copyleft"),
+    ],
+)
+def test_npm_verdict(lic: str, prod: bool, expected: str) -> None:
+    assert cl.npm_verdict(lic, prod) == expected
+
+
+def test_npm_tree_has_no_licence_violations() -> None:
+    if not (_WEB / "node_modules").is_dir():
+        pytest.skip("web/node_modules absent (run npm install in web/)")
+    rows = cl.scan_npm(_WEB)
+    assert rows, "no npm packages found"
+    bad = [(r.name, r.verdict, r.licence, r.prod) for r in rows if r.verdict != "ok"]
+    assert not bad, f"npm licence violations: {bad}"
