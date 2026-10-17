@@ -134,8 +134,20 @@ _DEGREES = (
 _DEGREE_UNITS = {"C": " Celsius", "F": " Fahrenheit", None: ""}
 
 
+# A numeric bracket "[12]", "[3, 4]", "[12–14]" is a citation and is dropped. It is a
+# mathematical interval instead, kept as written (ING-6; wording is MATH-2, M5), when it starts
+# with 0 ("[0, 2]"), is directly preceded (optionally one space) by a maths operator or "(",
+# or is followed by ")". Brackets holding a letter, a Greek letter or ∞, and half-open forms
+# ("[0, 1)", "(0, 1]") never match the citation shape, so they are kept too.
+_MATH_BEFORE = "×∈⊂⊆∪∩⊗=("
+_CITATION = (
+    rf"(?P<citation>(?<![{_MATH_BEFORE}]\s)(?<![{_MATH_BEFORE}])"
+    r"\[(?!0)\d+(?:\s*[,–-]\s*\d+)*\](?!\)))"
+)
+
+
 _PATTERN = re.compile(
-    r"(?P<citation>\[\d+(?:\s*[,–-]\s*\d+)*\])"
+    rf"{_CITATION}"
     r"|(?P<etal>\bet al\.)"
     r"|(?P<percent>\b\d+(?:\.\d+)?%)"
     rf"|(?P<url>(?:\bhttps?://{_SPACE_BEFORE_HOST}(?:www\.)?|\bwww\.{_SPACE_BEFORE_HOST})"

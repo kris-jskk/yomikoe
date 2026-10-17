@@ -722,3 +722,35 @@ def test_ing6_degrees_char_map_round_trip() -> None:
     sp = spaced.index(" °")
     assert all(sp <= i < sp + 3 for i in cmap[o : o + len(" degrees Celsius")])
     assert cmap[-1] == len(spaced) - 1
+
+
+def test_ing6_interval_after_operator_kept() -> None:
+    out = normalize("compactly supported in Kν × [0, 2], and")[0]
+    assert "[0, 2]" in out
+
+
+def test_ing6_numeric_citations_still_dropped() -> None:
+    out = normalize("as shown in [1, 2] and [3–5] and [12]")[0]
+    assert out == "as shown in and and"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "on R3 × [0, 1) and [0, ∞) and (0, 1]",
+        "the set [0, 2] here",
+        "u ∈ [2, 3] here",
+        "on [a, b] here",
+        "on [−π, π] here",
+    ],
+)
+def test_ing6_intervals_kept_as_written(text: str) -> None:
+    assert normalize(text)[0] == text
+
+
+def test_ing6_interval_after_equals_kept() -> None:
+    assert normalize("x = [1, 2] here")[0] == "x equals [1, 2] here"
+
+
+def test_ing6_citation_list_of_three_dropped() -> None:
+    assert normalize("prior work [1,2,7] disagrees")[0] == "prior work disagrees"

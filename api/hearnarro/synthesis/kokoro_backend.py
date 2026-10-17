@@ -133,6 +133,14 @@ _ARPA_VOWEL = {
 }  # fmt: skip
 
 
+# Square brackets are read as round ones before G2P (SYN-4, ING-6 intervals "[0, 1)"): spaCy
+# tags a "[" glued to a digit as XX, not -LRB-, so misaki's ``G2P.retokenize`` does not treat it
+# as punctuation and merges it with the digit into one word "[0" with no pronunciation (silent).
+# Same length, so token offsets still map back onto the original text. It also keeps prose from
+# being read as misaki's "[word](/phonemes/)" markup.
+_SQUARE_TO_ROUND = str.maketrans("[]", "()")
+
+
 def voice_from_id(voice_id: str) -> Voice:
     name = dict(_VOICES)[voice_id]
     lang = _LANG[voice_id[0]]
@@ -438,11 +446,12 @@ class KokoroBackend:
         definitions = context.acronyms if context else {}
         spans = caps_fold_spans(text, definitions)
         folded_text = fold_caps(text, definitions) if spans else text
-        _, tokens = g2p(folded_text)
+        g2p_text = folded_text.translate(_SQUARE_TO_ROUND)
+        _, tokens = g2p(g2p_text)
         folded: set[int] = set()
         pos = 0
         for t in tokens:  # original text back on every token (timestamps match on it)
-            i = folded_text.find(t.text, pos) if t.text else -1
+            i = g2p_text.find(t.text, pos) if t.text else -1
             if i < 0:
                 continue
             pos = i + len(t.text)
