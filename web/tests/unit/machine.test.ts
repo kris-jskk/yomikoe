@@ -191,6 +191,31 @@ describe('PLAY-1..PLAY-5 player reducer', () => {
     expect(first.current).toEqual({ segmentId: 101, offsetMs: 0 })
   })
 
+  it('SKIP_SECTION +1 with no later section is a no-op (same object)', () => {
+    const before = st('playing', { current: { segmentId: 109, offsetMs: 400 } })
+    expect(reduce(before, { type: 'SKIP_SECTION', by: 1 })).toBe(before)
+  })
+
+  it('SKIP_SECTION -1 mid-section goes to the current section start', () => {
+    const s = reduce(st('playing', { current: { segmentId: 106, offsetMs: 400 } }), {
+      type: 'SKIP_SECTION',
+      by: -1,
+    })
+    expect(s.status).toBe('loading')
+    expect(s.generation).toBe(6)
+    expect(s.current).toEqual({ segmentId: 104, offsetMs: 0 })
+  })
+
+  it('SKIP_SECTION -1 at a section start goes to the previous section start', () => {
+    const s = reduce(st('playing', { current: { segmentId: 108, offsetMs: 0 } }), {
+      type: 'SKIP_SECTION',
+      by: -1,
+    })
+    expect(s.status).toBe('loading')
+    expect(s.generation).toBe(6)
+    expect(s.current).toEqual({ segmentId: 104, offsetMs: 0 })
+  })
+
   it('SET_VOICE from playing', () => {
     const s = reduce(st('playing'), { type: 'SET_VOICE', voice: 'bm_george' })
     expect(s.status).toBe('loading')
@@ -255,6 +280,14 @@ describe('PLAY-1..PLAY-5 player reducer', () => {
     const s = reduce(st('playing'), { type: 'BUFFERING', generation: 5 })
     expect(s.status).toBe('loading')
     expect(s.generation).toBe(5)
+  })
+
+  it('BUFFERING keeps generation', () => {
+    const before = st('playing')
+    const s = reduce(before, { type: 'BUFFERING', generation: 5 })
+    expect(s.status).toBe('loading')
+    expect(s.generation).toBe(before.generation)
+    expect(s.current).toEqual(before.current)
   })
 
   it('ENDED from playing', () => {

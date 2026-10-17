@@ -32,6 +32,8 @@ export interface Voice {
   name: string
   gender: string
   language: string
+  /** Present on the wire (`routes/voices.py`); not used by the reader. */
+  backend?: string
 }
 
 export interface AudioClip {
