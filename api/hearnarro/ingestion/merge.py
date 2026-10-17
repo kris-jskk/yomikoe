@@ -275,8 +275,20 @@ BRACKET_REACH = 4
 _EDGE = ".,;:!?\"'“”‘’"
 _SYMBOLIC_RE = re.compile(r"^[\w¯′'#.*/^()\[\]{}+\-–−,|=<>~]+$")
 _WORD3_RE = re.compile(r"[A-Za-z]{3}")
+# MATH-2 (m5 p3h): a function name from this short list, directly followed by "(" or a script
+# ("exp(-1/x)", "log_2", "max^"), is maths, not a prose word; scientific notation ("1e-8",
+# "2.5E+3", "10^-8", "10−8" with a true minus from a lost superscript) is a number in maths.
+FUNCTION_NAMES = ("exp", "log", "ln", "sin", "cos", "tan", "min", "max", "arg", "lim", "det")
+FUNCTION_NAMES += ("tr", "sup", "inf")
+_FUNCTION_RE = re.compile(rf"(?<![A-Za-z])(?:{'|'.join(FUNCTION_NAMES)})(?=[(_^])")
+_SCIENTIFIC_RE = re.compile(r"^[-−]?\d+(?:\.\d+)?[eE][-+−]?\d+$|^[-−]?10(?:\^[-+−]?|−)\d+$")
 _INNER_RELATION_RE = re.compile(r"[=<>≤≥]")
 _GLYPHS_NONASCII = frozenset(c for c in MATH_CHARS if not c.isascii())
+
+
+def _has_word(text: str) -> bool:
+    """A prose word of three letters or more, function names before "(" or a script aside."""
+    return bool(_WORD3_RE.search(_FUNCTION_RE.sub("", text)))
 
 
 def _core(tok: str) -> str:
@@ -294,7 +306,7 @@ def _operand(tok: str) -> bool:
         return False
     if _glyph_token(core):
         return True
-    return bool(_SYMBOLIC_RE.match(core)) and not _WORD3_RE.search(core) and core != "a"
+    return bool(_SYMBOLIC_RE.match(core)) and not _has_word(core) and core != "a"
 
 
 def _inner_relation(tok: str) -> bool:
@@ -328,6 +340,8 @@ def content_spans(text: str, taken: list[MathSpan] | None = None) -> list[MathSp
                 marks.append((i - 1, i + 1 if right else i))
         elif _inner_relation(tok):  # a lone glyph token is the reader's (glyph_spans, units)
             marks.append((i, i))
+        elif _SCIENTIFIC_RE.match(core) or (_FUNCTION_RE.match(core) and "(" in core):
+            marks.append((i, i))  # "1e-8", "10^-8", "exp(-x)": maths standing alone (p3h)
     merged: list[list[int]] = []
     for lo, hi in sorted(marks):
         if merged and (lo <= merged[-1][1] or (lo == merged[-1][1] + 1 and _operand(toks[lo][2]))):
@@ -341,7 +355,7 @@ def content_spans(text: str, taken: list[MathSpan] | None = None) -> list[MathSp
             depth > 0
             and m[1] + 1 < len(toks)
             and reach < BRACKET_REACH
-            and not _WORD3_RE.search(toks[m[1] + 1][2])
+            and not _has_word(toks[m[1] + 1][2])
         ):
             m[1] += 1
             reach += 1
@@ -362,7 +376,7 @@ def content_spans(text: str, taken: list[MathSpan] | None = None) -> list[MathSp
             ):
                 break
             e -= 1
-        if s < e and not _WORD3_RE.search(text[s:e]) and not any(s < b and a < e for a, b in busy):
+        if s < e and not _has_word(text[s:e]) and not any(s < b and a < e for a, b in busy):
             out.append(MathSpan(s, e, False, []))
     return out
 

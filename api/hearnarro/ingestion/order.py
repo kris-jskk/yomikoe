@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from hearnarro.ingestion.models import BBox, Block, Line, Page
+from hearnarro.ingestion.models import BBox, Block, Line, Page, Span
 
 READ_TYPES = {"body", "heading", "list", "caption", "equation", "table", "code"}  # code: ING-10
 GUTTER_FRAC = 0.015  # minimum gutter width, fraction of page width
@@ -30,6 +30,17 @@ LABEL_END_RE = re.compile(r"\(\d{1,3}[a-z]?\)\s*$")  # merge.EQUATION_LABEL_RE
 # A display's left-hand side that stage 2 left as body ("∆cyc =", "(µP)(A) :="): one short line
 # ending in a relation, on the line of an equation piece.
 LHS_RE = re.compile(r"[^\n]{1,24}(?:=|:=|≤|≥|<|>|∼|≈|≡|∝|→)\s*")
+# m5 p3h: a short one-line body or list block of maths (a math-font glyph or a relation, at most
+# TEXT_PIECE_WORDS prose words) is a row of a display ("at,i ∈ {Skip, Update}." under eq. 2);
+# it joins only a group that holds an equation block.
+TEXT_PIECE_WORDS = 2
+TEXT_PIECE_RE = re.compile(r"[=<>≤≥∼~≈≡∝→∈−+±×Σ∑∫√]")
+WORD3_RE = re.compile(r"[A-Za-z]{3,}")
+WORD2_RE = re.compile(r"[A-Za-z]{2,}")
+FUNCTION_WORDS = {"exp", "log", "ln", "sin", "cos", "tan", "min", "max", "arg", "lim", "det"}
+FUNCTION_WORDS |= {"tr", "sup", "inf"}  # merge.FUNCTION_NAMES
+MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
+RELATIONS = ("=", "≤", "≥", "<", ">", "∼", "≈", "≡", "∝", "→")
 
 
 def _weight(block: Block) -> int:
@@ -217,12 +228,122 @@ def attach_inline(blocks: list[Block]) -> list[Block]:
     return out
 
 
+def _math_font(font: str) -> bool:
+    return any(m in font for m in MATH_FONT_MARKERS)
+
+
+def _text_piece(block: Block) -> bool:
+    """A one-line body or list block of maths, not prose (TEXT_PIECE_WORDS)."""
+    lines = _text_lines(block)
+    if block.type not in INLINE_HOSTS or len(lines) != 1 or _is_prose(block):
+        return False
+    text = block.text
+    has_glyph = any(_math_font(sp.font) and sp.text.strip() for sp in lines[0].spans)
+    return (has_glyph or bool(TEXT_PIECE_RE.search(text))) and len(
+        WORD3_RE.findall(text)
+    ) <= TEXT_PIECE_WORDS
+
+
 def _display_piece(block: Block) -> bool:
     return not block.inline and (
         block.type == "equation"
         or bool(LABEL_ONLY_RE.fullmatch(block.text))
         or (block.type == "body" and bool(LHS_RE.fullmatch(block.text)))
+        or _text_piece(block)
     )
+
+
+def _prose_span(span: Span) -> bool:
+    """A text-font span holding a word (two letters or more, function names such as "exp" or
+    "log" aside) or ending a clause: where a display tail cannot start. Upright single letters
+    and digits ("1", "d") in a text font are maths."""
+    if _math_font(span.font):
+        return False
+    words = [w for w in WORD2_RE.findall(span.text) if w not in FUNCTION_WORDS]
+    return bool(words) or span.text.rstrip()[-1:] in ",.;:"
+
+
+def _line_of(spans: list[Span], dir: tuple[float, float]) -> Line:
+    return Line(
+        spans,
+        BBox(
+            min(sp.bbox.x0 for sp in spans),
+            min(sp.bbox.y0 for sp in spans),
+            max(sp.bbox.x1 for sp in spans),
+            max(sp.bbox.y1 for sp in spans),
+        ),
+        dir,
+    )
+
+
+def _box_of(lines: list[Line]) -> BBox:
+    return BBox(
+        min(ln.bbox.x0 for ln in lines),
+        min(ln.bbox.y0 for ln in lines),
+        max(ln.bbox.x1 for ln in lines),
+        max(ln.bbox.y1 for ln in lines),
+    )
+
+
+def _split_tail(block: Block, equations: list[Block]) -> tuple[Block, Block] | None:
+    """MATH-1 (m5 p3h): a body block whose last text line opens a display ("... for a fixed
+    T > 0, µT := 1/T Σ") that equation pieces continue on the same line hands that tail to the
+    display. The tail starts after the line's last prose span (``_prose_span``), holds a
+    relation, and runs to the block's end; every later line of the block (a large-operator glyph)
+    shares the display line. None when the block has no such tail."""
+    if block.type != "body" or block.inline or not block.lines:
+        return None
+    for k, line in enumerate(block.lines):
+        rest = block.lines[k + 1 :]
+        if all(_v_overlap(ln.bbox, line.bbox) > 0 for ln in rest):
+            break
+    else:  # pragma: no cover - the last line always qualifies
+        return None
+    start = 0
+    for j, sp in enumerate(line.spans):
+        if _prose_span(sp):
+            start = j + 1
+    tail = [sp for sp in line.spans[start:] if sp.text.strip()]
+    head = line.spans[:start]
+    if not tail or not head or not any(r in "".join(sp.text for sp in tail) for r in RELATIONS):
+        return None
+    x0 = min(sp.bbox.x0 for sp in tail)
+    if not any(
+        _v_overlap(e.bbox, line.bbox) > 0 and x0 <= e.bbox.x0 < block.bbox.x1 for e in equations
+    ):
+        return None
+    head_lines = [*block.lines[:k], _line_of(head, line.dir)]
+    tail_lines = [_line_of(tail, line.dir), *rest]
+    body = Block(
+        page=block.page,
+        index=block.index,
+        bbox=_box_of(head_lines),
+        lines=head_lines,
+        type="body",
+        ocr=block.ocr,
+        lead=block.lead,
+    )
+    piece = Block(
+        page=block.page,
+        index=block.index,
+        bbox=_box_of(tail_lines),
+        lines=tail_lines,
+        type="equation",
+        ocr=block.ocr,
+    )
+    return body, piece
+
+
+def split_display_tails(blocks: list[Block]) -> list[Block]:
+    """``_split_tail`` over the body blocks of one page; other blocks pass through."""
+    equations = [b for b in blocks if b.type == "equation" and not LABEL_ONLY_RE.fullmatch(b.text)]
+    if not equations:
+        return blocks
+    out: list[Block] = []
+    for b in blocks:
+        split = _split_tail(b, equations)
+        out.extend(split if split else [b])
+    return out
 
 
 def _block_size(block: Block) -> float:
@@ -280,6 +401,7 @@ def merge_display_pieces(blocks: list[Block]) -> list[Block]:
     lines run left to right and top to bottom (``_display_order``), so stage 4 gives the display
     one span and its label. A group needs an equation block; two groups that each carry a label
     stay apart (two numbered equations are two displays). Other blocks pass through unchanged."""
+    blocks = split_display_tails(blocks)
     pieces = [b for b in blocks if _display_piece(b)]
     if len(pieces) < 2:
         return blocks

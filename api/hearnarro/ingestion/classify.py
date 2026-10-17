@@ -368,6 +368,68 @@ def _is_noise_text(block: Block, page: Page) -> bool:
     )
 
 
+# MATH-1, ING-3 (m5 p3h): a display set in a text font (textbook pages: "p + q = 1",
+# "n − 1 or s = Σ f(x − x̄)") has no maths font for _is_equation. A short body block standing
+# alone on its line (no body, list, heading or caption block shares it) whose text, a trailing "(N)" label aside, is
+# maths by content (merge.content_spans, maths-font or MATH_CHARS glyphs) for at least
+# TEXT_DISPLAY_SHARE of its characters, holds a relation or an operation and at most
+# TEXT_DISPLAY_WORDS prose words is a display equation.
+TEXT_DISPLAY_SHARE = 0.6
+TEXT_DISPLAY_WORDS = 1
+TEXT_DISPLAY_MAX_CHARS = 80
+TEXT_DISPLAY_MAX_LINES = 3
+TEXT_DISPLAY_OPS = set("=<>≤≥∼~≈≡∝→∈−+±×÷·Σ∑∫√")
+_LABEL_TAIL_RE = re.compile(r"\s*\(\d{1,3}[a-z]?\)\s*$")
+_PROSE_WORD_RE = re.compile(r"[A-Za-z]{3,}")
+
+
+def _text_display(block: Block) -> bool:
+    from hearnarro.ingestion.merge import _FUNCTION_RE, content_spans
+
+    lines = [ln for ln in block.lines if ln.text.strip()]
+    if not lines or len(lines) > TEXT_DISPLAY_MAX_LINES:
+        return False
+    text = _LABEL_TAIL_RE.sub("", " ".join(ln.text.strip() for ln in lines))
+    total = sum(1 for c in text if not c.isspace())
+    if not 3 <= total <= TEXT_DISPLAY_MAX_CHARS or not any(c in TEXT_DISPLAY_OPS for c in text):
+        return False
+    if len(_PROSE_WORD_RE.findall(_FUNCTION_RE.sub("", text))) > TEXT_DISPLAY_WORDS:
+        return False
+    covered = [False] * len(text)
+    for sp in content_spans(text):
+        covered[sp.start : sp.end] = [True] * (sp.end - sp.start)
+    glyphs = {c for ln in lines for s in ln.spans if _is_math_font(s.font) for c in s.text}
+    maths = sum(
+        1
+        for k, c in enumerate(text)
+        if not c.isspace() and (covered[k] or c in MATH_CHARS or c in glyphs)
+    )
+    return maths >= TEXT_DISPLAY_SHARE * total
+
+
+def _retype_text_displays(page: Page) -> None:
+    """Body blocks that are text-font displays (``_text_display``) alone on their line become
+    equation blocks; stage 3 then joins their pieces (order.merge_display_pieces)."""
+    # Any text block on the line, short or long, means the maths is part of a sentence or of
+    # a list item (formula_06's "• s = Σ(x − x̄)" row), not a display of its own (gate (e):
+    # retyping those moves glyph tokens out of the prose the profile measures).
+    prose = [b for b in page.blocks if b.type in ("body", "list", "heading", "caption")]
+    for block in page.blocks:
+        if block.type != "body" or not _text_display(block):
+            continue
+        if any(
+            p is not block
+            and min(p.bbox.y1, block.bbox.y1) - max(p.bbox.y0, block.bbox.y0) > 0
+            and any(
+                min(ln.bbox.y1, block.bbox.y1) - max(ln.bbox.y0, block.bbox.y0) > 0
+                for ln in p.lines
+            )
+            for p in prose
+        ):
+            continue
+        block.type = "equation"
+
+
 def _classify(
     block: Block, page: Page, median: float, repeated: set[str], tables: list[BBox]
 ) -> BlockType:
@@ -661,6 +723,7 @@ def classify_pages(pages: list[Page]) -> list[Page]:
             block.type = _classify(block, page, median, repeated, tables)
             if block.type not in ("caption", "code") and in_figure(block, page.figure_bboxes):
                 block.type = "figure"
+        _retype_text_displays(page)
         if page.number < COVER_PAGES:
             _retype_pull_quotes(page, median)
         _fold_vertical_titles(page)
