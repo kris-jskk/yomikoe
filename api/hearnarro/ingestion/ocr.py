@@ -118,6 +118,13 @@ def parse_tsv(tsv: str, *, scale: float) -> list[OcrLine]:
     return lines
 
 
+class _Default:
+    """Sentinel: ``ocr_backend`` not given, use the default engine."""
+
+
+DEFAULT_OCR = _Default()
+
+
 def default_backend() -> OCRBackend | None:
     """The engine used when the caller does not name one: tesseract if on PATH, else none."""
     return TesseractBackend() if TesseractBackend.available() else None

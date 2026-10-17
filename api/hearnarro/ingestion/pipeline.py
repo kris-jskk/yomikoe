@@ -11,7 +11,13 @@ from hearnarro.ingestion.classify import classify_pages
 from hearnarro.ingestion.extract import extract_pages
 from hearnarro.ingestion.merge import merge_blocks
 from hearnarro.ingestion.models import LogicalBlock, Page, Segment
-from hearnarro.ingestion.ocr import OCRBackend, apply_ocr, default_backend
+from hearnarro.ingestion.ocr import (
+    DEFAULT_OCR,
+    OCRBackend,
+    _Default,
+    apply_ocr,
+    default_backend,
+)
 from hearnarro.ingestion.order import order_document
 from hearnarro.ingestion.segment import split_sentences
 
@@ -23,13 +29,6 @@ class IngestResult:
     segments: list[Segment]
     acronyms: dict[str, str] = field(default_factory=dict)  # {ACR: expansion}, ING-6
     ocr_skipped_pages: int = 0  # pages that needed OCR while no engine was available (ING-2)
-
-
-class _Default:
-    """Sentinel: ``ocr_backend`` not given, use the default engine."""
-
-
-DEFAULT_OCR = _Default()
 
 
 def ingest(

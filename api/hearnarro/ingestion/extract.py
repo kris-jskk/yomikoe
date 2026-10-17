@@ -21,6 +21,7 @@ from typing import Any
 import pdfplumber
 
 from hearnarro.ingestion.models import BBox, Block, Line, Page, Span
+from hearnarro.ingestion.ocr import DEFAULT_OCR, OCRBackend, _Default
 
 OCR_DPI = 300
 FIGURE_MIN_FRAC = 0.02  # a drawings union covering less of the page is a rule or a box
@@ -948,6 +949,7 @@ def extract_pages(
     ocr: bool = True,
     min_text_chars: int = 20,
     on_page: Callable[[int, int], None] | None = None,
+    ocr_backend: OCRBackend | None | _Default = DEFAULT_OCR,
 ) -> list[Page]:
     """Extract every page of ``pdf_path``; OCR pages with fewer than ``min_text_chars``.
 
@@ -981,9 +983,13 @@ def extract_pages(
             if page.text_chars < min_text_chars:
                 page.has_text_layer = False
                 page.blocks = []
-                if ocr and ocr_available():
-                    page.blocks = ocr_page(pdf_path, number)
             pages.append(page)
             if on_page is not None:
                 on_page(number + 1, total)
+    if ocr:
+        # ING-2, D28: pages that needs_ocr go to the backend (lazy import avoids a cycle).
+        from hearnarro.ingestion.ocr import apply_ocr, default_backend
+
+        backend = default_backend() if isinstance(ocr_backend, _Default) else ocr_backend
+        pages, _ = apply_ocr(pdf_path, pages, backend)
     return pages
