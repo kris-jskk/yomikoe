@@ -1,17 +1,23 @@
+# One service (D30): the API also serves the built web app at / (D21). PRD "Packaging".
 services:
   api:
-    build: ./api
-    ports: ["8000:8000"]
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    image: hearnarro:latest
+    ports:
+      - "8765:8765"
     volumes:
       - ./data:/data
       - hf_home:/hf_home
     environment:
       HEARNARRO_DATA_DIR: /data
+      HEARNARRO_WEB_DIST: /app/web/dist
+      HEARNARRO_TTS_BACKEND: kokoro
+      HEARNARRO_KOKORO_REVISION: f3ff3571791e39611d31c381e3a41a3af07b4987
+      HEARNARRO_AUDIO_FORMAT: wav
       HF_HOME: /hf_home
-  web:
-    build: ./web
-    ports: ["5173:5173"]
-    depends_on: [api]
+    restart: unless-stopped
 
 volumes:
   hf_home:

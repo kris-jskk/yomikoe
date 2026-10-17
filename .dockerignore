@@ -1,0 +1,22 @@
+# Build context is the repo root (api/Dockerfile). Keep it small and free of local state.
+.git
+.gitignore
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/.pytest_cache
+**/.ruff_cache
+**/tests
+**/test-results
+web/dist
+data
+.hf_home
+_agent
+.claude
+docs
+.env
+**/*.pem
+**/*.key
+.DS_Store
