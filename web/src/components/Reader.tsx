@@ -1,6 +1,7 @@
 // Reader (spec §7, PLAY-2, PLAY-3): segments rendered once as `.seg` elements with one `.w` span per
 // whitespace token of `text` (offsets from `tokenize`, so X-Timestamps char offsets map onto them).
 // The highlight is applied by usePlayer's rAF loop through the refs registered here, never by React.
+// M4: a segment skipped by a PLAY-8 toggle gets the `skipped` class (rendered dimmed).
 
 import { memo, useMemo, type MouseEvent } from 'react'
 import type { Section, Segment } from '../api/types'
@@ -13,16 +14,20 @@ export interface ReaderProps {
   /** The reading column element; the player listens for wheel/touchmove on it (stops follow mode). */
   registerReaderEl?: (el: HTMLElement | null) => void
   onSeek: (segmentId: number, tokenIndex?: number) => void
+  /** PLAY-8: ids skipped by the toggles. */
+  skipped?: ReadonlySet<number>
 }
 
 function SegmentView({
   seg,
   section,
   register,
+  skipped,
 }: {
   seg: Segment
   section: Section | undefined
   register: ReaderProps['registerSegmentEl']
+  skipped: boolean
 }) {
   const tokens = useMemo(() => tokenize(seg.text), [seg.text])
   const children: (string | React.JSX.Element)[] = []
@@ -35,7 +40,7 @@ function SegmentView({
     )
   })
   const props = {
-    className: `seg seg-${seg.type}`,
+    className: `seg seg-${seg.type}${skipped ? ' skipped' : ''}`,
     'data-id': seg.id,
     'data-order': seg.order,
     ref: (el: HTMLElement | null) => register(seg.id, el, tokens),
@@ -67,6 +72,7 @@ function ReaderImpl({
   registerSegmentEl,
   registerReaderEl,
   onSeek,
+  skipped,
 }: ReaderProps) {
   const byFirst = useMemo(() => new Map(sections.map((s) => [s.first_segment_id, s])), [sections])
   const onClick = (e: MouseEvent<HTMLElement>) => {
@@ -86,6 +92,7 @@ function ReaderImpl({
           seg={seg}
           section={byFirst.get(seg.id)}
           register={registerSegmentEl}
+          skipped={skipped?.has(seg.id) ?? false}
         />
       ))}
     </article>

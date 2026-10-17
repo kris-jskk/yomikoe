@@ -11,6 +11,7 @@ export default defineConfig({
       '/documents': api,
       '/audio': api,
       '/voices': api,
+      '/settings': api,
     },
   },
   test: {

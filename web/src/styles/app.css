@@ -85,30 +85,62 @@ a {
   margin: 0;
 }
 
-/* Picker */
-.picker {
-  max-width: 48rem;
+/* Library (LIB-1, LIB-3, LIB-4) */
+.library,
+.loading {
+  max-width: 60rem;
   margin: 0 auto;
   padding: 1rem var(--gutter);
 }
 
-.picker ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.picker li {
+.library-head {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid var(--border);
+  gap: 0.75rem;
 }
 
-.picker .meta {
+.defaults {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0.5rem 0 1rem;
   color: var(--muted);
+}
+
+.defaults input[type='number'] {
+  width: 5rem;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+
+.doc-table th,
+.doc-table td {
+  text-align: left;
+  padding: 0.5rem 0.6rem 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.doc-table th {
+  color: var(--muted);
+  font-weight: 600;
   font-size: 0.9rem;
+}
+
+.doc-table .actions {
+  white-space: nowrap;
+}
+
+.row-error {
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 /* Document layout: TOC beside the text on wide screens, above it on narrow ones */
@@ -186,6 +218,18 @@ a {
 
 .seg.active {
   background: var(--hl-seg);
+}
+
+/* PLAY-8: segments skipped by a toggle are dimmed */
+.seg.skipped {
+  opacity: 0.4;
+}
+
+.skips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.85rem;
 }
 
 .w {

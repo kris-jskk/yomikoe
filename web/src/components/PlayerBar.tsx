@@ -1,13 +1,22 @@
 // PlayerBar (spec §7, PLAY-1, PLAY-2, PLAY-4): transport, "Back to reading" pill (follow mode),
-// voice, speed, status word and D19 stats readout.
+// voice, speed, status word and D19 stats readout. M4: skip toggles (PLAY-8).
 
 import type { Voice } from '../api/types'
+import type { SkipState } from '../player/skip'
 import type { Player } from '../player/usePlayer'
 
 export interface PlayerBarProps {
   player: Player
   voices: Voice[]
+  /** PLAY-8: called with the new toggles; the caller computes the skipped ids and dispatches SET_SKIP. */
+  onSkipChange?: (skip: SkipState) => void
 }
+
+const SKIP_TOGGLES: { key: keyof SkipState; label: string }[] = [
+  { key: 'footnotes', label: 'Skip footnotes' },
+  { key: 'captions', label: 'Skip captions' },
+  { key: 'references', label: 'Skip references' },
+]
 
 const SPEED_MIN = 0.5
 const SPEED_MAX = 3
@@ -21,7 +30,7 @@ export function snapSpeed(v: number): number {
 
 const ms = (x: number) => `${Math.round(x)} ms`
 
-export function PlayerBar({ player, voices }: PlayerBarProps) {
+export function PlayerBar({ player, voices, onSkipChange }: PlayerBarProps) {
   const { state, dispatch, play, pause, lastClip, following, followHint, resumeFollowing } = player
   const playing = state.status === 'playing'
   const fa = state.firstAudio
@@ -110,6 +119,18 @@ export function PlayerBar({ player, voices }: PlayerBarProps) {
           }
         />{' '}
         <span id="speed-value">{state.speed.toFixed(2)}x</span>
+      </span>
+      <span className="skips">
+        {SKIP_TOGGLES.map((t) => (
+          <label key={t.key}>
+            <input
+              type="checkbox"
+              checked={state.skip[t.key]}
+              onChange={(e) => onSkipChange?.({ ...state.skip, [t.key]: e.target.checked })}
+            />{' '}
+            {t.label}
+          </label>
+        ))}
       </span>
       <span className="status" role="status" data-status={state.status} aria-live="polite">
         {state.status}

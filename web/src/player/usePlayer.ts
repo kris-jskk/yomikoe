@@ -1,11 +1,19 @@
 // The player hook (spec _agent/specs/m3-reader-interfaces.md §6; D5, D8, D10).
 // Owns the AudioContext, the schedule of AudioBufferSourceNodes, prefetch, the rAF highlight loop and
-// the D19 instrumentation. Reducer state holds no audio objects: they live in a PlayerEngine instance
+// the D19 instrumentation. M4: position saves (LIB-2), per-document settings saves (LIB-3), the keyboard
+// map (PLAY-6), Media Session (PLAY-7) and user skips left out of the schedule (PLAY-8). Reducer state holds no audio objects: they live in a PlayerEngine instance
 // created once per hook, and the engine talks back to React only through `dispatch`.
 
-import { useCallback, useEffect, useLayoutEffect, useReducer, useState } from 'react'
-import { fetchAudio } from '../api/client'
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react'
+import { fetchAudio, patchDocument } from '../api/client'
 import type { AudioClip } from '../api/types'
+import { keyToAction, stepSpeed } from './keys'
+import {
+  clearMediaSession,
+  setMediaHandlers,
+  setMediaMetadata,
+  setMediaPlaybackState,
+} from './mediaSession'
 import { initialState, reduce, type PlayerEvent, type PlayerState } from './machine'
 import {
   chainStart,
@@ -36,6 +44,10 @@ const START_LEAD_SEC = 0.05
 const POSITION_MS = 250
 /** Entries kept for `window.__hearnarro.entries` per generation. */
 const LOG_CAP = 500
+/** LIB-2: TICK_SAVE period while playing. */
+export const SAVE_TICK_MS = 5_000
+/** LIB-3: per-document settings PATCH debounce. */
+export const SETTINGS_DEBOUNCE_MS = 500
 
 export interface ScheduleEntry extends ScheduleEntryView {
   /** Null for a zero-length clip: it has an entry (durationSec 0) but nothing plays. */
@@ -89,6 +101,54 @@ export interface Player {
   /** Click to seek (PLAY-3): SEEK while active, PLAY from idle/error. */
   seekTo: (segmentId: number, tokenIndex?: number) => void
   lastClip: ClipStats | null
+  /** Scroll a segment to the centre without playing (LIB-2 restore). */
+  revealSegment: (segmentId: number) => void
+}
+
+type SavedPosition = { segment_id: number; offset_ms: number }
+
+/**
+ * LIB-2 position saves: at most one PATCH in flight; a save asked for while one is in flight replaces any
+ * queued one and goes out when it settles. A failed save is forgotten (the next tick retries), never shown.
+ */
+export class PositionSaver {
+  private inFlight = false
+  private queued: { docId: number; pos: SavedPosition } | null = null
+  /** `docId:segment:offset` of the last save sent and not failed. */
+  last = ''
+
+  static key(docId: number, pos: SavedPosition) {
+    return `${docId}:${pos.segment_id}:${pos.offset_ms}`
+  }
+
+  send(docId: number, pos: SavedPosition) {
+    if (this.inFlight) {
+      this.queued = { docId, pos }
+      return
+    }
+    const k = PositionSaver.key(docId, pos)
+    if (k === this.last) return
+    this.inFlight = true
+    this.last = k
+    patchDocument(docId, { position: pos })
+      .catch(() => {
+        if (this.last === k) this.last = ''
+      })
+      .finally(() => {
+        this.inFlight = false
+        const q = this.queued
+        this.queued = null
+        if (q) this.send(q.docId, q.pos)
+      })
+  }
+
+  /** pagehide (D26): the last known value with keepalive, unless it is the one already saved. */
+  sendBeacon(docId: number, pos: SavedPosition) {
+    const k = PositionSaver.key(docId, pos)
+    if (k === this.last) return
+    this.last = k
+    void patchDocument(docId, { position: pos }, { keepalive: true }).catch(() => {})
+  }
 }
 
 const settingsKey = (voice: string, speed: number) => `${voice}|${speed.toFixed(2)}`
@@ -272,6 +332,15 @@ export class PlayerEngine {
     }
   }
 
+  /** Ids the schedule steps over: failed prefetches (PLAY-5) and the user's skip toggles (PLAY-8). */
+  blocked(): ReadonlySet<number> {
+    const user = this.state.skippedIds
+    if (user.length === 0) return this.skipped
+    const out = new Set(user)
+    for (const id of this.skipped) out.add(id)
+    return out
+  }
+
   ensureCtx(): AudioContext {
     if (!this.ctx) this.ctx = new AudioContext()
     if (this.ctx.state === 'suspended') void this.ctx.resume()
@@ -318,7 +387,12 @@ export class PlayerEngine {
     const ids = s.orderedIds
     const i = ids.indexOf(fromId)
     if (i < 0) return
-    const span = ids.slice(i, i + PREFETCH_DEPTH + 1)
+    // the target plus the next PREFETCH_DEPTH ids the user has not skipped (PLAY-8: never fetched)
+    const userSkip = new Set(s.skippedIds)
+    const span: number[] = [fromId]
+    for (let j = i + 1; j < ids.length && span.length < PREFETCH_DEPTH + 1; j++) {
+      if (!userSkip.has(ids[j])) span.push(ids[j])
+    }
     const want = new Set(span)
     for (const [id, p] of this.pending) {
       if (!want.has(id)) {
@@ -449,7 +523,7 @@ export class PlayerEngine {
         this.dispatch({ type: 'AUDIO_READY', generation: gen, at })
         continue
       }
-      const nextId = nextPlayable(s.orderedIds, tail.segmentId, this.skipped)
+      const nextId = nextPlayable(s.orderedIds, tail.segmentId, this.blocked())
       if (nextId === null) return
       const clip = this.pending.get(nextId)?.clip
       if (!clip) return
@@ -531,7 +605,7 @@ export class PlayerEngine {
     }
     const tail = this.sorted.length > 0 ? this.sorted[this.sorted.length - 1] : null
     if (s.status !== 'playing' || tail === null || now < tail.startAt + tail.durationSec) return
-    const next = nextPlayable(s.orderedIds, tail.segmentId, this.skipped)
+    const next = nextPlayable(s.orderedIds, tail.segmentId, this.blocked())
     if (next === null) {
       this.ended = true
       this.dispatch({ type: 'ENDED', offsetMs: Math.round(tail.durationSec * 1000) })
@@ -570,7 +644,7 @@ export class PlayerEngine {
   }
 }
 
-export function usePlayer(): Player {
+export function usePlayer(opts: { title?: string } = {}): Player {
   const [state, dispatch] = useReducer(reduce, initialState)
   const [lastClip, setLastClip] = useState<ClipStats | null>(null)
   const [follow, setFollow] = useState<{ following: boolean; hint: FollowHint }>({
@@ -601,6 +675,7 @@ export function usePlayer(): Player {
     const w = hookWindow()
     w.__hearnarro = engine.hooks
     const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return // a player shortcut (PLAY-6), not a page scroll
       const t = e.target instanceof HTMLElement ? e.target.tagName : null
       if (isScrollKey(e.key, t)) engine.noteInput()
     }
@@ -712,18 +787,141 @@ export function usePlayer(): Player {
   )
 
   const resumeFollowing = useCallback(() => engine.resumeFollowing(), [engine])
+  const revealSegment = useCallback(
+    (segmentId: number) => engine.scrollTo(segmentId, 'navigate'),
+    [engine],
+  )
+
+  // LIB-2: TICK_SAVE every 5 s (the reducer ignores it unless playing); a new pendingSave is PATCHed
+  const [saver] = useState(() => new PositionSaver())
+  useEffect(() => {
+    if (!looping) return
+    const t = setInterval(() => dispatch({ type: 'TICK_SAVE' }), SAVE_TICK_MS)
+    return () => clearInterval(t)
+  }, [looping])
+  useEffect(() => {
+    const docId = engine.state.documentId
+    if (state.pendingSave && docId !== null) saver.send(docId, state.pendingSave)
+  }, [engine, saver, state.pendingSave])
+
+  // LIB-3: a voice or speed change in the reader PATCHes this document's settings, debounced 500 ms
+  const settingsTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sendSettings = useCallback(
+    (keepalive: boolean) => {
+      const s = engine.state
+      if (s.documentId === null) return
+      void patchDocument(
+        s.documentId,
+        { settings: { voice_id: s.voice || null, speed: s.speed } },
+        { keepalive },
+      ).catch(() => {})
+    },
+    [engine],
+  )
+  /** Send a debounced settings save now, if one is waiting. */
+  const flushSettings = useCallback(
+    (keepalive: boolean) => {
+      if (settingsTimer.current === null) return
+      clearTimeout(settingsTimer.current)
+      settingsTimer.current = null
+      sendSettings(keepalive)
+    },
+    [sendSettings],
+  )
+  const appDispatch = useCallback(
+    (e: PlayerEvent) => {
+      userDispatch(e)
+      if (e.type === 'SET_VOICE' || e.type === 'SET_SPEED') {
+        if (settingsTimer.current !== null) clearTimeout(settingsTimer.current)
+        settingsTimer.current = setTimeout(() => {
+          settingsTimer.current = null
+          sendSettings(false)
+        }, SETTINGS_DEBOUNCE_MS)
+      }
+    },
+    [userDispatch, sendSettings],
+  )
+
+  // LIB-2: a pause saves where it stopped
+  const pauseAndSave = useCallback(() => {
+    const s = engine.state
+    if (s.status !== 'playing') return
+    pause()
+    if (s.documentId !== null && s.current !== null) {
+      saver.send(s.documentId, { segment_id: s.current.segmentId, offset_ms: s.current.offsetMs })
+    }
+  }, [engine, pause, saver])
+
+  // D26: pagehide sends the last known position (only once something played) and pending settings
+  useEffect(() => {
+    const onHide = () => {
+      flushSettings(true)
+      const s = engine.state
+      if (s.documentId === null || s.current === null || saver.last === '') return
+      saver.sendBeacon(s.documentId, {
+        segment_id: s.current.segmentId,
+        offset_ms: s.current.offsetMs,
+      })
+    }
+    window.addEventListener('pagehide', onHide)
+    return () => {
+      window.removeEventListener('pagehide', onHide)
+      flushSettings(false)
+    }
+  }, [engine, saver, flushSettings])
+
+  // PLAY-6: one keydown listener on the document; form fields keep their keys (keys.ts)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      const a = keyToAction({ key: e.key, shiftKey: e.shiftKey, target: e.target })
+      if (a === null) return
+      if (a.type === 'TOGGLE') {
+        // a focused button or link already turns Space into its own click
+        const tag = e.target instanceof HTMLElement ? e.target.tagName : ''
+        if (tag === 'BUTTON' || tag === 'A') return
+        e.preventDefault()
+        if (engine.state.status === 'playing') pauseAndSave()
+        else play()
+        return
+      }
+      e.preventDefault()
+      if (a.type === 'SPEED') {
+        appDispatch({ type: 'SET_SPEED', speed: stepSpeed(engine.state.speed, a.delta) })
+      } else appDispatch(a)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [engine, play, pauseAndSave, appDispatch])
+
+  // PLAY-7: Media Session (feature-detected in mediaSession.ts)
+  useEffect(() => {
+    if (opts.title) setMediaMetadata(opts.title)
+  }, [opts.title])
+  useEffect(() => {
+    const off = setMediaHandlers({
+      play,
+      pause: pauseAndSave,
+      previoustrack: () => appDispatch({ type: 'SKIP', by: -1 }),
+      nexttrack: () => appDispatch({ type: 'SKIP', by: 1 }),
+    })
+    return off
+  }, [play, pauseAndSave, appDispatch])
+  useEffect(() => () => clearMediaSession(), [])
+  useEffect(() => setMediaPlaybackState(state.status), [state.status])
 
   return {
     state,
-    dispatch: userDispatch,
+    dispatch: appDispatch,
     registerSegmentEl,
     registerReaderEl,
     following: follow.following,
     followHint: follow.hint,
     resumeFollowing,
     play,
-    pause,
+    pause: pauseAndSave,
     seekTo,
     lastClip,
+    revealSegment,
   }
 }
