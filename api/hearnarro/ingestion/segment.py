@@ -35,6 +35,8 @@ _CLOSERS = re.compile(r"(?:[”’»)\]}]|[\"'](?=\s|$))+")
 _SECTION_NUMBER = re.compile(r"\d+(?:\.\d+)*\.")
 _INITIAL = re.compile(r"\(?-?[A-Z]\.(?:-?[A-Z]\.)*")
 _REFERENCE_MARKER = re.compile(r"\[\d+\]")
+_REFERENCE_ENTRY = re.compile(r"\[\d+\]\s+[“\"(]?[A-Z]")
+_NUMBERED_ITEM = re.compile(r"\d+\.\s")
 _OPENERS = "([{“\"‘'"
 _TERMINAL = ".!?…:;"
 _TRAILING_CLOSERS = ")]}”’\"'»"
@@ -109,7 +111,12 @@ def _should_merge(prev: str, nxt: str, abbreviations: AbbreviationSet) -> bool:
     if token in abbreviations.non_terminal:
         return True
     if token in abbreviations.before_number:
-        return nxt[0].isdigit() or nxt[0] in "([#"
+        # "No. [10] Our bodies" is a reference entry after a real sentence end, not "No. [3]".
+        return (
+            nxt[0].isdigit()
+            or nxt[0] in "(#"
+            or (nxt[0] == "[" and not _REFERENCE_ENTRY.match(nxt))
+        )
     if token in abbreviations.may_end:
         return not _starts_capital(nxt)
     if _is_initial_end(tokens):
@@ -155,8 +162,12 @@ def _merge(text: str, spans: list[Span], abbreviations: AbbreviationSet) -> list
             # the word-level score. A split before pure punctuation ("seq." | ", Public") is
             # not a word break and may be undone.
             joins_words = start == prev_end and _has_word_char(text, prev_end, start, end)
-            if not joins_words and _should_merge(
-                text[prev_start:prev_end], text[start:end], abbreviations
+            # "habits\n2. Stabilized": a numbered list item on its own line stays split.
+            list_item = "\n" in text[prev_end:start] and _NUMBERED_ITEM.match(text, start, end)
+            if (
+                not joins_words
+                and not list_item
+                and _should_merge(text[prev_start:prev_end], text[start:end], abbreviations)
             ):
                 out[-1] = (prev_start, end)
                 continue
