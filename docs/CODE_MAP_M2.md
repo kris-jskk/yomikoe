@@ -21,6 +21,8 @@ committed. The per-file inventory, with how each status was decided, is in
 
 **Update, phase 2 (service, cache, queue, stretch, audio API; commit "SYN-1 SYN-3 SYN-5 SYN-6: synthesis service ...").** `stretch.py`, `cache.py`, `service.py`, `routes/audio.py`, `routes/voices.py` and the `app.py` lifespan are now real code, tested on the FakeBackend: `_agent/results/297_syn_tests_green.txt` (58 passed, 2 failed, 2 `@model` skipped; the two failures are a test defect, see "Open items"), full suite `_agent/results/300_full_suite.txt`, manual run `_agent/results/302_manual_audio.txt`. Where the code differs from the designed walkthrough below, the step now says what the code does. `KokoroBackend` and `OpusEncoder` remain stubs here (another worker owns them).
 
+**Update, phase 3 (Kokoro backend; commit "SYN-2 SYN-4: Kokoro backend (D15, ...)").** `kokoro_backend.py` is real code: Kokoro-82M on PyTorch CPU at the pinned revision, its own pipeline over the vendored `KModel` (`hearnarro/synthesis/kokoro_model/`, Apache-2.0, 972 lines from `kokoro` 0.9.4, so the `kokoro` package is not a dependency) and base `misaki.en.G2P`, the `num2words` shim (`hearnarro/synthesis/compat/`), and an OOV fallback (misaki lexicon for camel-case pieces, else the vendored g2p_en predictor in `hearnarro/synthesis/g2p_oov/`, else letter spelling). Model tests: `_agent/results/311_model_tests.txt` (30 passed with `HEARNARRO_TEST_MODEL=1`, including the Kokoro gate: TTFA 1842/997/472/483 ms at 0.5/1.0/2.0/3.0 on the 150-character sentence). `scripts/bench.py` is real: `_agent/results/314_bench.txt`, `bench/2026-10-16.json`. OOV demo `_agent/results/315_oov.txt`; cold start 2.34 s `_agent/results/316_cold_start.txt`; licence check 0 violations `_agent/results/310_install_licences.txt`.
+
 ### What M2 adds
 
 M1 turns a PDF into ordered sentence segments in SQLite. M2 turns one segment into audio the
@@ -67,7 +69,7 @@ at read time. Both are **to be measured in phase 3**.
 | `stretch_pcm`, `scale_timestamps` (`stretch.py`) | tested (numpy WSOLA, D17) |
 | `AudioCache` (`cache.py`) | tested |
 | `SynthesisService`, `DbSegmentRepo` (`service.py`) | tested (two queue tests fail on a test defect; Open items) |
-| `KokoroBackend` (`kokoro_backend.py`) | stub |
+| `KokoroBackend` (`kokoro_backend.py`) | tested (`@model`, 311) |
 | `GET`/`HEAD /audio`, `GET /voices` (`routes/`) | tested |
 | App wiring (`app.py` lifespan, `build_backend`) | tested (through `test_api_audio.py`) |
 | `settings.py` | tested |
@@ -76,7 +78,8 @@ at read time. Both are **to be measured in phase 3**.
 | `test_syn1_timestamps.py`, `test_syn3_speed.py`, `test_api_audio.py`, `test_syn_gate.py` (FakeBackend part), `test_stretch.py` | green (297) |
 | `test_syn5_queue.py` | 8 of 10 green; 2 fail on a fixture text collision (`_agent/results/299_queue_test_text_collision.txt`) |
 | `test_stretch.py` | WSOLA length within 2 % and pitch kept at 1.05–1.5; short/empty input; `scale_timestamps` order | SYN-3 | green (297) |
-| `scripts/bench.py` | planned (other worker) |
+| `scripts/bench.py` | tested (314) |
+| `compat/num2words.py`, `g2p_oov/`, vendored `kokoro_model/` | tested (311; `test_compat_num2words.py`) |
 
 ## Code flows
 
@@ -350,7 +353,10 @@ worst a stray `.tmp` file, never a `ready` row pointing at a truncated file.
 
 ### h. The benchmark script's loop
 
-`api/scripts/bench.py` [planned]. Designed loop from the spec:
+`api/scripts/bench.py` [tested, 314]. As built it calls the backend directly (no service, cache
+or encoder), so TTFA is synthesis plus stretch above 2.0x; sentences are 20 body/list lines of
+80–200 characters taken round-robin from the fixtures' `expected.jsonl`, normalized. Designed
+loop from the spec:
 
 1. Build the configured backend (`load_settings()` → `build_backend()`), and warm it with one
    throwaway synthesis so model load time is excluded ("warm model").
@@ -409,7 +415,7 @@ Signatures are copied from the files as read, or from the spec where the file do
 | `stretch.py` | Speeds above native max (D6, SYN-3) | `MAX_RATIO = 1.5`; `def stretch_pcm(pcm: bytes, sample_rate: int, ratio: float) -> bytes`; `def scale_timestamps(ts: list[WordTimestamp], ratio: float) -> list[WordTimestamp]` | none | none | tested (numpy WSOLA, D17; `test_syn3_speed.py`, `test_stretch.py`) |
 | `cache.py` | Write-through audio cache (D7, SYN-6) | `class AudioEntry` (dataclass, see "Data structures"); `class AudioCache`: `def __init__(self, data_dir: Path, db: Engine) -> None`, `async def get(self, segment_id: int, voice_id: str, speed: float, backend: str) -> AudioEntry \| None`, `async def put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry`, `async def mark_failed(self, segment_id: int, voice_id: str, speed: float, backend: str, reason: str) -> None` | `audio_cache` rows; files under `data_dir/audio/` | `audio_cache` rows; audio files (`.tmp` then rename) | tested (`test_api_audio.py`) |
 | `service.py` | Orchestration: cache, queue, thread, stretch, translate, encode (SYN-1/3/5/6) | `DEFAULT_LOOKAHEAD = 5`, `QUEUE_BOUND = 16`, `SHUTDOWN_WAIT_S = 5.0`; `class SegmentSynthesisFailed(Exception)`; `class SegmentRepo(Protocol)`: `async def get_segment(self, segment_id: int) -> Segment \| None`, `async def segments_from(self, document_id: int, from_order: int, limit: int) -> list[Segment]`; `class DbSegmentRepo` (`def __init__(self, db: Engine) -> None` + the two methods); `class SynthesisService`: `def __init__(self, backend: TTSBackend, encoder: AudioEncoder, cache: AudioCache, repo: SegmentRepo, *, lookahead: int = DEFAULT_LOOKAHEAD, executor: ThreadPoolExecutor \| None = None) -> None`, `async def get_audio(self, segment_id: int, voice_id: str, speed: float) -> AudioEntry`, `async def prefetch(self, document_id: int, from_order: int, voice_id: str, speed: float) -> None`, `def queue_depth(self, document_id: int) -> int`, `async def shutdown(self) -> None` | `segments` rows (via repo); cache | cache (via `AudioCache`); log | tested (`test_syn1`, `test_syn3`, `test_syn5`; see Open items) |
-| `kokoro_backend.py` | The only module that names a TTS model | `MODEL_REPO = "hexgrad/Kokoro-82M"`; `class KokoroBackend` (`name = "kokoro"`, `def __init__(self, revision: str) -> None`, `voices`, `speed_range`, `synthesize`) | model weights from the Hub at the pinned revision (designed) | `$HF_HOME` cache (designed) | stub |
+| `kokoro_backend.py` | The only module that names a TTS model | `MODEL_REPO = "hexgrad/Kokoro-82M"`; `class KokoroBackend` (`name = "kokoro"`, `def __init__(self, revision: str) -> None`, `voices`, `speed_range`, `synthesize`) | model weights from the Hub at the pinned revision | `$HF_HOME` cache | tested (`@model`) |
 
 #### `backend.py`
 
@@ -518,16 +524,29 @@ Failure: see flow (f). Tests: `test_syn1_timestamps.py`, `test_syn3_speed.py` (r
 
 #### `kokoro_backend.py`
 
-The only file that may name a TTS model (`MODEL_REPO = "hexgrad/Kokoro-82M"`, Apache-2.0).
-`KokoroBackend(revision=...)` takes the Hugging Face revision hash from
-`HEARNARRO_KOKORO_REVISION` (CLAUDE.md: pin every Hub model to a revision). Designed behaviour:
-load the pipeline once on the synthesis thread; `speed_range()` returns `(0.5, 2.0)`;
-`voices()` maps Kokoro's voice ids (`af_heart`, `am_adam`, `bf_emma`, …) to `Voice` with language
-and gender; `synthesize` passes `speed` to the model's duration control and joins the per-token
-`start_ts`/`end_ts` into words on whitespace (first token's start, last token's end), with char
-offsets into the text passed in. The package and phonemizer are still being chosen (see
-"Dependencies and licences"); the class signature does not change with that choice. Tested by
-the `@model` smoke and gate tests (planned).
+The only file that may name a TTS model (`MODEL_REPO = "hexgrad/Kokoro-82M"`, Apache-2.0) [tested].
+`KokoroBackend(revision=PINNED_REVISION)`; `settings.DEFAULT_KOKORO_REVISION` holds the same D15
+hash and is used when `HEARNARRO_TTS_BACKEND=kokoro` names no revision and the `tts` extra is
+installed. Construction (on the synthesis thread) registers the `num2words` shim, imports torch
+and `misaki.en`, fetches `config.json` and `kokoro-v1_0.pth` with `hf_hub_download(revision=...)`,
+builds the vendored `KModel` and the US `G2P` (spaCy `en_core_web_sm`); the GB `G2P` and each
+voice pack (`voices/<id>.pt`, same revision) load on first use. `voices()` lists 10 voices
+(`af_heart` first; af/am en-US, bf/bm en-GB; gender from the second letter); `speed_range()` is
+`(0.5, 2.0)`. `synthesize` runs under a lock: G2P → tokens, phonemes filtered to Kokoro's vocab,
+chunks of ≤ 510 phonemes cut at sentence then clause punctuation, one `KModel` call per chunk
+with `pack[len(ps) - 1]`, and token times from `pred_dur` (25 ms frames; a token spans its own
+phoneme characters). `kokoro.pipeline` is never imported, which also avoids upstream
+`join_timestamps`' misalignment after empty-phoneme tokens (spike 274).
+
+Word rule: one `WordTimestamp` per whitespace-delimited word of the input, `(char_start,
+char_end)` = that slice; start = first timed token's start, end = last timed token's end; a word
+with no timed token gets a zero-length interval at the previous word's end; times are clamped to
+be non-decreasing and ≤ duration. OOV words (misaki returns no phonemes): `_OOVFallback` splits
+camel case and a possessive `'s`, looks pieces up in misaki's gold/silver lexicon, else predicts
+ARPAbet with the vendored g2p_en GRU and maps it to Kokoro IPA (`arpabet_to_kokoro`), else spells
+the letters; one `WARNING` per OOV word naming the phonemes and the method. Tests:
+`test_kokoro_backend.py` (pure helpers always; model tests `@pytest.mark.model`),
+`test_syn_gate.py` (smoke and gate), `test_compat_num2words.py`.
 
 ### `api/hearnarro/routes/`
 
@@ -564,7 +583,7 @@ with a warning naming why. `HEARNARRO_LOOKAHEAD` must be an integer ≥ 0. The `
 
 | File | Responsibility | Public interface | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
-| `bench.py` | TTFA and RTF for the configured backend (PRD M2) | CLI script; see flow (h) | fixture PDFs, env settings | stdout table; `bench/<date>.json` | planned |
+| `bench.py` | TTFA and RTF for the configured backend (PRD M2) | CLI script; see flow (h) | fixture `expected.jsonl` files | stdout table; `bench/<date>.json` | tested (314) |
 
 ### `api/tests/` (M2 files)
 
@@ -821,6 +840,27 @@ scale math; stretch length; ratio bounds; API validation 0.5 to 3.0 in 0.1 steps
 
 ## Dependencies and licences
 
+**As built (phase 3, option A: vendor instead of `kokoro`).** `kokoro` on PyPI declares
+`misaki[en]`, so any normal install pulls `phonemizer-fork` (GPL), `espeakng-loader` and
+`num2words` (LGPL); pyproject cannot express "kokoro without its dependencies". The four model
+files (`model.py`, `istftnet.py`, `modules.py`, `custom_stft.py`; 972 lines with headers) are
+therefore vendored into `api/hearnarro/synthesis/kokoro_model/` with Kokoro's Apache-2.0 `LICENSE`
+and a `NOTICE` listing the three changes (unused `attr` import dropped, so `attrs` is not needed;
+relative import; stdlib logging instead of loguru). `g2p_en` is not a dependency either: its
+distribution requires `distance` (GPL) and `nltk` (which downloads corpora at import), so only its
+numpy GRU predictor and `checkpoint20.npz` (3.3 MB, unchanged) are vendored in
+`api/hearnarro/synthesis/g2p_oov/` with `LICENSE` and `NOTICE`. The `tts` extra in
+`api/pyproject.toml` is `torch`, `transformers`, `misaki==0.9.4` (no extras), `spacy>=3.8,<3.9`,
+`en_core_web_sm` pinned by wheel URL (3.8.0), and `inflect` (MIT, backs `compat/num2words.py`);
+`num2words` is removed from the base dependencies (`normalize.py` never used it), and
+`kokoro-onnx`, `onnxruntime` and `soundfile` are gone. Install: `cd api && uv pip install -e
+'.[dev,tts]'`. `scripts/check_licences.py` on that venv: 99 distributions, 0 violations
+(`regex` is `Apache-2.0 AND CNRI-Python`; CNRI-Python, OSI-approved and permissive, was added to
+the script's permissive set), and none of `kokoro`, `phonemizer`, `phonemizer-fork`, `espeakng-loader`,
+`num2words`, `distance`, `nltk`, `g2p-en` installed (`_agent/results/310_install_licences.txt`).
+`tests/test_licences.py` has no known violations left. The rest of this section is the
+pre-build survey.
+
 The project rule: every dependency and model in v1 is Apache-2.0, MIT or BSD (CLAUDE.md). The
 state below is from the dependency survey (`_agent/results/253_m2_dependency_survey.md`, a
 reading of package pages, no installs) and the Kokoro install spike
@@ -834,7 +874,7 @@ reading of package pages, no installs) and the Kokoro install spike
   `hf_hub_download(revision=...)`. Never install `misaki[en]`, `phonemizer`, `phonemizer-fork`,
   `espeakng-loader`, `espeak-ng` or `num2words`. The backend builds its own pipeline over `KModel`
   + `misaki.en.G2P` so `kokoro.pipeline` is never imported; a shim module
-  `hearnarro.synthesis.compat.num2words` (planned; not present at read time) is registered in
+  `hearnarro.synthesis.compat.num2words` (built in phase 3) is registered in
   `sys.modules` before misaki is imported; out-of-vocabulary words get a `g2p_en` (Apache-2.0)
   fallback with letter spelling last. Model and spaCy model load in the lifespan on the synthesis
   thread. The amendment also reports spike timings from results 273–279; this document has not
@@ -971,7 +1011,7 @@ HEARNARRO_TEST_MODEL=1 HEARNARRO_KOKORO_REVISION=<hash> \
     .venv/bin/python -m pytest -m model -s
 ```
 
-Benchmark (planned):
+Benchmark (`HF_HOME` is where the 327 MB model is cached):
 
 ```bash
 HEARNARRO_TTS_BACKEND=kokoro HEARNARRO_KOKORO_REVISION=<hash> \
@@ -984,7 +1024,7 @@ Server:
 # With the fake backend (silent audio, exact timing; no model needed)
 HEARNARRO_TTS_BACKEND=fake .venv/bin/python -m hearnarro serve --data-dir ~/hearnarro-m2 --port 8765
 
-# With Kokoro (once kokoro_backend.py is implemented)
+# With Kokoro (tts extra installed; the revision defaults to the D15 pin)
 HEARNARRO_TTS_BACKEND=kokoro HEARNARRO_KOKORO_REVISION=<hash> HF_HOME=~/.cache/huggingface \
     .venv/bin/python -m hearnarro serve --data-dir ~/hearnarro-m2 --port 8765
 
@@ -1007,10 +1047,10 @@ lookahead come from the environment through `load_settings()`.
 | `GET`/`HEAD /audio`, `GET /voices` | `routes/audio.py`, `routes/voices.py` | done, phase 2 |
 | `test_syn5_queue.py`, `test_api_audio.py`, `test_syn_gate.py` (FakeBackend part) | `api/tests/` | done (written before the code) |
 | `OpusEncoder` (library or ffmpeg, container WebM or Ogg) | `encode.py` | after the licence decision; WAV until then |
-| `KokoroBackend`, the `@model` smoke and gate tests, the skip hook for `HEARNARRO_TEST_MODEL` | `kokoro_backend.py`, `conftest.py`, `test_syn_gate.py` | phase 3 |
+| `KokoroBackend`, the `@model` smoke and gate tests, the skip hook for `HEARNARRO_TEST_MODEL` | `kokoro_backend.py`, `conftest.py`, `test_syn_gate.py` | done, phase 3 (311) |
 | Model load on the synthesis thread before `yield` in the lifespan | `app.py` | done, phase 2 (`build_backend` runs on `synth_executor`) |
 | 5 s cap on shutdown | `service.py`, `app.py` | done, phase 2 |
-| `scripts/bench.py`; first TTFA and RTF numbers (`276_spike_rtf.txt` absent at read time) | `api/scripts/` | phase 3 |
+| `scripts/bench.py`; first TTFA and RTF numbers | `api/scripts/` | done, phase 3 (314: at 0.5x 6 of 20 sentences of up to 200 chars exceed 2 s) |
 | Boundary thresholds asserted in `test_syn_boundaries.py` | `api/tests/` | after supervisor review of result 261 |
 | Retry policy for a key whose row is `failed` (retry vs 502 from the row) | `service.py` | done: retried once, then 502 from the row |
 | Exact seek rule ("outside the window") | `service.py`, `test_syn5_queue.py` | done: outside `[last, last+N]` or a voice/speed change |

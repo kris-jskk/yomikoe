@@ -1,0 +1,715 @@
+{
+  "date": "2026-10-16T21:44:45",
+  "machine": "macOS-26.6.2-arm64-arm-64bit arm64 py3.11.16",
+  "backend": "kokoro",
+  "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+  "voice": "af_heart",
+  "cold_start_s": 2.33,
+  "ttfa_limit_ms": 2000,
+  "summary": [
+    {
+      "speed": 0.5,
+      "n": 20,
+      "ttfa_mean_ms": 1883.2,
+      "ttfa_p50_ms": 1767.5,
+      "ttfa_max_ms": 2985.8,
+      "rtf_mean": 0.0878,
+      "rtf_max": 0.098,
+      "within_2s": 14
+    },
+    {
+      "speed": 1.0,
+      "n": 20,
+      "ttfa_mean_ms": 861.9,
+      "ttfa_p50_ms": 797.8,
+      "ttfa_max_ms": 1410.7,
+      "rtf_mean": 0.0798,
+      "rtf_max": 0.0949,
+      "within_2s": 20
+    },
+    {
+      "speed": 2.0,
+      "n": 20,
+      "ttfa_mean_ms": 458.1,
+      "ttfa_p50_ms": 432.2,
+      "ttfa_max_ms": 727.2,
+      "rtf_mean": 0.081,
+      "rtf_max": 0.0828,
+      "within_2s": 20
+    },
+    {
+      "speed": 3.0,
+      "n": 20,
+      "ttfa_mean_ms": 469.3,
+      "ttfa_p50_ms": 438.4,
+      "ttfa_max_ms": 739.6,
+      "rtf_mean": 0.1244,
+      "rtf_max": 0.1315,
+      "within_2s": 20
+    }
+  ],
+  "sentences": [
+    "We evaluate open-weight and commercial A S R\u2013L L M systems using identical verifiers and quantify the speech gap as the difference between text and speech accuracy.",
+    "1State Key Laboratory of Human-Machine Hybrid Augmented Intelligence, Institute of Artificial Intelligence and Robotics,",
+    "Weight pruning can degrade the accuracy of large reasoning models (LRMs), yet it remains unclear whether it damages reasoning itself.",
+    "Our controlled ablation crosses three harnesses (zero-shot, a single tool-using agent, and a decomposed multi-agent pipeline) with three Claude models on 153 gold bills from two jurisdictions.",
+    "Salima Lamsiyah Adelaide Danilov Oleksandr Marchenko Breneur Aria Nourbakhsh Department of Computer Science (D C S), University of Luxembourg",
+    "This publication has been developed by N I S T in accordance with its statutory responsibilities under the Federal Information Security Modernization Act (F I S M A) of 2014, 44 U.S.C. \u00a7 3551 et seq.",
+    "This publication has been developed by N I S T to further its statutory responsibilities under the Federal Information Security Modernization Act (F I S M A), 44 U.S.C. \u00a7 3551 et seq.",
+    "COPULA ACTIVE SUBSPACES I I: E R R O R DECOMPOSITION, A POSTERIORI ESTIMATION, A N D SHARPNESS O F T H E BOUNDS\u2217",
+    "We study the convergence of Markov chains in the geometry induced by Hilbertian embeddings associated with positive definite kernels, also called Maximum Mean Discrepancy (M M D).",
+    "Manuel H\u00fclskamp Julius Kobialka Emanuel Sommer Thomas Nagler David R\u00fcgamer L M U Munich and Munich Center for Machine Learning",
+    "Ujas Shah Panagiota Birmpa Rebecca Morrison University of Colorado Boulder Heriot-Watt University University of Colorado Boulder",
+    "Neural learners for classification and regression are often criticized as black boxes.",
+    "Results show substantial degradation, with accuracy drops of 9.00\u201318.50 percentage points for multiple-choice reasoning and 20.00\u201342.86 points for instruction following.",
+    "Xi\u2019an Jiaotong University 2Faculty of Electronic and Information Engineering, Xi\u2019an Jiaotong University 3Imperial College London",
+    "We find that a substantial fraction of this degradation stems from a failure to stop rather than to reason.",
+    "The harness narrows the model gap: the weakest model in the full pipeline beats the strongest model alone (0.948 versus 0.806, paired bootstrap p less than 0.001).",
+    "Sparse autoencoders (SAEs) have emerged as a promising approach to mechanistic interpretability by decomposing language-model activations into sparse, potentially interpretable features.",
+    "This guideline is consistent with the requirements of the Office of Management and Budget (O M B) Circular A-130.",
+    "This guideline is consistent with requirements of the Office of Management and Budget (O M B) Circular A-130.",
+    "N I S T is responsible for developing information security standards and guidelines, including minimum requirements for federal information systems."
+  ],
+  "rows": [
+    {
+      "speed": 0.5,
+      "i": 0,
+      "chars": 164,
+      "ttfa_ms": 1962.1,
+      "audio_ms": 23550.0,
+      "rtf": 0.0833
+    },
+    {
+      "speed": 0.5,
+      "i": 1,
+      "chars": 120,
+      "ttfa_ms": 1532.4,
+      "audio_ms": 16925.0,
+      "rtf": 0.0905
+    },
+    {
+      "speed": 0.5,
+      "i": 2,
+      "chars": 133,
+      "ttfa_ms": 1660.1,
+      "audio_ms": 18075.0,
+      "rtf": 0.0918
+    },
+    {
+      "speed": 0.5,
+      "i": 3,
+      "chars": 192,
+      "ttfa_ms": 2472.4,
+      "audio_ms": 28075.0,
+      "rtf": 0.0881
+    },
+    {
+      "speed": 0.5,
+      "i": 4,
+      "chars": 141,
+      "ttfa_ms": 1886.1,
+      "audio_ms": 21700.0,
+      "rtf": 0.0869
+    },
+    {
+      "speed": 0.5,
+      "i": 5,
+      "chars": 199,
+      "ttfa_ms": 2985.8,
+      "audio_ms": 34050.0,
+      "rtf": 0.0877
+    },
+    {
+      "speed": 0.5,
+      "i": 6,
+      "chars": 183,
+      "ttfa_ms": 2614.9,
+      "audio_ms": 30475.0,
+      "rtf": 0.0858
+    },
+    {
+      "speed": 0.5,
+      "i": 7,
+      "chars": 112,
+      "ttfa_ms": 1872.9,
+      "audio_ms": 21475.0,
+      "rtf": 0.0872
+    },
+    {
+      "speed": 0.5,
+      "i": 8,
+      "chars": 179,
+      "ttfa_ms": 2228.8,
+      "audio_ms": 25550.0,
+      "rtf": 0.0872
+    },
+    {
+      "speed": 0.5,
+      "i": 9,
+      "chars": 126,
+      "ttfa_ms": 1731.9,
+      "audio_ms": 19125.0,
+      "rtf": 0.0906
+    },
+    {
+      "speed": 0.5,
+      "i": 10,
+      "chars": 128,
+      "ttfa_ms": 1652.2,
+      "audio_ms": 19075.0,
+      "rtf": 0.0866
+    },
+    {
+      "speed": 0.5,
+      "i": 11,
+      "chars": 86,
+      "ttfa_ms": 1180.5,
+      "audio_ms": 12050.0,
+      "rtf": 0.098
+    },
+    {
+      "speed": 0.5,
+      "i": 12,
+      "chars": 169,
+      "ttfa_ms": 1510.9,
+      "audio_ms": 18275.0,
+      "rtf": 0.0827
+    },
+    {
+      "speed": 0.5,
+      "i": 13,
+      "chars": 128,
+      "ttfa_ms": 1763.0,
+      "audio_ms": 19875.0,
+      "rtf": 0.0887
+    },
+    {
+      "speed": 0.5,
+      "i": 14,
+      "chars": 107,
+      "ttfa_ms": 1195.8,
+      "audio_ms": 13800.0,
+      "rtf": 0.0867
+    },
+    {
+      "speed": 0.5,
+      "i": 15,
+      "chars": 163,
+      "ttfa_ms": 2363.5,
+      "audio_ms": 29475.0,
+      "rtf": 0.0802
+    },
+    {
+      "speed": 0.5,
+      "i": 16,
+      "chars": 186,
+      "ttfa_ms": 2315.7,
+      "audio_ms": 26325.0,
+      "rtf": 0.088
+    },
+    {
+      "speed": 0.5,
+      "i": 17,
+      "chars": 113,
+      "ttfa_ms": 1486.5,
+      "audio_ms": 16475.0,
+      "rtf": 0.0902
+    },
+    {
+      "speed": 0.5,
+      "i": 18,
+      "chars": 109,
+      "ttfa_ms": 1477.6,
+      "audio_ms": 16350.0,
+      "rtf": 0.0904
+    },
+    {
+      "speed": 0.5,
+      "i": 19,
+      "chars": 148,
+      "ttfa_ms": 1771.9,
+      "audio_ms": 20800.0,
+      "rtf": 0.0852
+    },
+    {
+      "speed": 1.0,
+      "i": 0,
+      "chars": 164,
+      "ttfa_ms": 1110.1,
+      "audio_ms": 11700.0,
+      "rtf": 0.0949
+    },
+    {
+      "speed": 1.0,
+      "i": 1,
+      "chars": 120,
+      "ttfa_ms": 789.8,
+      "audio_ms": 8450.0,
+      "rtf": 0.0935
+    },
+    {
+      "speed": 1.0,
+      "i": 2,
+      "chars": 133,
+      "ttfa_ms": 694.0,
+      "audio_ms": 8950.0,
+      "rtf": 0.0775
+    },
+    {
+      "speed": 1.0,
+      "i": 3,
+      "chars": 192,
+      "ttfa_ms": 1082.2,
+      "audio_ms": 14125.0,
+      "rtf": 0.0766
+    },
+    {
+      "speed": 1.0,
+      "i": 4,
+      "chars": 141,
+      "ttfa_ms": 839.0,
+      "audio_ms": 10875.0,
+      "rtf": 0.0772
+    },
+    {
+      "speed": 1.0,
+      "i": 5,
+      "chars": 199,
+      "ttfa_ms": 1410.7,
+      "audio_ms": 17125.0,
+      "rtf": 0.0824
+    },
+    {
+      "speed": 1.0,
+      "i": 6,
+      "chars": 183,
+      "ttfa_ms": 1355.5,
+      "audio_ms": 15275.0,
+      "rtf": 0.0887
+    },
+    {
+      "speed": 1.0,
+      "i": 7,
+      "chars": 112,
+      "ttfa_ms": 828.4,
+      "audio_ms": 10725.0,
+      "rtf": 0.0772
+    },
+    {
+      "speed": 1.0,
+      "i": 8,
+      "chars": 179,
+      "ttfa_ms": 970.7,
+      "audio_ms": 12700.0,
+      "rtf": 0.0764
+    },
+    {
+      "speed": 1.0,
+      "i": 9,
+      "chars": 126,
+      "ttfa_ms": 735.2,
+      "audio_ms": 9550.0,
+      "rtf": 0.077
+    },
+    {
+      "speed": 1.0,
+      "i": 10,
+      "chars": 128,
+      "ttfa_ms": 731.2,
+      "audio_ms": 9500.0,
+      "rtf": 0.077
+    },
+    {
+      "speed": 1.0,
+      "i": 11,
+      "chars": 86,
+      "ttfa_ms": 461.5,
+      "audio_ms": 5975.0,
+      "rtf": 0.0772
+    },
+    {
+      "speed": 1.0,
+      "i": 12,
+      "chars": 169,
+      "ttfa_ms": 710.3,
+      "audio_ms": 9150.0,
+      "rtf": 0.0776
+    },
+    {
+      "speed": 1.0,
+      "i": 13,
+      "chars": 128,
+      "ttfa_ms": 778.6,
+      "audio_ms": 10000.0,
+      "rtf": 0.0779
+    },
+    {
+      "speed": 1.0,
+      "i": 14,
+      "chars": 107,
+      "ttfa_ms": 545.5,
+      "audio_ms": 6900.0,
+      "rtf": 0.0791
+    },
+    {
+      "speed": 1.0,
+      "i": 15,
+      "chars": 163,
+      "ttfa_ms": 1118.2,
+      "audio_ms": 14575.0,
+      "rtf": 0.0767
+    },
+    {
+      "speed": 1.0,
+      "i": 16,
+      "chars": 186,
+      "ttfa_ms": 1015.8,
+      "audio_ms": 13050.0,
+      "rtf": 0.0778
+    },
+    {
+      "speed": 1.0,
+      "i": 17,
+      "chars": 113,
+      "ttfa_ms": 631.5,
+      "audio_ms": 8200.0,
+      "rtf": 0.077
+    },
+    {
+      "speed": 1.0,
+      "i": 18,
+      "chars": 109,
+      "ttfa_ms": 624.3,
+      "audio_ms": 8075.0,
+      "rtf": 0.0773
+    },
+    {
+      "speed": 1.0,
+      "i": 19,
+      "chars": 148,
+      "ttfa_ms": 805.7,
+      "audio_ms": 10500.0,
+      "rtf": 0.0767
+    },
+    {
+      "speed": 2.0,
+      "i": 0,
+      "chars": 164,
+      "ttfa_ms": 507.3,
+      "audio_ms": 6325.0,
+      "rtf": 0.0802
+    },
+    {
+      "speed": 2.0,
+      "i": 1,
+      "chars": 120,
+      "ttfa_ms": 360.6,
+      "audio_ms": 4425.0,
+      "rtf": 0.0815
+    },
+    {
+      "speed": 2.0,
+      "i": 2,
+      "chars": 133,
+      "ttfa_ms": 390.0,
+      "audio_ms": 4850.0,
+      "rtf": 0.0804
+    },
+    {
+      "speed": 2.0,
+      "i": 3,
+      "chars": 192,
+      "ttfa_ms": 606.2,
+      "audio_ms": 7525.0,
+      "rtf": 0.0806
+    },
+    {
+      "speed": 2.0,
+      "i": 4,
+      "chars": 141,
+      "ttfa_ms": 441.9,
+      "audio_ms": 5475.0,
+      "rtf": 0.0807
+    },
+    {
+      "speed": 2.0,
+      "i": 5,
+      "chars": 199,
+      "ttfa_ms": 727.2,
+      "audio_ms": 8975.0,
+      "rtf": 0.081
+    },
+    {
+      "speed": 2.0,
+      "i": 6,
+      "chars": 183,
+      "ttfa_ms": 650.9,
+      "audio_ms": 8075.0,
+      "rtf": 0.0806
+    },
+    {
+      "speed": 2.0,
+      "i": 7,
+      "chars": 112,
+      "ttfa_ms": 443.5,
+      "audio_ms": 5575.0,
+      "rtf": 0.0796
+    },
+    {
+      "speed": 2.0,
+      "i": 8,
+      "chars": 179,
+      "ttfa_ms": 526.3,
+      "audio_ms": 6700.0,
+      "rtf": 0.0785
+    },
+    {
+      "speed": 2.0,
+      "i": 9,
+      "chars": 126,
+      "ttfa_ms": 394.7,
+      "audio_ms": 4800.0,
+      "rtf": 0.0822
+    },
+    {
+      "speed": 2.0,
+      "i": 10,
+      "chars": 128,
+      "ttfa_ms": 391.7,
+      "audio_ms": 4825.0,
+      "rtf": 0.0812
+    },
+    {
+      "speed": 2.0,
+      "i": 11,
+      "chars": 86,
+      "ttfa_ms": 262.8,
+      "audio_ms": 3175.0,
+      "rtf": 0.0828
+    },
+    {
+      "speed": 2.0,
+      "i": 12,
+      "chars": 169,
+      "ttfa_ms": 395.0,
+      "audio_ms": 4875.0,
+      "rtf": 0.081
+    },
+    {
+      "speed": 2.0,
+      "i": 13,
+      "chars": 128,
+      "ttfa_ms": 422.5,
+      "audio_ms": 5175.0,
+      "rtf": 0.0816
+    },
+    {
+      "speed": 2.0,
+      "i": 14,
+      "chars": 107,
+      "ttfa_ms": 311.1,
+      "audio_ms": 3800.0,
+      "rtf": 0.0819
+    },
+    {
+      "speed": 2.0,
+      "i": 15,
+      "chars": 163,
+      "ttfa_ms": 619.8,
+      "audio_ms": 7675.0,
+      "rtf": 0.0808
+    },
+    {
+      "speed": 2.0,
+      "i": 16,
+      "chars": 186,
+      "ttfa_ms": 561.3,
+      "audio_ms": 6850.0,
+      "rtf": 0.0819
+    },
+    {
+      "speed": 2.0,
+      "i": 17,
+      "chars": 113,
+      "ttfa_ms": 354.9,
+      "audio_ms": 4375.0,
+      "rtf": 0.0811
+    },
+    {
+      "speed": 2.0,
+      "i": 18,
+      "chars": 109,
+      "ttfa_ms": 346.8,
+      "audio_ms": 4300.0,
+      "rtf": 0.0807
+    },
+    {
+      "speed": 2.0,
+      "i": 19,
+      "chars": 148,
+      "ttfa_ms": 446.9,
+      "audio_ms": 5525.0,
+      "rtf": 0.0809
+    },
+    {
+      "speed": 3.0,
+      "i": 0,
+      "chars": 164,
+      "ttfa_ms": 517.7,
+      "audio_ms": 4216.7,
+      "rtf": 0.1228
+    },
+    {
+      "speed": 3.0,
+      "i": 1,
+      "chars": 120,
+      "ttfa_ms": 370.9,
+      "audio_ms": 2950.0,
+      "rtf": 0.1257
+    },
+    {
+      "speed": 3.0,
+      "i": 2,
+      "chars": 133,
+      "ttfa_ms": 399.2,
+      "audio_ms": 3233.3,
+      "rtf": 0.1235
+    },
+    {
+      "speed": 3.0,
+      "i": 3,
+      "chars": 192,
+      "ttfa_ms": 620.3,
+      "audio_ms": 5016.7,
+      "rtf": 0.1236
+    },
+    {
+      "speed": 3.0,
+      "i": 4,
+      "chars": 141,
+      "ttfa_ms": 453.5,
+      "audio_ms": 3650.0,
+      "rtf": 0.1243
+    },
+    {
+      "speed": 3.0,
+      "i": 5,
+      "chars": 199,
+      "ttfa_ms": 739.6,
+      "audio_ms": 5983.3,
+      "rtf": 0.1236
+    },
+    {
+      "speed": 3.0,
+      "i": 6,
+      "chars": 183,
+      "ttfa_ms": 664.9,
+      "audio_ms": 5383.3,
+      "rtf": 0.1235
+    },
+    {
+      "speed": 3.0,
+      "i": 7,
+      "chars": 112,
+      "ttfa_ms": 455.2,
+      "audio_ms": 3716.7,
+      "rtf": 0.1225
+    },
+    {
+      "speed": 3.0,
+      "i": 8,
+      "chars": 179,
+      "ttfa_ms": 542.5,
+      "audio_ms": 4466.7,
+      "rtf": 0.1215
+    },
+    {
+      "speed": 3.0,
+      "i": 9,
+      "chars": 126,
+      "ttfa_ms": 420.9,
+      "audio_ms": 3200.0,
+      "rtf": 0.1315
+    },
+    {
+      "speed": 3.0,
+      "i": 10,
+      "chars": 128,
+      "ttfa_ms": 400.3,
+      "audio_ms": 3216.7,
+      "rtf": 0.1244
+    },
+    {
+      "speed": 3.0,
+      "i": 11,
+      "chars": 86,
+      "ttfa_ms": 266.1,
+      "audio_ms": 2116.7,
+      "rtf": 0.1257
+    },
+    {
+      "speed": 3.0,
+      "i": 12,
+      "chars": 169,
+      "ttfa_ms": 402.6,
+      "audio_ms": 3250.0,
+      "rtf": 0.1239
+    },
+    {
+      "speed": 3.0,
+      "i": 13,
+      "chars": 128,
+      "ttfa_ms": 423.3,
+      "audio_ms": 3450.0,
+      "rtf": 0.1227
+    },
+    {
+      "speed": 3.0,
+      "i": 14,
+      "chars": 107,
+      "ttfa_ms": 319.5,
+      "audio_ms": 2533.3,
+      "rtf": 0.1261
+    },
+    {
+      "speed": 3.0,
+      "i": 15,
+      "chars": 163,
+      "ttfa_ms": 648.4,
+      "audio_ms": 5116.7,
+      "rtf": 0.1267
+    },
+    {
+      "speed": 3.0,
+      "i": 16,
+      "chars": 186,
+      "ttfa_ms": 565.7,
+      "audio_ms": 4566.7,
+      "rtf": 0.1239
+    },
+    {
+      "speed": 3.0,
+      "i": 17,
+      "chars": 113,
+      "ttfa_ms": 360.6,
+      "audio_ms": 2916.7,
+      "rtf": 0.1236
+    },
+    {
+      "speed": 3.0,
+      "i": 18,
+      "chars": 109,
+      "ttfa_ms": 361.1,
+      "audio_ms": 2866.7,
+      "rtf": 0.126
+    },
+    {
+      "speed": 3.0,
+      "i": 19,
+      "chars": 148,
+      "ttfa_ms": 453.9,
+      "audio_ms": 3683.3,
+      "rtf": 0.1232
+    }
+  ]
+}

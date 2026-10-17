@@ -5,7 +5,7 @@ Exit 0 when clean, 1 on violations.
 
 Rules
 - Permissive / OSI non-copyleft is OK: Apache, MIT, BSD, PSF, ISC, MPL-2.0 (file-level),
-  BSL-1.0, Zlib, CC0, Unlicense, public domain.
+  BSL-1.0, Zlib, CC0, Unlicense, CNRI-Python, public domain.
 - Copyleft (GPL, LGPL, AGPL, SSPL, EUPL, CeCILL) and non-commercial are violations.
 - Compound expressions: "A OR B" is OK if ANY option is OK (the user may pick it);
   "A AND B" is OK only if ALL parts are OK. Only upper-case OR/AND are operators, so
@@ -45,7 +45,7 @@ _COPYLEFT = re.compile(
 )
 _PERMISSIVE = re.compile(
     r"apache|\bmit\b|bsd|\bpsf|python software foundation|\bisc\b|\bmpl\b|mozilla public"
-    r"|\bbsl\b|boost software|zlib|\bcc0|unlicense|public domain|\bhpnd\b",
+    r"|\bbsl\b|boost software|zlib|\bcc0|unlicense|public domain|\bhpnd\b|\bcnri\b",
     re.IGNORECASE,
 )
 _PROPRIETARY = re.compile(r"proprietary|all rights reserved", re.IGNORECASE)

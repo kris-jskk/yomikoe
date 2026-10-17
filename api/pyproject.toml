@@ -13,7 +13,6 @@ dependencies = [
     "pdfplumber>=0.11",
     "pypdfium2>=4.30",
     "pysbd>=0.3",
-    "num2words>=0.5",
     "numpy>=1.26",
     "huggingface_hub>=0.24",
     "python-multipart>=0.0.9",
@@ -27,10 +26,18 @@ dev = [
     "httpx>=0.27",
     "ruff>=0.5",
 ]
+# D15: Kokoro-82M on PyTorch CPU without the GPL/LGPL chain. The `kokoro` package itself is
+# NOT a dependency (it declares misaki[en] -> phonemizer/espeak/num2words); its Apache-2.0 model
+# code is vendored in hearnarro/synthesis/kokoro_model/. misaki is installed WITHOUT extras.
+# The OOV predictor (g2p_en, Apache-2.0) is vendored in hearnarro/synthesis/g2p_oov/ because the
+# g2p_en distribution depends on `distance` (GPL). inflect backs compat/num2words.py.
 tts = [
-    "kokoro>=0.9",
-    "onnxruntime>=1.18",
-    "soundfile>=0.12",
+    "torch>=2.4",
+    "transformers>=4.40",
+    "misaki==0.9.4",
+    "spacy>=3.8,<3.9",
+    "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+    "inflect>=7",
 ]
 ocr = [
     "pytesseract>=0.3",
@@ -47,9 +54,15 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["hearnarro*"]
 
+[tool.setuptools.package-data]
+"hearnarro.synthesis.g2p_oov" = ["checkpoint20.npz", "LICENSE", "NOTICE"]
+"hearnarro.synthesis.kokoro_model" = ["LICENSE", "NOTICE"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Vendored third-party code is kept byte-close to upstream.
+extend-exclude = ["hearnarro/synthesis/kokoro_model"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

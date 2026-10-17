@@ -54,6 +54,10 @@ pytest
 
 Models download from the Hugging Face Hub on first run into `$HF_HOME`; set it to a persistent path. `ffmpeg` must be on PATH for the Opus audio cache.
 
+## Benchmark (M2)
+
+`cd api && .venv/bin/python scripts/bench.py` (needs `uv pip install -e '.[dev,tts]'`) prints time to first audio and real-time factor for Kokoro over 20 fixture sentences at 0.5/1.0/2.0/3.0x and writes `bench/<date>.json`; latest: `bench/2026-10-16.json`.
+
 ## Documentation
 
 - [docs/PRD.md](docs/PRD.md): scope, requirement IDs, milestone gates

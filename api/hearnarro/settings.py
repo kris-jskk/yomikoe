@@ -21,6 +21,10 @@ AUDIO_FORMAT_ENV = "HEARNARRO_AUDIO_FORMAT"
 AUDIO_FORMATS = ("wav", "opus")  # D16: wav default
 DEFAULT_LOOKAHEAD = 5
 BACKENDS = ("fake", "kokoro")
+# D15: hexgrad/Kokoro-82M revision used when HEARNARRO_TTS_BACKEND=kokoro names no revision.
+DEFAULT_KOKORO_REVISION = "f3ff3571791e39611d31c381e3a41a3af07b4987"
+# Import names of the `tts` extra (D15: no `kokoro` package; model code is vendored).
+TTS_MODULES = ("torch", "transformers", "misaki", "spacy", "inflect")
 
 
 class SettingsError(ValueError):
@@ -37,7 +41,8 @@ class Settings:
 
 
 def kokoro_available() -> bool:
-    return importlib.util.find_spec("kokoro") is not None
+    """True when the ``tts`` extra is installed (``pip install -e '.[tts]'``)."""
+    return all(importlib.util.find_spec(m) is not None for m in TTS_MODULES)
 
 
 def load_settings(
@@ -45,9 +50,10 @@ def load_settings(
 ) -> Settings:
     """Read settings from ``env`` (default ``os.environ``).
 
-    Backend: an explicit ``HEARNARRO_TTS_BACKEND`` wins (``kokoro`` then requires
-    ``HEARNARRO_KOKORO_REVISION``). Unset: ``kokoro`` when the package is installed and a
-    revision is pinned, else ``fake`` with a warning.
+    Backend: an explicit ``HEARNARRO_TTS_BACKEND`` wins. ``kokoro`` takes
+    ``HEARNARRO_KOKORO_REVISION``, defaulting to the D15 pin when the ``tts`` extra is
+    installed (without the extra and without a revision it raises). Unset: ``kokoro`` when
+    the extra is installed and a revision is set, else ``fake`` with a warning.
     """
     env = os.environ if env is None else env
     installed = kokoro_available() if kokoro_installed is None else kokoro_installed
@@ -58,7 +64,12 @@ def load_settings(
         if backend not in BACKENDS:
             raise SettingsError(f"{BACKEND_ENV}={backend!r}; expected one of {BACKENDS}")
         if backend == "kokoro" and revision is None:
-            raise SettingsError(f"{BACKEND_ENV}=kokoro requires {KOKORO_REVISION_ENV}")
+            if not installed:
+                raise SettingsError(
+                    f"{BACKEND_ENV}=kokoro: the tts extra is not installed and no "
+                    f"{KOKORO_REVISION_ENV} is set"
+                )
+            revision = DEFAULT_KOKORO_REVISION
     elif installed and revision is not None:
         backend = "kokoro"
     else:

@@ -17,9 +17,7 @@ sys.modules["check_licences"] = cl
 _spec.loader.exec_module(cl)
 
 # Temporary: known violations that are printed, not failed. Remove entries as they are fixed.
-KNOWN_VIOLATIONS: dict[str, str] = {
-    "num2words": "removed in M2 backend task",
-}
+KNOWN_VIOLATIONS: dict[str, str] = {}
 
 
 @pytest.mark.parametrize(
@@ -41,6 +39,7 @@ KNOWN_VIOLATIONS: dict[str, str] = {
         ("Non-commercial research use only", "noncommercial"),
         ("MIT AND MPL-2.0", "ok"),
         ("(Apache-2.0 OR BSD-3-Clause)", "ok"),
+        ("Apache-2.0 AND CNRI-Python", "ok"),
         ("GPL-2.0 OR MIT", "ok"),
         ("GPL-3.0 AND MIT", "copyleft"),
         ("GPL-3.0 OR LGPL-2.1", "copyleft"),

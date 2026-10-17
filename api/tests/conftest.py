@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import dataclasses
 import functools
+import os
 import threading
 import time
 from collections.abc import Sequence
@@ -120,6 +121,16 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers", "model: needs a real TTS model; skipped unless HEARNARRO_TEST_MODEL=1"
     )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Skip every ``@pytest.mark.model`` test unless ``HEARNARRO_TEST_MODEL=1``."""
+    if os.environ.get("HEARNARRO_TEST_MODEL") == "1":
+        return
+    skip = pytest.mark.skip(reason="model test: set HEARNARRO_TEST_MODEL=1")
+    for item in items:
+        if "model" in item.keywords:
+            item.add_marker(skip)
 
 
 class SpyBackend:
