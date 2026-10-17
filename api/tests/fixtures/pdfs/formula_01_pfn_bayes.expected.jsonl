@@ -1,0 +1,45 @@
+{"order": 0, "page": 0, "type": "body", "text": "complicates the error source analysis of deployed PFNs."}
+{"order": 1, "page": 0, "type": "body", "text": "Our Contribution In this work, we make the following contributions to study the sources of error and uncertainty in PFNs with a focus on amortization:"}
+{"order": 2, "page": 0, "type": "list", "text": "1. A decomposition of the error of any PFN under a deployment distribution, splitting into prior, context and amortization error."}
+{"order": 3, "page": 0, "type": "list", "text": "2. A study of the amortization error of PFNs under its training prior, including a comparison to a realistic reference PPD (Section 2)."}
+{"order": 4, "page": 0, "type": "list", "text": "3. An extended investigation of the amortization error of PFNs under a deployment task distribution (Section 3)."}
+{"order": 5, "page": 0, "type": "list", "text": "4. An analysis of approximate Bayesian model averages over PFN weights (Section 4): Deep ensembles consistently improve predictions, whereas sampling and variational learning add little."}
+{"order": 6, "page": 0, "type": "heading", "text": "2 AMORTIZATION ERROR"}
+{"order": 7, "page": 0, "type": "heading", "text": "2.1 Setup"}
+{"order": 8, "page": 0, "type": "body", "text": "Following Nagler (2023), a task is a law p over (X, Y ) ∈ X × Y with covariate law pX and conditional p(y | x), and a dataset Dn = {(Xi, Yi)}n i=1 consisting of n independent and identically distributed (iid) draws from it."}
+{"order": 9, "page": 0, "type": "body", "text": "A PFN assumes a prior Π over pairs (p, N) of a task and a context size, whose marginal over N is the size distribution Ψ."}
+{"order": 10, "page": 0, "type": "body", "text": "Given (p, N=n), the context is Dn ∼p⊗n, and the PFN targets the posterior predictive distribution (PPD)"}
+{"order": 11, "page": 0, "type": "equation", "text": "πΠ(y | x, Dn) = ∫ p(y | x) dΠ(p | x, Dn). (1)"}
+{"order": 12, "page": 0, "type": "body", "text": "At deployment, pairs follow a different distribution Π′ with size marginal Ψ′."}
+{"order": 13, "page": 0, "type": "body", "text": "In the following, we study PFNs through the lens of risk minimization."}
+{"order": 14, "page": 0, "type": "body", "text": "Risks average over a task, a context Dn ∼p⊗n and an independent query (X, Y ) ∼p."}
+{"order": 15, "page": 0, "type": "body", "text": "We write Ep[·] := EDn∼p⊗nE(X,Y )∼p[·] for a fixed pair (p, n) and EΠ[·] := E(p,N)∼ΠEp[·] when the pair is drawn as well, likewise for Π′."}
+{"order": 16, "page": 0, "type": "body", "text": "Random variables are capitalized."}
+{"order": 17, "page": 0, "type": "heading", "text": "2.2 Risk Under a Task Distribution"}
+{"order": 18, "page": 0, "type": "body", "text": "A PFN with parameters θ ∈Θ is a measurable map qθ : (x, Dn) 7→qθ(· | x, Dn) into the distributions on Y."}
+{"order": 19, "page": 0, "type": "body", "text": "Deployed on Π′, its risk under the log loss is"}
+{"order": 20, "page": 0, "type": "equation", "text": "RΠ′(qθ) := EΠ′[−log qθ(Y | X, DN)]. (2)"}
+{"order": 21, "page": 0, "type": "body", "text": "The following proposition characterizes the optimal predictor under an arbitrary task distribution."}
+{"order": 22, "page": 0, "type": "body", "text": "Proposition 1."}
+{"order": 23, "page": 0, "type": "body", "text": "Let RΠ′(πΠ′) be finite."}
+{"order": 24, "page": 0, "type": "body", "text": "Then for every predictor q,"}
+{"order": 25, "page": 0, "type": "equation", "text": "RΠ′(q) − RΠ′(πΠ′) = EΠ′[DKL(πΠ′(· | X, DN) ∥ q(· | X, DN))] ≥ 0, (3)"}
+{"order": 26, "page": 0, "type": "body", "text": "with equality if and only if q = πΠ′ almost surely under Π′."}
+{"order": 27, "page": 0, "type": "body", "text": "In particular, πΠ′ is the unique minimizer of RΠ′ and RΠ′(πΠ′), the Bayes risk of Π′, is the lowest risk any predictor can attain on Π′."}
+{"order": 28, "page": 0, "type": "body", "text": "The proof is given in Appendix B.1."}
+{"order": 29, "page": 0, "type": "body", "text": "A PFN qθ is pretrained on the population objective"}
+{"order": 30, "page": 0, "type": "equation", "text": "L(θ) := RΠ(qθ). (4)"}
+{"order": 31, "page": 0, "type": "body", "text": "With Π′ = Π, Proposition 1 thus gives the pretraining objective: a PFN is trained to minimize its risk under its own prior, the minimizer over all predictors is πΠ (Müller et al., 2021), and the excess risk"}
+{"order": 32, "page": 0, "type": "equation", "text": "AΠ(qθ) := RΠ(qθ) − RΠ(πΠ) = EΠ[DKL(πΠ ∥ qθ)] ≥ 0 (5)"}
+{"order": 33, "page": 0, "type": "body", "text": "is the amortization error."}
+{"order": 34, "page": 0, "type": "body", "text": "This error is the distance, in expected KL, of the network from the PPD it is supposed to amortize."}
+{"order": 35, "page": 0, "type": "body", "text": "In practice, Eq. (4) is approximated by empirical risk minimization over M datasets D(j) whose task and size (pj, nj) are drawn from the prior,"}
+{"order": 36, "page": 0, "type": "equation", "text": "Lemp(θ) := −1/M ∑_{j=1}^{M} log qθ(yj | xj, D(j)), (6)"}
+{"order": 37, "page": 0, "type": "body", "text": "optimized with first-order stochastic gradient methods such that, in general, we have no guarantee how close we get to the target πΠ."}
+{"order": 38, "page": 0, "type": "body", "text": "Figure 1 places the amortization error among the two other sources of error of a deployed PFN: the context error, incurred even by πΠ because a finite context leaves the task uncertain, and the prior error, incurred because real tasks follow Π′ ̸= Π."}
+{"order": 39, "page": 0, "type": "body", "text": "We focus on the former and work towards its precise relation to the other two in Proposition 2."}
+{"order": 40, "page": 0, "type": "body", "text": "As a first step, we propose how to analyse the amortization error for a tractable but realistic reference prior in the following section."}
+{"order": 41, "page": 0, "type": "heading", "text": "2.3 Measuring Amortization Error"}
+{"order": 42, "page": 0, "type": "body", "text": "Measuring AΠ(q) = EΠ[DKL(πΠ∥q)] directly requires knowledge of the true PPD, which is intractable for the priors used by current tabular foundation models."}
+{"order": 43, "page": 0, "type": "body", "text": "The evidence that trained PFNs closely track the PPD they amortize comes from Müller et al. (2021, 2024)."}
+{"order": 44, "page": 0, "type": "body", "text": "The considered settings are low-dimensional compared to current structural causal model (SCM) prior (Qu et al., 2026; Hollmann et al., 2025), none use a current PFN architecture at scale, and only small context sizes"}

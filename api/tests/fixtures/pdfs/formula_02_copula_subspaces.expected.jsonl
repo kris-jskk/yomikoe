@@ -1,0 +1,35 @@
+{"order": 0, "page": 0, "type": "heading", "text": "3. A priori error bounds."}
+{"order": 1, "page": 0, "type": "body", "text": "3.1. The marginals."}
+{"order": 2, "page": 0, "type": "body", "text": "For a fixed dictionary of degree K2 we assume the moment bounds (T),"}
+{"order": 3, "page": 0, "type": "equation", "text": "(3.1) E∥θ̂r∥² = O(1), E Eπn[(1 + ∥Z∥ + ∥Ẑ∥)^{2(K2−1)} ∥Ẑ − Z∥²] = O(d(log N)^{K2} / N)."}
+{"order": 4, "page": 0, "type": "body", "text": "where the outer expectation is over the estimation sample and the inner one over a fresh residual."}
+{"order": 5, "page": 0, "type": "body", "text": "A mean-value bound for the polynomial bLr and the Cauchy–Schwarz inequality give E|RN| = O( √ d (log N)K2/2N −1/2) (Appendix A)."}
+{"order": 6, "page": 0, "type": "body", "text": "Combining this with (M) gives"}
+{"order": 7, "page": 0, "type": "equation", "text": "(3.2) E[Emarg − log Ẑcomp] = O(√d (log N)^{K2/2} N^{−1/2}),"}
+{"order": 8, "page": 0, "type": "body", "text": "and Emarg − log Ẑcomp = Op(√d (log N)^{K2/2} N^{−1/2})."}
+{"order": 9, "page": 0, "type": "body", "text": "The constants depend on d and the dictionary."}
+{"order": 10, "page": 0, "type": "body", "text": "We compute the remaining correction log bZcomp for each estimate and do not bound it a priori."}
+{"order": 11, "page": 0, "type": "body", "text": "3.2. The subspace."}
+{"order": 12, "page": 0, "type": "body", "text": "The Stage-1 bounds follow from the next inequality, in which S′ is an arbitrary score field."}
+{"order": 13, "page": 0, "type": "body", "text": "Proposition 3.1 (Stage-1 bounds)."}
+{"order": 14, "page": 0, "type": "body", "text": "Let V̂C r be the estimated Stage-1 basis of (3.5) and P̂r := V̂C r V̂C⊤ r."}
+{"order": 15, "page": 0, "type": "body", "text": "Under Assumption 2.1 of Part I, for every score field S′ ∈L2(πZ; Rd) with second-moment matrix C′ := EπZ[S′S′⊤],"}
+{"order": 16, "page": 0, "type": "equation", "text": "(3.3) √(2 Eproj) ≤ ∥S − S′∥L2(πZ) + √(Tr((I − P̂r)C′))."}
+{"order": 17, "page": 0, "type": "body", "text": "For S′ = S, the score-error term in (3.3) vanishes."}
+{"order": 18, "page": 0, "type": "body", "text": "Squaring the remaining inequality and dividing by two yields the oracle bound"}
+{"order": 19, "page": 0, "type": "equation", "text": "(3.4) Eproj = DKL(πn ∥ πn( · ; V̂C r)) ≤ C1 := 1/2 Tr((I − P̂r)C),"}
+{"order": 20, "page": 0, "type": "body", "text": "The oracle bound uses half the trace of C over the discarded subspace."}
+{"order": 21, "page": 0, "type": "body", "text": "For comparison,"}
+{"order": 22, "page": 0, "type": "body", "text": "let P C r := V C r V C⊤ r project onto the top-r eigenspace of C."}
+{"order": 23, "page": 0, "type": "body", "text": "Subtracting and adding the trace at this projector separates the rank and suboptimality contributions:"}
+{"order": 24, "page": 0, "type": "equation", "text": "(3.5) C1 = 1/2 ∑_{i>r} λi(C) [rank] + 1/2 [Tr(PC r C) − Tr(P̂r C)] [∆subopt ≥ 0],"}
+{"order": 25, "page": 0, "type": "body", "text": "where the rank term is fixed by C and r."}
+{"order": 26, "page": 0, "type": "body", "text": "The remaining term ∆subopt is of order ∥sin Θ( bV C r , V C r )∥2 F ."}
+{"order": 27, "page": 0, "type": "body", "text": "It is zero whenever span( bV C r ) = span(V C r ), and only in this case if λr(C) > λr+1(C)."}
+{"order": 28, "page": 0, "type": "body", "text": "To prove Proposition 3.1, apply the triangle inequality in L2(πZ; Rd) to the Gaussian-reference bound (2.5) of Part I (Appendix A)."}
+{"order": 29, "page": 0, "type": "body", "text": "This bound is [36, Cor. 2.10] specialized to a standard Gaussian reference."}
+{"order": 30, "page": 0, "type": "body", "text": "In the score-ratio-matching stability result of [5, Thm. 3.3], the divergence at the top-r eigenspace of C′ is bounded by ∥S −S′∥2 L2(πZ) + P i>r λi(C′)."}
+{"order": 31, "page": 0, "type": "body", "text": "This follows from (3.3) at that eigenprojector after applying (a + b)2 ≤2a2 + 2b2."}
+{"order": 32, "page": 0, "type": "body", "text": "Our bound retains the square root and applies to the estimated projector bPr."}
+{"order": 33, "page": 0, "type": "body", "text": "Projecting S onto the gradient space FΛ in L2(πZ) defines SΛ, its second-moment matrix CΛ, and the top-r projector P Λ⋆ r ."}
+{"order": 34, "page": 0, "type": "body", "text": "Because bC is computed from the penalized"}

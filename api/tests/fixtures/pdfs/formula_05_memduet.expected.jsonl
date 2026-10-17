@@ -1,0 +1,35 @@
+{"order": 0, "page": 0, "type": "body", "text": "to select candidate chunks for memory updating:"}
+{"order": 1, "page": 0, "type": "equation", "text": "at,i ∼ πsel ϕ(· | q, ci, mt), at,i ∈ {Skip, Update}. (2)"}
+{"order": 2, "page": 0, "type": "body", "text": "The chunks predicted as Update form the candidate set"}
+{"order": 3, "page": 0, "type": "equation", "text": "Ct = {ci ∈ Wt | at,i = Update}, (3)"}
+{"order": 4, "page": 0, "type": "body", "text": "which is forwarded to System 2."}
+{"order": 5, "page": 0, "type": "heading", "text": "3.2.2 System 2: Speculative Verification and Memory Consolidation"}
+{"order": 6, "page": 0, "type": "body", "text": "Inspired by speculative decoding’s acceptance rule (Leviathan et al., 2023; Chen et al., 2023a), System 2’s binary policy πver θ assesses whether selected chunks warrant memory updates."}
+{"order": 7, "page": 0, "type": "body", "text": "For candidate indices It = {i | ci ∈Ct}, the action-level acceptance probability is"}
+{"order": 8, "page": 0, "type": "equation", "text": "αt,i = min(1, πver θ(Update | q, ci, mt) / πsel ϕ(Update | q, ci, mt)). (4)"}
+{"order": 9, "page": 0, "type": "body", "text": "Independently draw ξt,i ∼U(0, 1) for each candidate and accept it if ξt,i ≤αt,i."}
+{"order": 10, "page": 0, "type": "body", "text": "If any candidate is accepted, commit the first accepted chunk in document order and generate its replacement memory:"}
+{"order": 11, "page": 0, "type": "equation", "text": "mt+1 ∼πmem θ (· | q, ci⋆ t , mt), (5)"}
+{"order": 12, "page": 0, "type": "body", "text": "where i⋆ t = min{i ∈It | ξt,i ≤αt,i}."}
+{"order": 13, "page": 0, "type": "body", "text": "As a special case, if no candidate is accepted, retain the current memory and advance past the window."}
+{"order": 14, "page": 0, "type": "body", "text": "Otherwise, discard remaining predictions conditioned on mt and resume immediately after the committed chunk with mt+1."}
+{"order": 15, "page": 0, "type": "body", "text": "Answering uses the query and final memory; Algorithm 3 in Appendix B.4 gives the complete transitions."}
+{"order": 16, "page": 0, "type": "heading", "text": "3.3 Training of MemDuet"}
+{"order": 17, "page": 0, "type": "body", "text": "Figure 3 summarizes three-stage training."}
+{"order": 18, "page": 0, "type": "body", "text": "Stage I trains memory-conditioned evidence selection."}
+{"order": 19, "page": 0, "type": "body", "text": "Stage II freezes System 1 and trains System 2 to verify candidates, rewrite memory, and generate answers."}
+{"order": 20, "page": 0, "type": "body", "text": "Stage III jointly optimizes both systems with task rewards, coordinating selection with verification and memory updates."}
+{"order": 21, "page": 0, "type": "heading", "text": "3.3.1 Stage I: System 1 Supervised Warm-up"}
+{"order": 22, "page": 0, "type": "body", "text": "We initialize System 1 on HotpotQA (Yang et al., 2018) by aligning gold supporting facts with document chunks."}
+{"order": 23, "page": 0, "type": "body", "text": "Evidence-containing chunks are labeled Update, and other chunks Skip."}
+{"order": 24, "page": 0, "type": "caption", "text": "Figure 3: Three-stage training of MemDuet. Stage I trains System 1 with weighted classification and a paired-memory hinge loss. Stage II freezes System 1 and optimizes System 2 with GRPO. Stage III jointly optimizes both systems using task rewards."}
+{"order": 25, "page": 0, "type": "body", "text": "For each Update example (q, c, m), let m′ be the memory after incorporating the evidence from c."}
+{"order": 26, "page": 0, "type": "body", "text": "We retain the original example and add a postupdate negative:"}
+{"order": 27, "page": 0, "type": "equation", "text": "(q, c, m) −→ Update, (q, c, m′) −→ Skip. (6)"}
+{"order": 28, "page": 0, "type": "body", "text": "We train on the original examples and post-update negatives using the memory-contrastive objective:"}
+{"order": 29, "page": 0, "type": "equation", "text": "LStage I(ϕ) = LwCE + λpair Lpair, Lpair = EP[max(0, γ − ∆sϕ)]. (7)"}
+{"order": 30, "page": 0, "type": "body", "text": "Here, LwCE is class-weighted action cross-entropy; P contains matched memory pairs, with ∆sϕ = sϕ(q, c, m) −sϕ(q, c, m′)."}
+{"order": 31, "page": 0, "type": "body", "text": "The score sϕ is the UPDATE-minus-SKIP logit difference, and γ is the margin."}
+{"order": 32, "page": 0, "type": "body", "text": "Hyperparameters are reported in Appendix B.1."}
+{"order": 33, "page": 0, "type": "heading", "text": "3.3.2 Stage II: System 2 Reinforcement Learning"}
+{"order": 34, "page": 0, "type": "body", "text": "We freeze System 1 at ϕSFT and optimize all System 2 parameters θ by reinforcement learning over"}
