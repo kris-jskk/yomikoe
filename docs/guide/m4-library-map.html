@@ -1,0 +1,680 @@
+<title>HearNarro M4 Library Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 920px) of guide sections; figures in their own overflow containers; same tokens as the M1-M3 guides so the four read as one set. */
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --fg: #1d2129; --muted: #5d6470; --line: #d9d6cd;
+  --accent: #8b4a1f; --accent-soft: #f3e8df; --hl: #ffe08a; --hl-seg: #f3ecd6;
+  --done: #2f7d4f; --done-soft: #e1f0e6; --run: #b36b00; --run-soft: #fbeedb; --next: #6b6f78; --next-soft: #ebebe8;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --hl: #7a5a12; --hl-seg: #2b2a22; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --hl: #7a5a12; --hl-seg: #2b2a22; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; }
+main { max-width: 920px; margin: 0 auto; display: grid; gap: 48px; }
+h1 { font-size: 28px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+h2 .k { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-right: 10px; font-weight: 500; }
+h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 18px 0 8px; }
+p { margin: 0 0 10px; max-width: 70ch; }
+.lede { font-size: 17px; color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--accent-soft); padding: 1px 5px; border-radius: 3px; }
+.gate { border-left: 3px solid var(--accent); padding: 8px 14px; background: var(--surface); display: grid; gap: 4px; margin-top: 16px; }
+.gate b { font-weight: 600; }
+.stamp { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 14px; font-family: var(--font-mono); }
+.stamp .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--run); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; margin-top: 14px; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { text-decoration: underline; outline: none; }
+figure { margin: 18px 0 6px; background: var(--surface); border: 1px solid var(--line); padding: 14px; overflow-x: auto; }
+figure svg { display: block; max-width: 100%; height: auto; font-family: var(--font-body); }
+figure svg .mono { font-family: var(--font-mono); }
+figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 80ch; }
+.why { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.why > div { background: var(--surface); border: 1px solid var(--line); padding: 12px 14px; min-width: 0; }
+.why b { display: block; font-weight: 600; margin-bottom: 4px; }
+.why p { font-size: 14px; color: var(--muted); margin: 0; }
+@media (max-width: 640px) { .why { grid-template-columns: 1fr; } }
+table.rules { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+table.rules th, table.rules td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.rules th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+.ledger { display: grid; border-top: 1px solid var(--line); margin-top: 14px; }
+.phase { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.phase .who { font-size: 13px; color: var(--muted); display: grid; gap: 4px; align-content: start; }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; width: fit-content; }
+.pill.done { background: var(--done-soft); color: var(--done); } .pill.run { background: var(--run-soft); color: var(--run); } .pill.next { background: var(--next-soft); color: var(--next); }
+.phase .what { min-width: 0; display: grid; gap: 6px; }
+.phase .what b { font-weight: 600; }
+.phase .what .why-line { font-size: 14px; color: var(--accent); }
+.phase ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+.phase li { margin: 2px 0; }
+@media (max-width: 520px) { .phase { grid-template-columns: 1fr; gap: 6px; } }
+.note ul { margin: 0; padding-left: 18px; } .note li { margin: 5px 0; }
+.sample { font-family: var(--font-body); background: var(--surface); border: 1px solid var(--line); padding: 10px 14px; max-width: 70ch; margin-top: 10px; }
+.sample .seg { background: var(--hl-seg); padding: 2px 4px; }
+.sample .w { background: var(--hl); padding: 0 2px; border-radius: 2px; }
+</style>
+
+<main>
+  <header>
+    <h1>HearNarro M4: a library that remembers where you were</h1>
+    <p class="lede">Milestone 4 turns the reader into something you return to: a library of documents with progress, a position saved every few seconds, voice and speed remembered per document, delete, keyboard and lock-screen controls, skip toggles for footnotes, captions and references, the remaining ingestion rules (tables, equations, OCR, sections), and one container that serves it all. This page is the live status: one diagram per mechanism, and the phase ledger with evidence.</p>
+    <div class="stamp"><span class="dot"></span> Updated 2026-10-17 · all phases done · M4 workers $11.52 over 25 tasks, supervisor $13.19 (cost review 3 in _agent/cost-reviews.md) · merge to main pending the user's decision · branch m4-library · spec _agent/specs/m4-library-interfaces.md</div>
+    <nav class="toc">
+      <a href="#ledger">1 Phase ledger</a>
+      <a href="#gate">2 What the milestone must prove</a>
+      <a href="#lib1">3 Library and progress</a>
+      <a href="#lib2">4 Position save and restore</a>
+      <a href="#lib3">5 Settings precedence</a>
+      <a href="#lib4">6 Delete cascade</a>
+      <a href="#keys">7 Keyboard and Media Session</a>
+      <a href="#skip">8 Skip toggles</a>
+      <a href="#ing8">9 Sections at ingestion</a>
+      <a href="#ing4">10 Page markers and TOC leakage</a>
+      <a href="#ing6">11 Number forms by ear</a>
+      <a href="#ing7">12 Tables and equations</a>
+      <a href="#ocr">13 OCR fallback</a>
+      <a href="#soak">14 The 300-page soak</a>
+      <a href="#compose">15 One container</a>
+      <a href="#decisions">16 Decisions proposed</a>
+      <a href="#status">17 Status</a>
+    </nav>
+  </header>
+
+  <section id="ledger">
+    <h2><span class="k">1</span>Phase ledger</h2>
+    <p>Each phase ends with evidence under <code>_agent/results/</code> (numbering starts at 497) and a commit on <code>m4-library</code>. Workers run on the cheapest adequate model with a 40-call budget (cap 50); the supervisor republishes this page once per phase.</p>
+    <div class="ledger">
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 0</span><span>supervisor + workers</span><span>commits e22c758, 8a10704, b38eb0b, ac692cf</span></div>
+        <div class="what"><b>Setup</b><span class="why-line">Every later phase cites the spec, the branch and the environment facts; the number-forms sampler has to reach the user early because phase 3 waits on their verdicts (ING-6).</span>
+          <ul><li>Branch <code>m4-library</code> from main.</li><li>M3 leftovers (evidence, drafts, ledger) committed: <code>e22c758</code>.</li><li>Interfaces spec <code>_agent/specs/m4-library-interfaces.md</code> committed: <code>8a10704</code>.</li><li>This guide: first publish.</li><li>Environment: no container runtime on the dev machine (docker, podman, colima, orbstack, nerdctl all absent; spec §0 gate clause 3), and no <code>tesseract</code> binary (D28). Report: <code>498_env.txt</code>.</li><li>Number-forms sampler: twelve Kokoro WAVs in <code>497_number_forms/</code> with <code>index.md</code> (commit b38eb0b). Two findings before any listening: the dash-range rule rewrites the phone number 555-0123 as "555 to 0123", and "40°C" reaches Kokoro as an unknown word.</li><li>Phase 1 server gate tests written red: 21 failed, 1 guard passing, regression sample 38 passed (<code>500</code>–<code>502</code>, commit ac692cf).</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 1</span><span>two build workers (lib routes; ING-8 sections)</span><span>commits ac692cf, f3460f5, ec18b6e</span></div>
+        <div class="what"><b>Server</b><span class="why-line">The client cannot save or restore anything until the API carries position, settings and delete (LIB-1..4, D21, ING-8).</span>
+          <ul><li>Red gate tests: 21 failed, 1 guard passing (<code>500</code>–<code>502</code>, ac692cf).</li><li>ING-8: ingestion writes <code>sections</code> from heading blocks and stamps <code>segments.section_id</code>; re-ingest replaces a document's sections (<code>506</code>–<code>508</code>, f3460f5).</li><li>LIB-1..4, <code>GET/PUT /settings</code> (default speed 1.25), <code>web/dist</code> mounted at <code>/</code> after the routers (D21), <code>hearnarro purge-audio</code> (<code>503</code>–<code>505</code>, ec18b6e). Deviations recorded for the code map: PATCH also bounds the per-document speed to [0.5, 3.0]; position is never null (<code>{segment_id: null, offset_ms: 0}</code> when unset); purge-audio needs <code>--data-dir</code>; DELETE returns 409 only for status <code>parsing</code>.</li><li>Full suite on the combined commits: 863 passed, 26 skipped (<code>509_phase1_full_suite.txt</code>).</li><li>Open: DELETE does not cancel a synthesis lookahead already running for that document, so a job in flight could recreate a file under <code>audio/{id}/</code> (worker observation, no test).</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 2</span><span>unit-red, e2e-red, build-core, build-ui</span><span>commits 6b20b68, 7f2f015, cd54424, 5acbd14</span></div>
+        <div class="what"><b>Client</b><span class="why-line">The library, persistence and controls are what the reader sees of M4 (LIB-1..4, PLAY-6..8).</span>
+          <ul><li>Unit tests red (20 failing on missing modules and events, <code>510</code>–<code>511</code>), browser tests red (11 failing on missing UI, <code>512</code>–<code>513</code>).</li><li>Pure modules: <code>keys.ts</code>, <code>skip.ts</code>, <code>libraryFormat.ts</code>, client functions, machine events SET_SKIP / RESTORE_POSITION / TICK_SAVE; 149 unit tests green, typecheck clean (<code>514</code>–<code>516</code>).</li><li>UI: <code>Library.tsx</code> replaces the picker (upload with 2 s polling, delete with inline confirm, default voice and speed), position saved every 5 s, on pause and on pagehide with keepalive (D26), settings precedence document over global default, keyboard map, Media Session wrapper, three skip toggles with the references span; 20 browser tests green on Chromium in 48 s, build produces <code>web/dist</code> (<code>517</code>–<code>520</code>).</li><li>Deviations for the code map: Space is also ignored on a focused button or link; shortcut keys call preventDefault and the follow-mode scroll listener skips those events; the pagehide PATCH goes out only after a first save in the visit; the Library polls every row that is not ready; the settings PATCH always sends both fields; settings changes while loading bump the generation and rebuild instead of a deferred field.</li><li>Unverified: Media Session on a real lock screen; the pagehide keepalive request. WebKit and Firefox runs: pending (<code>531</code>–<code>532</code>).</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 3</span><span>rules, OCR, number forms by ear</span><span>254bf4e, f4f843c, 2d605fc, 6122dee, b17e634, f1b56d7</span></div>
+        <div class="what"><b>Ingestion</b><span class="why-line">Noise lines, tables and scanned pages are where narration still sounds wrong (ING-2, ING-4, ING-6, ING-7).</span>
+          <ul><li>Tests red: 45 failing on missing rules and the missing <code>ocr</code> module (<code>521</code>–<code>523</code>).</li><li>ING-4/5: bare and bracketed page numbers outside the TOC become noise (years 19xx/20xx excepted, since a classify test keeps a mid-page "2024" as body); bare-number headings become noise; a heading ending in a hyphen joins its next line; ligatures U+FB00–FB06 decompose in stage 1. ING-7: "Table N, R rows." then one segment per spoken row (cells split at gaps wider than one font size); "Equation." or "Equation N."; the D14 guard now measures excluded mass from the block's raw text. Golden suite unchanged at a 0.9914 word-level mean (<code>533</code>–<code>537</code>, f4f843c).</li><li>ING-2: <code>OCRBackend</code> protocol, <code>FakeOCRBackend</code>, <code>TesseractBackend</code> (subprocess, found on PATH), <code>needs_ocr</code> (under 20 text chars and ink over 0.5 %), no-engine path counts <code>documents.ocr_skipped_pages</code> via migration 0004; wired into stage 1 (<code>538</code>–<code>540</code>, <code>547</code>; 2d605fc, 6122dee). The real-engine test is skipped: no tesseract here.</li><li>Full API suite after phase 3: 908 passed, 28 skipped (<code>548</code>).</li><li>ING-6 by ear (user, 2026-10-17): ten of the twelve sampler sentences sound right as the pipeline speaks them (money, years, 100,000, 24/7, Founder/CEO, 3/4, version 2.0, the 1980s, pages 10–12). Two were wrong and got rules: phone numbers are spoken as digit groups with a pause ("5 5 5, 0 1 2 3"; "+44" becomes "plus 4 4") and are exempt from the dash-range rule; clock hours read "9 a.m." (the dotted form, because Kokoro reads "AM" as the verb), inferred for a working-hours pair only when a cue word such as call, open, hours or office is in the sentence (b17e634, <code>554_phone_hours/</code>). "40°C" reads "40 degrees Celsius", "°F" Fahrenheit, a bare sign "degrees", never a lone letter (f1b56d7, <code>560_degrees/</code>). The user confirmed the fixed sentences by ear. All nineteen library documents were renormalized (<code>563</code>; a phone number in document 16 now reads as digit groups, <code>565</code>) and the server restarted on 8765 (<code>564</code>).</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 4</span><span>soak-api, docker, soak-browser</span><span>c751cbd, f75d7a4, eadaef6; clause 3 is the user's</span></div>
+        <div class="what"><b>Soak and packaging</b><span class="why-line">The PRD gate: 300-page soak passes; Docker up.</span>
+          <ul><li>API soak gate passes: a generated 300-page PDF (reportlab 4.4.10, dev only; 4.2.5 was rejected for its LGPL chardet dependency) with 6030 segments ingests to ready in 6.9 s, peak RSS 119 MB in the API process and 80 MB in the parse worker, 13 segment pages in order in 0.03 s, first and last audio 200, delete clean (<code>524</code>–<code>527</code>, c751cbd). Thresholds were 300 s and 1.5 GB.</li><li>Browser soak (gate clause 2) passes on Chromium: the 6030-segment document shows its first sentence at 619 ms and its last at 677 ms, the highlighted word is right at 3 s, 8 s and 15 s, skip reaches the last section, and a reload resumes on the saved sentence (delta 0). D29 answered: the reader keeps loading everything; no virtualisation (<code>542</code>, eadaef6).</li><li>The Chromium-only skip the red-test worker had put into the phase 2 specs was removed; WebKit and Firefox now run all 20 and pass (<code>544</code>, <code>545</code>). D22 stays: asserted on Chromium only.</li><li>Dockerfile (node:24-slim build stage, python:3.11-slim runtime, <code>pip install -e ".[tts]"</code>, CPU torch index, Kokoro revision pinned), <code>.dockerignore</code>, Compose with one <code>api</code> service on 8765 and the <code>hf_home</code> volume (D30), <code>docs/DOCKER.md</code> (<code>528</code>–<code>530</code>, f75d7a4). Gate clause 3 is unverified here: no container runtime. The user runs <code>docker compose up --build</code> and checks <code>GET /documents</code> and the page at <code>/</code>.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 5</span><span>code map, testing doc, PRD + design sync, API follow-ups, cost review 3</span><span>ea92caa, 3c281ef, 97d67ee, 3e15224; merge pending the user</span></div>
+        <div class="what"><b>Docs and close</b><span class="why-line">The PRD and Technical Design must carry D26–D30 once confirmed; the next session starts from the handoff files.</span>
+          <ul><li><code>docs/CODE_MAP_M4.md</code>, PRD + TD sync, <code>docs/M4_TESTING.md</code>, cost review 3, guide copied to <code>docs/guide/</code>, merge.</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gate">
+    <h2><span class="k">2</span>What the milestone must prove</h2>
+    <p>LIB-1 to LIB-4, PLAY-6 to PLAY-8, ING-6 remaining number forms, ING-7 tables and equations as cues, ING-2 OCR fallback, ING-8 sections written at ingestion (closes D25), FastAPI serving <code>web/dist</code> (D21), Docker Compose, and the 300-page soak. Out of scope: PLAY-9 export, the PDF page view (M5), iOS background playback.</p>
+    <div class="gate">
+      <b>Gate (PRD milestone 4: "300-page soak passes; Docker up")</b>
+      <span>1. API soak: a generated 300-page PDF ingests to <code>ready</code> in under 300 s with peak RSS under 1.5 GB; segments page in order; <code>/audio</code> serves first and last; <code>DELETE</code> removes everything.</span>
+      <span>2. Browser soak (Chromium): first render under 5 s, correct highlighted word at three probes, skip to the last section, reload restores within one sentence.</span>
+      <span>3. Docker: <code>docker compose up --build</code>, then <code>GET /documents</code> 200 and the app at <code>/</code>. Built and lint-checked here; run by the user, since this machine has no container runtime.</span>
+    </div>
+  </section>
+
+  <section id="lib1">
+    <h2><span class="k">3</span>Library list and progress (LIB-1)</h2>
+    <p><code>GET /documents</code> grows from a list of names into the library's data: segment count, saved position, progress, settings and last opened. Progress is not stored; it is derived on every request from the saved position, so it can never disagree with where the reader will resume.</p>
+    <figure>
+      <svg viewBox="0 0 880 230" role="img" aria-label="Documents rows and segment order become a library summary with a derived progress fraction">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="30" width="230" height="80" rx="4"/><rect x="20" y="130" width="230" height="70" rx="4"/>
+          <rect x="330" y="70" width="230" height="90" rx="4" fill="var(--accent-soft)"/>
+          <rect x="640" y="30" width="220" height="170" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="32" y="50" font-weight="600">documents row</text>
+          <text x="32" y="68" class="mono" font-size="11" fill="var(--muted)">title, pages, status</text>
+          <text x="32" y="84" class="mono" font-size="11" fill="var(--muted)">position_segment_id, offset_ms</text>
+          <text x="32" y="100" class="mono" font-size="11" fill="var(--muted)">voice_id, speed, last_opened_at</text>
+          <text x="32" y="150" font-weight="600">segments of the document</text>
+          <text x="32" y="168" class="mono" font-size="11" fill="var(--muted)">count(*) = segment_count</text>
+          <text x="32" y="184" class="mono" font-size="11" fill="var(--muted)">order of the position segment</text>
+          <text x="445" y="92" text-anchor="middle" font-weight="600">progress rule</text>
+          <text x="445" y="114" text-anchor="middle" class="mono" font-size="11">order / segment_count</text>
+          <text x="445" y="132" text-anchor="middle" class="mono" font-size="11">0 when no position</text>
+          <text x="445" y="148" text-anchor="middle" class="mono" font-size="11" fill="var(--muted)">float in 0..1</text>
+          <text x="652" y="50" font-weight="600">summary (JSON)</text>
+          <text x="652" y="72" class="mono" font-size="11">segment_count</text>
+          <text x="652" y="90" class="mono" font-size="11">position {segment_id, offset_ms}</text>
+          <text x="652" y="108" class="mono" font-size="11">progress</text>
+          <text x="652" y="126" class="mono" font-size="11">settings {voice_id, speed}</text>
+          <text x="652" y="144" class="mono" font-size="11">last_opened_at</text>
+          <text x="652" y="176" font-size="11" fill="var(--muted)">Library table: title, pages,</text>
+          <text x="652" y="190" font-size="11" fill="var(--muted)">progress %, last opened, status</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M250 85 H328"/><path d="M250 160 H328"/><path d="M560 115 H638"/>
+        </g>
+      </svg>
+      <figcaption>Progress is computed from the saved position and the segment count at read time, so the percentage in the library always matches where Play will resume; nothing new is stored for it.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>Without a library the user has to remember which document they were in and re-upload it. LIB-1 makes the home page a list of everything already ingested.</p></div>
+      <div><b>Why no migration</b><p>The <code>documents</code> table already has position, voice, speed and <code>last_opened_at</code> columns from M1; LIB-1..4 add routes, not columns (OCR's <code>ocr_skipped_pages</code> is the only new column, migration 0004).</p></div>
+    </div>
+  </section>
+
+  <section id="lib2">
+    <h2><span class="k">4</span>Position save and restore (LIB-2, D26 proposed)</h2>
+    <p>While playing, the hook sends <code>PATCH /documents/{id}</code> with the current segment and the audio time into it every 5 s and on every <code>PAUSE</code>. When the tab is closed, <code>pagehide</code> sends the last known value with <code>fetch(..., {keepalive: true})</code>. On the next open, the reader scrolls to that segment and the first Play starts there at the saved offset.</p>
+    <figure>
+      <svg viewBox="0 0 880 280" role="img" aria-label="Three save triggers feed one PATCH; on reload the summary's position drives scroll and the first play">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="20" width="200" height="44" rx="4"/><rect x="20" y="80" width="200" height="44" rx="4"/><rect x="20" y="140" width="200" height="44" rx="4"/>
+          <rect x="300" y="60" width="220" height="84" rx="4" fill="var(--accent-soft)"/>
+          <rect x="620" y="60" width="240" height="84" rx="4"/>
+          <rect x="300" y="210" width="220" height="54" rx="4"/>
+          <rect x="20" y="210" width="200" height="54" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="120" y="40" text-anchor="middle" font-weight="600">TICK_SAVE every 5 s</text><text x="120" y="56" text-anchor="middle" font-size="11" fill="var(--muted)">only while playing</text>
+          <text x="120" y="100" text-anchor="middle" font-weight="600">PAUSE</text><text x="120" y="116" text-anchor="middle" font-size="11" fill="var(--muted)">every pause</text>
+          <text x="120" y="160" text-anchor="middle" font-weight="600">pagehide</text><text x="120" y="176" text-anchor="middle" font-size="11" fill="var(--muted)">last known value, keepalive</text>
+          <text x="410" y="82" text-anchor="middle" font-weight="600">PATCH /documents/{id}</text>
+          <text x="410" y="100" text-anchor="middle" class="mono" font-size="11">position {segment_id, offset_ms}</text>
+          <text x="410" y="118" text-anchor="middle" font-size="11" fill="var(--muted)">one in flight; a failure retries</text>
+          <text x="410" y="132" text-anchor="middle" font-size="11" fill="var(--muted)">at the next tick, never shown</text>
+          <text x="740" y="82" text-anchor="middle" font-weight="600">documents row</text>
+          <text x="740" y="100" text-anchor="middle" class="mono" font-size="11">position_segment_id</text>
+          <text x="740" y="116" text-anchor="middle" class="mono" font-size="11">position_offset_ms</text>
+          <text x="740" y="134" text-anchor="middle" font-size="11" fill="var(--muted)">422 if segment not in document</text>
+          <text x="410" y="232" text-anchor="middle" font-weight="600">reload: GET summary</text><text x="410" y="250" text-anchor="middle" font-size="11" fill="var(--muted)">RESTORE_POSITION, opened: true once</text>
+          <text x="120" y="232" text-anchor="middle" font-weight="600">reader</text><text x="120" y="250" text-anchor="middle" font-size="11" fill="var(--muted)">scroll to segment; Play at offset</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M220 42 L298 82"/><path d="M220 102 H298"/><path d="M220 162 L298 124"/>
+          <path d="M520 102 H618"/><path d="M740 144 V237 H522"/><path d="M300 237 H222"/>
+        </g>
+        <text x="760" y="200" font-size="11" fill="var(--muted)">next open</text>
+      </svg>
+      <figcaption>Three triggers, one endpoint: a tick, a pause and the page closing all write the same PATCH, and the next open reads the position back from the summary, so a reload resumes within one sentence (gate clause 2).</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>LIB-2 requires the position saved every 5 s and on pause; M3 kept it in memory only, so a reload started from the top.</p></div>
+      <div><b>Why keepalive fetch, not sendBeacon (D26, proposed)</b><p><code>sendBeacon</code> can only POST and cannot send a JSON content type without a Blob workaround. A keepalive <code>fetch</code> sends the same PATCH as everything else: one endpoint, one code path.</p></div>
+    </div>
+  </section>
+
+  <section id="lib3">
+    <h2><span class="k">5</span>Settings precedence (LIB-3)</h2>
+    <p>Voice and speed come from the document if it has its own, otherwise from the global default (<code>GET /settings</code>, speed 1.25 when unset). A change in the reader writes to that document only, debounced 500 ms; the library's default controls never touch a document that already has settings.</p>
+    <figure>
+      <svg viewBox="0 0 880 210" role="img" aria-label="Document settings win over global defaults; reader writes go to the document, library writes go to the default">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="30" width="230" height="60" rx="4"/><rect x="20" y="120" width="230" height="60" rx="4"/>
+          <rect x="330" y="65" width="220" height="80" rx="4" fill="var(--accent-soft)"/>
+          <rect x="630" y="65" width="230" height="80" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="135" y="54" text-anchor="middle" font-weight="600">document settings</text><text x="135" y="72" text-anchor="middle" class="mono" font-size="11">{voice_id, speed} or null</text>
+          <text x="135" y="144" text-anchor="middle" font-weight="600">global default</text><text x="135" y="162" text-anchor="middle" class="mono" font-size="11">default_voice_id, default_speed=1.25</text>
+          <text x="440" y="90" text-anchor="middle" font-weight="600">on open</text>
+          <text x="440" y="110" text-anchor="middle" class="mono" font-size="11">doc if set, else default</text>
+          <text x="440" y="128" text-anchor="middle" font-size="11" fill="var(--muted)">speed in [0.5, 3.0]</text>
+          <text x="745" y="90" text-anchor="middle" font-weight="600">reader voice + speed</text>
+          <text x="745" y="110" text-anchor="middle" font-size="11" fill="var(--muted)">a change PATCHes the document</text>
+          <text x="745" y="126" text-anchor="middle" font-size="11" fill="var(--muted)">settings, debounced 500 ms</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M250 60 L328 92" stroke-width="2"/><path d="M250 150 L328 120" stroke-dasharray="4 3"/>
+          <path d="M550 105 H628"/><path d="M745 65 V20 H135 V28"/>
+        </g>
+        <g font-size="11" fill="var(--muted)"><text x="262" y="66">first</text><text x="262" y="158">fallback</text><text x="380" y="16">writes back to the document only</text><text x="20" y="200">Library default controls: PUT /settings, which changes only documents without their own settings.</text></g>
+      </svg>
+      <figcaption>Two layers, one direction: the document's own voice and speed always win, the global default fills in only when the document has none, and edits in the reader never leak into the default.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>LIB-3: each document keeps the voice and speed it was last heard in, and a new document starts from a default the user chose once.</p></div>
+      <div><b>Why changes during loading are queued</b><p>M3 deviation 6 dropped a settings change made while a sentence was loading; M4 applies it when the load finishes.</p></div>
+    </div>
+  </section>
+
+  <section id="lib4">
+    <h2><span class="k">6</span>Delete cascade (LIB-4)</h2>
+    <p><code>DELETE /documents/{id}</code> removes the database rows (cascading to blocks, segments, sections and audio cache rows), the stored PDF and the document's audio directory, then returns 204. It refuses with 409 while the document is still parsing, so it never races the ingest worker.</p>
+    <figure>
+      <svg viewBox="0 0 880 220" role="img" aria-label="Delete request checks status, then removes rows, pdf file and audio directory">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="80" width="180" height="56" rx="4"/>
+          <rect x="260" y="70" width="170" height="76" rx="4" fill="var(--accent-soft)"/>
+          <rect x="500" y="20" width="360" height="50" rx="4"/><rect x="500" y="84" width="360" height="50" rx="4"/><rect x="500" y="148" width="360" height="50" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="110" y="104" text-anchor="middle" font-weight="600">DELETE /documents/{id}</text><text x="110" y="122" text-anchor="middle" font-size="11" fill="var(--muted)">inline confirm in Library</text>
+          <text x="345" y="94" text-anchor="middle" font-weight="600">status check</text>
+          <text x="345" y="112" text-anchor="middle" class="mono" font-size="11">parsing → 409</text>
+          <text x="345" y="128" text-anchor="middle" class="mono" font-size="11">unknown → 404</text>
+          <text x="512" y="42" font-weight="600">rows</text><text x="560" y="42" class="mono" font-size="11">documents → blocks, segments, sections, audio_cache</text>
+          <text x="512" y="62" font-size="11" fill="var(--muted)">FK cascade</text>
+          <text x="512" y="106" font-weight="600">pdf</text><text x="560" y="106" class="mono" font-size="11">pdfs/{sha256}.pdf</text>
+          <text x="512" y="126" font-size="11" fill="var(--muted)">the uploaded file</text>
+          <text x="512" y="170" font-weight="600">audio</text><text x="560" y="170" class="mono" font-size="11">audio/{id}/</text>
+          <text x="512" y="190" font-size="11" fill="var(--muted)">every cached clip, all voices and speeds</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M200 108 H258"/><path d="M430 100 L498 45"/><path d="M430 108 H498"/><path d="M430 116 L498 172"/>
+        </g>
+        <text x="440" y="212" font-size="11" fill="var(--muted)">then 204</text>
+      </svg>
+      <figcaption>One request clears all three places a document lives: the rows, the PDF and the audio directory; the soak's last check is that nothing it created is left behind.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>LIB-4: cached audio is the largest thing on disk (every voice and speed a document was heard at); deleting a document must free it.</p></div>
+      <div><b>Why 409 while parsing</b><p>The ingest worker is still writing rows; deleting under it would leave orphans or a crash. The user waits for ready or failed.</p></div>
+    </div>
+  </section>
+
+  <section id="keys">
+    <h2><span class="k">7</span>Keyboard and Media Session (PLAY-6, PLAY-7)</h2>
+    <p>One <code>keydown</code> listener on <code>document</code> and the <code>navigator.mediaSession</code> handlers are both thin maps onto the dispatches the PlayerBar buttons already use. Neither has logic of its own; the machine stays the only place playback state changes (D10).</p>
+    <figure>
+      <svg viewBox="0 0 880 270" role="img" aria-label="Keys and media session handlers map onto the same machine dispatches as the buttons">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="20" width="250" height="140" rx="4"/><rect x="20" y="180" width="250" height="74" rx="4"/>
+          <rect x="350" y="80" width="200" height="110" rx="4" fill="var(--accent-soft)"/>
+          <rect x="630" y="80" width="230" height="110" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="32" y="40" font-weight="600">player/keys.ts (pure)</text>
+          <text x="32" y="60" class="mono" font-size="11">Space → PLAY / PAUSE</text>
+          <text x="32" y="76" class="mono" font-size="11">← / → → skip sentence</text>
+          <text x="32" y="92" class="mono" font-size="11">Shift+← / Shift+→ → skip section</text>
+          <text x="32" y="108" class="mono" font-size="11">+ or = → speed +0.25</text>
+          <text x="32" y="124" class="mono" font-size="11">- → speed −0.25 (clamp 0.5..3.0)</text>
+          <text x="32" y="146" font-size="11" fill="var(--muted)">ignored in input, select, textarea, contenteditable</text>
+          <text x="32" y="200" font-weight="600">player/mediaSession.ts</text>
+          <text x="32" y="218" class="mono" font-size="11">play, pause, previoustrack, nexttrack</text>
+          <text x="32" y="236" font-size="11" fill="var(--muted)">feature-detected; title = document, artist HearNarro</text>
+          <text x="450" y="104" text-anchor="middle" font-weight="600">dispatch</text>
+          <text x="450" y="124" text-anchor="middle" class="mono" font-size="11">PLAY, PAUSE, SKIP,</text>
+          <text x="450" y="140" text-anchor="middle" class="mono" font-size="11">SKIP_SECTION, SET_SPEED</text>
+          <text x="450" y="166" text-anchor="middle" font-size="11" fill="var(--muted)">same as PlayerBar buttons</text>
+          <text x="745" y="104" text-anchor="middle" font-weight="600">player/machine.ts (D10)</text>
+          <text x="745" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">pure reducer; state changes</text>
+          <text x="745" y="140" text-anchor="middle" font-size="11" fill="var(--muted)">only here</text>
+          <text x="745" y="166" text-anchor="middle" class="mono" font-size="11">→ playbackState mirrors it</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M270 90 L348 120"/><path d="M270 217 L348 160"/><path d="M550 135 H628"/>
+          <path d="M745 190 V250 H280" stroke-dasharray="4 3"/>
+        </g>
+        <text x="520" y="244" font-size="11" fill="var(--muted)">lock-screen state</text>
+      </svg>
+      <figcaption>Keyboard, lock screen and on-screen buttons share one dispatch path into the reducer, so a shortcut cannot do anything a button cannot, and the lock screen's play state is read back from the same machine.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>PLAY-6 asks for space, arrows and +/-; PLAY-7 for lock-screen controls on phone browsers. Lock-screen behaviour on a real phone stays a manual check.</p></div>
+      <div><b>Why pure maps</b><p>A pure key map and handler wrapper are unit-testable without a browser (<code>keys.test.ts</code>), and keeping state in the one reducer file is D10.</p></div>
+    </div>
+  </section>
+
+  <section id="skip">
+    <h2><span class="k">8</span>Skip toggles (PLAY-8)</h2>
+    <p>Three toggles in the PlayerBar: footnotes, captions and references. Footnotes and captions are picked by block type. References is a span: from a heading whose text matches the references pattern up to the next heading. Skipped segments are dimmed, never scheduled, and jumped over by skip and seek.</p>
+    <figure>
+      <svg viewBox="0 0 880 250" role="img" aria-label="A run of segments with types; footnote, caption and the references span are marked skipped">
+        <g font-size="11" class="mono" fill="currentColor">
+          <rect x="20" y="40" width="96" height="34" fill="none" stroke="currentColor"/><text x="68" y="61" text-anchor="middle">heading</text>
+          <rect x="116" y="40" width="96" height="34" fill="none" stroke="currentColor"/><text x="164" y="61" text-anchor="middle">body</text>
+          <rect x="212" y="40" width="96" height="34" fill="var(--next-soft)" stroke="currentColor" stroke-dasharray="4 3"/><text x="260" y="61" text-anchor="middle" fill="var(--muted)">footnote</text>
+          <rect x="308" y="40" width="96" height="34" fill="none" stroke="currentColor"/><text x="356" y="61" text-anchor="middle">body</text>
+          <rect x="404" y="40" width="96" height="34" fill="var(--next-soft)" stroke="currentColor" stroke-dasharray="4 3"/><text x="452" y="61" text-anchor="middle" fill="var(--muted)">caption</text>
+          <rect x="500" y="40" width="120" height="34" fill="var(--next-soft)" stroke="currentColor" stroke-dasharray="4 3"/><text x="560" y="61" text-anchor="middle" fill="var(--muted)">References</text>
+          <rect x="620" y="40" width="80" height="34" fill="var(--next-soft)" stroke="currentColor" stroke-dasharray="4 3"/><text x="660" y="61" text-anchor="middle" fill="var(--muted)">list</text>
+          <rect x="700" y="40" width="80" height="34" fill="var(--next-soft)" stroke="currentColor" stroke-dasharray="4 3"/><text x="740" y="61" text-anchor="middle" fill="var(--muted)">list</text>
+          <rect x="780" y="40" width="80" height="34" fill="none" stroke="currentColor"/><text x="820" y="61" text-anchor="middle">heading</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none">
+          <path d="M500 90 V100 H780 V90"/>
+        </g>
+        <g font-size="11" fill="var(--muted)">
+          <text x="640" y="118" text-anchor="middle">references span: matching heading up to the next heading</text>
+          <text x="260" y="30" text-anchor="middle">type = footnote</text><text x="452" y="30" text-anchor="middle">type = caption</text>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="20" y="160" font-weight="600">Rules (player/skip.ts, pure)</text>
+          <text x="20" y="182" class="mono" font-size="11">footnotes:  block.type == "footnote"</text>
+          <text x="20" y="200" class="mono" font-size="11">captions:   block.type == "caption"</text>
+          <text x="20" y="218" class="mono" font-size="11">references: heading ~ /^(references|bibliography|works cited)\b/i … next heading</text>
+          <text x="20" y="240" font-size="11" fill="var(--muted)">State: machine.skip {footnotes, captions, references}, SET_SKIP; persisted per document in localStorage (try/catch).</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M164 34 C 220 6, 300 6, 356 34"/><path d="M356 34 C 500 0, 700 0, 820 34"/>
+        </g>
+        <text x="600" y="12" font-size="11" fill="var(--muted)">schedule and skip jump over dimmed segments</text>
+      </svg>
+      <figcaption>Two toggles are a block-type test; the references toggle is a span from a matching heading to the next heading, so the whole bibliography is dropped from scheduling and navigation in one rule.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>PLAY-8: footnotes, captions and a long references list interrupt listening; the user wants to mute them without re-ingesting.</p></div>
+      <div><b>Why localStorage here</b><p>Skip choices are a per-viewer convenience, not document data; losing them in a private window is harmless, so they stay off the server.</p></div>
+    </div>
+  </section>
+
+  <section id="ing8">
+    <h2><span class="k">9</span>Sections written at ingestion (ING-8, closes D25)</h2>
+    <p>Ingestion writes a <code>sections</code> row for every heading block, pointing at the first segment of that block, and stamps every following segment with that <code>section_id</code>. Documents ingested before this change keep empty sections and the client keeps deriving them from headings (D25).</p>
+    <figure>
+      <svg viewBox="0 0 880 220" role="img" aria-label="Heading blocks become sections rows; segments carry the section id of the heading before them">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="30" width="240" height="160" rx="4"/>
+          <rect x="330" y="60" width="200" height="90" rx="4" fill="var(--accent-soft)"/>
+          <rect x="600" y="30" width="260" height="70" rx="4"/><rect x="600" y="120" width="260" height="70" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="32" y="50" font-weight="600">classified blocks, reading order</text>
+          <text x="32" y="74" class="mono" font-size="11">heading "1 Introduction"</text>
+          <text x="32" y="92" class="mono" font-size="11" fill="var(--muted)">body, body, list</text>
+          <text x="32" y="116" class="mono" font-size="11">heading "2 Method"</text>
+          <text x="32" y="134" class="mono" font-size="11" fill="var(--muted)">body, table</text>
+          <text x="32" y="158" class="mono" font-size="11">heading "References"</text>
+          <text x="32" y="176" class="mono" font-size="11" fill="var(--muted)">list …</text>
+          <text x="430" y="84" text-anchor="middle" font-weight="600">per heading block</text>
+          <text x="430" y="104" text-anchor="middle" class="mono" font-size="11">title = block text</text>
+          <text x="430" y="120" text-anchor="middle" class="mono" font-size="11">level = 1 (v1)</text>
+          <text x="430" y="136" text-anchor="middle" class="mono" font-size="11">first_segment_id</text>
+          <text x="612" y="52" font-weight="600">sections rows</text>
+          <text x="612" y="72" class="mono" font-size="11">(1, "1 Introduction", 1, seg 1)</text>
+          <text x="612" y="88" class="mono" font-size="11">(2, "2 Method", 1, seg 9) …</text>
+          <text x="612" y="142" font-weight="600">segments</text>
+          <text x="612" y="162" class="mono" font-size="11">section_id = last heading seen</text>
+          <text x="612" y="178" font-size="11" fill="var(--muted)">renormalize does not rebuild sections</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M260 105 H328"/><path d="M530 90 L598 66"/><path d="M530 120 L598 152"/>
+        </g>
+      </svg>
+      <figcaption>Every heading block becomes one section row and every segment after it inherits its id, so section skip and the soak's "skip to the last section" read a stored table instead of re-deriving it in the browser.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>ING-8: a table of contents from headings. D25 had the client derive sections because ingestion never wrote them; M4 closes that.</p></div>
+      <div><b>Why level is always 1</b><p>The classifier labels a block as a heading but has no rank for it; inventing levels would be a guess, so v1 writes a flat list.</p></div>
+    </div>
+  </section>
+
+  <section id="ing4">
+    <h2><span class="k">10</span>Page markers and TOC leakage (ING-4, ING-5)</h2>
+    <p>A block whose only text is a page number on its own line, outside the TOC region, is typed <code>noise</code> and dropped, instead of surviving as a body or list block with empty spoken text. The document 17 findings add three fixes: a heading that is a bare page number is noise, a heading fragment ending in a hyphen joins the next line, and the U+FB00..U+FB06 ligatures decompose in stage 1.</p>
+    <figure>
+      <svg viewBox="0 0 880 230" role="img" aria-label="Candidate blocks tested against the page-marker pattern and TOC region; matches become noise">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="30" width="200" height="170" rx="4"/>
+          <rect x="300" y="60" width="240" height="110" rx="4" fill="var(--accent-soft)"/>
+          <rect x="620" y="30" width="240" height="70" rx="4"/><rect x="620" y="130" width="240" height="70" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="32" y="50" font-weight="600">blocks in</text>
+          <text x="32" y="74" class="mono" font-size="11">body "[12]"</text>
+          <text x="32" y="94" class="mono" font-size="11">list "137"</text>
+          <text x="32" y="114" class="mono" font-size="11">heading "42"  (TOC leak)</text>
+          <text x="32" y="134" class="mono" font-size="11">heading "Distrib-" + "uted"</text>
+          <text x="32" y="154" class="mono" font-size="11">body "eﬃcient"</text>
+          <text x="32" y="178" class="mono" font-size="11" fill="var(--muted)">TOC "Intro ..... 3"</text>
+          <text x="420" y="84" text-anchor="middle" font-weight="600">noise rule</text>
+          <text x="420" y="104" text-anchor="middle" class="mono" font-size="11">text ~ ^\[?\d{1,4}\]?$</text>
+          <text x="420" y="120" text-anchor="middle" class="mono" font-size="11">and not in TOC region</text>
+          <text x="420" y="140" text-anchor="middle" font-size="11" fill="var(--muted)">bare-number heading → noise</text>
+          <text x="420" y="156" text-anchor="middle" font-size="11" fill="var(--muted)">hyphen fragment joins next line</text>
+          <text x="632" y="52" font-weight="600">noise (dropped)</text>
+          <text x="632" y="72" class="mono" font-size="11">"[12]", "137", "42"</text>
+          <text x="632" y="88" font-size="11" fill="var(--muted)">never segmented, never spoken</text>
+          <text x="632" y="152" font-weight="600">kept, repaired</text>
+          <text x="632" y="172" class="mono" font-size="11">"Distributed", "efficient"</text>
+          <text x="632" y="188" font-size="11" fill="var(--muted)">TOC lines untouched by this rule</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M220 115 H298"/><path d="M540 100 L618 66"/><path d="M540 130 L618 164"/>
+        </g>
+      </svg>
+      <figcaption>A line that is nothing but a page number, outside the table of contents, is classified as noise before segmentation, so it never becomes an empty segment the player has to step over. Existing documents need re-upload: <code>renormalize</code> does not reclassify.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>ING-4 excludes page-number blocks from the reading order; M3 listening found them surviving as empty segments, and document 17 showed TOC numbers leaking in as headings.</p></div>
+      <div><b>Why the TOC region is exempt</b><p>TOC lines end in page numbers by design; the rule targets numbers standing alone in the body, not the TOC's own layout.</p></div>
+    </div>
+  </section>
+
+  <section id="ing6">
+    <h2><span class="k">11</span>Number forms by ear (ING-6)</h2>
+    <p>Before any new normalizer rule, a sampler synthesizes twelve sentences of money, years, fractions, slashes, phone numbers, versions, temperatures and ranges with Kokoro. The user listens and marks which readings are wrong; only those get rules, each with a character-map round-trip test.</p>
+    <figure>
+      <svg viewBox="0 0 880 150" role="img" aria-label="Sampler sentences to WAV files to user verdicts to rules for wrong forms only">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="40" width="180" height="70" rx="4"/><rect x="240" y="40" width="180" height="70" rx="4"/>
+          <rect x="460" y="40" width="180" height="70" rx="4" fill="var(--accent-soft)"/><rect x="680" y="40" width="180" height="70" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor" text-anchor="middle">
+          <text x="110" y="66" font-weight="600">12 sentences (§3a)</text><text x="110" y="86" class="mono" font-size="11">$50 million, 24/7, 3/4</text>
+          <text x="330" y="66" font-weight="600">Kokoro → WAV</text><text x="330" y="86" class="mono" font-size="11">497_number_forms/</text>
+          <text x="550" y="66" font-weight="600">user listens</text><text x="550" y="86" font-size="11">marks wrong forms</text>
+          <text x="770" y="66" font-weight="600">rules + tests</text><text x="770" y="86" class="mono" font-size="11">test_ing6_* round trip</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)"><path d="M200 75 H238"/><path d="M420 75 H458"/><path d="M640 75 H678"/></g>
+        <text x="20" y="138" font-size="11" fill="var(--muted)">Forms the model already reads correctly get no rule: every rule is a chance to break a character map.</text>
+      </svg>
+      <figcaption>Rules follow the ear, not a list: only the number forms the user hears read wrongly get a normalizer rule.</figcaption>
+    </figure>
+  </section>
+
+  <section id="ing7">
+    <h2><span class="k">12</span>Tables and equations as cues (ING-7)</h2>
+    <p>A table block becomes a spoken cue, "Table N, R rows.", then one segment per row with cells joined by commas; rows with no letters are skipped. An equation block becomes a single segment, "Equation." or "Equation N." when it carries a label like <code>(3)</code>; its symbols are never spoken.</p>
+    <figure>
+      <svg viewBox="0 0 880 250" role="img" aria-label="A table block becomes a cue segment plus one prose segment per row; an equation becomes one cue segment">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="20" width="250" height="110" rx="4"/>
+          <rect x="330" y="40" width="200" height="70" rx="4" fill="var(--accent-soft)"/>
+          <rect x="590" y="20" width="270" height="110" rx="4"/>
+          <rect x="20" y="160" width="250" height="60" rx="4"/>
+          <rect x="330" y="160" width="200" height="60" rx="4" fill="var(--accent-soft)"/>
+          <rect x="590" y="160" width="270" height="60" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="32" y="40" font-weight="600">table block (2nd in document)</text>
+          <text x="32" y="62" class="mono" font-size="11">Model | Params | Score</text>
+          <text x="32" y="78" class="mono" font-size="11">Base  | 82M    | 71.2</text>
+          <text x="32" y="94" class="mono" font-size="11">Large | 330M   | 74.9</text>
+          <text x="32" y="110" class="mono" font-size="11" fill="var(--muted)">----- | ----   | ----   (no letters)</text>
+          <text x="430" y="64" text-anchor="middle" font-weight="600">table rule</text>
+          <text x="430" y="82" text-anchor="middle" class="mono" font-size="11">cue + row per segment</text>
+          <text x="430" y="98" text-anchor="middle" class="mono" font-size="11">cells ", "  end "."</text>
+          <text x="602" y="40" font-weight="600">segments</text>
+          <text x="602" y="62" class="mono" font-size="11">"Table 2, 3 rows."</text>
+          <text x="602" y="78" class="mono" font-size="11">"Model, Params, Score."</text>
+          <text x="602" y="94" class="mono" font-size="11">"Base, 82M, 71.2."</text>
+          <text x="602" y="110" class="mono" font-size="11">"Large, 330M, 74.9."</text>
+          <text x="32" y="182" font-weight="600">equation block</text>
+          <text x="32" y="202" class="mono" font-size="11">E = mc² + Σ … (3)</text>
+          <text x="430" y="184" text-anchor="middle" font-weight="600">equation rule</text>
+          <text x="430" y="202" text-anchor="middle" class="mono" font-size="11">label → "Equation N."</text>
+          <text x="602" y="182" font-weight="600">one segment</text>
+          <text x="602" y="202" class="mono" font-size="11">"Equation 3."</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M270 75 H328"/><path d="M530 75 H588"/><path d="M270 190 H328"/><path d="M530 190 H588"/>
+        </g>
+        <text x="20" y="242" font-size="11" fill="var(--muted)">Golden D14 excluded-mass check unchanged: table characters stay excluded from the prose comparison.</text>
+      </svg>
+      <figcaption>Structure that cannot be heard is announced instead of read: a table becomes a count cue then one sentence per row, and an equation becomes a one-word cue, so neither turns into symbol soup.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>ING-7: tables as row-by-row prose with a cue ("Table 2, 3 rows"), equations as a cue, not symbols.</p></div>
+      <div><b>Why rows without letters are skipped</b><p>Separator rows and pure-number padding carry no meaning by ear; reading "dash dash dash" is worse than silence.</p></div>
+    </div>
+  </section>
+
+  <section id="ocr">
+    <h2><span class="k">13</span>OCR fallback per page (ING-2, D28 proposed)</h2>
+    <p>Stage 1 counts the non-space glyphs on each page. A page with fewer than 20 is rendered at 100 dpi in grayscale; if more than 0.5 % of its pixels are darker than 128, there is ink without text, and the page goes to <code>OCRBackend.recognize</code>. With no engine installed, the page stays empty and the document records how many pages were skipped.</p>
+    <figure>
+      <svg viewBox="0 0 880 290" role="img" aria-label="Per-page decision: text chars, then ink coverage, then OCR backend or skip">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="110" width="140" height="60" rx="4"/>
+          <path d="M290 100 L360 140 L290 180 L220 140 Z"/>
+          <path d="M500 100 L580 140 L500 180 L420 140 Z"/>
+          <rect x="420" y="16" width="160" height="50" rx="4"/>
+          <rect x="420" y="220" width="160" height="56" rx="4"/>
+          <path d="M720 100 L790 140 L720 180 L650 140 Z"/>
+          <rect x="640" y="16" width="220" height="56" rx="4" fill="var(--accent-soft)"/>
+          <rect x="640" y="220" width="220" height="56" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor" text-anchor="middle">
+          <text x="90" y="136" font-weight="600">page p</text><text x="90" y="154" class="mono" font-size="11">text_chars</text>
+          <text x="290" y="136" class="mono" font-size="11">text_chars</text><text x="290" y="152" class="mono" font-size="11">&lt; 20 ?</text>
+          <text x="500" y="136" class="mono" font-size="11">ink &gt; 0.5 % ?</text><text x="500" y="152" font-size="10" fill="var(--muted)">100 dpi, px &lt; 128</text>
+          <text x="500" y="38" font-weight="600">text layer</text><text x="500" y="54" font-size="11" fill="var(--muted)">normal stage 1</text>
+          <text x="500" y="242" font-weight="600">blank page</text><text x="500" y="260" font-size="11" fill="var(--muted)">nothing to read</text>
+          <text x="720" y="136" class="mono" font-size="11">tesseract</text><text x="720" y="152" class="mono" font-size="11">on PATH ?</text>
+          <text x="750" y="38" font-weight="600">OCRBackend.recognize</text><text x="750" y="56" class="mono" font-size="11">→ list[OcrLine] text + bbox</text>
+          <text x="750" y="242" font-weight="600">page left empty</text><text x="750" y="260" class="mono" font-size="11">ocr_skipped_pages += 1</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M160 140 H218"/><path d="M290 100 V41 H418"/><path d="M360 140 H418"/>
+          <path d="M500 180 V218"/><path d="M580 140 H648"/><path d="M720 100 V74"/><path d="M720 180 V218"/>
+        </g>
+        <g font-size="11" fill="var(--muted)">
+          <text x="296" y="80">no</text><text x="372" y="134">yes</text><text x="508" y="200">no</text><text x="596" y="134">yes</text><text x="728" y="90">yes</text><text x="728" y="204">no</text>
+          <text x="20" y="30">Backends: TesseractBackend</text><text x="20" y="46">(subprocess, psm 3, tsv)</text><text x="20" y="62">FakeOCRBackend (fixture lines)</text>
+        </g>
+      </svg>
+      <figcaption>OCR runs only on pages that have ink but no text, decided per page by two cheap measurements; when no engine is present the page is counted, logged and left empty instead of failing the document.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>ING-2: detect per page whether a text layer exists and OCR only the pages without one. Scanned pages are otherwise silent.</p></div>
+      <div><b>Why a subprocess (D28, proposed)</b><p>Tesseract is Apache-2.0 and runs as a binary behind <code>OCRBackend</code>, so no OCR engine becomes a Python dependency. It is not installed on the dev machine; the user chooses how to install it, or OCR is tested with the fake backend only in M4 (real test <code>@pytest.mark.ocr</code>, skipped without the binary).</p></div>
+    </div>
+  </section>
+
+  <section id="soak">
+    <h2><span class="k">14</span>The 300-page soak gate</h2>
+    <p>A generated 300-page PDF (reportlab, dev-only, a heading every 10 pages, about 20 varied sentences per page) is pushed through the whole system. The API clause checks time, memory, order, audio and cleanup; the browser clause checks render time, sync, navigation and restore; the Docker clause checks the packaged app answers.</p>
+    <figure>
+      <svg viewBox="0 0 880 270" role="img" aria-label="Soak fixture feeds three gate clauses with their thresholds">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="100" width="170" height="70" rx="4" fill="var(--accent-soft)"/>
+          <rect x="260" y="16" width="600" height="72" rx="4"/>
+          <rect x="260" y="100" width="600" height="72" rx="4"/>
+          <rect x="260" y="184" width="600" height="72" rx="4" stroke-dasharray="4 3"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="105" y="126" text-anchor="middle" font-weight="600">soak_300.pdf</text>
+          <text x="105" y="144" text-anchor="middle" font-size="11" fill="var(--muted)">generated per run,</text>
+          <text x="105" y="158" text-anchor="middle" font-size="11" fill="var(--muted)">not committed</text>
+          <text x="272" y="36" font-weight="600">1 API soak</text><text x="400" y="36" class="mono" font-size="11">test_soak_300.py, HEARNARRO_TEST_SOAK=1</text>
+          <text x="272" y="56" class="mono" font-size="11">ready &lt; 300 s wall · peak RSS &lt; 1.5 GB · segments in order</text>
+          <text x="272" y="74" class="mono" font-size="11">/audio first + last (FakeBackend) · DELETE leaves nothing</text>
+          <text x="272" y="120" font-weight="600">2 Browser soak</text><text x="400" y="120" class="mono" font-size="11">soak.spec.ts, Chromium</text>
+          <text x="272" y="140" class="mono" font-size="11">first render &lt; 5 s · right word at 3 probe times</text>
+          <text x="272" y="158" class="mono" font-size="11">skip to last section · reload restores within one sentence</text>
+          <text x="272" y="204" font-weight="600">3 Docker</text><text x="400" y="204" font-size="11" fill="var(--muted)">run by the user: no container runtime here</text>
+          <text x="272" y="224" class="mono" font-size="11">docker compose up --build</text>
+          <text x="272" y="242" class="mono" font-size="11">GET /documents → 200 · app loads at /</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M190 120 L258 52"/><path d="M190 135 H258"/><path d="M190 150 L258 220"/>
+        </g>
+      </svg>
+      <figcaption>One fixture, three clauses, each with a number to beat; the measurements (wall time, RSS, segment count, first render, probe results) are saved under <code>_agent/results/</code>, and the first-render number decides D29.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>The PRD gate for M4 is "300-page soak passes; Docker up". Every earlier test used short documents; a book-length one is where memory, ordering and rendering cost show up.</p></div>
+      <div><b>Why D29 waits for the numbers (proposed)</b><p>If first render passes 5 s or probes fail from scroll jank, the reader renders a window of segments (own code, no new dependency); otherwise M3's "load everything" stays.</p></div>
+    </div>
+  </section>
+
+  <section id="compose">
+    <h2><span class="k">15</span>One container serving API and app (D21, D30 proposed)</h2>
+    <p>With D21 the API mounts <code>web/dist</code> at <code>/</code> after its routers, so one process serves both. Compose therefore runs one service, <code>api</code>, built in two stages: a Node stage builds the app, the Python stage installs the API with Kokoro pinned and copies the built app in.</p>
+    <figure>
+      <svg viewBox="0 0 880 280" role="img" aria-label="Multi-stage build into one api service; routers win before the static mount; volumes for HF cache and data">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="20" width="200" height="60" rx="4"/><rect x="20" y="110" width="200" height="60" rx="4"/>
+          <rect x="300" y="20" width="320" height="200" rx="4"/>
+          <rect x="320" y="70" width="280" height="60" rx="4" fill="var(--accent-soft)"/>
+          <rect x="320" y="146" width="280" height="56" rx="4"/>
+          <rect x="700" y="20" width="160" height="56" rx="4"/><rect x="700" y="96" width="160" height="56" rx="4"/><rect x="700" y="172" width="160" height="56" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="120" y="44" text-anchor="middle" font-weight="600">node:24 stage</text><text x="120" y="62" text-anchor="middle" class="mono" font-size="11">npm ci &amp;&amp; npm run build</text>
+          <text x="120" y="134" text-anchor="middle" font-weight="600">python:3.11-slim</text><text x="120" y="152" text-anchor="middle" class="mono" font-size="11">pip install .[tts]</text>
+          <text x="312" y="42" font-weight="600">service api  ·  port 8765</text><text x="312" y="58" font-size="11" fill="var(--muted)">FastAPI app.py</text>
+          <text x="332" y="92" font-weight="600">routers first</text>
+          <text x="332" y="110" class="mono" font-size="11">/documents /audio /voices /settings</text>
+          <text x="332" y="168" font-weight="600">static mount, html=True</text>
+          <text x="332" y="186" class="mono" font-size="11">/ → web/dist (HEARNARRO_WEB_DIST)</text>
+          <text x="780" y="42" text-anchor="middle" font-weight="600">hf_home volume</text><text x="780" y="60" text-anchor="middle" class="mono" font-size="11">HF_HOME, Kokoro pinned</text>
+          <text x="780" y="118" text-anchor="middle" font-weight="600">bind mount /data</text><text x="780" y="136" text-anchor="middle" class="mono" font-size="11">HEARNARRO_DATA_DIR</text>
+          <text x="780" y="194" text-anchor="middle" font-weight="600">browser</text><text x="780" y="212" text-anchor="middle" class="mono" font-size="11">#/ and #/doc/{id}</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar)">
+          <path d="M220 50 C 260 50, 260 174, 318 174"/><path d="M220 140 H298"/>
+          <path d="M620 48 H698"/><path d="M620 124 H698"/><path d="M700 200 H622"/>
+        </g>
+        <g font-size="11" fill="var(--muted)">
+          <text x="226" y="96">web/dist copied in</text>
+          <text x="20" y="250">The old web service in docker-compose.yml is removed. Hash routes mean no SPA fallback; without web/dist, / is 404 and the API still serves.</text>
+          <text x="20" y="268">Lint-checked here (YAML and shell syntax; docker compose config is unavailable); built and run by the user.</text>
+        </g>
+      </svg>
+      <figcaption>Because the API serves the built app after its own routes, the stack is one image and one service: the app at <code>/</code>, the API paths unchanged, models and data on volumes so a rebuild keeps both.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>The gate's second half is "Docker up": a user without Python or Node set up runs one command and gets the app.</p></div>
+      <div><b>Why one service (D30, proposed)</b><p>D21 already makes FastAPI the static server; a second web container would only proxy back to it. One service is one port, one log and no CORS.</p></div>
+    </div>
+  </section>
+
+  <section id="decisions">
+    <h2><span class="k">16</span>Decisions proposed</h2>
+    <p>D26–D30 are proposed in the spec and become Technical Design entries in phase 5 after the user confirms them.</p>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>ID</th><th>Decision</th><th>Status</th></tr>
+      <tr><td>D26</td><td>Position saves use the same <code>PATCH</code> as settings, sent with <code>fetch(..., {keepalive: true})</code> on <code>pagehide</code>; no <code>sendBeacon</code>.</td><td>proposed</td></tr>
+      <tr><td>D28</td><td>OCR engine is Tesseract as a subprocess behind <code>OCRBackend</code>; no OCR engine is a Python dependency; install method is the user's call.</td><td>proposed</td></tr>
+      <tr><td>D29</td><td>Windowed rendering in <code>Reader.tsx</code> only if the soak's first render passes 5 s or probes fail from jank; own implementation.</td><td>proposed, decided by the soak</td></tr>
+      <tr><td>D30</td><td>Compose runs one <code>api</code> service from a multi-stage <code>api/Dockerfile</code> that copies <code>web/dist</code> in; the <code>web</code> service is removed.</td><td>proposed</td></tr>
+      <tr><td>D21</td><td>FastAPI serves <code>web/dist</code> (confirmed in M3, built in M4).</td><td>confirmed</td></tr>
+      <tr><td>D19</td><td>Clause chunking of the first sentence below 1.0x: optional A/B with <code>purge-audio</code> on the same segments.</td><td>deferred, user's call</td></tr>
+    </table></div>
+    <p style="font-size:13px;color:var(--muted);margin-top:8px">D27 is not named in the spec draft; the supervisor fills it in or renumbers when the decisions are confirmed.</p>
+  </section>
+
+  <section id="status">
+    <h2><span class="k">17</span>Status</h2>
+    <p>As of 2026-10-17: phase 0 is running on <code>m4-library</code>. The M3 leftovers are committed (<code>e22c758</code>) and the interfaces spec is committed (<code>8a10704</code>). The environment report and the number-forms sampler are pending; phases 1–5 are next.</p>
+    <h3>Things to know now</h3>
+    <div class="note"><ul>
+      <li>No container runtime on this machine (docker, podman, colima, orbstack, nerdctl all absent): the Docker gate clause is built and lint-checked here and run by the user.</li>
+      <li>No <code>tesseract</code> on this machine: OCR is tested with <code>FakeOCRBackend</code> unless the user installs it (D28).</li>
+      <li>Carried from M3: ING-4 page-marker lines, the document 17 findings, the D19 A/B (optional), and D16, one play in the user's own Safari.</li>
+      <li>Earlier guides: <a href="https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n">HearNarro M1 Ingest Map</a>, <a href="https://claude.ai/artifact/J7wJUWammFqBxc22s121Pr">HearNarro M2 Synthesis Map</a>; the M3 reader map is in <code>docs/guide/m3-reader-map.html</code>.</li>
+    </ul></div>
+  </section>
+</main>
