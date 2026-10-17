@@ -229,6 +229,18 @@ decides whether clause chunking (D19) is needed in M3 or deferred.
   selects by role/label.
 - `Toc`: `sections` list; click → `SEEK{first_segment_id, 0}` (and `PLAY` if idle).
 
+**Sections (amended 2026-10-17, phase 1 finding):** the API's `sections` table is never written in M1/M2
+(the e2e probe saw 0 sections in every fixture; ING-8 server-side TOC stays an M4 item). In M3 the reader
+derives sections client-side: every segment whose `type` is `heading` starts a section, titled by its
+`text`, with `first_segment_id = its id`; `sectionStarts` for LOAD is the ordered list of those ids. If the
+document endpoint ever returns a non-empty `sections`, it is used instead, unchanged. The Toc and the
+section-skip buttons work on the derived list; the e2e PLAY-1 section test asserts against heading
+segments (`.seg.seg-heading`).
+
+**Status element:** the PlayerBar status word is rendered in an element with `role="status"` and
+`data-status="<state>"`; the e2e tests read it with `getByRole('status')`. The speed readout text is
+`<speed.toFixed(2)>x` (e.g. `2.00x`).
+
 Styling: `app.css` with tokens per the artifact-guide pattern; `.w.active { background: var(--hl) }`,
 `.seg.active { background: var(--hl-seg) }`, contrast ≥ 4.5:1 on both themes (values recorded in the file).
 
