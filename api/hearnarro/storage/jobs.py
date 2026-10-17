@@ -1,15 +1,16 @@
 """Ingestion job run inside the ``ProcessPoolExecutor`` (D9; ING-1..ING-6).
 
-``run_ingestion`` is module-level so it pickles by reference into a spawned worker. It
-records ``page_count`` before extraction, updates ``pages_done`` while extracting (every 10
+``run_ingestion`` is module-level so it pickles by reference into a spawned worker (the
+pool uses the spawn start method, see ``hearnarro.app._default_executor``). It records ``page_count`` before extraction, updates ``pages_done`` while extracting (every 10
 pages and the last, on its own connection), then writes every block and segment and flips
 the document to ``ready`` in one transaction; any exception flips it to ``failed`` with the
-message instead. Both outcomes set ``parse_ms``, the worker's wall time from job start.
+message instead (and logs the traceback). Both outcomes set ``parse_ms``, the worker's wall time from job start.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import re
 import sqlite3
 import time
@@ -19,6 +20,8 @@ from pathlib import Path
 from hearnarro.ingestion.models import BBox
 from hearnarro.ingestion.pipeline import IngestResult, ingest
 from hearnarro.storage.db import connect_sync, pack_char_map
+
+log = logging.getLogger(__name__)
 
 PROGRESS_EVERY = 10  # pages between pages_done writes (plus one write for the last page)
 
@@ -212,6 +215,7 @@ def run_ingestion(db_file: str, document_id: int, pdf_path: str) -> float:
             _write_result(conn, document_id, result, title, _elapsed_ms(start))
         finally:
             conn.close()
-    except Exception as exc:  # noqa: BLE001 - any parse/store error becomes fail_reason
+    except Exception as exc:  # any parse/store error becomes fail_reason (and is logged)
+        log.exception("ingestion of document %s failed", document_id)
         mark_failed(db_file, document_id, f"{type(exc).__name__}: {exc}", _elapsed_ms(start))
     return time.perf_counter() - start

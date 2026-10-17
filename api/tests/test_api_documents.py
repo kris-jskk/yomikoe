@@ -100,6 +100,22 @@ async def test_ing1_ingestion_uses_process_pool_of_two(tmp_path: Path) -> None:
         assert pool._max_workers == 2
 
 
+async def test_ing1_ingestion_pool_uses_spawn_not_fork(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D9: the pool must spawn, never fork. A worker forked while the API holds a SQLite
+    connection inherits SQLite's per-inode lock state without the POSIX locks, and its
+    writes fail with "disk I/O error" or corrupt the file (seen in Docker, Linux default
+    start method fork; _agent/results/596_sqlite_hypotheses.txt)."""
+    import multiprocessing.context as mpc
+
+    # Make the process-wide default "fork" (as on Linux) so the test also bites on macOS.
+    monkeypatch.setattr(mpc._default_context, "_actual_context", mpc._concrete_contexts["fork"])
+    async with client_for(tmp_path) as client:
+        pool = client.app.state.ingest_executor  # type: ignore[attr-defined]
+        assert isinstance(pool._mp_context, mpc.SpawnContext)
+
+
 async def test_ing1_reupload_same_bytes_dedupes_by_sha256_documents_table(tmp_path: Path) -> None:
     async with client_for(tmp_path) as client:
         first = await upload(client, TEXT_PDF)

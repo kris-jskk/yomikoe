@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import multiprocessing
 from collections.abc import AsyncIterator, Callable
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from contextlib import asynccontextmanager
@@ -29,7 +30,13 @@ INGEST_WORKERS = 2  # D9
 
 
 def _default_executor() -> Executor:
-    return ProcessPoolExecutor(max_workers=INGEST_WORKERS)
+    """D9 pool with the spawn start method, never fork (Linux's default). A worker forked
+    while the API holds a SQLite connection inherits SQLite's per-inode lock bookkeeping
+    without the POSIX locks behind it; its writes then fail with "disk I/O error" or corrupt
+    the file (found in the Docker image, D30)."""
+    return ProcessPoolExecutor(
+        max_workers=INGEST_WORKERS, mp_context=multiprocessing.get_context("spawn")
+    )
 
 
 def build_backend(settings: Settings) -> TTSBackend:
