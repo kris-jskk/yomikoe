@@ -161,3 +161,13 @@ false positives (block-boundary splits from stages 1–4) are addressed. Known t
 review later: academic_01 "in Proc." / "W. -Y.", academic_03 "No-Term." / ":". The golden's
 sentence-level diagnostic (D14) now reads lower because its expected side keeps the old splits; it
 stays printed, never asserted, and is dropped when the boundary gate replaces it fully.
+
+## Amendment 2026-10-16 (D19, user decision): the 0.5x gate
+
+Benchmark (results 314, bench/2026-10-16.json): 1.0x–3.0x clear the 2 s gate with margin; at 0.5x the
+spec's 150-character sentence passes (1842 ms) but 6 of 20 benchmark sentences up to 200 characters
+exceed 2 s (max 2986 ms), because half speed doubles the audio generated before the first byte.
+Decision: the M2 gate is measured on the spec sentence (passes); the benchmark keeps reporting the
+full distribution; M3 adds clause-level chunking of the first sentence at speeds below 1.0 (synthesize
+the first clause, start playback, then the rest) and measures the listener's actual wait in the player.
+PRD: add the M3 item; gate wording unchanged.

@@ -25,6 +25,8 @@ On top of that, evidence works like this:
   no reservation script; if two files would collide, take the next number again.
 - A claim you could not back with a run is reported as **unverified**, in those words. Never
   round it up to confirmed.
+- The green run you cite must come from the final code. If you edit anything after a run (a new test,
+  a lint fix, a rename), run again and cite the new file; a run from before the last edit is not evidence.
 - Never print, cat, or grep credential, token or key files (`.env`, `*.pem`, `*.key`).
 
 ## 2. Things you never do
