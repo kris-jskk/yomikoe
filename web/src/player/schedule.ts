@@ -91,3 +91,42 @@ export function findActiveWord(mapped: MappedTimestamp[], elapsedMs: number): nu
   }
   return lo === 0 ? null : mapped[lo - 1].tokenIndex
 }
+
+/**
+ * Where the clip after `tail` starts (PLAY-5). Chained at `tail.startAt + tail.durationSec` while that
+ * is still ahead of `now` and the schedule is not buffering (a zero-length tail chains at its own
+ * startAt: gapless); otherwise freshly at `now + leadSec`, which is a gap.
+ */
+export function chainStart(
+  tail: ScheduleEntryView,
+  now: number,
+  buffering: boolean,
+  leadSec: number,
+): { when: number; gap: boolean } {
+  const end = tail.startAt + tail.durationSec
+  if (!buffering && end > now) return { when: end, gap: false }
+  return { when: now + leadSec, gap: true }
+}
+
+/** The first id after `afterId` in reading order that is not in `skipped`, or null past the end. */
+export function nextPlayable(
+  orderedIds: number[],
+  afterId: number,
+  skipped: ReadonlySet<number>,
+): number | null {
+  const i = orderedIds.indexOf(afterId)
+  if (i < 0) return null
+  for (let j = i + 1; j < orderedIds.length; j++) {
+    if (!skipped.has(orderedIds[j])) return orderedIds[j]
+  }
+  return null
+}
+
+/**
+ * What a failed fetch does (PLAY-5): a failure on the segment the schedule is blocked on (`targetId`:
+ * the play/seek target, or the next clip while buffering) is an error; any other failure is a
+ * prefetch, which is skipped so playback continues past it.
+ */
+export function onFetchFailure(failedId: number, targetId: number | null): 'error' | 'skip' {
+  return failedId === targetId ? 'error' : 'skip'
+}

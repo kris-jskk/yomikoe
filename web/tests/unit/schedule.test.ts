@@ -3,9 +3,12 @@ import { describe, expect, it } from 'vitest'
 
 import type { WordTimestamp } from '../../src/api/types'
 import {
+  chainStart,
   findActiveWord,
   locate,
   mapTimestampsToTokens,
+  nextPlayable,
+  onFetchFailure,
   tokenize,
   type MappedTimestamp,
   type ScheduleEntryView,
@@ -172,5 +175,45 @@ describe('findActiveWord', () => {
 
   it('no mapped timestamps is null', () => {
     expect(findActiveWord([], 500)).toBeNull()
+  })
+})
+
+describe('PLAY-5: empty clips and skipped segments', () => {
+  it('chains after a zero-length tail at the same startAt (gapless)', () => {
+    const audio: ScheduleEntryView = { segmentId: 221, startAt: 10, durationSec: 2 }
+    const empty: ScheduleEntryView = { segmentId: 222, startAt: 12, durationSec: 0 }
+    expect(chainStart(audio, 11, false, 0.05)).toEqual({ when: 12, gap: false })
+    expect(chainStart(empty, 11.5, false, 0.05)).toEqual({ when: 12, gap: false })
+  })
+
+  it('starts fresh (a gap) once the tail end has passed or while buffering', () => {
+    const empty: ScheduleEntryView = { segmentId: 222, startAt: 12, durationSec: 0 }
+    expect(chainStart(empty, 12.5, false, 0.05)).toEqual({ when: 12.55, gap: true })
+    expect(chainStart(empty, 11, true, 0.05)).toEqual({ when: 11.05, gap: true })
+  })
+
+  it('locate passes over a zero-length entry to the clip chained at the same startAt', () => {
+    const entries: ScheduleEntryView[] = [
+      { segmentId: 221, startAt: 10, durationSec: 2 },
+      { segmentId: 222, startAt: 12, durationSec: 0 },
+      { segmentId: 223, startAt: 12, durationSec: 3 },
+    ]
+    expect(locate(entries, 11.9)?.segmentId).toBe(221)
+    expect(locate(entries, 12)?.segmentId).toBe(223)
+  })
+
+  it('nextPlayable steps over skipped ids and is null past the end', () => {
+    const ids = [220, 221, 222, 223]
+    expect(nextPlayable(ids, 220, new Set())).toBe(221)
+    expect(nextPlayable(ids, 221, new Set([222]))).toBe(223)
+    expect(nextPlayable(ids, 221, new Set([222, 223]))).toBeNull()
+    expect(nextPlayable(ids, 223, new Set())).toBeNull()
+    expect(nextPlayable(ids, 999, new Set())).toBeNull()
+  })
+
+  it('a failed prefetch is skipped; only a failure on the target is an error', () => {
+    expect(onFetchFailure(222, 220)).toBe('skip')
+    expect(onFetchFailure(222, null)).toBe('skip')
+    expect(onFetchFailure(220, 220)).toBe('error')
   })
 })

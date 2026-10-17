@@ -40,7 +40,10 @@ export interface AudioClip {
   segmentId: number
   voice: string
   speed: number
-  buffer: AudioBuffer
+  /** Null for an empty clip (no samples: header-only WAV or X-Duration-Ms 0); it is never decoded. */
+  buffer: AudioBuffer | null
+  /** Playable length in seconds: the decoded buffer's duration, or 0 for an empty clip (PLAY-5). */
+  durationSec: number
   timestamps: WordTimestamp[]
   durationMs: number
   mediaType: string
