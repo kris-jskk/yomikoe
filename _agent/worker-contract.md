@@ -28,6 +28,9 @@ On top of that, evidence works like this:
 - The green run you cite must come from the final code. If you edit anything after a run (a new test,
   a lint fix, a rename), run again and cite the new file; a run from before the last edit is not evidence.
 - Never print, cat, or grep credential, token or key files (`.env`, `*.pem`, `*.key`).
+- Never run `git stash` in any worktree: the stash is shared by every worktree of the repo, and on
+  2026-10-17 two parallel workers stashed in the same second and swapped each other's edits. For a clean
+  "before" measurement, use a second detached worktree at the commit; never delete a worktree you did not create.
 - Python runs through `api/.venv/bin/python` (pip-managed). Never run `uv run`, `uv sync` or `uv pip`:
   a worker did on 2026-10-17 and it re-synced the venv and left `api/uv.lock`; the user chose pip (M4).
 
