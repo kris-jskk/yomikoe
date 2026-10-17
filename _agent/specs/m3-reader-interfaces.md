@@ -204,8 +204,12 @@ previous token stays highlighted.
 
 **Auto-scroll (amended 2026-10-17, follow mode, user request; replaces the cooldown):** an explicit navigation
 (Toc entry, word or sentence click, sentence/section skip, Play from idle/error or after the end, or the
-"Back to reading" button) always centres its target and turns follow mode on. The first `wheel`/`touchmove`
-inside the reading column, or a page-scroll key outside a form control, turns follow mode off; the automatic
+"Back to reading" button) always centres its target and turns follow mode on. Any document-level scroll the reader did not start itself (the browser's find box, the scrollbar, a trackpad
+gesture, keyboard scrolling) turns follow mode off: the engine marks a self-scroll window around each
+`scrollIntoView` it issues (`isSelfScroll(now, selfScrollUntil, dist, lastDist)` with `centreDistance`), ended by
+`scrollend` or by the target settling within 2 px of centre; a scroll inside the window that moves the target away
+from centre still counts as the listener's. `wheel`/`touchmove` inside the reading column and page-scroll keys
+outside a form control turn it off before the first scroll event; the automatic
 advance then never scrolls until the next navigation, while the highlight keeps moving. While follow mode is
 off, the PlayerBar shows `<button id="follow" aria-label="Back to reading">` with ↑ or ↓ when the highlighted
 segment is wholly above or below the viewport (no arrow when in view); clicking it centres the current segment
