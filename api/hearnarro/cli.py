@@ -2,13 +2,16 @@
 
 ``hearnarro dump <pdf> [--jsonl] [--no-ocr]`` prints segments (ING-2..ING-6);
 ``hearnarro check <pdf> [--json] [--no-ocr]`` runs the document quality checklist;
-``hearnarro serve [--data-dir DIR] [--host H] [--port N]`` runs the API (ING-1).
+``hearnarro serve [--data-dir DIR] [--host H] [--port N]`` runs the API (ING-1);
+``hearnarro renormalize --data-dir DIR (--document-id N | --all)`` re-runs speech
+normalization on stored segments and drops the audio cache of the ones that changed (SYN-1).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -49,6 +52,67 @@ def _serve(data_dir: str | None, host: str, port: int) -> int:
     return 0
 
 
+def renormalize_document(
+    conn: sqlite3.Connection, document_id: int, data_dir: Path
+) -> tuple[int, int, int]:
+    """Rewrite one document's ``normalized_text``/``char_map`` in one transaction.
+
+    Returns (segments changed, audio_cache rows removed, cached files left on disk). Only the
+    changed segments lose their cache rows; their files stay as orphans.
+    """
+    from hearnarro.ingestion.normalize import normalize
+    from hearnarro.storage.db import pack_char_map
+
+    rows = conn.execute(
+        "SELECT s.id, s.text, s.normalized_text, s.char_map, b.type FROM segments s "
+        "JOIN blocks b ON b.id = s.block_id WHERE s.document_id = ?",
+        (document_id,),
+    ).fetchall()
+    changed = removed = orphans = 0
+    with conn:
+        for seg_id, text, old_norm, old_map, block_type in rows:
+            norm, cmap = normalize(text, heading=block_type == "heading")
+            packed = pack_char_map(cmap)
+            if norm == old_norm and packed == bytes(old_map):
+                continue
+            changed += 1
+            conn.execute(
+                "UPDATE segments SET normalized_text = ?, char_map = ? WHERE id = ?",
+                (norm, packed, seg_id),
+            )
+            paths = conn.execute(
+                "SELECT path FROM audio_cache WHERE segment_id = ?", (seg_id,)
+            ).fetchall()
+            orphans += sum(1 for (path,) in paths if path and (data_dir / path).exists())
+            removed += conn.execute(
+                "DELETE FROM audio_cache WHERE segment_id = ?", (seg_id,)
+            ).rowcount
+    return changed, removed, orphans
+
+
+def _renormalize(data_dir: str | None, document_id: int | None) -> int:
+    from hearnarro.storage.db import connect_sync, db_path, resolve_data_dir
+
+    root = resolve_data_dir(data_dir)
+    conn = connect_sync(db_path(root))
+    try:
+        if document_id is None:
+            ids = [r[0] for r in conn.execute("SELECT id FROM documents ORDER BY id")]
+        else:
+            ids = [document_id]
+        totals = [0, 0, 0]
+        for doc in ids:
+            counts = renormalize_document(conn, doc, root)
+            totals = [a + b for a, b in zip(totals, counts, strict=True)]
+            print(f"document {doc}: {counts[0]} segments changed, {counts[1]} cache rows removed")
+    finally:
+        conn.close()
+    print(f"segments changed: {totals[0]}")
+    print(f"cache rows removed: {totals[1]}")
+    print(f"orphaned audio files left on disk: {totals[2]}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="hearnarro")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -64,6 +128,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     serve.add_argument("--data-dir", default=None, help="default: $HEARNARRO_DATA_DIR or ./data")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
+    renorm = sub.add_parser("renormalize", help="re-run speech normalization on stored segments")
+    renorm.add_argument("--data-dir", default=None, help="default: $HEARNARRO_DATA_DIR or ./data")
+    which = renorm.add_mutually_exclusive_group(required=True)
+    which.add_argument("--document-id", type=int)
+    which.add_argument("--all", action="store_true", help="every document")
     args = parser.parse_args(argv)
     if args.command == "dump":
         return _dump(args.pdf, jsonl=args.jsonl, ocr=not args.no_ocr)
@@ -71,6 +140,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _check(args.pdf, as_json=args.json, ocr=not args.no_ocr)
     if args.command == "serve":
         return _serve(args.data_dir, args.host, args.port)
+    if args.command == "renormalize":
+        return _renormalize(args.data_dir, args.document_id)
     parser.error(f"unknown command {args.command}")
     return 2
 
