@@ -3,7 +3,7 @@
  * Asserted on Chromium; WebKit and Firefox are reported, not asserted, in M3.
  */
 import type { Page } from '@playwright/test'
-import { expect, getDocument, getSegments, test, type Api, type Segment } from './fixtures'
+import { expect, getSegments, test, type Api, type Segment } from './fixtures'
 
 test.skip(({ browserName }) => browserName !== 'chromium', 'M3 gate is asserted on Chromium only')
 test.describe.configure({ timeout: 90_000 })
@@ -188,9 +188,10 @@ test('PLAY-4: a speed change mid-play restarts the current sentence at the new s
     .toBe('2.00')
 })
 
-test('PLAY-1: pause/resume, next/previous sentence and next section', async ({ page, api }) => {
-  const doc = await getDocument(api)
-  const segs = await getSegments(api)
+test('PLAY-1: pause/resume, next/previous sentence and next/previous section', async ({
+  page,
+  api,
+}) => {
   await openAndPlay(page, api)
   await page.getByRole('button', { name: 'Pause', exact: true }).click()
   await expect(page.getByRole('status')).toContainText('paused')
@@ -203,20 +204,22 @@ test('PLAY-1: pause/resume, next/previous sentence and next section', async ({ p
   await page.getByRole('button', { name: 'Previous sentence' }).click()
   await expect.poll(() => activeOrder(page)).toBe(o)
 
-  const nextSection = page.getByRole('button', { name: 'Next section' })
-  await expect(nextSection).toBeVisible()
-  const starts = doc.sections
-    .map((s) => segs.find((g) => g.id === s.first_segment_id)!.order)
-    .filter((x) => x > o)
-  if (starts.length === 0) {
-    test.info().annotations.push({
-      type: 'fixture-gap',
-      description: `document has ${doc.sections.length} sections; section jump not assertable`,
-    })
-    return
-  }
-  await nextSection.click()
-  await expect.poll(() => activeOrder(page)).toBe(Math.min(...starts))
+  // Sections are derived client-side from heading segments (spec §7 amendment).
+  const headings = await page
+    .locator('.seg.seg-heading')
+    .evaluateAll((els) => els.map((e) => Number((e as HTMLElement).dataset.order)))
+  expect(headings.length).toBeGreaterThan(1)
+  const next = headings.filter((h) => h > o)
+  expect(next.length).toBeGreaterThan(0)
+  await page.getByRole('button', { name: 'Next section' }).click()
+  await expect.poll(() => activeOrder(page)).toBe(Math.min(...next))
+
+  // Previous section: the current section's heading, or the previous heading if already on one.
+  const c = (await activeOrder(page))!
+  const prev = headings.filter((h) => (headings.includes(c) ? h < c : h <= c))
+  expect(prev.length).toBeGreaterThan(0)
+  await page.getByRole('button', { name: 'Previous section' }).click()
+  await expect.poll(() => activeOrder(page)).toBe(Math.max(...prev))
 })
 
 test('PLAY-5: with every clip cached, consecutive entries splice with zero gap', async ({
