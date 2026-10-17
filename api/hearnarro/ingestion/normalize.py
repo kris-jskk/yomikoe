@@ -50,6 +50,14 @@ _ONES = [
 _TENS = {2: "twenty", 3: "thirty"}
 # A heading that is a numeral alone ("II", "XIV.") or leads with one ("II. Making Money").
 _HEADING_ROMAN = re.compile(rf"(?P<num>{_ROMAN})(?=\.?\s*$|\.\s)")
+# A dash between two plain integers ("1–10", "pp. 10-12", "3 - 5") is a range, spoken "to";
+# misaki drops "1–10" as an unknown token and reads "10-12" as "ten twelve". Not a range when
+# the first number follows a letter, digit or ". , : / -" (identifiers, decimals, times) or
+# the second continues into a digit, decimal or another dash-joined number (ISBNs, dates).
+_RANGE = (
+    r"(?P<range>(?<![\w.,:/-])\d{1,4}(?P<rsep>[–—-]| [–—-] )"
+    r"(?=\d{1,4}(?![.,:]?\d| ?[–—-] ?\d)))"
+)
 
 
 _PATTERN = re.compile(
@@ -61,6 +69,7 @@ _PATTERN = re.compile(
     rf"|(?P<email>(?<![\w.+-])[A-Za-z0-9._%+-]+@{_LABEL}(?:\.{_LABEL})*\.[A-Za-z]{{2,}}\b)"
     rf"|(?P<domain>(?<![\w@./:-])(?:{_LABEL}\.)+(?:{_TLDS})(?![\w-]|\.\w)(?:/\S*)?)"
     rf"|(?P<roman>(?i:\b(?P<kw>{_STRUCTURAL})[ \t]+)(?P<num>{_ROMAN})\b(?![-'’]?\w))"
+    rf"|{_RANGE}"
 )
 _URL_PREFIX = re.compile(r"(?:https?://\s?(?:www\.)?|www\.\s?)")
 _URL_TRAILING = ".,;:!?)]}'\"”’"
@@ -119,6 +128,12 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
     kept. When ``heading`` is true, a numeral that is the whole text ("II", "XIV.") or leads
     it before ". " ("II. Making Money") is converted too, except a bare "I". "Henry VIII"
     and "Mr. X" have no keyword and are untouched.
+
+    A numeric range, two integers of 1..4 digits joined by "–", "—" or "-" (no spaces, or one
+    space on each side), becomes "a to b" with " to " mapped onto the dash ("1–10" -> "1 to
+    10", "5–10%" -> "5 to 10 percent"). Excluded: a first number after a letter, digit or
+    ". , : / -" ("A-1", "COVID-19", "1.5-2", "9:00-10:00") and a second number followed by a
+    digit, ". , :" plus digit, or another dash and number ("978-0-12-...", "2026-10-17").
     """
     out: list[str] = []
     cmap: list[int] = []
@@ -207,6 +222,12 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
                     out.append(text[i])
                     cmap.append(i)
                 emit(number_words(roman_value(num)), num_start, len(num))
+        elif kind == "range":
+            sep_start = m.start("rsep")
+            for i in range(start, sep_start):
+                out.append(text[i])
+                cmap.append(i)
+            emit(" to ", sep_start, end - sep_start)  # the second number is matched on its own
         for i in range(suffix_start, end):
             out.append(text[i])
             cmap.append(i)

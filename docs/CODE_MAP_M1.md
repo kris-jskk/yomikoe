@@ -57,7 +57,7 @@ M1 turns a PDF into ordered sentence segments in SQLite and serves them over HTT
   I..XXXIX after a structural word (part, chapter, book, section, volume, vol., act, scene,
   appendix, war, phase, stage, step, level, tier) become cardinal words ("PART II" -> "Part two"),
   and in a heading segment (`normalize(text, heading=True)`) a numeral alone or leading "II. Title"
-  does too, except a bare "I". `hearnarro renormalize --data-dir D (--document-id N | --all)`
+  does too, except a bare "I". A dash between two plain 1..4-digit integers ("1–10", "pp. 10-12", "3 - 5") is spoken as a range, "1 to 10" (" to " mapped onto the dash), unless it is part of an identifier, decimal, time or a longer dash-joined number (ISBN, date). `hearnarro renormalize --data-dir D (--document-id N | --all)`
   re-applies the rules to stored segments and drops the audio cache rows of those that changed.
 - A document quality checklist (`hearnarro check`, 12 checks), a CLI, an HTTP smoke script.
 - ING-7 (table rows as prose) and ING-8 are not M1 (PRD milestones); OCR quality is M4.
