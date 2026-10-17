@@ -109,3 +109,35 @@ Time-to-first-audio and real-time factor for the configured backend over 20 sent
   parser's word stream to the truth's with the word-level edit script; precision, recall and F1 of parser
   boundaries vs truth. Test prints per fixture; thresholds are set by the supervisor after the first
   measurement (not asserted until then).
+
+## Amendments 2026-10-16 after the licensing spike (results 273–279)
+
+**D15 — Kokoro runtime without the GPL chain.** `kokoro` (Apache-2.0) on PyTorch CPU; model
+`hexgrad/Kokoro-82M` pinned at f3ff3571791e39611d31c381e3a41a3af07b4987 and fetched with
+`hf_hub_download(revision=...)` (KModel's own download ignores the revision). Never install
+`misaki[en]`, `phonemizer`, `phonemizer-fork`, `espeakng-loader`, `espeak-ng` or `num2words`.
+The backend builds its own pipeline over `KModel` + `misaki.en.G2P` so `kokoro.pipeline` (which
+imports `misaki.espeak`, hence phonemizer) is never imported. `misaki.en` imports `num2words`
+(LGPL) at module top level: the backend registers `hearnarro.synthesis.compat.num2words` (our
+own, MIT-compatible, number-to-words via `inflect`) in `sys.modules` before importing misaki;
+this is documented as a shim in the code map. Out-of-vocabulary words: misaki drops them silently
+(result 274), so the backend adds a fallback G2P: `g2p_en` (Apache-2.0) ARPAbet → IPA mapped
+into Kokoro's vocabulary, letter spelling only as the last resort; a warning is logged per OOV
+word. Model and spaCy model load in the lifespan on the synthesis thread (cold start ≈ 2 s;
+warm first audio ≈ 0.8 s on this machine, RTF 0.078). `kokoro` needs `attrs` (undeclared): pin it.
+Measured speed input: 0.5/1.0/2.0 → 11.55/5.75/3.33 s of audio for the same sentence.
+
+**D16 — Container.** M2 ships `WavEncoder` as default (stdlib, decodes everywhere). `OpusEncoder`
+via `opuscodec` (Apache-2.0; Ogg Opus, QEXT off, ≈ 7x smaller) is available behind
+`HEARNARRO_AUDIO_FORMAT=opus`. Browser decode of Ogg Opus (Safari before 18.4 reportedly fails) is
+verified in M3 with the real player; a WebM muxer is written only if Safari needs it. D7 in the
+Technical Design is amended accordingly; no ffmpeg anywhere.
+
+**D17 — Stretch.** `audiotsm` (MIT, numpy) WSOLA in-process, ratio ≤ 1.5 (measured: −1.5 % length
+error, ≈ 20 ms). D6's ffmpeg atempo is replaced.
+
+**Licence policy clarification (CLAUDE.md).** Transitive components under other OSI-approved,
+non-copyleft licences (PSF-2.0, ISC, MPL-2.0 at file level, BSL-1.0, Zlib, CC0, Unlicense) are
+acceptable; copyleft (GPL, LGPL, AGPL, SSPL) and non-commercial terms remain excluded. Every
+install is checked with the licence script from the spike (`lic_check.py`, to be moved into
+`api/scripts/check_licences.py` and run in the test suite).

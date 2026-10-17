@@ -5,7 +5,10 @@
 - Work milestone by milestone (M1 → M4). Do not start a later milestone until the previous gate test passes.
 - Write the gate test before the feature. Gate tests live in `api/tests/` and are the acceptance criteria.
 - `TTSBackend` (see PRD, "Data model and API") is the only place a TTS model may be named. The reader and API never import a model directly.
-- Licensing: every dependency and model in v1 must be Apache-2.0, MIT or BSD. No non-commercial models in shipped code.
+- Licensing: every dependency and model in v1 must be Apache-2.0, MIT or BSD; transitive components under
+  other OSI-approved non-copyleft licences (PSF-2.0, ISC, MPL-2.0 file-level, BSL-1.0, Zlib, CC0) are
+  acceptable (clarified 2026-10-16). Copyleft (GPL, LGPL, AGPL, SSPL) and non-commercial terms are excluded
+  from shipped code, including transitive imports; `api/scripts/check_licences.py` enforces it in the suite.
 - Pin every Hugging Face model to a revision hash in config.
 - Python: 3.11+, `ruff` for lint/format, `pytest` for tests, type hints everywhere.
 - Frontend: React + TypeScript + Vite in `web/`. Audio playback is per-segment HTTP fetch + Web Audio API scheduled buffers (D5); never MSE, never per-segment `<audio>` tags. Player state is a typed `useReducer` machine in one file (D10).
