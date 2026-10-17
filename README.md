@@ -53,3 +53,11 @@ pytest
 ```
 
 Models download from the Hugging Face Hub on first run into `$HF_HOME`; set it to a persistent path. `ffmpeg` must be on PATH for the Opus audio cache.
+
+## Documentation
+
+- [docs/PRD.md](docs/PRD.md): scope, requirement IDs, milestone gates
+- [docs/TECHNICAL_DESIGN.md](docs/TECHNICAL_DESIGN.md): algorithms, schema, protocol, decision log
+- [docs/M1_TESTING.md](docs/M1_TESTING.md): M1 hand-testing procedure
+- [docs/guide/](docs/guide/): milestone guides
+- [docs/CODE_MAP_M2.md](docs/CODE_MAP_M2.md): M2 code map (flows, modules, data structures, concurrency, licences)
