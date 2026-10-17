@@ -530,3 +530,23 @@ not reported closed until its gate clause runs are saved and the guide says so (
 - Q6: the TERM-3 author–year toggle is a re-normalizing document setting, not a player skip.
 - Q7: SYN-8 pauses in the service change cached audio for heading, list and equation segments; a
   client-side scheduling gap would not. The brief fixes the service; confirm.
+
+## 8. Open points: supervisor decisions (2026-10-17)
+
+- Q1 `profile` lives in `manifest.json` per fixture. Decided.
+- Q2 Datasets live in `api/hearnarro/evals/data/`; the PRD's `evals/data/` wording is synced in phase 6. Decided.
+- Q3 Tesseract 5.5.3 IS installed at `/opt/homebrew/bin` (M4 close). Every worker runs commands with
+  `PATH=/opt/homebrew/bin:$PATH`; the scanned cases are never skipped at close, and the `@pytest.mark.ocr`
+  skip in §1d applies only on a machine without the binary. The spec's "not installed" sentence is wrong.
+- Q4 The profile pass runs between stage 4 (merge) and stage 5 (segment); D40's "stage-6" wording in the
+  Technical Design is corrected by the phase 2 worker in its doc commit ("profile pass, between stages 4 and 5").
+- Q5 Span geometry first (§3). If a structure needs per-glyph geometry, the phase 3 worker stops and reports
+  with the failing fixture; the M1 goldens and the D14 guard must not change. Supervisor decides then.
+- Q6 TERM-3 author–year toggle as a document setting that re-normalizes. Decided.
+- Q7 SYN-8 pauses are client-side scheduling gaps in the web player (start-time offsets keyed by the segment's
+  block type), not audio in the cache: the cache stays by (segment, voice, speed), and a preset can change
+  pause lengths without re-synthesis. The synthesis service is untouched by SYN-8. Decided.
+- Phase 1 amendment: `mathspeak_score` lands in `scorers.py` in phase 1 (pure function), so EVAL-10 runs from
+  phase 1 and the first run is the baseline (today's output is the ING-7 cue, so scores are low). The gate
+  test is red on clause (b) scores and on clause (e) (`compute_profile` imported inside the test, absent
+  until phase 2); it is not red on a collection error.
