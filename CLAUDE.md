@@ -51,9 +51,11 @@ do), `brief-template.md`, `report-template.md`, and `supervisor-log.md`.
 
 ## Rule: every stage is visualized; the architectural guide tracks the phases
 
-The published architectural guide (artifact "HearNarro M1 Ingest Map",
-https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n; source `m1-ingest-map.html` in the session
-scratchpad, copy under `docs/guide/` when a milestone closes) is how the user follows the work.
+The published architectural guides are how the user follows the work, one per milestone:
+M1 "HearNarro M1 Ingest Map" https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n (closed; repo copy
+`docs/guide/m1-ingest-map.html`), M2 "HearNarro M2 Synthesis Map"
+https://claude.ai/artifact/J7wJUWammFqBxc22s121Pr (source `m2-synthesis-map.html` in the session
+scratchpad; copy under `docs/guide/` when the milestone closes). Each new milestone starts a new guide.
 
 1. **Every pipeline stage gets its own diagram** in the guide: the mechanism (what goes in,
    what rule is applied, what comes out), not a labelled box. A new stage, a replaced
