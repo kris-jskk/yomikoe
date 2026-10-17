@@ -51,7 +51,22 @@ export interface AudioClip {
   decodeMs: number
 }
 
-/** One row of `GET /documents`. */
+export interface DocumentSettings {
+  voice_id: string | null
+  speed: number | null
+}
+
+/**
+ * Stored position on the wire. NOTE: an unset position arrives as `{segment_id: null, offset_ms: 0}`
+ * (M4 deviation 3); `segment_id` stays typed `number` until App.tsx (UI worker) narrows it, so every
+ * reader must still check `segment_id != null`.
+ */
+export interface DocumentPosition {
+  segment_id: number
+  offset_ms: number
+}
+
+/** One row of `GET /documents` (LIB-1); also the body `PATCH /documents/{id}` returns. */
 export interface DocumentSummary {
   id: number
   title: string
@@ -59,23 +74,37 @@ export interface DocumentSummary {
   page_count: number
   pages_done: number
   status: string
+  segment_count: number
+  /** Null tolerated for older servers; the M4 API sends the null-fields object instead. */
+  position: DocumentPosition | null
+  /** Fraction of segments before the saved position, in [0, 1]. */
+  progress: number
+  settings: DocumentSettings | null
+  last_opened_at: string | null
 }
 
-export interface DocumentSettings {
-  voice_id: string | null
-  speed: number | null
-}
-
-export interface DocumentPosition {
-  segment_id: number
-  offset_ms: number
-}
-
-/** `GET /documents/{id}`: the summary plus sections, settings and position (the last two may be null). */
+/** `GET /documents/{id}`: the summary plus sections. */
 export interface DocumentDetail extends DocumentSummary {
   sections: Section[]
-  settings: DocumentSettings | null
-  position: DocumentPosition | null
+}
+
+/** `PATCH /documents/{id}` body (LIB-2, LIB-3); every field optional. */
+export interface DocumentPatch {
+  position?: { segment_id: number; offset_ms: number }
+  settings?: DocumentSettings
+  opened?: boolean
+}
+
+/** `GET` / `PUT /settings`: global defaults (LIB-3). */
+export interface GlobalSettings {
+  default_voice_id: string | null
+  default_speed: number
+}
+
+/** `POST /documents` response: 202 for a new upload, 200 for an already-known file. */
+export interface UploadResult {
+  id: number
+  status: string
 }
 
 /** `GET /documents/{id}/segments?from=&limit=`. */

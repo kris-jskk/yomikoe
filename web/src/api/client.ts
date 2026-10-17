@@ -4,9 +4,12 @@
 import type {
   AudioClip,
   DocumentDetail,
+  DocumentPatch,
   DocumentSummary,
+  GlobalSettings,
   Segment,
   SegmentsPage,
+  UploadResult,
   Voice,
   WordTimestamp,
 } from './types'
@@ -50,6 +53,7 @@ async function request<T>(
   url: string,
   read: (res: Response) => Promise<T>,
   signal?: AbortSignal,
+  init: Omit<RequestInit, 'signal'> = {},
 ): Promise<T> {
   const ctrl = new AbortController()
   let timedOut = false
@@ -71,7 +75,7 @@ async function request<T>(
   try {
     let res: Response
     try {
-      res = await fetch(url, { signal: ctrl.signal })
+      res = await fetch(url, { ...init, signal: ctrl.signal })
     } catch (err) {
       throw fail(0, err)
     }
@@ -129,6 +133,48 @@ export async function getAllSegments(
     from = page.next_from
   }
   return all.sort((a, b) => a.order - b.order)
+}
+
+function sendJson<T>(method: string, url: string, body: unknown, keepalive = false): Promise<T> {
+  const init: Omit<RequestInit, 'signal'> = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }
+  if (keepalive) init.keepalive = true
+  return request(url, async (res) => (await res.json()) as T, undefined, init)
+}
+
+/** PATCH /documents/{id} (LIB-2 position, LIB-3 settings, `opened`); `keepalive` for the pagehide save. */
+export function patchDocument(
+  id: number,
+  body: DocumentPatch,
+  opts: { keepalive?: boolean } = {},
+): Promise<DocumentSummary> {
+  return sendJson<DocumentSummary>('PATCH', `/documents/${id}`, body, opts.keepalive ?? false)
+}
+
+/** DELETE /documents/{id} (LIB-4); resolves on 204, throws ApiError (409 while parsing). */
+export function deleteDocument(id: number): Promise<void> {
+  return request(`/documents/${id}`, async () => undefined, undefined, { method: 'DELETE' })
+}
+
+export function getSettings(signal?: AbortSignal): Promise<GlobalSettings> {
+  return getJson<GlobalSettings>('/settings', signal)
+}
+
+export function putSettings(s: GlobalSettings): Promise<GlobalSettings> {
+  return sendJson<GlobalSettings>('PUT', '/settings', s)
+}
+
+/** POST /documents as multipart, field "file"; no Content-Type header so the browser sets the boundary. */
+export function uploadDocument(file: File): Promise<UploadResult> {
+  const form = new FormData()
+  form.append('file', file)
+  return request('/documents', async (res) => (await res.json()) as UploadResult, undefined, {
+    method: 'POST',
+    body: form,
+  })
 }
 
 export function getVoices(signal?: AbortSignal): Promise<Voice[]> {
