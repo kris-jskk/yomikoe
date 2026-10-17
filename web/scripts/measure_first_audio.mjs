@@ -1,3 +1,4 @@
+/* global process, console, fetch, setTimeout, HTMLInputElement, Event */
 // D19: the listener's first-audio wait measured in the built reader (browser end to end).
 //
 // For each speed, picks three body segments of 100-200 characters whose clip is not cached yet
@@ -22,7 +23,8 @@ const LOOKAHEAD = 6 // server lookahead (5) plus the segment itself
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const audioUrl = (id, speed) => `${API}/audio/${id}?voice=${VOICE}&speed=${speed}`
-const isCold = async (id, speed) => (await fetch(audioUrl(id, speed), { method: 'HEAD' })).status === 404
+const isCold = async (id, speed) =>
+  (await fetch(audioUrl(id, speed), { method: 'HEAD' })).status === 404
 
 async function segmentsOf(docId) {
   const r = await fetch(`${API}/documents/${docId}/segments?from=0&limit=500`)
@@ -75,7 +77,8 @@ async function main() {
   const pool = []
   for (const [docId, segs] of docs)
     for (const s of segs)
-      if (s.type === 'body' && s.text.length >= 100 && s.text.length <= 200) pool.push({ docId, seg: s })
+      if (s.type === 'body' && s.text.length >= 100 && s.text.length <= 200)
+        pool.push({ docId, seg: s })
   // interleave documents and space picks apart so lookahead never warms a later pick
   pool.sort((a, b) => a.seg.order - b.seg.order || a.docId - b.docId)
   const used = new Set()
@@ -99,14 +102,23 @@ async function main() {
     }
     if (warmTarget) {
       const r = await measure(browser, warmTarget.docId, warmTarget.seg, speed)
-      rows.push({ speed, docId: warmTarget.docId, seg: warmTarget.seg, cache: 'warm', r, dur: warmTarget.dur })
+      rows.push({
+        speed,
+        docId: warmTarget.docId,
+        seg: warmTarget.seg,
+        cache: 'warm',
+        r,
+        dur: warmTarget.dur,
+      })
       console.error(`speed ${speed} warm seg ${warmTarget.seg.id}: ${JSON.stringify(r.log)}`)
     }
   }
   await browser.close()
 
   console.log(`Voice ${VOICE}; web ${WEB}; api ${API}; ${new Date().toISOString()}\n`)
-  console.log('| speed | doc | segment | text len | cache before | first-audio ms | logged segment | logged speed | X-Duration-Ms | status after | < 2000 ms |')
+  console.log(
+    '| speed | doc | segment | text len | cache before | first-audio ms | logged segment | logged speed | X-Duration-Ms | status after | < 2000 ms |',
+  )
   console.log('|---|---|---|---|---|---|---|---|---|---|---|')
   for (const { speed, docId, seg, cache, r, dur } of rows) {
     const l = r.log
@@ -116,9 +128,13 @@ async function main() {
     )
   }
   for (const speed of SPEEDS) {
-    const cold = rows.filter((x) => x.speed === speed && x.cache === 'cold' && x.r.log).map((x) => x.r.log.ms)
+    const cold = rows
+      .filter((x) => x.speed === speed && x.cache === 'cold' && x.r.log)
+      .map((x) => x.r.log.ms)
     if (cold.length)
-      console.log(`\nspeed ${speed}: cold mean ${Math.round(cold.reduce((a, b) => a + b, 0) / cold.length)} ms, worst ${Math.max(...cold)} ms (n=${cold.length})`)
+      console.log(
+        `\nspeed ${speed}: cold mean ${Math.round(cold.reduce((a, b) => a + b, 0) / cold.length)} ms, worst ${Math.max(...cold)} ms (n=${cold.length})`,
+      )
   }
 }
 
