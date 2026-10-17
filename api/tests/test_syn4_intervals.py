@@ -40,3 +40,19 @@ def test_syn4_interval_closed_digits_spoken() -> None:
     by_text = {t.text: t.phonemes for t in tokens}
     assert by_text["0"] == _phon("0") and by_text["2"] == _phon("2")
     assert "[" in by_text and "]" in by_text
+
+
+@pytest.mark.model
+def test_math1_fallback_case1_every_token_voiced() -> None:
+    """MATH-1 fallback / ING-6: after normalization, no token of 637 row 242 is silent."""
+    from hearnarro.ingestion.normalize import normalize
+
+    raw = (
+        "For every ν > 0 there exist a force f ∈C∞ c (R3 × (0, ∞); R3), a compact set K ⊂R3, "
+        "and smooth velocity and pressure fields u, p on R3 × [0, 1) satisfying"
+    )
+    tokens = _tokens(normalize(raw)[0])
+    silent = [t.text for t in tokens if not t.phonemes]
+    assert silent == []
+    for word in ("nu", "greater", "infinity", "times", "subset"):
+        assert word in [t.text for t in tokens]
