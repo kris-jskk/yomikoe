@@ -86,6 +86,9 @@ def test_d19_purge_audio_whole_document(tmp_path: Path, capsys: pytest.CaptureFi
     assert {c[0] // 100 for c in _cached(tmp_path)} == {2}
     assert all(f.startswith("audio/2/") for f in _files(tmp_path))
     assert len(_files(tmp_path)) == SEGMENTS_PER_DOC * len(VARIANTS)
+    # D19: emptied directories are removed, others stay
+    assert not (tmp_path / "audio" / "1").exists()
+    assert (tmp_path / "audio" / "2" / "200").is_dir()
 
 
 def test_d19_purge_audio_filters_segment_voice_speed(
@@ -99,6 +102,7 @@ def test_d19_purge_audio_filters_segment_voice_speed(
     assert len(_cached(tmp_path)) == 2 * SEGMENTS_PER_DOC * len(VARIANTS) - 1
     assert _path(1, 101, "af_heart", 1.5) not in _files(tmp_path)
     assert _path(1, 101, "af_heart", 1.0) in _files(tmp_path)
+    assert (tmp_path / "audio" / "1" / "101").is_dir()
 
     assert main(_purge(tmp_path, "--document-id", "1", "--voice", "am_adam")) == 0
     assert _count(capsys.readouterr().out) == SEGMENTS_PER_DOC

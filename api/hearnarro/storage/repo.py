@@ -11,7 +11,7 @@ import aiosqlite
 
 DOCUMENT_COLUMNS = (
     "id, title, filename, sha256, page_count, pages_done, parse_ms, status, fail_reason, "
-    "voice_id, speed, acronyms_json, "
+    "voice_id, speed, acronyms_json, ocr_skipped_pages, "
     "position_segment_id, position_offset_ms, created_at, last_opened_at"
 )
 DuplicateDocument = sqlite3.IntegrityError

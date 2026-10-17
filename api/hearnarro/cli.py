@@ -148,7 +148,17 @@ def purge_audio(
         removed = conn.execute(f"DELETE FROM audio_cache WHERE {clause}", params).rowcount
     for rel in paths:
         if rel:
-            (data_dir / rel).unlink(missing_ok=True)
+            path = data_dir / rel
+            path.unlink(missing_ok=True)
+            # remove directories this emptied, never above <data_dir>/audio
+            audio_root = data_dir / "audio"
+            parent = path.parent
+            while parent != audio_root and audio_root in parent.parents:
+                try:
+                    parent.rmdir()
+                except OSError:
+                    break
+                parent = parent.parent
     return removed
 
 

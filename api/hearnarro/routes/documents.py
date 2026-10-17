@@ -65,6 +65,7 @@ def _document_summary(doc: dict[str, Any]) -> dict[str, Any]:
         "created_at",
         "last_opened_at",
         "segment_count",
+        "ocr_skipped_pages",
     )
     count = int(doc["segment_count"] or 0)
     order = doc["position_order"]

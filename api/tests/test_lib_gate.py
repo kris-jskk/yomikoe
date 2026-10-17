@@ -52,9 +52,11 @@ async def test_lib1_summary_fields_and_zero_progress_without_position(tmp_path: 
         assert row["position"] is None or row["position"]["segment_id"] is None
         assert row["settings"] == {"voice_id": None, "speed": None}
         assert row["last_opened_at"] is None
+        assert "ocr_skipped_pages" in row  # ING-2
 
         detail = (await client.get(f"/documents/{doc_id}")).json()
         assert detail["segment_count"] == len(segments)
+        assert "ocr_skipped_pages" in detail  # ING-2
 
 
 async def test_lib1_progress_is_position_order_over_segment_count(tmp_path: Path) -> None:
