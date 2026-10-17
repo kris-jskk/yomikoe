@@ -9,6 +9,7 @@ message instead. Both outcomes set ``parse_ms``, the worker's wall time from job
 
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
 import time
@@ -143,12 +144,13 @@ def _write_result(
         filename = row[0] if row and row[0] else "document.pdf"
         conn.execute(
             "UPDATE documents SET status = 'ready', fail_reason = NULL, page_count = ?, "
-            "pages_done = ?, parse_ms = ?, title = ? WHERE id = ?",
+            "pages_done = ?, parse_ms = ?, title = ?, acronyms_json = ? WHERE id = ?",
             (
                 len(result.pages),
                 len(result.pages),
                 parse_ms,
                 choose_title(title, _first_heading(result), filename),
+                json.dumps(result.acronyms, sort_keys=True),
                 document_id,
             ),
         )

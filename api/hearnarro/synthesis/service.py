@@ -19,6 +19,7 @@ import asyncio
 import collections
 import contextlib
 import dataclasses
+import inspect
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Protocol
@@ -26,7 +27,7 @@ from typing import Protocol
 from hearnarro.ingestion.models import Segment
 from hearnarro.storage import repo as db_repo
 from hearnarro.storage.db import Engine, unpack_char_map
-from hearnarro.synthesis.backend import TTSBackend, WordTimestamp
+from hearnarro.synthesis.backend import SynthContext, SynthResult, TTSBackend, WordTimestamp
 from hearnarro.synthesis.cache import AudioCache, AudioEntry, speed_key
 from hearnarro.synthesis.encode import AudioEncoder
 from hearnarro.synthesis.stretch import scale_timestamps, stretch_pcm
@@ -92,6 +93,10 @@ class DbSegmentRepo:
         async with self.db.connect() as conn:
             rows = await db_repo.segment_rows_from(conn, document_id, from_order, limit)
         return [_segment(r) for r in rows]
+
+    async def document_acronyms(self, document_id: int) -> dict[str, str]:
+        async with self.db.connect() as conn:
+            return await db_repo.get_document_acronyms(conn, document_id)
 
 
 def to_text_offsets(ts: list[WordTimestamp], seg: Segment) -> list[WordTimestamp]:
@@ -164,6 +169,7 @@ class SynthesisService:
         self._wake: asyncio.Event | None = None
         self._worker: asyncio.Task[None] | None = None
         self._closed = False
+        self._contexts: dict[int, SynthContext | None] = {}  # document -> context (SYN-4)
 
     # --- public API ---------------------------------------------------------------------
 
@@ -257,6 +263,7 @@ class SynthesisService:
             )
 
     def _clear_document(self, document_id: int) -> int:
+        self._contexts.pop(document_id, None)
         before = len(self._queue)
         self._queue = collections.deque(
             j for j in self._queue if j.segment.document_id != document_id
@@ -346,8 +353,9 @@ class SynthesisService:
     async def _synthesize_and_store(self, seg: Segment, voice_id: str, speed: float) -> AudioEntry:
         loop = asyncio.get_running_loop()
         try:
+            context = await self._context(seg.document_id)
             rendered = await loop.run_in_executor(
-                self._executor, self._render, seg, voice_id, speed
+                self._executor, self._render, seg, voice_id, speed, context
             )
         except asyncio.CancelledError:
             raise
@@ -380,16 +388,40 @@ class SynthesisService:
         assert first is not None
         return first
 
-    def _render(self, seg: Segment, voice_id: str, speed: float) -> list[tuple[_Rendered, bytes]]:
+    async def _context(self, document_id: int) -> SynthContext | None:
+        """The document's acronym definitions as a SynthContext (None when it has none)."""
+        if document_id not in self._contexts:
+            lookup = getattr(self.repo, "document_acronyms", None)
+            acronyms = await lookup(document_id) if lookup is not None else {}
+            self._contexts[document_id] = (
+                SynthContext(acronyms=acronyms, document_id=document_id) if acronyms else None
+            )
+        return self._contexts[document_id]
+
+    def _synth(
+        self, text: str, voice_id: str, speed: float, context: SynthContext | None
+    ) -> SynthResult:
+        # No context, or a backend (test double) whose synthesize predates the parameter:
+        # the 3-argument call.
+        if (
+            context is None
+            or "context" not in inspect.signature(self.backend.synthesize).parameters
+        ):
+            return self.backend.synthesize(text, voice_id, speed)
+        return self.backend.synthesize(text, voice_id, speed, context=context)
+
+    def _render(
+        self, seg: Segment, voice_id: str, speed: float, context: SynthContext | None = None
+    ) -> list[tuple[_Rendered, bytes]]:
         """On the synthesis thread: synthesize (+ stretch above the native max, D6/D17) and
         encode. Returns the requested speed first, then the native-max file if stretched."""
         _, native_max = self.backend.speed_range()
         if speed <= native_max:
-            result = self.backend.synthesize(seg.normalized_text, voice_id, speed)
+            result = self._synth(seg.normalized_text, voice_id, speed, context)
             ts = to_text_offsets(result.timestamps, seg)
             outs = [_Rendered(speed, result.audio, result.sample_rate, ts)]
         else:
-            result = self.backend.synthesize(seg.normalized_text, voice_id, native_max)
+            result = self._synth(seg.normalized_text, voice_id, native_max, context)
             native_ts = to_text_offsets(result.timestamps, seg)
             ratio = speed / native_max
             pcm = stretch_pcm(result.audio, result.sample_rate, ratio)

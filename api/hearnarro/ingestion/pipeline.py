@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
+from hearnarro.ingestion.acronyms import document_definitions
 from hearnarro.ingestion.classify import classify_pages
 from hearnarro.ingestion.extract import extract_pages
 from hearnarro.ingestion.merge import merge_blocks
@@ -19,6 +20,7 @@ class IngestResult:
     pages: list[Page]
     blocks: list[LogicalBlock]
     segments: list[Segment]
+    acronyms: dict[str, str] = field(default_factory=dict)  # {ACR: expansion}, ING-6
 
 
 def ingest(
@@ -28,7 +30,8 @@ def ingest(
     ocr: bool = True,
     on_page: Callable[[int, int], None] | None = None,
 ) -> IngestResult:
-    """extract_pages -> classify_pages -> order_document -> merge_blocks -> split_sentences.
+    """extract_pages -> classify_pages -> order_document -> merge_blocks -> split_sentences;
+    acronym definitions are collected from the merged block texts (stage 5).
 
     ``on_page(pages_done, total)`` is forwarded to ``extract_pages``; it does not change the
     result.
@@ -45,4 +48,9 @@ def ingest(
                 id_start=len(segments),
             )
         )
-    return IngestResult(pages=pages, blocks=blocks, segments=segments)
+    return IngestResult(
+        pages=pages,
+        blocks=blocks,
+        segments=segments,
+        acronyms=document_definitions(b.text for b in blocks),
+    )

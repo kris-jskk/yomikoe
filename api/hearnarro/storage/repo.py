@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import UTC, datetime
 from typing import Any
@@ -10,7 +11,7 @@ import aiosqlite
 
 DOCUMENT_COLUMNS = (
     "id, title, filename, sha256, page_count, pages_done, parse_ms, status, fail_reason, "
-    "voice_id, speed, "
+    "voice_id, speed, acronyms_json, "
     "position_segment_id, position_offset_ms, created_at, last_opened_at"
 )
 DuplicateDocument = sqlite3.IntegrityError
@@ -35,6 +36,17 @@ async def get_document(conn: aiosqlite.Connection, document_id: int) -> dict[str
     return await _one(
         conn, f"SELECT {DOCUMENT_COLUMNS} FROM documents WHERE id = ?", (document_id,)
     )
+
+
+def document_acronyms(doc: dict[str, Any]) -> dict[str, str]:
+    """``documents.acronyms_json`` as a dict ({} when NULL: ingested before migration 0003)."""
+    raw = doc.get("acronyms_json")
+    return dict(json.loads(raw)) if raw else {}
+
+
+async def get_document_acronyms(conn: aiosqlite.Connection, document_id: int) -> dict[str, str]:
+    row = await _one(conn, "SELECT acronyms_json FROM documents WHERE id = ?", (document_id,))
+    return document_acronyms(row) if row else {}
 
 
 async def get_document_by_sha256(conn: aiosqlite.Connection, sha256: str) -> dict[str, Any] | None:

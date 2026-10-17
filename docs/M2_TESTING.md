@@ -199,6 +199,12 @@ the full response, not the player's wait.
 
 ## 10. Known limits
 
+- **Adding a pronunciation.** Add one line to `OVERRIDES` in
+  `api/hearnarro/synthesis/lexicon_overrides.py` (lower-case word -> phonemes in misaki's alphabet,
+  e.g. `"uber": "ˈubəɹ"`), then run `HEARNARRO_TEST_MODEL=1 pytest tests/test_kokoro_backend.py -k override`;
+  re-ingest or clear the document's audio cache to hear it. Acronym readings: `SPOKEN`, `SPELLED`,
+  `COLLOCATIONS`, `RESPELL` in `api/hearnarro/synthesis/acronyms.py`.
+
 - **0.5x tail (D19).** At half speed the model generates twice the audio before the first byte,
   so long sentences (6 of 20 benchmark sentences of up to 200 characters) exceed 2 s. The M2 gate
   is measured on the spec's 150-character sentence, which passes. M3 adds clause-level chunking

@@ -9,8 +9,28 @@
 - ``misaki`` is installed without extras; its top-level ``from num2words import num2words``
   (LGPL) is served by ``hearnarro.synthesis.compat.num2words`` registered before import;
 - out-of-vocabulary words, which misaki would drop silently, go through ``_OOVFallback``:
-  misaki's own lexicon for camel-case pieces, else the vendored g2p_en predictor (ARPAbet ->
-  Kokoro IPA), else letter spelling; one warning per OOV word.
+  the CMU Pronouncing Dictionary for the whole word (vendored BSD data,
+  ``hearnarro.synthesis.cmudict``; ARPAbet -> Kokoro IPA by ``arpabet_to_kokoro``), else per
+  camel-case piece misaki's lexicon, then cmudict, then the vendored g2p_en predictor, else
+  letter spelling; one warning per OOV word per document naming the tier(s) used.
+
+Pronunciation tiers, in order: ``lexicon_overrides`` -> misaki gold/silver lexicon -> cmudict ->
+g2p_en neural fallback -> letters.
+
+Custom pronunciations (SYN-4): ``hearnarro.synthesis.lexicon_overrides`` entries are written
+into misaki's gold lexicon when a G2P is built, and after G2P every token they match (case-
+insensitive, possessive/plural suffixes) gets the override's phonemes, before the all-caps step;
+each entry used is logged once per document at INFO.
+
+All-caps tokens (SYN-4, ING-6): after misaki's G2P, every token of 2+ capital letters is
+re-read by ``hearnarro.synthesis.acronyms.decide`` (overrides, collocation with the next word,
+the document's definitions from ``SynthContext``, misaki's lexicon, a pronounceability
+heuristic). Spoken: the lexicon entry of its ``RESPELL`` word if it has one, else misaki's own
+word phonemes if it had them, else the lexicon entry, else the
+g2p_en predictor on the lowercase form. Spelled: the token is replaced by one token per letter
+(no spaces between them, so the phoneme string equals misaki's letter spelling), each with its
+own duration; the letters fold back into one WordTimestamp spanning the original token. Each
+(document, token) decision is logged once at INFO.
 
 Word timestamps (contract for ``SynthResult.timestamps``):
 - one ``WordTimestamp`` per whitespace-delimited word of the input text, in order; the word
@@ -33,6 +53,7 @@ Speeds <= 1.0 are unchanged.
 
 from __future__ import annotations
 
+import copy
 import logging
 import re
 import threading
@@ -42,7 +63,9 @@ from typing import Any
 
 import numpy as np
 
-from hearnarro.synthesis.backend import SynthResult, Voice, WordTimestamp
+from hearnarro.synthesis import cmudict, lexicon_overrides
+from hearnarro.synthesis.acronyms import RESPELL, Decision, decide, is_acronym, spell_phonemes
+from hearnarro.synthesis.backend import SynthContext, SynthResult, Voice, WordTimestamp
 
 log = logging.getLogger(__name__)
 
@@ -115,9 +138,23 @@ def arpabet_to_kokoro(arpa: list[str], british: bool = False) -> str:
 class _OOVFallback:
     """misaki ``G2P.fallback`` hook: ``(token) -> (phonemes | None, rating)``."""
 
-    def __init__(self, lexicon: Any, predictor: Any, vocab: set[str], british: bool) -> None:
+    def __init__(
+        self,
+        lexicon: Any,
+        predictor: Any,
+        vocab: set[str],
+        british: bool,
+        cmu: dict[str, list[str]] | None = None,
+    ) -> None:
         self.lexicon, self.predictor, self.vocab, self.british = lexicon, predictor, vocab, british
+        self.cmu = cmu or {}
         self.used: list[tuple[str, str, str]] = []  # (word, phonemes, methods) for diagnostics
+        self.document_id: int | None = None  # set by the backend for each synthesis
+        self._logged: set[tuple[int | None, str]] = set()
+
+    def _cmu(self, w: str) -> str | None:
+        arpa = self.cmu.get(w.lower())
+        return arpabet_to_kokoro(arpa, self.british) if arpa else None
 
     def _look(self, w: str) -> str | None:
         for k in (w, w.lower(), w.capitalize(), w.upper()):
@@ -136,10 +173,13 @@ class _OOVFallback:
         word, tail = tk.text, ""
         if word.endswith(("'s", "’s")):
             word, tail = word[:-2], "z"
-        parts = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+", word)
+        whole = self._cmu(word) if word.isalpha() else None
+        parts = [word] if whole else re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+", word)
         pieces, methods = [], []
         for part in parts:
-            ps, how = self._look(part), "lexicon"
+            ps, how = (whole, "cmudict") if whole else (self._look(part), "lexicon")
+            if not ps and part.isalpha():
+                ps, how = self._cmu(part), "cmudict"
             if not ps and part.isalpha() and not part.isupper():
                 ps, how = arpabet_to_kokoro(self.predictor.predict(part), self.british), "g2p_en"
             if not ps:
@@ -148,9 +188,12 @@ class _OOVFallback:
             methods.append(how)
         phonemes = "".join(c for c in "".join(pieces) + tail if c in self.vocab) or None
         self.used.append((tk.text, phonemes or "", "+".join(methods)))
-        log.warning(
-            "kokoro OOV word %r -> %r via %s", tk.text, phonemes, "+".join(methods) or "none"
-        )
+        if (self.document_id, tk.text) not in self._logged:
+            self._logged.add((self.document_id, tk.text))
+            log.warning(
+                "kokoro OOV word %r -> %r via %s (document=%s)",
+                tk.text, phonemes, "+".join(methods) or "none", self.document_id,
+            )  # fmt: skip
         return phonemes, 1
 
 
@@ -256,6 +299,8 @@ class KokoroBackend:
         self._g2p: dict[bool, Any] = {}
         self._packs: dict[str, Any] = {}
         self._lock = threading.Lock()
+        self._acronyms_logged: set[tuple[int | None, str, Decision]] = set()
+        self._overrides_logged: set[tuple[int | None, str]] = set()
         self._g2p_for(british=False)  # load the US pipeline (spaCy) now, not on first request
 
     def _fetch(self, filename: str) -> str:
@@ -264,7 +309,10 @@ class KokoroBackend:
     def _g2p_for(self, british: bool) -> Any:
         if british not in self._g2p:
             g2p = self._en.G2P(trf=False, british=british, fallback=None, unk="")
-            g2p.fallback = _OOVFallback(g2p.lexicon, self._predictor, self._vocab, british)
+            g2p.lexicon.golds.update(lexicon_overrides.OVERRIDES)  # before misaki's own entries
+            g2p.fallback = _OOVFallback(
+                g2p.lexicon, self._predictor, self._vocab, british, cmu=cmudict.load()
+            )
             self._g2p[british] = g2p
         return self._g2p[british]
 
@@ -285,14 +333,16 @@ class KokoroBackend:
     def speed_range(self) -> tuple[float, float]:
         return (0.5, 2.0)
 
-    def synthesize(self, text: str, voice_id: str, speed: float) -> SynthResult:
+    def synthesize(
+        self, text: str, voice_id: str, speed: float, context: SynthContext | None = None
+    ) -> SynthResult:
         if voice_id not in dict(_VOICES):
             raise ValueError(f"unknown kokoro voice {voice_id!r}")
         lo, hi = self.speed_range()
         if not lo <= speed <= hi:
             raise ValueError(f"speed {speed} outside native range {lo}..{hi}")
         with self._lock:
-            return self._synthesize(text, voice_id, speed)
+            return self._synthesize(text, voice_id, speed, context)
 
     def _infer(self, ps: str, ref_s: Any, speed: float) -> tuple[np.ndarray, np.ndarray]:
         """``KModel.forward_with_tokens`` with one change: the BOS duration is floored at its
@@ -325,11 +375,75 @@ class KokoroBackend:
             audio = m.decoder(asr, f0, noise, ref_s[:, :128]).squeeze()
         return audio.cpu().numpy().astype(np.float32), pred_dur.cpu().numpy()
 
-    def _synthesize(self, text: str, voice_id: str, speed: float) -> SynthResult:
-        pack = self._pack(voice_id)
-        _, tokens = self._g2p_for(british=voice_id[0] == "b")(text)
-        for t in tokens:  # keep only symbols the model knows, so char i <-> pred_dur[i + 1]
+    def _tokens(self, text: str, british: bool, context: SynthContext | None = None) -> list[Any]:
+        """misaki tokens for ``text`` with all-caps tokens re-read (module docstring) and only
+        phoneme symbols the model knows, so char i of the chunk string <-> pred_dur[i + 1]."""
+        g2p = self._g2p_for(british)
+        g2p.fallback.document_id = context.document_id if context else None
+        _, tokens = g2p(text)
+        doc = context.document_id if context else None
+        for entry in lexicon_overrides.apply(tokens):
+            if (doc, entry) not in self._overrides_logged:
+                self._overrides_logged.add((doc, entry))
+                log.info("pronunciation override document=%s entry=%r", doc, entry)
+        tokens = self._pronounce_acronyms(tokens, g2p, british, context)
+        for t in tokens:
             t.phonemes = "".join(c for c in (t.phonemes or "") if c in self._vocab)
+        return tokens
+
+    def _pronounce_acronyms(
+        self, tokens: list[Any], g2p: Any, british: bool, context: SynthContext | None
+    ) -> list[Any]:
+        lex = g2p.lexicon
+        look = g2p.fallback._look
+
+        def in_lexicon(w: str) -> bool:
+            return w.lower() in lex.golds or w.lower() in lex.silvers
+
+        definitions = context.acronyms if context else {}
+        out: list[Any] = []
+        for i, t in enumerate(tokens):
+            if not is_acronym(t.text) or lexicon_overrides.lookup(t.text):
+                out.append(t)
+                continue
+            nxt = tokens[i + 1].text if i + 1 < len(tokens) and t.whitespace else None
+            d = decide(
+                t.text,
+                next_word=nxt if nxt and nxt.isalpha() else None,
+                definitions=definitions,
+                in_lexicon=in_lexicon,
+            )
+            key = (context.document_id if context else None, t.text, d)
+            if key not in self._acronyms_logged:
+                self._acronyms_logged.add(key)
+                log.info(
+                    "acronym document=%s token=%r decision=%s reason=%s",
+                    key[0], t.text, "spoken" if d.spoken else "spelled", d.reason,
+                )  # fmt: skip
+            if d.spoken:
+                spelled_by_misaki = lex.get_NNP(t.text)[0]
+                if t.text in RESPELL:
+                    t.phonemes = look(RESPELL[t.text]) or t.phonemes
+                elif not t.phonemes or t.phonemes == spelled_by_misaki:
+                    t.phonemes = look(t.text) or arpabet_to_kokoro(
+                        self._predictor.predict(t.text.lower()), british
+                    )
+                out.append(t)
+                continue
+            letters = {c: look(c) or "" for c in set(t.text)}
+            pieces = spell_phonemes(t.text, letters)
+            for k, (c, ps) in enumerate(zip(t.text, pieces, strict=True)):
+                lt = copy.copy(t)
+                lt.text, lt.phonemes = c, ps
+                lt.whitespace = t.whitespace if k == len(t.text) - 1 else ""
+                out.append(lt)
+        return out
+
+    def _synthesize(
+        self, text: str, voice_id: str, speed: float, context: SynthContext | None = None
+    ) -> SynthResult:
+        pack = self._pack(voice_id)
+        tokens = self._tokens(text, voice_id[0] == "b", context)
         audio_parts: list[np.ndarray] = []
         timed: list[_Timed] = []
         offset_ms = 0.0

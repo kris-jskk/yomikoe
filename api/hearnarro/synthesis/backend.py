@@ -29,6 +29,15 @@ class WordTimestamp:
     char_end: int
 
 
+@dataclass(frozen=True)
+class SynthContext:
+    """Document context for pronunciation (SYN-4): acronym definitions found at ingestion
+    (``{"TED": "Transferable Erosion Deposit"}``, ING-6). ``document_id`` is for logging."""
+
+    acronyms: dict[str, str] = field(default_factory=dict)
+    document_id: int | None = None
+
+
 @dataclass
 class SynthResult:
     audio: bytes  # PCM 16-bit mono
@@ -50,4 +59,8 @@ class TTSBackend(Protocol):
         """Native speed range, e.g. (0.5, 2.0). Outside it the service time-stretches."""
         ...
 
-    def synthesize(self, text: str, voice_id: str, speed: float) -> SynthResult: ...
+    def synthesize(
+        self, text: str, voice_id: str, speed: float, context: SynthContext | None = None
+    ) -> SynthResult:
+        """``context`` is optional document context; a backend may ignore it."""
+        ...

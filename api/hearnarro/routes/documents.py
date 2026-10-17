@@ -136,6 +136,7 @@ async def get_document(document_id: int, conn: Conn) -> dict[str, Any]:
         raise HTTPException(404, "document not found")
     return _document_summary(doc) | {
         "sections": await repo.list_sections(conn, document_id),
+        "acronyms": repo.document_acronyms(doc),
         "settings": {"voice_id": doc["voice_id"], "speed": doc["speed"]},
         "position": {
             "segment_id": doc["position_segment_id"],

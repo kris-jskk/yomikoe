@@ -439,6 +439,13 @@ Tested by `test_syn4_fake_backend_satisfies_protocol`, which assigns a `FakeBack
 `TTSBackend`-typed variable and checks `name` and `speed_range()` (the Protocol is not
 `runtime_checkable`; conformance is checked statically and by use).
 
+`SynthContext(acronyms: dict[str, str] = {}, document_id: int | None = None)` is optional document
+context: `synthesize(text, voice_id, speed, context=None)`. `FakeBackend` accepts and ignores it.
+`SynthesisService._context` loads `documents.acronyms_json` once per document through
+`DbSegmentRepo.document_acronyms` and passes a context only when the document has definitions; a
+backend whose `synthesize` has no `context` parameter (the `SpyBackend` test double in
+`conftest.py`) still gets the 3-argument call.
+
 #### `fake.py`
 
 `FakeBackend` produces silence with exactly predictable timing: each whitespace-separated word
@@ -557,6 +564,33 @@ ARPAbet with the vendored g2p_en GRU and maps it to Kokoro IPA (`arpabet_to_koko
 the letters; one `WARNING` per OOV word naming the phonemes and the method. Tests:
 `test_kokoro_backend.py` (pure helpers always; model tests `@pytest.mark.model`, including
 `test_syn3_kokoro_first_word_not_clipped_at_fast_native_speeds`), `test_syn_gate.py` (smoke and gate), `test_compat_num2words.py`.
+
+**Pronunciation tiers (2026-10-16).** `KokoroBackend._tokens(text, british, context)` runs misaki's
+G2P and then rewrites tokens; per word the first tier that has it wins:
+1. `lexicon_overrides.py` — `OVERRIDES: dict[str, str]`, lower-case word -> phonemes in misaki's
+   US alphabet (`ˈ`/`ˌ` before the stressed vowel; `A` "ay", `I` "eye", `O` "oh", `W` "ow", `ɹ`,
+   `ə`). Case-insensitive; `'s`/`’s`/plural `s` add `s`/`z`/`ɪz`. Entries are also written into
+   misaki's gold lexicon. Ships with "uber" only (misaki lacks it, cmudict says "YOO-ber"); each
+   entry used is logged once per document at INFO. To add one: one line in that dict (the model
+   test checks every symbol is in Kokoro's vocab).
+2. misaki gold/silver lexicon.
+3. CMU Pronouncing Dictionary (`hearnarro/synthesis/cmudict/`, vendored `cmudict.dict.gz` from
+   cmusphinx at a pinned commit, BSD-style licence; the PyPI `cmudict` package is GPL-3.0+ and not
+   used, result 367_cmudict_licence) through `arpabet_to_kokoro`; whole word first, then camel-case
+   pieces. Coverage on 200 names: misaki 107, cmudict +53, fallback 40; g2p_en vs cmudict PER
+   0.095 on 30 words (result 368_coverage).
+4. g2p_en neural fallback, then letters. `_OOVFallback` logs the tier(s) once per word per document.
+
+**All-caps tokens** (`acronyms.py`, after the tiers above): `decide(word, next_word=,
+definitions=, in_lexicon=)` -> `Decision(spoken, reason)`, first rule wins: `SPOKEN`/`SPELLED`
+overrides -> `COLLOCATIONS` (`("TED", "talk")` spoken, `("SAT", "score")` spelled, ...) -> the
+document's definition (`SynthContext.acronyms`: spelled, unless >= 4 letters and pronounceable)
+-> misaki lexicon (lowercase form) -> `pronounceable` heuristic. Spoken: `RESPELL` word's lexicon
+entry ("JSON" -> "Jason"), else misaki's word phonemes, else lexicon, else g2p_en. Spelled: one
+token per letter, no spaces (so the phoneme string equals misaki's own letter spelling), each with
+its own duration; `word_timestamps` folds them into one `WordTimestamp` spanning the original
+token. One INFO line per (document, token, decision). Tests: `test_acronyms.py`,
+`test_lexicon_overrides.py`, `@model` `test_syn4_kokoro_acronyms_*`, `test_syn4_kokoro_document_definition_spells_ted`, `test_syn4_kokoro_lexicon_override_uber`.
 
 ### `api/hearnarro/routes/`
 
@@ -1060,6 +1094,8 @@ lookahead come from the environment through `load_settings()`.
 
 | Item | Where | Lands in |
 | --- | --- | --- |
+| Per-document user pronunciation corrections (beyond the global `lexicon_overrides.py`) | `synthesis/` + library UI | M4 |
+| Cached audio is keyed by segment/voice/speed, not by acronym decisions: documents synthesized before 2026-10-16 keep "T E D" until re-ingested | `cache.py` | re-ingest |
 | `SynthesisService` (`get_audio`, `prefetch`, `queue_depth`, real `shutdown`), `DbSegmentRepo` | `service.py` | done, phase 2 |
 | `AudioCache` (`get`, `put`, `mark_failed`); `document_id` lookup for the file path; `media_type` from extension | `cache.py` | done, phase 2 |
 | `stretch_pcm`, `scale_timestamps` (numpy WSOLA, D17) | `stretch.py` | done, phase 2 |

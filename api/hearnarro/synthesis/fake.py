@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from hearnarro.synthesis.backend import SynthResult, Voice, WordTimestamp
+from hearnarro.synthesis.backend import SynthContext, SynthResult, Voice, WordTimestamp
 
 SAMPLE_RATE = 24_000
 WORD_MS = 80
@@ -38,7 +38,10 @@ class FakeBackend:
     def speed_range(self) -> tuple[float, float]:
         return (0.5, 2.0)
 
-    def synthesize(self, text: str, voice_id: str, speed: float) -> SynthResult:
+    def synthesize(
+        self, text: str, voice_id: str, speed: float, context: SynthContext | None = None
+    ) -> SynthResult:
+        """``context`` is accepted and ignored (the fake does not phonemize)."""
         if voice_id not in {v.id for v in _VOICES}:
             raise ValueError(f"unknown voice {voice_id!r} for backend 'fake'")
         lo, hi = self.speed_range()

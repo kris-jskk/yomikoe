@@ -148,3 +148,75 @@ def test_syn3_kokoro_first_word_not_clipped_at_fast_native_speeds(text: str) -> 
         onset, rms, start = _first_word_onset(result)
         assert onset <= start + 60, f"speed {speed}: onset {onset:.0f} ms, first word {start} ms"
         assert rms >= 0.5 * ref_rms, f"speed {speed}: first-word RMS {rms:.4f} vs {ref_rms:.4f}"
+
+
+ACRONYM_SENTENCE = "The CEO watched a TED talk about NASA and PDF files."
+
+
+@pytest.mark.model
+def test_syn4_kokoro_acronyms_spoken_or_spelled_one_timestamp_per_word() -> None:
+    b = _backend()
+    tokens = b._tokens(ACRONYM_SENTENCE, british=False)
+    texts = [t.text for t in tokens]
+    assert "TED" in texts and "NASA" in texts  # single word tokens
+    assert "CEO" not in texts and "PDF" not in texts  # replaced by letter tokens
+    lex = b._g2p_for(british=False).lexicon
+    by_text = {t.text: t.phonemes for t in tokens}
+    assert by_text["TED"] == lex.golds["ted"]
+    assert by_text["NASA"] == lex.golds["NASA"]
+    c = texts.index("C")
+    assert texts[c : c + 3] == ["C", "E", "O"]
+    assert [t.whitespace for t in tokens[c : c + 3]] == ["", "", " "]
+    assert "".join(t.phonemes for t in tokens[c : c + 3]) == lex.get_NNP("CEO")[0]
+    p = texts.index("P")
+    assert texts[p : p + 3] == ["P", "D", "F"]
+    result = b.synthesize(ACRONYM_SENTENCE, "af_heart", 1.0)
+    _check_invariants(ACRONYM_SENTENCE, result)
+    spans = {t.word: (t.char_start, t.char_end, t.end_ms - t.start_ms) for t in result.timestamps}
+    for word in ("CEO", "TED", "NASA", "PDF"):
+        start = ACRONYM_SENTENCE.index(word)
+        assert spans[word][:2] == (start, start + len(word))
+        assert spans[word][2] > 0
+    assert spans["CEO"][2] > spans["TED"][2]  # three letters take longer than one syllable
+
+
+@pytest.mark.model
+def test_syn4_kokoro_document_definition_spells_ted() -> None:
+    from hearnarro.synthesis.backend import SynthContext
+
+    text = "The Transferable Erosion Deposit (TED) rose, and TED values fell."
+    ctx = SynthContext(acronyms={"TED": "Transferable Erosion Deposit"}, document_id=1)
+    texts = [t.text for t in _backend()._tokens(text, british=False, context=ctx)]
+    assert "TED" not in texts and texts.count("T") == 2
+    plain = [t.text for t in _backend()._tokens(text, british=False)]
+    assert plain.count("TED") == 2
+    _check_invariants(text, _backend().synthesize(text, "af_heart", 1.0, context=ctx))
+
+
+@pytest.mark.model
+def test_syn4_kokoro_json_respelled_as_jason() -> None:
+    b = _backend()
+    tokens = b._tokens("Parse the JSON file.", british=False)
+    json_ps = next(t.phonemes for t in tokens if t.text == "JSON")
+    assert json_ps == b._g2p_for(british=False).fallback._look("Jason")
+
+
+UBER_SENTENCE = "I took an Uber to the TED talk."
+
+
+@pytest.mark.model
+def test_syn4_kokoro_lexicon_override_uber(caplog: pytest.LogCaptureFixture) -> None:
+    from hearnarro.synthesis.backend import SynthContext
+    from hearnarro.synthesis.lexicon_overrides import OVERRIDES
+
+    b = _backend()
+    assert all(c in b._vocab for ps in OVERRIDES.values() for c in ps)
+    ctx = SynthContext(acronyms={"XYZ": "Some Other Thing"}, document_id=4242)
+    with caplog.at_level(logging.INFO, logger="hearnarro.synthesis.kokoro_backend"):
+        by_text = {t.text: t.phonemes for t in b._tokens(UBER_SENTENCE, False, ctx)}
+        b._tokens("Two Ubers and Uber's app.", False, ctx)
+    assert by_text["Uber"] == "ˈubəɹ"  # the 'u' vowel, not 'j' (fallback said jˈubəɹ)
+    assert by_text["TED"] == "tˈɛd"
+    logged = [r.getMessage() for r in caplog.records if "override" in r.getMessage()]
+    assert logged == ["pronunciation override document=4242 entry='uber'"]  # once per document
+    _check_invariants(UBER_SENTENCE, b.synthesize(UBER_SENTENCE, "af_heart", 1.0))

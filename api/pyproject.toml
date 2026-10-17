@@ -62,6 +62,7 @@ include = ["hearnarro*"]
 [tool.setuptools.package-data]
 "hearnarro.synthesis.g2p_oov" = ["checkpoint20.npz", "LICENSE", "NOTICE"]
 "hearnarro.synthesis.kokoro_model" = ["LICENSE", "NOTICE"]
+"hearnarro.synthesis.cmudict" = ["cmudict.dict.gz", "LICENSE", "NOTICE"]
 
 [tool.ruff]
 line-length = 100

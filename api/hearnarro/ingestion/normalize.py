@@ -1,17 +1,19 @@
-"""Stage 5 normalization for speech, with a char_map back to the source (subset of ING-6)."""
+"""Stage 5 normalization for speech, with a char_map back to the source (subset of ING-6).
+
+All-caps tokens are left as written: whether "TED" is spoken or "PDF" spelled is decided by
+the synthesis backend (``hearnarro.synthesis.acronyms``, SYN-4), which has a pronunciation
+lexicon and the document's acronym definitions (``hearnarro.ingestion.acronyms``).
+"""
 
 from __future__ import annotations
 
 import re
-
-SPOKEN_ACRONYMS = {"NASA", "JSON", "SQL", "NATO", "UNESCO", "RAM", "ROM", "GPU", "CPU"}
 
 _PATTERN = re.compile(
     r"(?P<citation>\[\d+(?:\s*[,–-]\s*\d+)*\])"
     r"|(?P<etal>\bet al\.)"
     r"|(?P<percent>\b\d+(?:\.\d+)?%)"
     r"|(?P<url>(?:\bhttps?://|\bwww\.)[^\s/]+(?:/\S*)?)"
-    r"|(?P<acronym>\b[A-Z]{2,5}\b)"
 )
 _URL_TRAILING = ".,;:!?)]}'\"”’"
 _DROP_FOLLOWERS = ",.;:!?)"
@@ -26,7 +28,7 @@ def _url_host(token: str) -> str:
 def normalize(text: str) -> tuple[str, list[int]]:
     """Return (normalized_text, char_map) with len(char_map) == len(normalized_text).
 
-    One left-to-right pass over regex matches (citation, et al., percent, URL, acronym).
+    One left-to-right pass over regex matches (citation, et al., percent, URL).
     Unmatched characters are copied with identity mapping. A rewritten token at input
     ``[start, start + L)`` with expansion ``E`` (length L') maps output char k to
     ``start + min(L - 1, k * L // L')``: monotone, inside the token, first char -> start
@@ -66,11 +68,6 @@ def normalize(text: str) -> tuple[str, list[int]]:
             suffix_start = start + len(trimmed)
             host = _url_host(trimmed) or trimmed
             emit(host, start, len(trimmed))
-        elif kind == "acronym":
-            if token in SPOKEN_ACRONYMS:
-                emit(token, start, len(token))
-            else:
-                emit(" ".join(token), start, len(token))
         for i in range(suffix_start, end):
             out.append(text[i])
             cmap.append(i)

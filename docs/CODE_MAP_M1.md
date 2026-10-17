@@ -52,7 +52,8 @@ M1 turns a PDF into ordered sentence segments in SQLite and serves them over HTT
 - **ING-5** merge lines (de-hyphenation), join paragraphs across page and column breaks, then
   split into sentences with offsets back into the merged block text.
 - **ING-6 (subset)** normalization for speech (`normalized_text` plus `char_map`): citations
-  dropped, `et al.`, percent, URLs to host, acronyms spelled out.
+  dropped, `et al.`, percent, URLs to host; all-caps tokens left as written (the M2 backend
+  decides spoken vs spelled), and acronym definitions collected per document.
 - A document quality checklist (`hearnarro check`, 12 checks), a CLI, an HTTP smoke script.
 - ING-7 (table rows as prose) and ING-8 are not M1 (PRD milestones); OCR quality is M4.
 
@@ -98,7 +99,7 @@ their expected files are provisional until the OCR fallback lands (M4).
 | CLI (`cli.py`, `__main__.py`) | implemented (`check` exercised through `check_pdf` in tests) |
 | App factory (`app.py`, M1 part) | tested through `test_api_documents.py` |
 | Documents API (`routes/documents.py`) | tested |
-| Storage (`storage/db.py`, `repo.py`, `jobs.py`, migrations 0001/0002) | tested; migrations also run by hand (result 225) |
+| Storage (`storage/db.py`, `repo.py`, `jobs.py`, migrations 0001/0002/0003; 0003 adds `documents.acronyms_json`) | tested; migrations also run by hand (result 225) |
 | `scripts/m1_smoke.py` | implemented; run against a server (results 170, 248) |
 | `scripts/check_licences.py` | tested (`test_classify`, `test_allowlist_covers_no_metadata`); environment scan red (env) |
 | Reading-order gate | passing (151, 296) |
@@ -388,8 +389,9 @@ Signatures are copied from the files at `fa7b257`. Line counts are in
 | `merge.py` | Stage 4: line merge, de-hyphenation, cross-break joins (ING-5) | `def merge_lines(lines: list[str]) -> str`; `def is_noise_line(text: str) -> bool`; `def strip_emails(text: str) -> str`; `def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]` | `list[Block]` | none | tested |
 | `segment.py` | Stage 5: sentence split with offsets (ING-5, D4) | `def split_sentences(block: LogicalBlock, *, document_id: int, order_start: int, id_start: int) -> list[Segment]`; private `_segmenter() -> pysbd.Segmenter` (cached; also used by `merge.py`) | `LogicalBlock` | none | changing (tested at `fa7b257`) |
 | `abbreviations.py` | Abbreviation data for the new splitter | not described (untracked) | | | changing (untracked) |
-| `normalize.py` | Speech normalization with `char_map` (ING-6 subset) | `SPOKEN_ACRONYMS`; `def normalize(text: str) -> tuple[str, list[int]]` | `str` | none | tested |
-| `pipeline.py` | Stage composition | `class IngestResult` (`pages`, `blocks`, `segments`); `def ingest(pdf_path: str \| Path, *, document_id: int = 0, ocr: bool = True, on_page: Callable[[int, int], None] \| None = None) -> IngestResult` | PDF | none | tested |
+| `normalize.py` | Speech normalization with `char_map` (ING-6 subset) | `def normalize(text: str) -> tuple[str, list[int]]` | `str` | none | tested |
+| `acronyms.py` | Acronym definitions per document (ING-6) | `MINOR`; `def find_definitions(text: str) -> dict[str, str]`; `def document_definitions(texts: Iterable[str]) -> dict[str, str]` | merged block texts | none (stored by `jobs._write_result` in `documents.acronyms_json`) | tested (`test_ing6_acronym_definitions.py`) |
+| `pipeline.py` | Stage composition | `class IngestResult` (`pages`, `blocks`, `segments`, `acronyms`); `def ingest(pdf_path: str \| Path, *, document_id: int = 0, ocr: bool = True, on_page: Callable[[int, int], None] \| None = None) -> IngestResult` | PDF | none | tested |
 
 #### `models.py`
 
@@ -1072,7 +1074,6 @@ One pass over `_PATTERN` matches, alternatives tried in this order:
 | `etal` `\bet al\.` | `et al` | |
 | `percent` `\b\d+(?:\.\d+)?%` | `<number> percent` | `3.2%` → `3.2 percent` |
 | `url` `(?:\bhttps?://\|\bwww\.)[^\s/]+(?:/\S*)?` | the host without `www.`; trailing `.,;:!?)]}'"”’` stays as text | `https://www.nist.gov/x.` → `nist.gov.` |
-| `acronym` `\b[A-Z]{2,5}\b` | spelled with spaces unless in `SPOKEN_ACRONYMS` = `NASA, JSON, SQL, NATO, UNESCO, RAM, ROM, GPU, CPU` | `NIST` → `N I S T` |
 
 `char_map`: unmatched characters map to themselves; an expansion of length L′ of a token at
 `[start, start+L)` maps output character k to `start + min(L − 1, k × L // L′)` (monotone,
@@ -1080,8 +1081,17 @@ inside the token). A dropped citation contributes nothing. Pinned by
 `test_ing6_char_map_invariants`, `test_ing6_identity_on_plain_prose`,
 `test_ing6_citation_dropped_and_space_collapsed`, `test_ing6_citation_list_and_range_dropped`,
 `test_ing6_consecutive_drops_collapse_to_one_space`, `test_ing6_et_al`, `test_ing6_percent`,
-`test_ing6_url_to_domain`, `test_ing6_www_url_keeps_host_only`, `test_ing6_all_caps_spelled_out`,
-`test_ing6_spoken_acronym_unchanged`. Numbers are not expanded to words (no `num2words` call
+`test_ing6_url_to_domain`, `test_ing6_www_url_keeps_host_only`,
+`test_ing6_all_caps_tokens_left_for_the_backend`.
+
+All-caps tokens are no longer rewritten here (until 2026-10-16 a `SPOKEN_ACRONYMS` allowlist
+spelled every other 2–5 letter token, so "TED" became "T E D"). The synthesis backend decides
+(`hearnarro/synthesis/acronyms.py`, CODE_MAP_M2). Documents ingested before the change still
+carry the spelled form in `normalized_text` until re-ingested. `ingestion/acronyms.py` collects
+definitions: `<words> (ACR)` or `ACR (<words>)` where the words spell ACR by initials (first word
+capitalized; minor words such as "of" may supply a letter or be skipped); first definition per
+ACR wins; "Figure 2 (left)" is rejected. `pipeline.ingest` stores them on `IngestResult.acronyms`,
+`jobs._write_result` writes `documents.acronyms_json`, `GET /documents/{id}` returns `acronyms`. Numbers are not expanded to words (no `num2words` call
 anywhere in M1; see "Dependencies and licences").
 
 ## Golden and quality gates

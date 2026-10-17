@@ -4,7 +4,7 @@ from itertools import pairwise
 
 import pytest
 
-from hearnarro.ingestion.normalize import SPOKEN_ACRONYMS, normalize
+from hearnarro.ingestion.normalize import normalize
 
 VARIED = [
     "The cat sat on the mat.",
@@ -96,14 +96,7 @@ def test_ing6_www_url_keeps_host_only() -> None:
     assert "/page" not in out
 
 
-def test_ing6_all_caps_spelled_out() -> None:
-    text = "open the PDF file"
-    out, cmap = normalize(text)
-    assert out == "open the P D F file"
-    _assert_expansion_in_span(text, "PDF", out, cmap, "P D F")
-
-
-def test_ing6_spoken_acronym_unchanged() -> None:
-    assert "NASA" in SPOKEN_ACRONYMS
-    text = "ask NASA today"
+@pytest.mark.parametrize("text", ["open the PDF file", "ask NASA today", "a TED talk by the CEO"])
+def test_ing6_all_caps_tokens_left_for_the_backend(text: str) -> None:
+    """Acronym pronunciation is decided in the synthesis backend (SYN-4), not here."""
     assert normalize(text) == (text, list(range(len(text))))

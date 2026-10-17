@@ -1,0 +1,5 @@
+cmudict.dict.gz is cmudict.dict from https://github.com/cmusphinx/cmudict at commit
+74790861f652b15e4ac49015a90074ad62a27690 (sha256 of the uncompressed file
+81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22), gzip-compressed, otherwise
+unchanged. Copyright (C) 1993-2015 Carnegie Mellon University; BSD-style licence in LICENSE.
+The PyPI package "cmudict" is GPL-3.0-or-later and is deliberately not used.
