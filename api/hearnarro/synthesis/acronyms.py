@@ -31,6 +31,11 @@ An acronym with a possessive or plural suffix ("CEO's", "PDFs"; ``split_suffix``
 its letters; the suffix is voiced after the last sound (``suffix_phonemes``: "s" after a
 voiceless consonant, "ᵻz" after a sibilant, else "z") and joins the last letter when spelled.
 
+A mixed-case token whose tail is a run of two or more capitals after a lower-case letter
+("OpenAI", "GenAI", "xAI", "OpenAI's"; ``split_camel_acronym``) is read as its word part on the
+normal pronunciation tiers followed by the capital run decided like any acronym ("open A I").
+Ordinary camel case ("iPhone", "YouTube") does not match and is left alone.
+
 Spelling (``spell_phonemes``) gives one phoneme string per letter, all stresses secondary and
 the last one primary, which concatenated is exactly misaki's own letter spelling; the backend
 emits one token per letter so each letter has its own duration, while the word timestamp still
@@ -75,7 +80,7 @@ SPELLED: frozenset[str] = frozenset(
         "CEO", "CFO", "CTO", "HR",
         # computing: formats, hardware, protocols ("S Q L" is the safer common reading)
         "PDF", "HTML", "CSS", "URL", "USB", "API", "SQL", "CPU", "GPU", "HTTP", "SSH", "IT",
-        "PC", "TV", "DVD", "CD", "AI", "LLM", "NLP", "ML",
+        "PC", "TV", "DVD", "CD", "AI", "LLM", "NLP", "ML", "OS",
         # organisations and places
         "FBI", "CIA", "IBM", "UK", "US", "USA", "EU", "UN",
         # other
@@ -174,6 +179,7 @@ def spell_phonemes(word: str, letters: Mapping[str, str]) -> list[str]:
 _WORD = re.compile(r"[A-Za-z]+(?:['’-][A-Za-z]+)*")
 _CAPS = re.compile(r"[A-Z]+(?:['’-][A-Z]+)*")
 _SUFFIX = re.compile(r"([A-Z]{2,})(['’][sS]|s)")
+_CAMEL_TAIL = re.compile(r"([A-Za-z]*[a-z])([A-Z]{2,})(['’][sS])?")
 
 
 def is_caps(token: str) -> bool:
@@ -221,6 +227,13 @@ def split_suffix(token: str) -> tuple[str, str] | None:
     """("CEO", "'s") for "CEO's", ("PDF", "s") for "PDFs"; None if not an acronym + suffix."""
     m = _SUFFIX.fullmatch(token)
     return (m.group(1), m.group(2)) if m else None
+
+
+def split_camel_acronym(token: str) -> tuple[str, str, str] | None:
+    """("Open", "AI", "") for "OpenAI", ("Open", "AI", "'s") for "OpenAI's"; None when the token
+    does not end in 2+ capitals after a lower-case letter ("iPhone", "NASA", "PDFs")."""
+    m = _CAMEL_TAIL.fullmatch(token)
+    return (m.group(1), m.group(2), m.group(3) or "") if m else None
 
 
 def suffix_phonemes(last: str) -> str:

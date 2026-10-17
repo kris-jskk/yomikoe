@@ -36,7 +36,10 @@ g2p_en predictor on the lowercase form. Spelled: the token is replaced by one to
 (no spaces between them, so the phoneme string equals misaki's letter spelling), each with its
 own duration; the letters fold back into one WordTimestamp spanning the original token. A
 possessive/plural ("CEO's", "PDFs") is decided on its letters and the voiced suffix joins the
-last letter token ("O's", "Fs"). Each
+last letter token ("O's", "Fs"). A mixed-case token ending in 2+ capitals ("OpenAI", "xAI";
+``split_camel_acronym``) becomes a word-part token ("Open": lexicon, cmudict, g2p_en; primary
+stress made secondary) followed by the capital run decided as above ("A", "I's"); the pieces
+fold back into one WordTimestamp like spelled letters. Each
 (document, token) decision is logged once at INFO.
 
 Word timestamps (contract for ``SynthResult.timestamps``):
@@ -79,6 +82,7 @@ from hearnarro.synthesis.acronyms import (
     fold_caps,
     is_acronym,
     spell_phonemes,
+    split_camel_acronym,
     split_suffix,
     suffix_phonemes,
 )
@@ -465,7 +469,10 @@ class KokoroBackend:
         definitions = context.acronyms if context else {}
         out: list[Any] = []
         for i, t in enumerate(tokens):
+            head = ""
             word, suffix = (t.text, "") if is_acronym(t.text) else split_suffix(t.text) or ("", "")
+            if not word and (camel := split_camel_acronym(t.text)):
+                head, word, suffix = camel
             if (
                 not word
                 or id(t) in (folded or ())
@@ -474,6 +481,17 @@ class KokoroBackend:
             ):
                 out.append(t)
                 continue
+            if head:  # "OpenAI": the word part as its own token, then the capital run below
+                head_ps = (
+                    look(head)
+                    or g2p.fallback._cmu(head)
+                    or arpabet_to_kokoro(self._predictor.predict(head.lower()), british)
+                )
+                ht = copy.copy(t)
+                ht.text, ht.phonemes, ht.whitespace = head, head_ps.replace("ˈ", "ˌ"), ""
+                out.append(ht)
+                t = copy.copy(t)
+                t.text, t.phonemes = word + suffix, None
             nxt = tokens[i + 1].text if i + 1 < len(tokens) and t.whitespace else None
             d = decide(
                 word,
