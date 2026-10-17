@@ -145,7 +145,10 @@ def normalize(text: str) -> tuple[str, list[int]]
     #  - citation [12], [3, 4], [12–14]  -> dropped (no output chars)
     #  - "et al." -> "et al"
     #  - number% -> "<number> percent"   ("3.2%" -> "3.2 percent")
-    #  - URL (https?://host/...) or www.host/... -> host only ("https://arxiv.org/abs/1" -> "arxiv.org")
+    #  - URL (https?://host/...), www.host/..., bare domain (label.tld with a lowercase TLD from the list) and e-mail -> spoken:
+#    scheme and "www." dropped, "." -> " dot ", "@" -> " at ", a path of <= 3 plain segments and <= 30 chars -> " slash a slash b",
+#    else dropped ("https://arxiv.org/abs/1" -> "arxiv dot org slash abs slash 1", "Shopping.com." -> "Shopping dot com.");
+#    each char of " dot "/" slash "/" at " maps onto its source character (amended 2026-10-17)
     #  - ALL-CAPS token of 2-5 letters not in SPOKEN_ACRONYMS -> letters separated by spaces ("PDF" -> "P D F")
     #  - expanded output chars map to the input token: output char k of an expansion maps to
     #    input index  start + min(len(token)-1, k * len(token) // len(expansion))  (monotone, in range)
