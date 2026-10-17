@@ -25,12 +25,14 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Protocol
 
 from hearnarro.ingestion.models import Segment
+from hearnarro.settings import trim_pads
 from hearnarro.storage import repo as db_repo
 from hearnarro.storage.db import Engine, unpack_char_map
 from hearnarro.synthesis.backend import SynthContext, SynthResult, TTSBackend, WordTimestamp
 from hearnarro.synthesis.cache import AudioCache, AudioEntry, speed_key
 from hearnarro.synthesis.encode import AudioEncoder
 from hearnarro.synthesis.stretch import scale_timestamps, stretch_pcm
+from hearnarro.synthesis.trim import trim_silence
 
 log = logging.getLogger(__name__)
 
@@ -153,7 +155,13 @@ class SynthesisService:
         *,
         lookahead: int = DEFAULT_LOOKAHEAD,
         executor: ThreadPoolExecutor | None = None,
+        trim_lead_ms: int | None = None,
+        trim_tail_ms: int | None = None,
     ) -> None:
+        # SYN-1 silence trim pads; unset, from HEARNARRO_TRIM_LEAD_MS / HEARNARRO_TRIM_TAIL_MS.
+        env_lead, env_tail = trim_pads()
+        self.trim_lead_ms = env_lead if trim_lead_ms is None else trim_lead_ms
+        self.trim_tail_ms = env_tail if trim_tail_ms is None else trim_tail_ms
         self.backend = backend
         self.encoder = encoder
         self.cache = cache
@@ -410,6 +418,18 @@ class SynthesisService:
             return self.backend.synthesize(text, voice_id, speed)
         return self.backend.synthesize(text, voice_id, speed, context=context)
 
+    def _trimmed(self, result: SynthResult) -> SynthResult:
+        """SYN-1: the backend's clip with leading/trailing silence cut to the pads, timestamps
+        shifted (trim.py). Runs before any stretch, so stretched clips inherit the trim."""
+        audio, ts = trim_silence(
+            result.audio,
+            result.sample_rate,
+            result.timestamps,
+            lead_ms=self.trim_lead_ms,
+            tail_ms=self.trim_tail_ms,
+        )
+        return SynthResult(audio=audio, sample_rate=result.sample_rate, timestamps=ts)
+
     def _render(
         self, seg: Segment, voice_id: str, speed: float, context: SynthContext | None = None
     ) -> list[tuple[_Rendered, bytes]]:
@@ -418,10 +438,12 @@ class SynthesisService:
         _, native_max = self.backend.speed_range()
         if speed <= native_max:
             result = self._synth(seg.normalized_text, voice_id, speed, context)
+            result = self._trimmed(result)  # SYN-1 silence trim
             ts = to_text_offsets(result.timestamps, seg)
             outs = [_Rendered(speed, result.audio, result.sample_rate, ts)]
         else:
             result = self._synth(seg.normalized_text, voice_id, native_max, context)
+            result = self._trimmed(result)  # SYN-1 silence trim, before stretch
             native_ts = to_text_offsets(result.timestamps, seg)
             ratio = speed / native_max
             pcm = stretch_pcm(result.audio, result.sample_rate, ratio)

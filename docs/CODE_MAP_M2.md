@@ -74,7 +74,8 @@ at read time. Both are **to be measured in phase 3**.
 | `KokoroBackend` (`kokoro_backend.py`) | tested (`@model`, 311) |
 | `GET`/`HEAD /audio`, `GET /voices` (`routes/`) | tested |
 | App wiring (`app.py` lifespan, `build_backend`) | tested (through `test_api_audio.py`) |
-| `settings.py` | tested |
+| `settings.py` | tested (incl. `HEARNARRO_TRIM_LEAD_MS` / `HEARNARRO_TRIM_TAIL_MS`, `trim_pads`) |
+| `trim_silence` (`trim.py`) | tested (`test_trim.py`; `@model` `test_pause.py`) |
 | Test doubles in `conftest.py` | tested (committed) |
 | `boundary_util.py`, `test_syn_boundaries.py` | tested (D18 thresholds asserted) |
 | `test_syn1_timestamps.py`, `test_syn3_speed.py`, `test_api_audio.py`, `test_syn_gate.py` (FakeBackend part), `test_stretch.py` | green (297) |
@@ -139,6 +140,16 @@ has never been synthesized with this voice and speed.
    the executor; the queue consumer hands the executor one job at a time, so the request waits
    for at most the job in flight. A key already queued is removed from the queue; a key in flight
    is awaited through the in-flight map.
+7b. **Trim edge silence (SYN-1); runs inside step 8, after each `synthesize` call.** `service.py` → `_trimmed(result: SynthResult) -> SynthResult` [tested] calls
+    `trim.py` → `trim_silence(pcm: bytes, sample_rate: int, timestamps: list[WordTimestamp], *, lead_ms: int = 60, tail_ms: int = 150, threshold_dbfs: float = -40.0) -> tuple[bytes, list[WordTimestamp]]`
+    on every clip right after `backend.synthesize` and before any stretch: silence at or below
+    −40 dBFS is cut to `lead_ms` before the first sound and `tail_ms` after the last, never
+    closer than 20 ms to the first word's `start_ms`; timestamps shift by the head cut and are
+    clamped to the new duration; an all-silent clip (the FakeBackend's) is returned unchanged.
+    The pads come from the `SynthesisService(trim_lead_ms=, trim_tail_ms=)` arguments, else from
+    `settings.py` → `trim_pads(env: Mapping[str, str] | None = None) -> tuple[int, int]`
+    (`HEARNARRO_TRIM_LEAD_MS`, default 60; `HEARNARRO_TRIM_TAIL_MS`, default 150; also on
+    `Settings.trim_lead_ms` / `trim_tail_ms`). Evidence: `_agent/results/369_silence_table.md`, `372`, `374`, `377`.
 8. **Choose native or stretched.** `service.py` → `get_audio` [tested].
    `lo, hi = self.backend.speed_range()` (`FakeBackend`: `(0.5, 2.0)`). If `speed ≤ hi`, synthesize
    at `speed`. Otherwise synthesize at `hi` and remember `ratio = speed / hi`

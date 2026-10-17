@@ -53,6 +53,9 @@ The revision defaults to the D15 pin; set `HEARNARRO_KOKORO_REVISION=<hash>` onl
 different one. The model loads before the server accepts requests (about 2 s once cached).
 Other settings: `HEARNARRO_LOOKAHEAD` (segments synthesized ahead, default 5, SYN-5) and
 `HEARNARRO_AUDIO_FORMAT` (`wav` default, `opus` needs the `opus` extra, D16).
+`HEARNARRO_TRIM_LEAD_MS` (default 60) and `HEARNARRO_TRIM_TAIL_MS` (default 150) set the
+silence kept before and after each clip's sound (SYN-1); together they are the pause between two
+sentences. Cached clips keep the trim they were made with: use a fresh data dir after changing them.
 
 ## 3. Voices, one segment, two speeds (terminal 2)
 

@@ -18,6 +18,10 @@ KOKORO_REVISION_ENV = "HEARNARRO_KOKORO_REVISION"
 LOOKAHEAD_ENV = "HEARNARRO_LOOKAHEAD"
 DATA_DIR_ENV = "HEARNARRO_DATA_DIR"
 AUDIO_FORMAT_ENV = "HEARNARRO_AUDIO_FORMAT"
+TRIM_LEAD_ENV = "HEARNARRO_TRIM_LEAD_MS"  # SYN-1: silence kept before a clip's first sound
+TRIM_TAIL_ENV = "HEARNARRO_TRIM_TAIL_MS"  # SYN-1: silence kept after its last sound
+DEFAULT_TRIM_LEAD_MS = 60
+DEFAULT_TRIM_TAIL_MS = 150
 AUDIO_FORMATS = ("wav", "opus")  # D16: wav default
 DEFAULT_LOOKAHEAD = 5
 BACKENDS = ("fake", "kokoro")
@@ -38,11 +42,35 @@ class Settings:
     lookahead: int
     data_dir: Path
     audio_format: str = "wav"  # "wav" | "opus" (D16)
+    trim_lead_ms: int = DEFAULT_TRIM_LEAD_MS
+    trim_tail_ms: int = DEFAULT_TRIM_TAIL_MS
 
 
 def kokoro_available() -> bool:
     """True when the ``tts`` extra is installed (``pip install -e '.[tts]'``)."""
     return all(importlib.util.find_spec(m) is not None for m in TTS_MODULES)
+
+
+def _non_negative_int(env: Mapping[str, str], name: str, default: int) -> int:
+    raw = env.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        raise SettingsError(f"{name}={raw!r} is not an integer") from None
+    if value < 0:
+        raise SettingsError(f"{name}={raw!r} must be >= 0")
+    return value
+
+
+def trim_pads(env: Mapping[str, str] | None = None) -> tuple[int, int]:
+    """(lead_ms, tail_ms) for the per-clip silence trim (SYN-1), from ``env``."""
+    env = os.environ if env is None else env
+    return (
+        _non_negative_int(env, TRIM_LEAD_ENV, DEFAULT_TRIM_LEAD_MS),
+        _non_negative_int(env, TRIM_TAIL_ENV, DEFAULT_TRIM_TAIL_MS),
+    )
 
 
 def load_settings(
@@ -95,6 +123,7 @@ def load_settings(
     if audio_format not in AUDIO_FORMATS:
         raise SettingsError(f"{AUDIO_FORMAT_ENV}={audio_format!r}; expected one of {AUDIO_FORMATS}")
 
+    trim_lead_ms, trim_tail_ms = trim_pads(env)
     data_dir = resolve_data_dir(env.get(DATA_DIR_ENV) or None)
     return Settings(
         tts_backend=backend,
@@ -102,4 +131,6 @@ def load_settings(
         lookahead=lookahead,
         data_dir=data_dir,
         audio_format=audio_format,
+        trim_lead_ms=trim_lead_ms,
+        trim_tail_ms=trim_tail_ms,
     )
