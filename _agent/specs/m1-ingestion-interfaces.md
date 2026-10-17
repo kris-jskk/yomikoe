@@ -208,3 +208,12 @@ unchanged. Images from `page.images`; drawings for figure regions from `page.rec
 `page.lines`; tables from `page.find_tables()` plus a geometric detector for tables without ruling
 lines (round 3). Rendering for OCR uses `pypdfium2`; `ocr_page(pdf_path, number)`. Superscripts stay
 inside lines as `Span.superscript` spans. Every other stage keeps its contract.
+
+## Amendment 2026-10-17: all-caps tokens are not spelled by the normalizer
+
+The rule "ALL-CAPS token of 2-5 letters not in SPOKEN_ACRONYMS -> letters separated by spaces" is
+removed from `normalize.py`; all-caps tokens stay as written. Pronunciation is decided in the
+synthesis backend (overrides -> collocations -> document definitions -> lexicon -> CMUdict tier ->
+pronounceability heuristic -> fallback G2P). `ingestion/acronyms.py` collects "Expansion (ACR)" /
+"ACR (expansion)" definitions into `IngestResult.acronyms`, stored as `documents.acronyms_json`
+(migration 0003) and passed to the backend as `SynthContext`.
