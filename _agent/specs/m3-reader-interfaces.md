@@ -116,6 +116,7 @@ States: `idle | loading | playing | paused | error`. Context (always present):
 interface PlayerContext {
   documentId: number | null
   orderedIds: number[]            // segment ids in reading order (from getAllSegments)
+  sectionStarts: number[]         // first_segment_id of each section, in document order (amended 2026-10-17, phase 1)
   current: { segmentId: number; offsetMs: number } | null   // the segment the listener is on, and where in it
   voice: string; speed: number    // speed is a 0.05 multiple in [0.5, 3.0]
   generation: number              // bumped on every schedule rebuild; stale audio events are ignored
@@ -128,21 +129,22 @@ type PlayerState = { status: 'idle'|'loading'|'playing'|'paused'|'error' } & Pla
 Events (the whole vocabulary; components dispatch these and nothing else):
 
 ```
-LOAD{documentId, orderedIds, voice, speed, position?}  idle|error -> idle (context set, current = position or first id)
-PLAY{segmentId?, offsetMs?}     idle|paused|error -> loading   (target = arg, else current; generation++, firstAudio.requestedAt = now)
-AUDIO_READY{generation}         loading -> playing             (ignored if generation differs; firstAudio.startedAt = now)
+LOAD{documentId, orderedIds, sectionStarts, voice, speed, position?}
+                                idle|error -> idle             (context set, current = position or first id; sectionStarts = first segment id of each section, in order)
+PLAY{segmentId?, offsetMs?, at} idle|paused|error -> loading   (target = arg, else current; generation++, firstAudio.requestedAt = at)
+AUDIO_READY{generation, at}     loading -> playing             (ignored if generation differs; firstAudio.startedAt = at)
 PAUSE                           playing -> paused              (ctx.suspend(); schedule kept)
 RESUME                          paused -> playing              (ctx.resume())
 SEEK{segmentId, offsetMs=0}     playing|paused|loading -> loading   (generation++, current = target)
-SKIP{by: +1|-1}                 playing|paused -> loading      (target = orderedIds[idx(current)+by], clamped; offset 0)
-SKIP_SECTION{by: +1|-1}         playing|paused -> loading      (target = first_segment_id of the next/previous section by order; clamped)
+SKIP{by: +1|-1}                 playing|paused -> loading      (generation++; target = orderedIds[idx(current)+by], clamped to the ends; offset 0)
+SKIP_SECTION{by: +1|-1}         playing|paused -> loading      (generation++; +1: the first sectionStart whose order is greater than current's, or no-op (state unchanged, same object) when there is none; -1: the start of the current section if current is not that start, else the previous section's start, else no-op)
 SET_VOICE{voice} / SET_SPEED{speed}
-                                playing -> loading             (current kept, offsetMs = 0: the sentence restarts, PLAY-4)
+                                playing -> loading             (generation++; current kept, offsetMs = 0: the sentence restarts, PLAY-4)
                                 paused|idle -> same state      (context only; applies on next PLAY)
 SEGMENT_STARTED{segmentId, generation}   playing -> playing     (current = {segmentId, 0}; ignored if stale)
 POSITION{segmentId, offsetMs}   playing -> playing             (from the rAF loop, throttled to 4 Hz; for the position readout and M4 persistence)
-BUFFERING{generation}           playing -> loading             (next clip not ready at the boundary)
-ENDED                           playing -> paused              (after the last segment; current = last id, offset = duration)
+BUFFERING{generation}           playing -> loading             (next clip not ready at the boundary; generation unchanged, the schedule continues)
+ENDED{offsetMs}                 playing -> paused              (after the last segment; current = last id, offset = the clip's duration, passed by the hook)
 FETCH_FAILED{message, generation}  loading|playing -> error    (ignored if stale)
 RETRY                           error -> loading               (generation++, same current)
 DISMISS                         error -> idle
