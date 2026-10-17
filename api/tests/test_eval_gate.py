@@ -240,18 +240,154 @@ def test_eval4_examples_and_aggregate(all_run: dict[str, Any]) -> None:
         pytest.skip(reason)
     examples = suite["examples"]
     assert len(examples) == len(eval4_speech_form.load_pairs())
-    fields = {"id", "class", "exact", "partial", "score", "actual", "actual_ph", "expected_ph"}
+    from hearnarro.evals.suites.eval4_speech_form import strip_stress
+
+    fields = {"id", "class", "exact", "exact_stress", "partial", "score", "actual"}
+    fields |= {"actual_ph", "expected_ph"}
     for ex in examples:
         assert fields | {"text_exact", "text_partial"} <= set(ex)
         assert isinstance(ex["exact"], bool) and isinstance(ex["text_exact"], bool)
         assert 0.0 <= ex["partial"] <= 1.0 and 0.0 <= ex["text_partial"] <= 1.0
-        assert ex["exact"] == (ex["actual_ph"] == ex["expected_ph"])
+        assert ex["exact_stress"] == (ex["actual_ph"] == ex["expected_ph"])
+        assert ex["exact"] == (strip_stress(ex["actual_ph"]) == strip_stress(ex["expected_ph"]))
+        assert ex["exact"] or not ex["exact_stress"]
         assert not ex["exact"] or ex["partial"] == 1.0
         assert not ex["text_exact"] or ex["text_partial"] == 1.0
     agg = suite["aggregate"]
     n = len(examples)
     assert agg["accuracy"] == pytest.approx(sum(e["exact"] for e in examples) / n)
     assert agg["partial_mean"] == pytest.approx(sum(e["partial"] for e in examples) / n)
+    assert agg["accuracy_stress"] == pytest.approx(sum(e["exact_stress"] for e in examples) / n)
+    assert agg["accuracy"] >= agg["accuracy_stress"]
+    assert strip_stress("ˈhɛlO ˌwɜɹld") == "hɛlO wɜɹld"
     assert agg["text_accuracy"] == pytest.approx(sum(e["text_exact"] for e in examples) / n)
     assert agg["text_partial_mean"] == pytest.approx(sum(e["text_partial"] for e in examples) / n)
     assert set(agg["by_category"]) == {e["class"] for e in examples} >= EVAL4_CATEGORIES
+
+
+# --- E2: tier-1 suites with the real voice: EVAL-5 intelligibility, EVAL-6 sync, EVAL-7 speed
+# (SYN-1, SYN-4, SYN-5, PLAY-3; D31, D34). Kokoro synthesizes, faster-whisper (MIT, pinned in
+# settings.py) transcribes. Five sentences at speed 1.0, both eval voices.
+
+E2_N = 5
+
+
+@pytest.fixture(scope="module")
+def e2_examples() -> list[dict[str, Any]]:
+    from hearnarro.evals.suites import eval5_intelligibility
+
+    reason = eval5_intelligibility.unavailable()
+    if reason:
+        pytest.skip(reason)
+    return eval5_intelligibility.dataset(limit=E2_N, speeds=(1.0,))
+
+
+@pytest.mark.model
+def test_eval5_eval6_eval7_registered_tier1() -> None:
+    from hearnarro.evals.suites import SUITES, direction, select
+
+    for sid in ("EVAL-5", "EVAL-6", "EVAL-7"):
+        assert SUITES[sid].TIER == 1
+        assert direction(sid) == "lower"
+    assert {m.ID for m in select(["all"], 0)} == {"EVAL-1", "EVAL-2", "EVAL-3", "EVAL-4"}
+    assert {"EVAL-5", "EVAL-6", "EVAL-7"} <= {m.ID for m in select(["all"], 1)}
+
+
+@pytest.mark.model
+def test_eval5_dataset_50_sentences_two_voices() -> None:
+    from hearnarro.evals.suites import eval5_intelligibility as e5
+    from hearnarro.synthesis.kokoro_backend import voice_from_id
+
+    sentences = e5.load_sentences()
+    assert len(sentences) == 50 == len({s["id"] for s in sentences})
+    assert e5.load_sentences() == sentences  # committed list, deterministic
+    genders = {voice_from_id(v).gender for v in e5.VOICES}
+    assert genders == {"female", "male"} and len(e5.VOICES) == 2
+    assert {1.0, 2.0} <= set(e5.SPEEDS)
+    full = e5.dataset()
+    assert len(full) == 50 * len(e5.VOICES) * len(e5.SPEEDS)
+
+
+@pytest.mark.model
+def test_eval5_wer_normalization() -> None:
+    from hearnarro.evals.suites.eval5_intelligibility import norm_words, wer
+
+    assert norm_words("Self-driving cars, she said: \"Go!\"") == [
+        "self", "driving", "cars", "she", "said", "go"
+    ]  # fmt: skip
+    assert wer(["a", "b", "c", "d"], ["a", "x", "c"]) == pytest.approx(0.5)
+    assert wer(["a"], ["a", "b"]) == pytest.approx(1.0)
+
+
+@pytest.mark.model
+def test_eval5_intelligibility_round_trip(e2_examples: list[dict[str, Any]]) -> None:
+    from hearnarro.evals.suites import eval5_intelligibility as e5
+
+    assert len(e2_examples) == E2_N * len(e5.VOICES)
+    scores = [e5.score(ex) for ex in e2_examples]
+    for s in scores:
+        assert {"id", "class", "sentence_id", "speed", "voice", "reference", "hypothesis"} <= set(s)
+        assert s["direction"] == "lower" and s["score"] == s["wer"] >= 0.0
+        assert s["speed"] == 1.0 and s["reference"]
+    agg = e5.aggregate(scores)
+    assert agg["mean_wer"] == pytest.approx(sum(s["wer"] for s in scores) / len(scores))
+    assert agg["worst"]["wer"] == max(s["wer"] for s in scores)
+    assert set(agg["per_voice"]) == set(e5.VOICES) and set(agg["per_speed"]) == {"1.0"}
+    assert agg["mean_wer"] < 0.25  # SYN-1: the voice is intelligible at normal speed
+
+
+@pytest.mark.model
+def test_eval6_sync_word_offsets(e2_examples: list[dict[str, Any]]) -> None:
+    from hearnarro.evals.suites import eval6_sync as e6
+
+    scores = [e6.score(ex) for ex in e2_examples]
+    for s in scores:
+        assert {"id", "class", "speed", "voice", "mean_abs_offset_ms", "share_within_150ms"} <= set(s)
+        assert 0 < s["n_matched"] <= s["n_backend_words"]
+        assert len(s["abs_offsets_ms"]) == s["n_matched"]
+        assert s["score"] == s["mean_abs_offset_ms"] >= 0.0
+        assert 0.0 <= s["share_within_150ms"] <= 1.0
+        assert s["n_matched"] >= 0.6 * s["n_backend_words"]
+    agg = e6.aggregate(scores)
+    pooled = [o for s in scores for o in s["abs_offsets_ms"]]
+    assert agg["mean_abs_offset_ms"] == pytest.approx(sum(pooled) / len(pooled))
+    assert agg["share_within_150ms"] == pytest.approx(sum(o <= 150 for o in pooled) / len(pooled))
+    assert set(agg["per_speed"]) == {"1.0"}
+    assert agg["mean_abs_offset_ms"] < 250  # PLAY-3: highlight follows the voice
+
+
+@pytest.mark.model
+def test_eval6_compare_rules_per_metric() -> None:
+    from hearnarro.evals.store import compare
+
+    ex = {"id": "s", "class": "1.0", "score": 100.0, "mean_abs_offset_ms": 100.0}
+    ex["share_within_150ms"] = 0.8
+    base = {"run_id": "a", "suites": {"EVAL-6": {"examples": [ex], "aggregate": {}}}}
+    within = copy.deepcopy(base)
+    within["suites"]["EVAL-6"]["examples"][0].update(score=109.0, mean_abs_offset_ms=109.0)
+    within["suites"]["EVAL-6"]["examples"][0]["share_within_150ms"] = 0.9
+    assert compare(base, within)["regressions"] == []  # +9 % timing, share up
+    worse = copy.deepcopy(base)
+    worse["suites"]["EVAL-6"]["examples"][0]["share_within_150ms"] = 0.7
+    (reg,) = compare(base, worse)["regressions"]
+    assert set(reg["metrics"]) == {"share_within_150ms"}
+
+
+@pytest.mark.model
+def test_eval7_speed_from_bench() -> None:
+    from hearnarro.evals.suites import eval7_speed as e7
+
+    full = e7.dataset()
+    assert len({ex["sentence"] for ex in full}) == 20
+    examples = e7.dataset(limit=E2_N, speeds=(1.0,))
+    if examples[0]["skip"]:
+        pytest.skip(examples[0]["skip"])
+    scores = [e7.score(ex) for ex in examples]
+    for s in scores:
+        assert s["ttfa_ms"] > 0 and s["audio_ms"] > 0
+        assert s["rtf"] == pytest.approx(s["ttfa_ms"] / s["audio_ms"], rel=1e-3)
+        assert s["score"] == s["ttfa_ms"]
+    agg = e7.aggregate(scores)
+    assert agg["ttfa_p50_ms"] <= agg["ttfa_p95_ms"]
+    assert set(agg["per_speed"]) == {"1.0"}
+    assert agg["ttfa_p95_ms"] <= 2000  # PRD M2: first audio within 2 s
