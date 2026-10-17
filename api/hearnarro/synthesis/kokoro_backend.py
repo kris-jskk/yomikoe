@@ -22,14 +22,21 @@ into misaki's gold lexicon when a G2P is built, and after G2P every token they m
 insensitive, possessive/plural suffixes) gets the override's phonemes, before the all-caps step;
 each entry used is logged once per document at INFO.
 
-All-caps tokens (SYN-4, ING-6): after misaki's G2P, every token of 2+ capital letters is
+All-caps context (SYN-4): before G2P the segment goes through
+``hearnarro.synthesis.acronyms.fold_caps``; in a heading or emphasized run ("ERIC'S NOTE") the
+caps words are case-folded ("Eric's Note") so misaki reads them as words instead of spelling
+them, the tokens get their original text back, and the folded ones skip the per-token step.
+
+All-caps tokens (SYN-4, ING-6): after misaki's G2P, every other token of 2+ capital letters is
 re-read by ``hearnarro.synthesis.acronyms.decide`` (overrides, collocation with the next word,
 the document's definitions from ``SynthContext``, misaki's lexicon, a pronounceability
 heuristic). Spoken: the lexicon entry of its ``RESPELL`` word if it has one, else misaki's own
 word phonemes if it had them, else the lexicon entry, else the
 g2p_en predictor on the lowercase form. Spelled: the token is replaced by one token per letter
 (no spaces between them, so the phoneme string equals misaki's letter spelling), each with its
-own duration; the letters fold back into one WordTimestamp spanning the original token. Each
+own duration; the letters fold back into one WordTimestamp spanning the original token. A
+possessive/plural ("CEO's", "PDFs") is decided on its letters and the voiced suffix joins the
+last letter token ("O's", "Fs"). Each
 (document, token) decision is logged once at INFO.
 
 Word timestamps (contract for ``SynthResult.timestamps``):
@@ -64,7 +71,17 @@ from typing import Any
 import numpy as np
 
 from hearnarro.synthesis import cmudict, lexicon_overrides
-from hearnarro.synthesis.acronyms import RESPELL, Decision, decide, is_acronym, spell_phonemes
+from hearnarro.synthesis.acronyms import (
+    RESPELL,
+    Decision,
+    caps_fold_spans,
+    decide,
+    fold_caps,
+    is_acronym,
+    spell_phonemes,
+    split_suffix,
+    suffix_phonemes,
+)
 from hearnarro.synthesis.backend import SynthContext, SynthResult, Voice, WordTimestamp
 
 log = logging.getLogger(__name__)
@@ -172,7 +189,7 @@ class _OOVFallback:
     def __call__(self, tk: Any) -> tuple[str | None, int]:
         word, tail = tk.text, ""
         if word.endswith(("'s", "’s")):
-            word, tail = word[:-2], "z"
+            word, tail = word[:-2], "z"  # voiced below, after the word's last sound
         whole = self._cmu(word) if word.isalpha() else None
         parts = [word] if whole else re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+", word)
         pieces, methods = [], []
@@ -186,6 +203,8 @@ class _OOVFallback:
                 ps, how = self._spell(part), "spelled"
             pieces.append(ps)
             methods.append(how)
+        if tail:
+            tail = suffix_phonemes("".join(pieces))
         phonemes = "".join(c for c in "".join(pieces) + tail if c in self.vocab) or None
         self.used.append((tk.text, phonemes or "", "+".join(methods)))
         if (self.document_id, tk.text) not in self._logged:
@@ -380,19 +399,37 @@ class KokoroBackend:
         phoneme symbols the model knows, so char i of the chunk string <-> pred_dur[i + 1]."""
         g2p = self._g2p_for(british)
         g2p.fallback.document_id = context.document_id if context else None
-        _, tokens = g2p(text)
+        definitions = context.acronyms if context else {}
+        spans = caps_fold_spans(text, definitions)
+        folded_text = fold_caps(text, definitions) if spans else text
+        _, tokens = g2p(folded_text)
+        folded: set[int] = set()
+        pos = 0
+        for t in tokens:  # original text back on every token (timestamps match on it)
+            i = folded_text.find(t.text, pos) if t.text else -1
+            if i < 0:
+                continue
+            pos = i + len(t.text)
+            t.text = text[i:pos]
+            if any(a < pos and i < b for a, b in spans):
+                folded.add(id(t))
         doc = context.document_id if context else None
         for entry in lexicon_overrides.apply(tokens):
             if (doc, entry) not in self._overrides_logged:
                 self._overrides_logged.add((doc, entry))
                 log.info("pronunciation override document=%s entry=%r", doc, entry)
-        tokens = self._pronounce_acronyms(tokens, g2p, british, context)
+        tokens = self._pronounce_acronyms(tokens, g2p, british, context, folded)
         for t in tokens:
             t.phonemes = "".join(c for c in (t.phonemes or "") if c in self._vocab)
         return tokens
 
     def _pronounce_acronyms(
-        self, tokens: list[Any], g2p: Any, british: bool, context: SynthContext | None
+        self,
+        tokens: list[Any],
+        g2p: Any,
+        british: bool,
+        context: SynthContext | None,
+        folded: set[int] | None = None,
     ) -> list[Any]:
         lex = g2p.lexicon
         look = g2p.fallback._look
@@ -403,17 +440,23 @@ class KokoroBackend:
         definitions = context.acronyms if context else {}
         out: list[Any] = []
         for i, t in enumerate(tokens):
-            if not is_acronym(t.text) or lexicon_overrides.lookup(t.text):
+            word, suffix = (t.text, "") if is_acronym(t.text) else split_suffix(t.text) or ("", "")
+            if (
+                not word
+                or id(t) in (folded or ())
+                or lexicon_overrides.lookup(t.text)
+                or lexicon_overrides.lookup(word)
+            ):
                 out.append(t)
                 continue
             nxt = tokens[i + 1].text if i + 1 < len(tokens) and t.whitespace else None
             d = decide(
-                t.text,
+                word,
                 next_word=nxt if nxt and nxt.isalpha() else None,
                 definitions=definitions,
                 in_lexicon=in_lexicon,
             )
-            key = (context.document_id if context else None, t.text, d)
+            key = (context.document_id if context else None, word, d)
             if key not in self._acronyms_logged:
                 self._acronyms_logged.add(key)
                 log.info(
@@ -421,21 +464,27 @@ class KokoroBackend:
                     key[0], t.text, "spoken" if d.spoken else "spelled", d.reason,
                 )  # fmt: skip
             if d.spoken:
-                spelled_by_misaki = lex.get_NNP(t.text)[0]
-                if t.text in RESPELL:
-                    t.phonemes = look(RESPELL[t.text]) or t.phonemes
-                elif not t.phonemes or t.phonemes == spelled_by_misaki:
-                    t.phonemes = look(t.text) or arpabet_to_kokoro(
-                        self._predictor.predict(t.text.lower()), british
+                spelled_by_misaki = lex.get_NNP(word)[0]
+                ps = None
+                if word in RESPELL:
+                    ps = look(RESPELL[word])
+                elif not t.phonemes or t.phonemes.startswith(spelled_by_misaki):
+                    ps = look(word) or arpabet_to_kokoro(
+                        self._predictor.predict(word.lower()), british
                     )
+                if ps:
+                    t.phonemes = ps + (suffix_phonemes(ps) if suffix else "")
                 out.append(t)
                 continue
-            letters = {c: look(c) or "" for c in set(t.text)}
-            pieces = spell_phonemes(t.text, letters)
-            for k, (c, ps) in enumerate(zip(t.text, pieces, strict=True)):
+            letters = {c: look(c) or "" for c in set(word)}
+            pieces = spell_phonemes(word, letters)
+            if suffix:
+                pieces[-1] += suffix_phonemes(pieces[-1])
+            for k, (c, ps) in enumerate(zip(word, pieces, strict=True)):
                 lt = copy.copy(t)
-                lt.text, lt.phonemes = c, ps
-                lt.whitespace = t.whitespace if k == len(t.text) - 1 else ""
+                last = k == len(word) - 1
+                lt.text, lt.phonemes = (c + suffix if last else c), ps
+                lt.whitespace = t.whitespace if last else ""
                 out.append(lt)
         return out
 

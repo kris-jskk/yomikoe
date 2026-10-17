@@ -10,10 +10,15 @@ from hearnarro.synthesis.acronyms import (
     RESPELL,
     SPELLED,
     SPOKEN,
+    caps_fold_spans,
     decide,
+    fold_caps,
     is_acronym,
+    is_caps,
     pronounceable,
     spell_phonemes,
+    split_suffix,
+    suffix_phonemes,
 )
 from hearnarro.synthesis.backend import SynthContext
 from hearnarro.synthesis.kokoro_backend import _Timed, word_timestamps
@@ -130,3 +135,74 @@ def test_syn1_spelled_letters_fold_into_one_word_timestamp() -> None:
         ("CEO", 120, 400, 4, 7),
         ("left", 420, 600, 8, 12),
     ]
+
+
+# --- SYN-4: all-caps context (headings, emphasized runs) -----------------------------------
+
+
+@pytest.mark.parametrize(
+    ("token", "caps"),
+    [("ERIC'S", True), ("LONG-TERM", True), ("NOTE", True), ("I", False), ("Eric", False),
+     ("CEO's", False), ("PDFs", False), ("#1", False)],
+)  # fmt: skip
+def test_syn4_is_caps(token: str, caps: bool) -> None:
+    assert is_caps(token) is caps
+
+
+@pytest.mark.parametrize(
+    ("text", "folded"),
+    [
+        ("ERIC'S NOTE", "Eric's Note"),
+        ("PART I: WEALTH", "Part I: Wealth"),  # never "P A R T"
+        ("BUILDING WEALTH", "Building Wealth"),
+        ("UNDERSTAND HOW WEALTH IS CREATED", "Understand How Wealth Is Created"),
+        ("TWEETS AND TWEETSTORMS", "Tweets And Tweetstorms"),
+        ("TRAP #1: LACK OF INTENTIONALITY", "Trap #1: Lack Of Intentionality"),
+        ("DEAR READER,", "Dear Reader,"),
+        ("LONG-TERM GAMES", "Long-term Games"),
+        # one-word headings are words, unless SPELLED
+        ("FOREWORD", "Foreword"),
+        ("PREFACE", "Preface"),
+        ("CONTENTS", "Contents"),
+        ("SOURCES", "Sources"),
+        ("PDF", "PDF"),
+        # mixed: SPELLED stays, the caps run is folded
+        ("The CEO read ERIC'S NOTE", "The CEO read Eric's Note"),
+        ("WHY THE CEO LEFT", "Why The CEO Left"),
+        # SPOKEN overrides and vowel-less tokens keep the per-token decision
+        ("PARSE THE JSON", "Parse The JSON"),
+        ("NFL MVP AWARDS", "NFL MVP Awards"),
+        # outside a caps context nothing changes
+        ("the CEO said", "the CEO said"),
+        ("a TED talk", "a TED talk"),
+        ("The NASA team met the FBI today.", "The NASA team met the FBI today."),
+    ],
+)
+def test_syn4_caps_context_folds_heading_words(text: str, folded: str) -> None:
+    out = fold_caps(text)
+    assert out == folded
+    assert len(out) == len(text)  # char spans unchanged
+
+
+def test_syn4_caps_context_keeps_document_defined_acronym_spelled() -> None:
+    defs = {"TED": "Transferable Erosion Deposit"}
+    assert fold_caps("WHY TED VALUES FELL", defs) == "Why TED Values Fell"
+    assert fold_caps("WHY TED VALUES FELL") == "Why Ted Values Fell"
+    text = "WHY TED VALUES FELL"
+    assert [text[a:b] for a, b in caps_fold_spans(text, defs)] == ["WHY", "VALUES", "FELL"]
+
+
+@pytest.mark.parametrize(
+    ("token", "split"),
+    [("CEO's", ("CEO", "'s")), ("CEO’s", ("CEO", "’s")), ("PDFs", ("PDF", "s")),
+     ("CEO'S", ("CEO", "'S")), ("NASA", None), ("Uber's", None), ("Is", None), ("PDF", None)],
+)  # fmt: skip
+def test_syn4_split_acronym_suffix(token: str, split: tuple[str, str] | None) -> None:
+    assert split_suffix(token) == split
+
+
+def test_syn4_suffix_phonemes_voicing() -> None:
+    assert suffix_phonemes("ˈɛf") == "s"  # PDFs
+    assert suffix_phonemes("ˈO") == "z"  # CEO's
+    assert suffix_phonemes("ˈɛs") == "ᵻz"  # OSes
+    assert suffix_phonemes("ˈeɪʧ") == "ᵻz"

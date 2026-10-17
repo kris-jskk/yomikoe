@@ -206,7 +206,12 @@ the full response, not the player's wait.
   `api/hearnarro/synthesis/lexicon_overrides.py` (lower-case word -> phonemes in misaki's alphabet,
   e.g. `"uber": "ˈubəɹ"`), then run `HEARNARRO_TEST_MODEL=1 pytest tests/test_kokoro_backend.py -k override`;
   re-ingest or clear the document's audio cache to hear it. Acronym readings: `SPOKEN`, `SPELLED`,
-  `COLLOCATIONS`, `RESPELL` in `api/hearnarro/synthesis/acronyms.py`.
+  `COLLOCATIONS`, `RESPELL` in `api/hearnarro/synthesis/acronyms.py`. All-caps headings
+  ("ERIC'S NOTE", "BUILDING WEALTH", "FOREWORD") are read as words, not spelled; a lone acronym in
+  a normal sentence keeps its decision ("the CEO said" spelled, "a TED talk" spoken), and so do
+  `SPELLED` and document-defined acronyms inside a heading. Hear it:
+  `~/hearnarro-m1/audio_samples/erics_note_1.0x.wav`. Cached audio of a heading synthesized before
+  this change keeps the spelled reading until the document's audio cache is cleared.
 
 - **0.5x tail (D19).** At half speed the model generates twice the audio before the first byte,
   so long sentences (6 of 20 benchmark sentences of up to 200 characters) exceed 2 s. The M2 gate

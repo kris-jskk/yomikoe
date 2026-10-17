@@ -592,6 +592,16 @@ G2P and then rewrites tokens; per word the first tier that has it wins:
    0.095 on 30 words (result 368_coverage).
 4. g2p_en neural fallback, then letters. `_OOVFallback` logs the tier(s) once per word per document.
 
+**All-caps context** (`acronyms.py`, before G2P, first step of the acronym decision):
+`caps_fold_spans(text, definitions)` / `fold_caps` -> a segment with >= 2 caps tokens in a row
+(>= 2 upper-case letters, `'` and `-` allowed inside: ERIC'S, LONG-TERM), or >= 2 words of which
+>= 60 % are caps, or a single caps word ("FOREWORD") is a heading: its caps words are case-folded
+("ERIC'S NOTE" -> "Eric's Note", same length) before misaki's G2P, the tokens get their original
+text back, and folded tokens skip the per-token step below. Not folded (they keep `decide`):
+`SPELLED`/`SPOKEN` words, document-defined acronyms, vowel-less tokens (NFL). Outside a caps
+context nothing changes ("the CEO said", "a TED talk"). Tests: `test_syn4_caps_context_*`,
+`@model` `test_syn4_kokoro_caps_heading_read_as_words`.
+
 **All-caps tokens** (`acronyms.py`, after the tiers above): `decide(word, next_word=,
 definitions=, in_lexicon=)` -> `Decision(spoken, reason)`, first rule wins: `SPOKEN`/`SPELLED`
 overrides -> `COLLOCATIONS` (`("TED", "talk")` spoken, `("SAT", "score")` spelled, ...) -> the
@@ -600,7 +610,9 @@ document's definition (`SynthContext.acronyms`: spelled, unless >= 4 letters and
 entry ("JSON" -> "Jason"), else misaki's word phonemes, else lexicon, else g2p_en. Spelled: one
 token per letter, no spaces (so the phoneme string equals misaki's own letter spelling), each with
 its own duration; `word_timestamps` folds them into one `WordTimestamp` spanning the original
-token. One INFO line per (document, token, decision). Tests: `test_acronyms.py`,
+token. A possessive/plural ("CEO's", "PDFs": `split_suffix`) is decided on its letters; the
+suffix (`suffix_phonemes`: s / z / ᵻz by the last sound) joins the last letter token ("O's",
+"Fs"); the OOV fallback voices "'s" the same way ("Eric's" -> ...ks). One INFO line per (document, token, decision). Tests: `test_acronyms.py`,
 `test_lexicon_overrides.py`, `@model` `test_syn4_kokoro_acronyms_*`, `test_syn4_kokoro_document_definition_spells_ted`, `test_syn4_kokoro_lexicon_override_uber`.
 
 ### `api/hearnarro/routes/`
