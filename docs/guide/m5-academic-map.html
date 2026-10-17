@@ -75,12 +75,12 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
   <header>
     <h1>HearNarro M5: formulas read aloud, terms said right</h1>
     <p class="lede">Milestone 5 makes HearNarro a study narrator. A paper, a textbook chapter or lecture notes go in; display and inline formulas come out spoken as a person would read them, technical words are pronounced from an academic lexicon and the user's own overrides, code listings are cued, and playback gains an equation repeat, slower equations and pauses after theorems. A document profile decides which rules apply, so "[12]" stays a dropped citation in an essay while "[0, 1]" is read as an interval in a maths text. This page is the live status: one diagram per new mechanism and the phase ledger with evidence.</p>
-    <div class="stamp"><span class="dot next"></span> Updated 2026-10-17 (later) · phases 0–1 done · phase 2 Document profile next · gate red by design: spoken-maths scores 0.00–0.03 · branch m5-academic</div>
+    <div class="stamp"><span class="dot next"></span> Updated 2026-10-17 (evening) · phases 0–2 done · phase 3 Mathspeak running · gate (e) green 28/30, gate (b) red by design · branch m5-academic</div>
     <div class="phases" aria-label="Phase status">
       <span class="pill done">0 Scope <b>done</b></span>
       <span class="pill done">1 Fixtures and red gate <b>done</b></span>
-      <span class="pill next">2 Document profile <b>next</b></span>
-      <span class="pill plan">3 Mathspeak and code listings <b>planned</b></span>
+      <span class="pill done">2 Document profile <b>done</b></span>
+      <span class="pill run">3 Mathspeak and code listings <b>running</b></span>
       <span class="pill plan">4 Vocabulary <b>planned</b></span>
       <span class="pill plan">5 Playback <b>planned</b></span>
       <span class="pill plan">6 Close <b>planned</b></span>
@@ -117,14 +117,14 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
           <h3>Evidence</h3><ul class="ev"><li>Gate red: 12 failed, 1 passed; clause (a) green, (b) scores 0.012, 0.010, 0.017, 0.022, 0.026 for 01–05 and 0.000 for 06–10, (e) fails on the absent <code>compute_profile</code> (<code>_agent/results/667_gate.txt</code>).</li><li>Suite green without the gate file: 1008 passed, 29 skipped (<code>664_suite.txt</code>); ruff clean (<code>668</code>, <code>671</code>).</li><li>Tier 0: EVAL-10 mean 0.3157 (display 0.00, inline 0.65, symbol 0.21, reference 0.85, fixture 0.01); 0 regressions vs 9ec85bb (<code>665</code>, <code>666</code>, <code>672</code>; record <code>evals/runs/2026-10-17_8f1cee1.json</code>).</li><li>Fixtures and profiles: <code>650</code>, <code>651</code>, <code>652</code> (golden 34 passed); convention changes <code>670</code>.</li><li>Commits <code>a943c03</code>, <code>8f1cee1</code> (fixtures), <code>0849580</code> (EVAL-10, gate), <code>5c3009f</code> (manifest readers), <code>1a64611</code> (convention), spec <code>c1f8eba</code>, <code>9ec85bb</code>.</li></ul></div>
       </div>
       <div class="phase">
-        <div class="who"><span class="pill next">next</span><span>phase 2</span></div>
+        <div class="who"><span class="pill done">done</span><span>phase 2</span><span>2026-10-17</span></div>
         <div class="what"><b>Document profile</b><span class="why-line">Mathspeak and citation handling read the class as a parameter, so the profile lands before either of them.</span>
           <span class="ids">ING-11 · D40 · gate clause (e)</span>
-          <ul><li>Stage-6 pass, <code>documents.profile_json</code> through an Alembic migration, class thresholds, LIB-1 badge, per-document override through <code>hearnarro renormalize</code>.</li></ul>
-          <h3>Evidence</h3><ul class="ev"><li class="empty">none yet</li></ul></div>
+          <ul><li><code>ingestion/profile.py</code> runs between merge and sentence splitting; migration 0005 adds <code>documents.profile_json</code> and <code>segments.math_json</code>; profile in the document API, <code>PATCH</code> override re-normalizes through the renormalize path; LIB-1 badge in the library list.</li><li>The bracket rule is live in the normalizer: a prose document drops "[12]", a maths span keeps "[0, 1]"; spans arrive in phase 3, so spoken output does not change yet.</li><li>Thresholds re-tuned on the 30 fixtures: D40 as written classified 17 of 30; the tuned rules (two display runs per page, 4 % maths-glyph tokens, 1 % prose bar, code share under 10 %) classify 28 of 30, exactly the floor. Two honest mismatches: a scanned Markov-kernel page reads as mixed, and the memduet page is denser than a fixture labelled math. Phase 3 re-tunes once real maths spans replace the glyph estimate.</li></ul>
+          <h3>Evidence</h3><ul class="ev"><li>Gate (e): 28 of 30, per class prose 11/11, mixed 7/8, math 10/11 (<code>_agent/results/682_gate_e.txt</code>; D40 thresholds 17/30 in <code>677</code>, tuned in <code>681</code>).</li><li>Suite: 1026 passed, 29 skipped, 11 failed, all gate (b) (<code>686</code>); migrations on a fresh and an M4 data dir (<code>684</code>); web build and 9 unit tests (<code>683</code>); ruff clean (<code>676</code>).</li><li>Tier 0: 0 regressions vs 9b8e04b (<code>673</code>, <code>674</code>, <code>675</code>).</li><li>Commits <code>c6ec78d</code> (feature), <code>12a8c99</code> (D40 wording, <code>docs/CODE_MAP_M5.md</code>).</li></ul></div>
       </div>
       <div class="phase">
-        <div class="who"><span class="pill plan">planned</span><span>phase 3</span></div>
+        <div class="who"><span class="pill run">running</span><span>phase 3</span></div>
         <div class="what"><b>Mathspeak and code listings</b><span class="why-line">This is the core of the milestone: formulas spoken in full instead of the one-word cue, with highlighting kept honest through <code>char_map</code>.</span>
           <span class="ids">MATH-1..4 · D36 · D37 · ING-10 · gate clause (b)</span>
           <ul><li>Glyph structure (fractions, sub- and superscripts, large operators), the MATH-3 symbol table, equation numbers and references, the fallback cue. Code listings typed <code>code</code> and cued.</li></ul>
@@ -235,9 +235,9 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
           <text x="120" y="93" text-anchor="middle" font-weight="600">code share</text><text x="120" y="109" text-anchor="middle" font-size="10" fill="var(--muted)">ING-10 listings</text>
           <text x="120" y="147" text-anchor="middle" font-weight="600">citation style</text><text x="120" y="163" text-anchor="middle" font-size="10" fill="var(--muted)">numeric, author–year, none</text>
           <text x="120" y="201" text-anchor="middle" font-weight="600">scanned share</text><text x="120" y="217" text-anchor="middle" font-size="10" fill="var(--muted)">ING-2 OCR pages</text>
-          <text x="375" y="42" text-anchor="middle" font-weight="600">thresholds (proposed)</text>
-          <text x="272" y="70" class="mono" font-size="11">math:</text><text x="272" y="86" font-size="11">mass ≥ 15 %, or ≥ 1 display</text><text x="272" y="100" font-size="11">equation per page</text>
-          <text x="272" y="126" class="mono" font-size="11">prose:</text><text x="272" y="142" font-size="11">mass &lt; 2 % and no display</text><text x="272" y="156" font-size="11">equations</text>
+          <text x="375" y="42" text-anchor="middle" font-weight="600">thresholds (tuned, phase 2)</text>
+          <text x="272" y="70" class="mono" font-size="11">math:</text><text x="272" y="86" font-size="11">mass ≥ 15 %, or ≥ 2 display runs</text><text x="272" y="100" font-size="11">per page, or ≥ 4 % maths tokens</text>
+          <text x="272" y="126" class="mono" font-size="11">prose:</text><text x="272" y="142" font-size="11">mass &lt; 1 %, &lt; 1 display per page,</text><text x="272" y="156" font-size="11">code share &lt; 10 %</text>
           <text x="272" y="182" class="mono" font-size="11">mixed:</text><text x="272" y="198" font-size="11">otherwise</text>
           <text x="580" y="55" text-anchor="middle" class="mono" font-weight="600">math</text><text x="580" y="128" text-anchor="middle" class="mono" font-weight="600">mixed</text><text x="580" y="201" text-anchor="middle" class="mono" font-weight="600">prose</text>
           <text x="760" y="42" text-anchor="middle" font-weight="600">bracket rule fired</text>
@@ -464,7 +464,8 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
 
   <section id="links">
     <h2><span class="k">10</span>Links and status</h2>
-    <p>As of 2026-10-17 (later): phases 0 and 1 are done. The ten formula fixtures, EVAL-10, the reading convention and the red gate exist; the gate's spoken-maths scores sit between 0.00 and 0.03 because the pipeline still speaks the ING-7 cue. Phase 2 Document profile is next; phases 3–6 are planned. Spec: <code>_agent/specs/m5-academic-reading.md</code>.</p>
+    <p>As of 2026-10-17 (evening): phases 0 to 2 are done and phase 3 Mathspeak is running (two builds in parallel: the maths spans and code block type in ingestion, and the structure-reader package; then an integration pass against the gate).</p>
+    <p>Earlier: phases 0 and 1 are done. The ten formula fixtures, EVAL-10, the reading convention and the red gate exist; the gate's spoken-maths scores sit between 0.00 and 0.03 because the pipeline still speaks the ING-7 cue. Phase 2 Document profile is next; phases 3–6 are planned. Spec: <code>_agent/specs/m5-academic-reading.md</code>.</p>
     <div class="note"><ul>
       <li>Previous milestone: <a href="m4-library-map.html">HearNarro M4 Library Map</a> (repo copy).</li>
       <li>Eval layer: <a href="evals-primer.html">evals primer</a> (EVAL-1..9; EVAL-10 joins in phase 1).</li>
