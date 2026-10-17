@@ -124,6 +124,9 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers", "soak: 300-page soak gate (M4); skipped unless HEARNARRO_TEST_SOAK=1"
     )
+    config.addinivalue_line(
+        "markers", "ocr: needs the tesseract binary (ING-2, D28); the test skips itself without it"
+    )
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:

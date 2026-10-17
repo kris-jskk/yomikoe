@@ -163,13 +163,15 @@ def _write_result(
         filename = row[0] if row and row[0] else "document.pdf"
         conn.execute(
             "UPDATE documents SET status = 'ready', fail_reason = NULL, page_count = ?, "
-            "pages_done = ?, parse_ms = ?, title = ?, acronyms_json = ? WHERE id = ?",
+            "pages_done = ?, parse_ms = ?, title = ?, acronyms_json = ?, "
+            "ocr_skipped_pages = ? WHERE id = ?",
             (
                 len(result.pages),
                 len(result.pages),
                 parse_ms,
                 choose_title(title, _first_heading(result), filename),
                 json.dumps(result.acronyms, sort_keys=True),
+                result.ocr_skipped_pages,
                 document_id,
             ),
         )
