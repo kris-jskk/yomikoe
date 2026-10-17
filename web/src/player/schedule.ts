@@ -131,28 +131,34 @@ export function onFetchFailure(failedId: number, targetId: number | null): 'erro
   return failedId === targetId ? 'error' : 'skip'
 }
 
-/** Automatic advance scrolling is suppressed this long after user scroll input in the reading column. */
-export const SCROLL_COOLDOWN_MS = 3000
-
 /** Why the reader scrolls: an explicit user navigation, or the automatic advance during playback. */
 export type ScrollReason = 'navigate' | 'advance'
 
 /**
- * PLAY-3: an explicit navigation (Toc, word or sentence click, skip buttons, Play from the saved
- * position) always scrolls to its target; the automatic advance scrolls only when no scroll input was
- * seen in the reading column within the last `cooldownMs` (`lastInputAt` null: never).
+ * PLAY-2/PLAY-3 follow mode: an explicit navigation (Toc, word or sentence click, skip buttons, Play
+ * from the saved position, "Back to reading") always scrolls to its target; the automatic advance
+ * scrolls only while the reader is following, i.e. no scroll input in the reading column (or page
+ * scroll key) has been seen since the last navigation.
  */
-export function shouldAutoScroll(
-  reason: ScrollReason,
-  lastInputAt: number | null,
-  now: number,
-  cooldownMs: number = SCROLL_COOLDOWN_MS,
-): boolean {
-  if (reason === 'navigate') return true
-  return lastInputAt === null || now - lastInputAt > cooldownMs
+export function shouldAutoScroll(reason: ScrollReason, following: boolean): boolean {
+  return reason === 'navigate' || following
 }
 
-/** Keys that scroll the page when focus is not in a form control (arm the cooldown like a wheel). */
+/** Where the highlighted segment is relative to the viewport: above it, below it, or (null) in view. */
+export type FollowHint = 'up' | 'down' | null
+
+/** The arrow on "Back to reading": 'up' when the segment lies wholly above the viewport, 'down' below. */
+export function followHint(
+  rect: { top: number; bottom: number } | null,
+  viewportHeight: number,
+): FollowHint {
+  if (!rect) return null
+  if (rect.bottom <= 0) return 'up'
+  if (rect.top >= viewportHeight) return 'down'
+  return null
+}
+
+/** Keys that scroll the page when focus is not in a form control (stop following, like a wheel). */
 const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '])
 
 /** True for a keydown that scrolls the document rather than operating a control. */

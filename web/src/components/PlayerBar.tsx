@@ -1,4 +1,5 @@
-// PlayerBar (spec §7, PLAY-1, PLAY-4): transport, voice, speed, status word and D19 stats readout.
+// PlayerBar (spec §7, PLAY-1, PLAY-2, PLAY-4): transport, "Back to reading" pill (follow mode),
+// voice, speed, status word and D19 stats readout.
 
 import type { Voice } from '../api/types'
 import type { Player } from '../player/usePlayer'
@@ -21,13 +22,25 @@ export function snapSpeed(v: number): number {
 const ms = (x: number) => `${Math.round(x)} ms`
 
 export function PlayerBar({ player, voices }: PlayerBarProps) {
-  const { state, dispatch, play, pause, lastClip } = player
+  const { state, dispatch, play, pause, lastClip, following, followHint, resumeFollowing } = player
   const playing = state.status === 'playing'
   const fa = state.firstAudio
   const first =
     fa && fa.startedAt !== null ? `${((fa.startedAt - fa.requestedAt) / 1000).toFixed(2)} s` : '–'
   return (
     <div className="player-bar" role="region" aria-label="Player">
+      {!following && (
+        <button
+          type="button"
+          id="follow"
+          className="follow"
+          aria-label="Back to reading"
+          data-hint={followHint ?? 'none'}
+          onClick={resumeFollowing}
+        >
+          Back to reading{followHint === 'up' ? ' ↑' : followHint === 'down' ? ' ↓' : ''}
+        </button>
+      )}
       <div className="controls">
         <button
           type="button"

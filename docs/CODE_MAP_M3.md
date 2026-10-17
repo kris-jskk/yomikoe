@@ -93,7 +93,8 @@ browser            App/DocView            client.ts                 API (Vite pr
    engine.hooks` and listens on `window` for `keydown`, counting only scroll keys outside form
    controls (`schedule.ts` → `isScrollKey`). `Reader` registers `<article class="reader">` through
    `player.registerReaderEl` → `engine.attachReader(el)`, which puts the passive `wheel`/`touchmove`
-   listeners on the reading column itself, so scrolling the Toc list never arms the cooldown.
+   listeners on the reading column itself, so scrolling the Toc list never stops follow mode. The same effect listens for `scroll` (capture)
+   to refresh the "Back to reading" arrow while not following.
 3. **Load data.** `src/App.tsx` → `DocView` effect → `Promise.all([getDocument, getAllSegments,
    getVoices])` in `src/api/client.ts`. `getAllSegments(id, onPage?, signal?)` follows `next_from`
    with `limit=500` until null and throws `ApiError` if `next_from` does not advance; returns
@@ -213,8 +214,8 @@ at least five consecutive entries of `window.__hearnarro.entries` (436–438).
    true, so a click right after scrolling (the Toc, or the reading column) still scrolls. The same
    flag is set by `SKIP`/`SKIP_SECTION` dispatched from `PlayerBar` (the `dispatch` returned by
    `usePlayer` wraps the reducer's), by Play from `idle|error` (the saved position) and by Play after
-   the end. Rule: explicit navigation always scrolls; only the automatic advance (flow e step 5)
-   respects the cooldown. Evidence: before/after live run on document 17,
+   the end; each of these also sets `engine.following = true`. Rule: explicit navigation always
+   scrolls and resumes follow mode; only the automatic advance (flow e step 5) depends on it. Evidence: before/after live run on document 17,
    `_agent/results/467_live_toc_scroll.txt`.
 5. **Rebuild.** The build effect runs flow b steps 3–6 from the target: old sources stopped (their
    `onended` cleared), fetches outside the new window aborted, the target clip started at
@@ -236,8 +237,13 @@ at least five consecutive entries of `window.__hearnarro.entries` (436–438).
    `.seg` (from `engine.segEls`) and its `.w[data-i]`. No React state is read or written.
 5. **On segment change.** `SEGMENT_STARTED`, `ensureWindow`, `scheduleReady`, then
    `scrollTo(id, 'advance')`: `scrollIntoView({block: 'center'})`, `behavior: 'auto'` under
-   `prefers-reduced-motion`; skipped when `shouldAutoScroll('advance', lastInput, now)` is false,
-   i.e. within `SCROLL_COOLDOWN_MS` (3 s) of a wheel/touchmove in the reading column or a scroll key.
+   `prefers-reduced-motion`; skipped when `shouldAutoScroll('advance', following)` is false. Follow
+   mode (PLAY-2, user request 2026-10-17, replaces the 3 s cooldown): the first wheel/touchmove in the
+   reading column or page-scroll key outside a form control sets `following = false`, and the advance
+   then never scrolls, however long playback runs, while the highlight keeps moving. Any explicit
+   navigation (flow d step 4) or the `PlayerBar` pill `#follow` ("Back to reading ↑/↓", arrow from
+   `schedule.ts` → `followHint(rect, innerHeight)`) → `engine.resumeFollowing()` centres the current
+   segment at once and sets `following = true`; `window.__hearnarro.following` exposes it.
 6. **Position.** At most every 250 ms while `playing`: `POSITION{segmentId, offsetMs}` (the
    readout; M4 persistence will read it).
 
@@ -262,7 +268,7 @@ for that segment and the next carry `speed=2.00` (436–438).
 1. **Buttons.** `PlayerBar` `#prev-section` / `#next-section` → `SKIP_SECTION{by: -1|+1}`;
    `#prev-sentence` / `#next-sentence` → `SKIP{by}`. `Toc` buttons call `onSeek(first_segment_id)`
    (flow d, so from idle they start playback). All four buttons and the Toc mark a navigation, so the
-   target segment is scrolled into view regardless of the cooldown (flow d step 4).
+   target segment is scrolled into view and follow mode resumes (flow d step 4).
 2. **Target.** `machine.ts` → `sectionTarget(ctx, by)`: section starts mapped to their reading-order
    index; `+1` is the first start after `current`, `-1` the start of the current section if
    `current` is not on it, else the previous start; none → the same state object (no-op).
@@ -315,11 +321,11 @@ generation: builtGen}` → `error` (stale generations ignored). `PlayerBar` show
 | `api/types.ts` | Wire and client types: `WordTimestamp`, `Segment`, `Section`, `Voice` (+ optional `backend`), `AudioClip`, `DocumentSummary`, `DocumentDetail`, `DocumentSettings`, `DocumentPosition`, `SegmentsPage` | types | none | tested (typecheck) |
 | `api/client.ts` | The only module that builds URLs; 15 s timeout; `ApiError` | `TIMEOUT_MS`, `PAGE_LIMIT`, `ApiError`, `formatSpeed`, `audioUrl`, `segmentsUrl`, `getDocuments`, `getDocument`, `getAllSegments`, `getVoices`, `parseTimestamps`, `fetchAudio` | HTTP via `fetch`; `AudioContext.decodeAudioData` | tested (unit + e2e) |
 | `player/machine.ts` | Pure, totally defined reducer (D10): 5 states, 17 events, generation guard | `PlayerStatus`, `PlayerContext`, `PlayerState`, `PlayerEvent`, `initialState`, `indexOf`, `reduce` | none | tested (unit) |
-| `player/schedule.ts` | Pure timing helpers (D5, D8) | `Token`, `MappedTimestamp`, `ScheduleEntryView`, `tokenize`, `mapTimestampsToTokens`, `locate`, `findActiveWord`, `SCROLL_COOLDOWN_MS`, `ScrollReason`, `shouldAutoScroll`, `isScrollKey` | none | tested (unit) |
+| `player/schedule.ts` | Pure timing helpers (D5, D8) | `Token`, `MappedTimestamp`, `ScheduleEntryView`, `tokenize`, `mapTimestampsToTokens`, `locate`, `findActiveWord`, `ScrollReason`, `shouldAutoScroll`, `FollowHint`, `followHint`, `isScrollKey` | none | tested (unit) |
 | `player/usePlayer.ts` | `PlayerEngine` (AudioContext, schedule map, pending fetches, rAF tick, highlight, auto-scroll, instrumentation) and the `usePlayer` hook (reducer + effects + callbacks) | `PREFETCH_DEPTH`, `ScheduleEntry`, `ClipStats`, `HearnarroHooks`, `Player`, `PlayerEngine`, `usePlayer` | `window.__hearnarro`; DOM classes `active`, `data-active`; `console.info('hearnarro:first-audio')`; `/audio` via client | tested (e2e) |
 | `components/Picker.tsx` | Document list (M3 minimum, not LIB-1); ready rows link to `#/doc/{id}` | `Picker` | `GET /documents` | implemented (no e2e test renders the picker; the harness test calls `/documents/{id}` through the proxy) |
-| `components/Reader.tsx` | Segments as `.seg` with `.w` tokens; registers refs (segments and, via `registerReaderEl`, the reading column for the cooldown listeners); one click handler for seek; section derivation (D25) | `Reader`, `ReaderProps`, `deriveSections` | DOM | tested (e2e) |
-| `components/PlayerBar.tsx` | Transport, voice select, speed slider and readout, `role="status"` word with `data-status`, Retry/Dismiss, stats line | `PlayerBar`, `PlayerBarProps`, `snapSpeed` | reducer state, `lastClip` | tested (e2e) |
+| `components/Reader.tsx` | Segments as `.seg` with `.w` tokens; registers refs (segments and, via `registerReaderEl`, the reading column for the follow-mode listeners); one click handler for seek; section derivation (D25) | `Reader`, `ReaderProps`, `deriveSections` | DOM | tested (e2e) |
+| `components/PlayerBar.tsx` | Transport, "Back to reading" pill `#follow` (shown while not following), voice select, speed slider and readout, `role="status"` word with `data-status`, Retry/Dismiss, stats line | `PlayerBar`, `PlayerBarProps`, `snapSpeed` | reducer state, `lastClip` | tested (e2e) |
 | `components/Toc.tsx` | Sections list; click seeks to `first_segment_id` | `Toc`, `TocProps` | none | implemented (no e2e clicks the Toc; live Toc-click scroll check `_agent/results/467_live_toc_scroll.txt`) |
 | `styles/app.css` | Tokens on `:root`, dark mode, `.w.active` / `.seg.active` highlight colours with contrast ≥ 4.5:1 | n/a | n/a | implemented (`_agent/results/428b_contrast.txt`) |
 

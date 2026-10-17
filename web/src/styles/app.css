@@ -236,6 +236,21 @@ a {
   border-color: var(--accent);
 }
 
+.player-bar button.follow {
+  /* "Back to reading" pill floats just above the bar, centred (PLAY-2 follow mode) */
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.25rem 0.9rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+}
+
 .player-bar button:focus-visible,
 .player-bar select:focus-visible,
 .player-bar input:focus-visible {
