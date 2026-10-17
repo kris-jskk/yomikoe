@@ -144,6 +144,34 @@ export function shouldAutoScroll(reason: ScrollReason, following: boolean): bool
   return reason === 'navigate' || following
 }
 
+/** How long a programmatic scroll may run before a scroll event counts as the reader's own, ms. */
+export const SELF_SCROLL_MS = 1200
+/** A self-scroll has settled when the target's centre is this close to the viewport centre, px. */
+export const SELF_SCROLL_SETTLE_PX = 2
+
+/** Distance in px between `rect`'s vertical centre and the viewport centre (block:'center' target). */
+export function centreDistance(
+  rect: { top: number; bottom: number },
+  viewportHeight: number,
+): number {
+  return Math.abs((rect.top + rect.bottom) / 2 - viewportHeight / 2)
+}
+
+/**
+ * True when a page scroll event belongs to the engine's own scrollIntoView (navigate, advance, Back to
+ * reading): it falls inside the self-scroll window and does not move the target further from the
+ * viewport centre than the previous event (`dist` vs `lastDist`, both from centreDistance). Any other
+ * page scroll (find box, scrollbar, gesture, key, even one landing mid-scroll) stops following.
+ */
+export function isSelfScroll(
+  now: number,
+  selfScrollUntil: number,
+  dist = 0,
+  lastDist = Infinity,
+): boolean {
+  return now < selfScrollUntil && dist <= lastDist + SELF_SCROLL_SETTLE_PX
+}
+
 /** Where the highlighted segment is relative to the viewport: above it, below it, or (null) in view. */
 export type FollowHint = 'up' | 'down' | null
 

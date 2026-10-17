@@ -11,11 +11,15 @@ import {
   chainStart,
   findActiveWord,
   followHint,
+  centreDistance,
   isScrollKey,
+  isSelfScroll,
   locate,
   nextPlayable,
   onFetchFailure,
   mapTimestampsToTokens,
+  SELF_SCROLL_MS,
+  SELF_SCROLL_SETTLE_PX,
   shouldAutoScroll,
   type FollowHint,
   type MappedTimestamp,
@@ -129,6 +133,12 @@ export class PlayerEngine {
   /** Follow mode: the advance scrolls only while true; scroll input clears it, navigation sets it. */
   following = true
   hint: FollowHint = null
+  /** performance.now() until which page scroll events are the engine's own scrollIntoView. */
+  selfScrollUntil = 0
+  private selfScrollId: number | null = null
+  private selfScrollAt = 0
+  private lastDist = Infinity
+  private settledCount = 0
   /** Set by an explicit navigation; the next render scrolls to `state.current` with 'navigate'. */
   navPending = false
   private readerEl: HTMLElement | null = null
@@ -189,6 +199,42 @@ export class PlayerEngine {
     this.hint = null
     if (!f) this.computeHint()
     this.onFollow(this.following, this.hint)
+  }
+
+  /**
+   * A page scroll event (window, capture). Inside the self-scroll window, an event that does not move
+   * the target away from the centre is the engine's own scrollIntoView; the window ends early once the
+   * target sits within 2 px of centre for two events in a row, and trailing events that keep it there
+   * stay the engine's. Any other page scroll (find box, scrollbar, gesture, key) turns follow mode off.
+   */
+  onPageScroll() {
+    const now = performance.now()
+    const el = this.selfScrollId !== null ? this.segEls.get(this.selfScrollId) : undefined
+    const dist = el ? centreDistance(el.getBoundingClientRect(), window.innerHeight) : Infinity
+    if (isSelfScroll(now, this.selfScrollUntil, dist, this.lastDist)) {
+      this.lastDist = dist
+      if (dist <= SELF_SCROLL_SETTLE_PX) {
+        if (++this.settledCount >= 2) this.endSelfScroll()
+      } else this.settledCount = 0
+      return
+    }
+    if (this.selfScrollUntil === 0 && dist <= SELF_SCROLL_SETTLE_PX) return // trailing, still centred
+    this.endSelfScroll()
+    this.selfScrollId = null
+    if (this.following) this.setFollowing(false)
+    else this.updateHint()
+  }
+
+  /** `scrollend` (where supported): ignored in the first 100 ms, which may belong to a replaced scroll. */
+  onPageScrollEnd() {
+    if (performance.now() - this.selfScrollAt >= 100) this.endSelfScroll()
+  }
+
+  /** A settled target or `scrollend`: later scroll events are the reader's. */
+  endSelfScroll() {
+    this.selfScrollUntil = 0
+    this.settledCount = 0
+    this.lastDist = Infinity
   }
 
   /** Recompute the "Back to reading" arrow from the highlighted segment's rect (not following only). */
@@ -505,6 +551,11 @@ export class PlayerEngine {
     const el = this.segEls.get(segmentId)
     if (!el || !shouldAutoScroll(reason, this.following)) return
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    this.selfScrollAt = performance.now()
+    this.selfScrollUntil = this.selfScrollAt + SELF_SCROLL_MS
+    this.selfScrollId = segmentId
+    this.settledCount = 0
+    this.lastDist = centreDistance(el.getBoundingClientRect(), window.innerHeight)
     el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' })
   }
 
@@ -542,7 +593,10 @@ export function usePlayer(): Player {
   // instrumentation hooks (always set; the gate reads them). Wheel/touchmove are tracked on the reading
   // column (attachReader); keydown stays on window because keyboard page scrolling has no element
   // target, but only scroll keys outside form controls count, so Toc/button keys never stop following.
-  // Any scroll while not following refreshes the "Back to reading" arrow.
+  // Those listeners stop following before the first scroll event (snappier, and they also catch input
+  // during a self-scroll). Any page scroll the engine did not start itself (find box, scrollbar, a
+  // gesture the wheel listener misses) stops following too; while not following it refreshes the arrow.
+  // Only document scrolls count: an inner scroller such as the Toc list never stops following.
   useEffect(() => {
     const w = hookWindow()
     w.__hearnarro = engine.hooks
@@ -550,12 +604,22 @@ export function usePlayer(): Player {
       const t = e.target instanceof HTMLElement ? e.target.tagName : null
       if (isScrollKey(e.key, t)) engine.noteInput()
     }
-    const onScroll = () => engine.updateHint()
+    const isPage = (e: Event) =>
+      e.target === document || e.target === document.documentElement || e.target === window
+    const onScroll = (e: Event) => {
+      if (isPage(e)) engine.onPageScroll()
+      else engine.updateHint()
+    }
+    const onScrollEnd = (e: Event) => {
+      if (isPage(e)) engine.onPageScrollEnd()
+    }
     window.addEventListener('keydown', onKey)
     window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    window.addEventListener('scrollend', onScrollEnd, { passive: true, capture: true })
     return () => {
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('scroll', onScroll, { capture: true })
+      window.removeEventListener('scrollend', onScrollEnd, { capture: true })
       engine.attachReader(null)
       engine.dispose()
       if (w.__hearnarro === engine.hooks) delete w.__hearnarro
