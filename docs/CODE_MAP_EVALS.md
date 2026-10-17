@@ -199,6 +199,14 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
    --baseline 2026-10-17_eadaef6` (`_agent/results/590_e3_report_cmd.txt`): EVAL-1 and EVAL-2
    0 regressions, EVAL-3 to EVAL-7 no baseline.
 
+### d. `python -m hearnarro.evals listening prepare|ingest` (E4, EVAL-9)
+
+`listening prepare --out evals/listening/pending_<date>/` renders sentences_50.jsonl[:10] x
+(af_heart, am_michael) through `_voice.render` (kokoro) or `FakeBackend` (fake) into 20 WAVs and a
+blank `sheet.md`; a person fills it per `data/listening_rubric.md`; `listening ingest sheet.md`
+validates it and writes `evals/listening/<date>_<listener>.json`; `run EVAL-9` (tier 2) reads every
+`evals/listening/*.json` session.
+
 ## Modules and files
 
 ### `api/hearnarro/evals/`
@@ -224,7 +232,21 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 | `suites/eval7_speed.py` | EVAL-7: bench rows as examples | `ID`, `TITLE`, `TIER`, `DIRECTION`, `METRIC_RULES`, `bench()`, `dataset(limit, speeds)`, `score`, `aggregate` (ttfa_p50_ms, ttfa_p95_ms, rtf_mean, rtf_p50, share_within_2s; per_speed) | `api/scripts/bench.py` (by path); `_voice.backend` | tested (E2 gate) |
 | `data/sentences_50.jsonl` | E2: 50 `{id: "<fixture>#<row>", text}` (normalized), from `select_sentences()` (seed 34) | n/a | n/a | tested (E2 gate: 50, unique) |
 | `data/speech_form.jsonl` | 302 pairs: `id`, `category`, `text`, `expected`, optional `note`, optional `block` (`heading`, `table`: rows by line, cells by ` \| `; `equation`) | n/a | n/a | tested (gate: shape, ≥ 15 per category) |
-| `data/listening_rubric.md` | EVAL-9 form | n/a | n/a | planned |
+| `data/listening_rubric.md` | EVAL-9 listener instructions and column definitions | n/a | n/a | implemented |
+
+### E4 modules (EVAL-8, EVAL-9)
+
+| File | Responsibility | Status |
+| --- | --- | --- |
+| `api/hearnarro/evals/listening.py` (E4) | EVAL-9 session tooling: `prepare(out_dir, backend)` renders sentences_50.jsonl[:10] x (af_heart, am_michael) into 20 WAVs and a blank `sheet.md`; `parse_sheet(path)`; `ingest(sheet, out_dir)` writes `evals/listening/<date>_<listener>.json`; `register(sub)` adds the `listening` subparser (`prepare`, `ingest`) and `run_verb(args)` runs it from `__main__.main` | implemented, tested |
+| `api/hearnarro/evals/suites/eval9_listening.py` (E4) | EVAL-9 Listening, tier 2, direction higher (pron_errors lower via METRIC_RULES): `dataset(sessions_dir=None)`, `score`, `aggregate` over `evals/listening/*.json` (not `pending_*/`); skipped "no listening sessions under evals/listening/" when empty | implemented, tested |
+| `api/hearnarro/evals/suites/eval8_ocr.py` (E4) | EVAL-8 OCR, tier 1, direction lower: CER of OCR'd prose vs expected prose on the 5 scanned fixtures (`mean_cer`, `max_cer`); skipped "OCR unavailable (tesseract)" when `ocr_available()` is false | implemented, tested (skip path); scoring path implemented, unverified: never ran without tesseract |
+| `api/hearnarro/evals/scorers.py` (E4 addition) | `char_error_rate(actual, expected)` | implemented, tested |
+| `api/hearnarro/evals/suites/__init__.py` (E4 change) | registers EVAL-8 and EVAL-9 | implemented, tested |
+| `api/hearnarro/evals/__main__.py` (E4 change) | `listening` registered as a subparser of `main` via `listening.register`; dispatch to `listening.run_verb` | implemented, tested |
+| `api/hearnarro/evals/data/listening_rubric.md` (E4) | listener instructions and column definitions | implemented |
+| `api/tests/fixtures/listening/sample_sheet.md` (E4) | filled 4-row fixture sheet (listener "fixture"); never ingested into evals/listening/ | tested |
+| `evals/listening/pending_2026-10-17/sheet.md` (E4) | first real-voice (kokoro) sheet awaiting a listener; WAVs ignored by .gitignore | pending human |
 
 ### Test helpers and tests
 
@@ -233,6 +255,7 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 | `api/tests/golden_util.py` | Re-exports the reading-order scorers from `hearnarro.evals.scorers` (no logic) | tested (`554`) |
 | `api/tests/boundary_util.py` | Re-exports the boundary scorers (including `_alignment`) from `hearnarro.evals.scorers` | tested (`554`) |
 | `api/tests/test_eval_gate.py` | E0 gate: record shape, aggregates, compare zero/one-regression cases; E1: registry direction, `all` under 60 s, EVAL-3 rates, lower-is-better compare, EVAL-4 dataset shape, app path, aggregates; E2 (model-gated): registry tiers, sentence list, WER normalization, EVAL-5/6/7 on 5 sentences, per-metric compare rules; E3: HTML scorecard alone, against the first baseline (`no baseline` tiles), regressions block on a synthetic pair, `--standalone` and CLI | tested (`553`, `562`, `576`, `592`) |
+| `api/tests/test_eval_e4_gate.py` | E4 gate: sheet parse/ingest validation, `listening prepare` (fake backend), EVAL-8 skip path and CER, EVAL-9 skip/aggregate, registry | tested (`593`) |
 
 ### `evals/runs/` (repo root)
 
@@ -337,5 +360,5 @@ Tier 1 (needs `pip install -e '.[tts,evals]'`; first run downloads the ~145 MB r
 
 ## Open items
 
-- EVAL-8, EVAL-9 suites, `data/listening_rubric.md` (spec 3.3); linking the scorecard from a milestone guide (supervisor).
+- EVAL-8 scoring path with real tesseract (unverified); a first filled EVAL-9 listening session; linking the scorecard from a milestone guide (supervisor).
 - EVAL-1 scanned class needs tesseract on this machine (5 fixtures skipped in the baseline).

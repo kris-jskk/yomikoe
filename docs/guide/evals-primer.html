@@ -1,0 +1,660 @@
+<title>HearNarro Evals Primer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,650&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 880px) like a lab notebook; each section opens with the reader's question, wide figures scroll inside their own frames. */
+:root {
+  --bg: #f3f5f6;
+  --surface: #ffffff;
+  --fg: #172027;
+  --muted: #56636d;
+  --line: #d3dade;
+  --accent: #2b5d8a;
+  --accent-soft: #e1eaf2;
+  --amber: #a85f00;
+  --amber-soft: #f8ebd8;
+  --good: #2f7550;
+  --good-soft: #dff0e6;
+  --bad: #a83a32;
+  --bad-soft: #f6e0dd;
+  --font-display: "Literata", Georgia, "Times New Roman", serif;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171b; --surface: #1a2127; --fg: #e3e8ea; --muted: #9aa7b0; --line: #2f3a42;
+    --accent: #7fb2de; --accent-soft: #1d2f40; --amber: #e8a650; --amber-soft: #3a2b15;
+    --good: #79c79b; --good-soft: #193326; --bad: #ec8a80; --bad-soft: #3d1f1c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171b; --surface: #1a2127; --fg: #e3e8ea; --muted: #9aa7b0; --line: #2f3a42;
+  --accent: #7fb2de; --accent-soft: #1d2f40; --amber: #e8a650; --amber-soft: #3a2b15;
+  --good: #79c79b; --good-soft: #193326; --bad: #ec8a80; --bad-soft: #3d1f1c; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 36px 80px; }
+main { max-width: 880px; margin: 0 auto; display: grid; gap: 56px; }
+section, header { min-width: 0; }
+h1, h2 { font-family: var(--font-display); font-weight: 650; text-wrap: balance; letter-spacing: -0.01em; }
+h1 { font-size: clamp(30px, 6vw, 42px); line-height: 1.12; margin: 8px 0 12px; }
+h2 { font-size: clamp(22px, 4vw, 27px); line-height: 1.2; margin: 0 0 6px; }
+h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 28px 0 10px; }
+p { margin: 0 0 12px; max-width: 66ch; }
+.q { font-family: var(--font-display); font-style: italic; color: var(--accent); font-size: 18px; margin-bottom: 10px; }
+.sec-n { font-family: var(--font-mono); font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; letter-spacing: 0.04em; }
+.lede { font-size: 18px; color: var(--muted); }
+.status { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 13px; color: var(--amber); background: var(--amber-soft); padding: 4px 10px; border-radius: 4px; }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+code { background: var(--accent-soft); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; margin-top: 18px; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { text-decoration: underline; outline: 2px solid transparent; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+figure { margin: 22px 0 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
+.figscroll { overflow-x: auto; }
+figure svg { display: block; width: 100%; height: auto; font-family: var(--font-body); color: var(--fg); }
+.figscroll svg { min-width: 640px; }
+figcaption { font-size: 14px; color: var(--muted); margin-top: 12px; max-width: 78ch; }
+figcaption b { color: var(--fg); font-weight: 600; }
+svg .mono { font-family: var(--font-mono); }
+svg .muted { fill: var(--muted); }
+svg .acc { fill: var(--accent); }
+svg .acc-s { stroke: var(--accent); }
+svg .amb { fill: var(--amber); }
+svg .amb-s { stroke: var(--amber); }
+svg .good { fill: var(--good); }
+svg .bad { fill: var(--bad); }
+svg .surf { fill: var(--surface); }
+svg .soft { fill: var(--accent-soft); }
+svg .ambsoft { fill: var(--amber-soft); }
+
+.tablewrap { overflow-x: auto; margin-top: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 13px; }
+
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; min-width: 0; display: grid; gap: 6px; align-content: start; }
+.card .t { font-weight: 600; }
+.card p { margin: 0; font-size: 15px; color: var(--muted); }
+.card .ear { font-size: 14px; color: var(--fg); border-top: 1px dashed var(--line); padding-top: 8px; }
+.card .ear::before { content: "For a listener: "; font-weight: 600; color: var(--accent); }
+@media (max-width: 620px) { .cards { grid-template-columns: 1fr; } }
+
+.analogy { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; color: var(--muted); font-size: 15px; margin: 12px 0; max-width: 66ch; }
+.analogy b { color: var(--fg); }
+
+.tier { margin-top: 18px; }
+.tier-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; border-bottom: 2px solid var(--fg); padding-bottom: 6px; }
+.tier-head .name { font-family: var(--font-display); font-weight: 650; font-size: 19px; }
+.tier-head .cost { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.suites { display: grid; }
+.suite { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 4px 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.suite .id { font-family: var(--font-mono); font-size: 13px; color: var(--accent); font-weight: 500; }
+.suite .id span { display: block; font-family: var(--font-body); color: var(--fg); font-weight: 600; font-size: 15px; }
+.suite .body { min-width: 0; font-size: 15px; }
+.suite .body p { margin: 0 0 4px; }
+.suite .meta { font-size: 13px; color: var(--muted); }
+.chip { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; margin-left: 4px; }
+.chip.exists { background: var(--good-soft); color: var(--good); }
+.chip.new { background: var(--accent-soft); color: var(--accent); }
+.chip.blocked { background: var(--bad-soft); color: var(--bad); }
+@media (max-width: 520px) { .suite { grid-template-columns: 1fr; } }
+
+.tree { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 0; font-size: 14px; }
+.tree li { display: grid; grid-template-columns: minmax(130px, 200px) minmax(0, 1fr); gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.tree li .p { font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere; }
+.tree li .p.in { padding-left: 16px; }
+.tree li .d { color: var(--muted); min-width: 0; }
+@media (max-width: 520px) { .tree li { grid-template-columns: 1fr; gap: 2px; } }
+
+.record { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; margin-top: 14px; align-items: start; }
+.record pre { margin: 0; font-family: var(--font-mono); font-size: 12px; line-height: 1.55; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px; overflow-x: auto; white-space: pre; }
+.record ol { margin: 0; padding-left: 20px; font-size: 14px; display: grid; gap: 6px; }
+.record ol li { padding-left: 2px; }
+@media (max-width: 700px) { .record { grid-template-columns: 1fr; } }
+
+.example-banner { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; font-weight: 600; color: var(--amber); background: var(--amber-soft); border: 1px dashed var(--amber); border-radius: 6px; padding: 8px 12px; margin-top: 14px; }
+.scorecard { background: var(--surface); border: 1px dashed var(--amber); border-radius: 6px; padding: 6px 12px 12px; margin-top: 10px; }
+.scorecard .sname { font-family: var(--font-mono); font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+.delta-up { color: var(--good); }
+.delta-down { color: var(--bad); font-weight: 600; }
+.flag { display: inline-block; font-family: var(--font-body); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; background: var(--bad-soft); color: var(--bad); padding: 1px 6px; border-radius: 999px; }
+
+.timeline { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 0; }
+.timeline li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 14px; position: relative; padding-bottom: 20px; }
+.timeline li::before { content: ""; position: absolute; left: 27px; top: 34px; bottom: 0; width: 2px; background: var(--line); }
+.timeline li:last-child::before { display: none; }
+.timeline .ph { width: 56px; height: 34px; border-radius: 17px; border: 2px solid var(--accent); color: var(--accent); background: var(--bg); display: grid; place-items: center; font-family: var(--font-mono); font-weight: 500; font-size: 14px; position: relative; z-index: 1; }
+.timeline .c { min-width: 0; padding-top: 4px; }
+.timeline .c b { display: block; font-weight: 600; }
+.timeline .c .del { font-size: 14px; color: var(--muted); margin: 2px 0 6px; }
+.timeline .c .acc { font-size: 14px; }
+.timeline .c .acc::before { content: "Done when: "; font-weight: 600; color: var(--good); }
+
+.decide { background: var(--surface); border: 2px solid var(--fg); border-radius: 8px; padding: 18px 20px; display: grid; gap: 14px; }
+.decide ol { margin: 0; padding-left: 22px; display: grid; gap: 14px; }
+.decide li { padding-left: 4px; }
+.decide li b { display: block; }
+.decide li span { color: var(--muted); font-size: 15px; }
+
+dl.gloss { display: grid; grid-template-columns: minmax(130px, 190px) minmax(0, 1fr); gap: 0; margin: 12px 0 0; font-size: 15px; }
+dl.gloss dt, dl.gloss dd { padding: 8px 0; border-bottom: 1px solid var(--line); margin: 0; }
+dl.gloss dt { font-weight: 600; padding-right: 12px; }
+dl.gloss dd { color: var(--muted); min-width: 0; }
+@media (max-width: 520px) { dl.gloss { grid-template-columns: 1fr; } dl.gloss dt { border-bottom: 0; padding-bottom: 0; } }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<main>
+<header>
+  <span class="status">2026-10-17 · E0–E4 done · nine suites in place · first listening session awaiting a listener · OCR suite awaiting tesseract</span>
+  <h1>Evals for HearNarro: measuring how good, not only whether it works</h1>
+  <p class="lede">HearNarro turns a PDF into speech with word-by-word highlighting. Its tests say whether each part works. This page explains a proposed second layer, called evals, that says how well each part works and whether a change made it better or worse.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#what">1 What is an eval?</a>
+    <a href="#why">2 Why HearNarro needs them</a>
+    <a href="#today">3 What exists today</a>
+    <a href="#design">4 The design</a>
+    <a href="#scorecard">5 A scorecard, illustrated</a>
+    <a href="#rollout">6 Rollout</a>
+    <a href="#questions">7 Decisions taken</a>
+    <a href="#glossary">8 Glossary</a>
+  </nav>
+</header>
+
+<section id="progress">
+  <h2>Where the build stands</h2>
+  <p class="q">"What has actually been measured so far?"</p>
+  <p>The numbers below are from real runs on this machine, saved under <code>evals/runs/</code>. They are the first baseline, not a verdict: a baseline is the mark later runs are compared with.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Phase</th><th>Status</th><th>Commit</th><th>What the first run showed</th></tr></thead>
+    <tbody>
+      <tr><td>E0 runner and store</td><td>done</td><td>fd7a592</td><td>EVAL-1 order: mean 0.9914, worst PDF 0.9710 (15 scored, 5 scanned skipped). EVAL-2 boundaries: mean F1 0.9661, worst recall 0.9722. Tier 0 ran in 9 s.</td></tr>
+      <tr><td>E1 fast suites</td><td>done</td><td>e5fc969, bb4cfeb</td><td>EVAL-3 clean text: 2.6 checklist hits per 1 000 words. EVAL-4 speech form, 302 pairs: 0.62 exact phoneme match, 0.89 partial. The first scorer compared text and scored 0.27; that measured the wrong layer, because the voice front-end expands digits itself, so the scorer now compares phonemes through that same front-end.</td></tr>
+      <tr><td>E2 model suites</td><td>done</td><td>52e3940, 1dd5150</td><td>Real voice, 50 sentences, 2 voices, speeds 1×/2×/3×; the full run took 438 s. EVAL-5 intelligibility: word error rate 0.15 at 1×, 0.35 at 2×, 0.50 at 3×. EVAL-6 sync: words land within 150 ms of the highlight 45 % of the time at 1×, 84 % at 2×, 96 % at 3×. EVAL-7 speed: time to first audio median 645 ms, 95th percentile 2163 ms; real-time factor 0.095.</td></tr>
+      <tr><td>E3 reporting</td><td>done</td><td>18d5d29, b6f6722</td><td>The <a href="https://claude.ai/artifact/LiLtiJCotJ1Gj4oza2nTi5">first scorecard</a> is generated from the tier-1 record against the first baseline: EVAL-1 and EVAL-2 show zero regressions, EVAL-3 to EVAL-7 show “no baseline” because the first record predates them. The baseline rule now sits in the project instructions: run tier 0 before and after any ingestion or synthesis change and cite the compare output.</td></tr>
+      <tr><td>E4 human and OCR</td><td>done</td><td>9db1d55, b35e58e</td><td>EVAL-9: the runner prepared 20 real-voice clips (10 sentences × 2 voices) and a blank sheet at <code>evals/listening/pending_2026-10-17/sheet.md</code>; once a listener fills it in, the ingest command turns it into a session record. EVAL-8 OCR is built and runs skipped with the reason “tesseract absent”; its scoring path has not yet run on real OCR output.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>First findings from EVAL-4.</strong> Clock times are dropped entirely: "The train leaves at 10:30" reaches the listener as "The train leaves at" (all 22 time pairs lose words). Units are read as letters, so "5 km" becomes "five kem". Abbreviations and decimals score low too. None of this was visible to the existing tests, which is the point of the eval. Fixing it belongs to the speech-normalization requirement (ING-6), not to the eval layer.</p>
+  <p><strong>First findings from the real voice (E2).</strong> Two things stand out. The speech recogniser hears each word about 200 ms <em>before</em> the backend says it starts at 1×, and the gap halves at 2×, so it lives in the voice's own timeline rather than in playback; the highlighting lags the speech by that much. And the word error rate climbs steeply with speed; part of that is the recogniser struggling with fast audio and with numerals, so treat the 2× and 3× figures as a trend to track, not an absolute. The 95th-percentile time to first audio is above the 2 s target that the gate checks on one sentence only, which matches the deferred decision D19.</p>
+  <p><strong>What is left after the rollout.</strong> Four follow-ups, none of them eval-layer work: a person fills in the pending listening sheet and runs the ingest command; tesseract is installed so the OCR suite can score the five scanned fixtures; the ING-6 normalizer learns clock times and units, with EVAL-4 run before and after; and the 200 ms timing lead in EVAL-6 is traced to its cause in the voice's timeline.</p>
+</section>
+
+<section id="what">
+  <span class="sec-n">1</span>
+  <h2>What is an eval?</h2>
+  <p class="q">"We already have tests. What is different about an eval?"</p>
+  <p>A <b>test</b> asks a yes-or-no question about one behaviour. Does the light switch turn the light on? It passes or it fails. Tests run on every change so nothing breaks by accident.</p>
+  <p>An <b>eval</b> (short for evaluation) asks a different question: how good is it, and compared with what? It runs the system over a fixed set of examples, gives each example a score, keeps every score, and summarises them. It saves the result next to the exact version of the code that produced it (a version is called a <i>commit</i>), so two runs can be compared later. An eval never fails on its own. It produces numbers and a difference between runs. A <b>gate</b> is an eval with a pass mark bolted on.</p>
+  <p class="analogy"><b>Analogy.</b> A driving test is a test: you pass or you fail, and nobody records how close you came. A lap time is an eval: every lap gets a number, you keep them all, and you can see whether this week's car is faster than last week's.</p>
+
+  <h3>Three ideas carry everything</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Idea</th><th>What it means</th><th>HearNarro example</th></tr></thead>
+    <tbody>
+      <tr><td><b>Dataset</b></td><td>A fixed set of inputs, each with a known-good answer. The known-good answer is called the <i>ground truth</i>.</td><td>20 sample PDFs (the project calls them <i>fixtures</i>), each with a hand-corrected file of the expected reading order</td></tr>
+      <tr><td><b>Scorer</b></td><td>A rule that compares the system's output with the ground truth and returns a number.</td><td>A word-by-word comparison score from 0 to 1, where 1 means the words came out in exactly the expected order</td></tr>
+      <tr><td><b>Record</b></td><td>The scores, saved with the code version, the date and the settings used.</td><td>Today: printed on screen and lost</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <figure>
+    <div class="figscroll">
+    <svg viewBox="0 0 880 300" role="img" aria-label="A test turns one input into a single pass or fail answer and keeps nothing else. An eval runs many examples, scores each one, summarises the scores into a distribution, and saves everything in a record tied to the code version.">
+      <defs>
+        <marker id="a-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      </defs>
+      <!-- TEST panel -->
+      <text x="20" y="30" font-size="13" font-weight="600" letter-spacing="1.5" fill="currentColor">TEST</text>
+      <text x="20" y="48" font-size="12" class="muted">one question, one bit</text>
+      <g fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="20" y="70" width="100" height="40" rx="4"/>
+        <rect x="150" y="70" width="100" height="40" rx="4"/>
+        <line x1="120" y1="90" x2="148" y2="90" marker-end="url(#a-arr)"/>
+        <line x1="200" y1="110" x2="200" y2="143" marker-end="url(#a-arr)"/>
+        <polygon points="200,145 245,185 200,225 155,185"/>
+        <line x1="245" y1="185" x2="292" y2="165" marker-end="url(#a-arr)"/>
+        <line x1="245" y1="185" x2="292" y2="207" stroke-dasharray="4 3" marker-end="url(#a-arr)"/>
+      </g>
+      <g font-size="12" text-anchor="middle" fill="currentColor">
+        <text x="70" y="94">one input</text>
+        <text x="200" y="94">system</text>
+        <text x="200" y="182">score</text>
+        <text x="200" y="197" class="mono" font-size="11">≥ 0.95?</text>
+      </g>
+      <text x="298" y="169" font-size="13" font-weight="600" class="good">PASS</text>
+      <text x="298" y="212" font-size="13" font-weight="600" class="bad">FAIL</text>
+      <text x="20" y="262" font-size="12" class="muted">The score is used once to flip the switch,</text>
+      <text x="20" y="278" font-size="12" class="muted">then thrown away.</text>
+
+      <line x1="360" y1="20" x2="360" y2="285" stroke="currentColor" stroke-opacity="0.25" stroke-width="1"/>
+
+      <!-- EVAL panel -->
+      <text x="380" y="30" font-size="13" font-weight="600" letter-spacing="1.5" fill="currentColor">EVAL</text>
+      <text x="380" y="48" font-size="12" class="muted">many examples, every score kept</text>
+      <g fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="380" y="58" width="56" height="18" rx="3"/>
+        <rect x="380" y="82" width="56" height="18" rx="3"/>
+        <rect x="380" y="106" width="56" height="18" rx="3"/>
+        <rect x="380" y="130" width="56" height="18" rx="3"/>
+        <rect x="380" y="154" width="56" height="18" rx="3"/>
+        <rect x="380" y="178" width="56" height="18" rx="3"/>
+        <line x1="436" y1="67" x2="452" y2="67"/><line x1="436" y1="91" x2="452" y2="91"/>
+        <line x1="436" y1="115" x2="452" y2="115"/><line x1="436" y1="139" x2="452" y2="139"/>
+        <line x1="436" y1="163" x2="452" y2="163"/><line x1="436" y1="187" x2="452" y2="187"/>
+        <line x1="452" y1="67" x2="452" y2="187"/>
+        <line x1="452" y1="127" x2="476" y2="127" marker-end="url(#a-arr)"/>
+        <rect x="478" y="104" width="78" height="46" rx="4"/>
+        <line x1="556" y1="127" x2="578" y2="127" marker-end="url(#a-arr)"/>
+        <rect x="580" y="104" width="72" height="46" rx="4"/>
+        <line x1="652" y1="127" x2="672" y2="127" marker-end="url(#a-arr)"/>
+      </g>
+      <g font-size="11" text-anchor="middle" fill="currentColor" class="mono">
+        <text x="408" y="71">ex 1</text><text x="408" y="95">ex 2</text><text x="408" y="119">ex 3</text>
+        <text x="408" y="143">ex 4</text><text x="408" y="167">ex 5</text><text x="408" y="191">ex 6</text>
+      </g>
+      <g font-size="12" text-anchor="middle" fill="currentColor">
+        <text x="517" y="131">system</text>
+        <text x="616" y="131">scorer</text>
+      </g>
+      <!-- per-example score bars, scale 0.85..1.00 over 80px -->
+      <g class="acc">
+        <rect x="678" y="62" width="75" height="10"/>
+        <rect x="678" y="86" width="64" height="10"/>
+        <rect x="678" y="110" width="59" height="10"/>
+        <rect x="678" y="134" width="75" height="10"/>
+        <rect x="678" y="158" width="32" height="10" class="amb"/>
+        <rect x="678" y="182" width="69" height="10"/>
+      </g>
+      <g font-size="11" class="mono" fill="currentColor">
+        <text x="764" y="71">0.99</text><text x="764" y="95">0.97</text><text x="764" y="119">0.96</text>
+        <text x="764" y="143">0.99</text><text x="764" y="167" class="amb">0.91</text><text x="764" y="191">0.98</text>
+      </g>
+      <!-- distribution strip -->
+      <line x1="380" y1="246" x2="580" y2="246" stroke="currentColor" stroke-width="1"/>
+      <g stroke="currentColor" stroke-width="1"><line x1="380" y1="242" x2="380" y2="250"/><line x1="580" y1="242" x2="580" y2="250"/></g>
+      <g font-size="10" class="mono muted" text-anchor="middle"><text x="380" y="264">0.85</text><text x="580" y="264">1.00</text></g>
+      <g class="acc">
+        <circle cx="567" cy="238" r="4"/><circle cx="567" cy="229" r="4"/><circle cx="540" cy="238" r="4"/>
+        <circle cx="527" cy="238" r="4"/><circle cx="553" cy="238" r="4"/><circle cx="460" cy="238" r="4" class="amb"/>
+      </g>
+      <text x="380" y="280" font-size="12" class="muted">distribution: where the scores fall</text>
+      <!-- record -->
+      <g fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M720,198 L720,214" marker-end="url(#a-arr)"/>
+        <path d="M640,216 L640,282 L860,282 L860,216 Z"/>
+      </g>
+      <g font-size="11" fill="currentColor">
+        <text x="650" y="234" font-weight="600" font-size="12">saved run record</text>
+        <text x="650" y="251" class="mono">commit 7f2f015 · date · config</text>
+        <text x="650" y="266" class="mono">mean 0.967 · min 0.91</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>A test collapses a run into one bit; an eval keeps a number for every example.</b> On the left, the score is compared with a pass mark and discarded. On the right, six examples each get a score, the scores are summarised (mean and worst case) and saved with the code version, so a later run can be laid beside this one. The scores drawn here are made up for the picture.</figcaption>
+  </figure>
+</section>
+
+<section id="why">
+  <span class="sec-n">2</span>
+  <h2>Why HearNarro needs them</h2>
+  <p class="q">"Everything passes. Why measure more?"</p>
+  <p>A review of the current code found six gaps. Each one means a change could make HearNarro worse for a listener without any test noticing.</p>
+  <div class="cards">
+    <div class="card">
+      <div class="t">1. Scores exist but are thrown away</div>
+      <p>Reading order, sentence boundaries, an 11-check quality checklist, time-stretch accuracy, time to first audio, real-time factor and highlight drift are all computed today, then reduced to pass or fail. The last recorded reading-order mean was 0.9914, and nothing tracks it.</p>
+      <div class="ear">nobody can say whether a fix to the PDF reader (the parser) helped or hurt two-column papers, except by digging through old logs.</div>
+    </div>
+    <div class="card">
+      <div class="t">2. Silent slips inside the pass mark</div>
+      <p>Each PDF must score at least 0.95. A PDF can slide from 0.99 to 0.96 and every test still passes.</p>
+      <div class="ear">that slide is several sentences read in the wrong place in every document.</div>
+    </div>
+    <div class="card">
+      <div class="t">3. The speech layer has no quality figure</div>
+      <p>Turning numbers, units and abbreviations into words, deciding whether to spell out an acronym, and pronunciation are checked with a handful of hand-written yes/no examples. There is no accuracy figure over a larger collection.</p>
+      <div class="ear">"3 km" or "NASA" may be read wrongly, and no number would show it.</div>
+    </div>
+    <div class="card">
+      <div class="t">4. Audio is tested against a fake voice</div>
+      <p>The test voice (FakeBackend) produces silence with perfect word timings. It proves the plumbing, not the speech. Nothing compares the real voice model's (Kokoro's) word timings with its audio.</p>
+      <div class="ear">the highlighted word could drift away from the spoken word and only a person listening would catch it.</div>
+    </div>
+    <div class="card">
+      <div class="t">5. No yardstick for swapping the voice</div>
+      <p>HearNarro is built so the voice model can be replaced. Without an eval there is no way to say a new one is better, faster or easier to understand than Kokoro on the same sentences.</p>
+      <div class="ear">a voice change would be chosen by impression, not by evidence.</div>
+    </div>
+    <div class="card">
+      <div class="t">6. Scanned pages are unmeasured</div>
+      <p>Scanned pages are read by optical character recognition (OCR). The 5 scanned sample PDFs are skipped on machines without the OCR program (tesseract). Even once it is installed, nothing will say how accurate it is.</p>
+      <div class="ear">a scanned book could be full of misread words with no warning.</div>
+    </div>
+  </div>
+</section>
+
+<section id="today">
+  <span class="sec-n">3</span>
+  <h2>What exists today</h2>
+  <p class="q">"Where does HearNarro already measure quality?"</p>
+  <p>A PDF passes through a chain of stages before you hear it. Several stages already compute a real score. But every one of those scores is compared with a pass mark and then dropped. The picture below marks each stage.</p>
+  <figure>
+    <div class="figscroll">
+    <svg viewBox="0 0 1040 300" role="img" aria-label="The HearNarro pipeline from upload to playback. Reading order, sentence boundaries, the quality checklist, synthesis timing and highlight drift compute a score; normalization and real audio only have yes/no checks; upload and OCR have no quality measure. Every computed score ends in pass or fail and is not saved.">
+      <defs>
+        <marker id="b-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      </defs>
+      <!-- legend -->
+      <g font-size="12" fill="currentColor">
+        <circle cx="20" cy="18" r="6" class="amb"/><text x="32" y="22">score computed, then discarded</text>
+        <circle cx="262" cy="18" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M258,18 L261,21 L266,15" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="274" y="22">yes/no examples only</text>
+        <circle cx="440" cy="18" r="6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 2"/><text x="452" y="22">no quality measure</text>
+      </g>
+      <!-- stages: x = 14 + i*114, w=100 -->
+      <g fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="14" y="48" width="100" height="46" rx="4"/>
+        <rect x="128" y="48" width="100" height="46" rx="4"/>
+        <rect x="242" y="48" width="100" height="46" rx="4"/>
+        <rect x="356" y="48" width="100" height="46" rx="4"/>
+        <rect x="470" y="48" width="100" height="46" rx="4"/>
+        <rect x="584" y="48" width="100" height="46" rx="4"/>
+        <rect x="698" y="48" width="100" height="46" rx="4"/>
+        <rect x="812" y="48" width="100" height="46" rx="4"/>
+        <rect x="926" y="48" width="100" height="46" rx="4"/>
+        <line x1="114" y1="71" x2="126" y2="71" marker-end="url(#b-arr)"/>
+        <line x1="228" y1="71" x2="240" y2="71" marker-end="url(#b-arr)"/>
+        <line x1="342" y1="71" x2="354" y2="71" marker-end="url(#b-arr)"/>
+        <line x1="456" y1="71" x2="468" y2="71" marker-end="url(#b-arr)"/>
+        <line x1="570" y1="71" x2="582" y2="71" marker-end="url(#b-arr)"/>
+        <line x1="684" y1="71" x2="696" y2="71" marker-end="url(#b-arr)"/>
+        <line x1="798" y1="71" x2="810" y2="71" marker-end="url(#b-arr)"/>
+        <line x1="912" y1="71" x2="924" y2="71" marker-end="url(#b-arr)"/>
+      </g>
+      <g font-size="12" text-anchor="middle" fill="currentColor">
+        <text x="64" y="75">upload</text>
+        <text x="178" y="68">extract</text><text x="178" y="84">+ OCR</text>
+        <text x="292" y="75">classify</text>
+        <text x="406" y="75">order</text>
+        <text x="520" y="75">merge</text>
+        <text x="634" y="68">segment +</text><text x="634" y="84">normalize</text>
+        <text x="748" y="75">sections</text>
+        <text x="862" y="68">synthesis</text><text x="862" y="84" class="muted" font-size="10">voice·trim·stretch</text>
+        <text x="976" y="75">playback</text>
+      </g>
+      <text x="862" y="108" text-anchor="middle" font-size="10" class="muted">encode · cache</text>
+      <!-- markers row y=130 -->
+      <circle cx="64" cy="130" r="6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 2"/>
+      <circle cx="178" cy="130" r="6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 2"/>
+      <!-- bracket across classify, order, merge -->
+      <path d="M248,122 L248,128 L564,128 L564,122" fill="none" stroke="currentColor" stroke-width="1"/>
+      <circle cx="406" cy="130" r="6" class="amb"/>
+      <circle cx="622" cy="130" r="6" class="amb"/>
+      <circle cx="648" cy="130" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M644,130 L647,133 L652,127" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="748" cy="130" r="6" class="amb"/>
+      <circle cx="850" cy="130" r="6" class="amb"/>
+      <circle cx="876" cy="130" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M872,130 L875,133 L880,127" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="976" cy="130" r="6" class="amb"/>
+      <!-- marker labels -->
+      <g font-size="11" text-anchor="middle" class="muted">
+        <text x="64" y="154">no measure</text>
+        <text x="178" y="154">OCR skipped,</text><text x="178" y="168">no measure</text>
+        <text x="406" y="154">reading-order word score per PDF</text>
+        <text x="406" y="168">(covers all three stages)</text>
+        <text x="634" y="154">boundary F1</text><text x="634" y="168">+ normalize: yes/no</text>
+        <text x="748" y="154">11-check quality</text><text x="748" y="168">checklist</text>
+        <text x="862" y="154">stretch, speed,</text><text x="862" y="168">first-audio time;</text><text x="862" y="182">real voice: yes/no</text>
+        <text x="976" y="154">highlight drift</text><text x="976" y="168">(fake voice clock)</text>
+      </g>
+      <!-- funnel to pass/fail -->
+      <g fill="none" class="amb-s" stroke-width="1.2">
+        <line x1="406" y1="190" x2="406" y2="218"/>
+        <line x1="622" y1="190" x2="622" y2="218"/>
+        <line x1="748" y1="190" x2="748" y2="218"/>
+        <line x1="850" y1="190" x2="850" y2="218"/>
+        <line x1="976" y1="190" x2="976" y2="218"/>
+        <line x1="406" y1="218" x2="976" y2="218"/>
+        <line x1="690" y1="218" x2="690" y2="236" marker-end="url(#b-arr)"/>
+      </g>
+      <rect x="420" y="238" width="540" height="40" rx="4" class="ambsoft"/>
+      <rect x="420" y="238" width="540" height="40" rx="4" fill="none" class="amb-s" stroke-width="1.2"/>
+      <text x="690" y="256" text-anchor="middle" font-size="12" font-weight="600" fill="currentColor">compared with a pass mark → pass or fail</text>
+      <text x="690" y="271" text-anchor="middle" font-size="11" class="muted">the number itself is not saved anywhere</text>
+    </svg>
+    </div>
+    <figcaption><b>HearNarro already calculates five kinds of quality score, and keeps none of them.</b> Amber dots mark stages where a real score is computed; every amber line runs into a pass-or-fail check, and the number is then lost. The speech wording and the real voice have only yes/no examples, and upload and OCR have no quality measure at all.</figcaption>
+  </figure>
+  <p>Two details from the gaps above show up here. The reading-order score covers classify, order and merge together, because it compares the final word sequence. And the audio checks run on the fake voice, so they measure timing plumbing rather than speech.</p>
+</section>
+
+<section id="design">
+  <span class="sec-n">4</span>
+  <h2>The design</h2>
+  <p class="q">"So what would change?"</p>
+  <p>The core idea (proposed decision D31): <b>an eval is a scored test with the pass mark removed and every per-example score kept.</b> The scorers that already exist are reused unchanged. The eval layer adds only three things: a <b>runner</b> that calls them over the datasets and keeps every score, a <b>store</b> of saved run records, and a <b>compare and report</b> step. The existing gate tests keep their pass marks and still guard every change. Evals are the trend line above that floor.</p>
+  <p class="analogy"><b>Analogy.</b> A spell-checker tells you a word is wrong. A reading-aloud exam scores how well a whole passage was read, and the teacher keeps last term's mark to compare. The gates stay the spell-checker; evals add the exam and the mark book.</p>
+
+  <figure>
+    <div class="figscroll">
+    <svg viewBox="0 0 900 360" role="img" aria-label="The eval loop: a fixed dataset goes through the system at a given commit and settings, the output is scored per example, the scores are saved as a run record, the record is compared with a baseline run, and a scorecard flags any example whose score fell by more than 0.01 or newly failed. Each new record can become the next baseline.">
+      <defs>
+        <marker id="c-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="14" y="40" width="120" height="54" rx="4"/>
+        <rect x="190" y="40" width="150" height="54" rx="4"/>
+        <rect x="390" y="40" width="100" height="54" rx="4"/>
+        <rect x="540" y="40" width="110" height="54" rx="4"/>
+        <rect x="700" y="40" width="180" height="54" rx="4"/>
+        <rect x="190" y="150" width="150" height="40" rx="4" stroke-dasharray="4 3"/>
+        <rect x="690" y="140" width="190" height="62" rx="4"/>
+        <rect x="410" y="240" width="180" height="44" rx="4" stroke-dasharray="4 3"/>
+        <rect x="690" y="240" width="190" height="44" rx="4"/>
+        <line x1="134" y1="67" x2="188" y2="67" marker-end="url(#c-arr)"/>
+        <line x1="340" y1="67" x2="388" y2="67" marker-end="url(#c-arr)"/>
+        <line x1="490" y1="67" x2="538" y2="67" marker-end="url(#c-arr)"/>
+        <line x1="650" y1="67" x2="698" y2="67" marker-end="url(#c-arr)"/>
+        <line x1="265" y1="150" x2="265" y2="96" marker-end="url(#c-arr)"/>
+        <line x1="785" y1="94" x2="785" y2="138" marker-end="url(#c-arr)"/>
+        <line x1="785" y1="202" x2="785" y2="238" marker-end="url(#c-arr)"/>
+        <line x1="590" y1="262" x2="688" y2="262" marker-end="url(#c-arr)"/>
+        <line x1="785" y1="284" x2="785" y2="306" marker-end="url(#c-arr)"/>
+        <path d="M690,171 L500,171 L500,238" stroke-dasharray="3 3" marker-end="url(#c-arr)"/>
+      </g>
+      <rect x="640" y="308" width="250" height="46" rx="4" class="soft"/>
+      <rect x="640" y="308" width="250" height="46" rx="4" fill="none" class="acc-s" stroke-width="1.5"/>
+      <g font-size="12" text-anchor="middle" fill="currentColor">
+        <text x="74" y="63" font-weight="600">dataset</text><text x="74" y="80" class="muted" font-size="11">fixed examples</text>
+        <text x="265" y="63" font-weight="600">system under test</text><text x="265" y="80" class="muted" font-size="11">ingest / voice / player</text>
+        <text x="440" y="63" font-weight="600">output</text><text x="440" y="80" class="muted" font-size="11">text, audio, timings</text>
+        <text x="595" y="63" font-weight="600">scorer</text><text x="595" y="80" class="muted" font-size="11">vs ground truth</text>
+        <text x="790" y="63" font-weight="600">per-example scores</text><text x="790" y="80" class="muted" font-size="11">one number each</text>
+        <text x="265" y="174">settings (config)</text>
+        <text x="785" y="162" font-weight="600">run record (JSON)</text><text x="785" y="178" class="muted" font-size="11">commit, date, config,</text><text x="785" y="192" class="muted" font-size="11">every score, summaries</text>
+        <text x="500" y="260" font-weight="600">baseline run</text><text x="500" y="276" class="muted" font-size="11">an earlier record</text>
+        <text x="785" y="267" font-weight="600">compare</text>
+        <text x="765" y="328" font-weight="600">scorecard</text><text x="765" y="345" font-size="11">mean, worst, change per example</text>
+      </g>
+      <g font-size="11" class="muted">
+        <text x="140" y="60">run at a commit</text>
+        <text x="272" y="128">shapes the run</text>
+        <text x="793" y="120">saved</text>
+        <text x="520" y="164">later becomes the next baseline</text>
+        <text x="600" y="254">Δ per example</text>
+        <text x="20" y="320" font-size="11">flagged as a regression when an</text>
+        <text x="20" y="336" font-size="11">example's score drops by more than</text>
+        <text x="20" y="352" font-size="11">0.01, or an example newly fails</text>
+      </g>
+      <path d="M232,336 L636,336" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 3" marker-end="url(#c-arr)"/>
+    </svg>
+    </div>
+    <figcaption><b>The eval loop keeps every score and compares it with an earlier run.</b> A fixed dataset runs through the system at a known code version and settings; each output is scored against its ground truth; the scores are saved as one record; that record is compared with a baseline, and any example that dropped by more than 0.01 (for scores between 0 and 1) or newly failed is flagged on the scorecard.</figcaption>
+  </figure>
+
+  <h3>Nine suites, grouped by what they cost to run</h3>
+  <p>A <b>suite</b> is one dataset plus one scorer, answering one question. Each gets a new label, <code>EVAL-1</code> to <code>EVAL-9</code>. The existing requirement labels stay untouched. The suites are sorted into three <b>tiers</b> by cost: how long they take and what they need.</p>
+
+  <div class="tier">
+    <div class="tier-head"><span class="name">Tier 0 · fast</span><span class="cost">seconds · no voice model · every eval run</span></div>
+    <div class="suites">
+      <div class="suite"><div class="id">EVAL-1<span>Order</span></div><div class="body"><p>Is the prose read in the right order?</p><p class="meta">20 sample PDFs with expected order · word-by-word comparison score · mean, worst, and per kind of document (academic, report, scanned, tables) <span class="chip exists">scorer exists</span></p></div></div>
+      <div class="suite"><div class="id">EVAL-2<span>Boundaries</span></div><div class="body"><p>Are sentences split where a reader would pause?</p><p class="meta">15 sentence files · precision, recall and F1 · mean F1, worst recall <span class="chip exists">scorer exists</span></p></div></div>
+      <div class="suite"><div class="id">EVAL-3<span>Clean text</span></div><div class="body"><p>How much junk (broken hyphens, stray dots, garbled ligatures) reaches the voice?</p><p class="meta">the same 15 sample files · the quality checklist counts, per 1 000 words · rate per check, total <span class="chip exists">checks exist</span></p></div></div>
+      <div class="suite"><div class="id">EVAL-4<span>Speech form</span></div><div class="body"><p>Does the text sent to the voice read aloud correctly?</p><p class="meta">a new list of ~300 pairs (written text → expected spoken words) covering numbers, dates, units, ordinals, abbreviations, acronyms, table cues and equations · exact match, with partial credit for near misses · accuracy overall and per category <span class="chip new">new</span></p></div></div>
+    </div>
+  </div>
+
+  <div class="tier">
+    <div class="tier-head"><span class="name">Tier 1 · with the voice model</span><span class="cost">minutes · real voice (Kokoro) on the processor · on demand or nightly</span></div>
+    <div class="suites">
+      <div class="suite"><div class="id">EVAL-5<span>Intelligibility</span></div><div class="body"><p>Can the audio be understood?</p><p class="meta">50 sample sentences · round trip: the voice speaks, a speech recogniser (an MIT-licensed Whisper build) writes down what it hears, and word error rate compares the two · mean, worst sentence, per voice <span class="chip new">new; needs a licence check</span></p></div></div>
+      <div class="suite"><div class="id">EVAL-6<span>Sync</span></div><div class="body"><p>Do the word timings match the audio?</p><p class="meta">the same 50 sentences · recogniser's word timings vs the voice's own timings: average gap in milliseconds and the share of words within 150 ms · per speed 0.5×, 1×, 2×, 3× <span class="chip new">new</span></p></div></div>
+      <div class="suite"><div class="id">EVAL-7<span>Speed</span></div><div class="body"><p>How fast is speech produced on this machine?</p><p class="meta">20 benchmark sentences · time to first audio and real-time factor <span class="chip exists">exists as a script</span></p></div></div>
+      <div class="suite"><div class="id">EVAL-8<span>OCR</span></div><div class="body"><p>How accurate is the scanned-page path?</p><p class="meta">5 scanned sample PDFs · character error rate · mean, worst <span class="chip blocked">blocked until tesseract is installed</span></p></div></div>
+    </div>
+  </div>
+
+  <div class="tier">
+    <div class="tier-head"><span class="name">Tier 2 · a person listens</span><span class="cost">a scheduled human session · saved in the same store</span></div>
+    <div class="suites">
+      <div class="suite"><div class="id">EVAL-9<span>Listening</span></div><div class="body"><p>Does it sound good to a person?</p><p class="meta">10 sentences × 2 voices · a 1–5 score sheet for naturalness and pacing, plus a count of pronunciation errors · mean per voice, error count <span class="chip new">new</span></p></div></div>
+    </div>
+  </div>
+
+  <h3>Where the files would live (proposed decision D32)</h3>
+  <ul class="tree">
+    <li><span class="p">api/evals/</span><span class="d">the eval layer</span></li>
+    <li><span class="p in">runner.py</span><span class="d">runs one suite or all of them, at a chosen tier, and writes a run record</span></li>
+    <li><span class="p in">suites/</span><span class="d">one file per suite, each saying what its dataset is, how to score one example, and how to summarise</span></li>
+    <li><span class="p in">data/</span><span class="d">the new speech-form pairs and the listening score sheet; the sample PDFs stay where they are</span></li>
+    <li><span class="p in">store.py</span><span class="d">saves records named by date and short commit id, keeps a pointer to the latest, and compares two records</span></li>
+    <li><span class="p in">report.py</span><span class="d">turns a comparison into a scorecard, as text and as a web page</span></li>
+    <li><span class="p">evals/runs/</span><span class="d">the saved records, one small file per run</span></li>
+  </ul>
+
+  <h3>What one saved record looks like</h3>
+  <p>Each run is saved as one small JSON file, a plain-text format for structured data that both people and programs can read.</p>
+  <div class="record">
+    <pre aria-label="Example run record in JSON">{"run_id":"2026-10-17_7f2f015",
+ "commit":"7f2f015",
+ "date":"2026-10-17T14:02:00Z",
+ "config":{"backend":"fake","speed":1.0,
+           "tesseract":false},
+ "suites":{"EVAL-1":{
+   "examples":[{"id":"arxiv_2401_01234",
+                "class":"academic",
+                "score":0.993}],
+   "aggregate":{"mean":0.991,"min":0.962,
+     "by_class":{"academic":0.988}}}}}</pre>
+    <ol>
+      <li><b>run_id</b> names the run: its date plus the short code version.</li>
+      <li><b>commit</b> is the exact code version that was measured.</li>
+      <li><b>date</b> is when the run happened.</li>
+      <li><b>config</b> records the settings: which voice engine (here the fake one), the playback speed, and whether OCR was available.</li>
+      <li><b>suites</b> holds one entry per suite run. Under <b>examples</b>, each sample gets its own line with its id, its kind and its score.</li>
+      <li><b>aggregate</b> holds the summaries: the mean, the worst score, and a mean per kind of document.</li>
+    </ol>
+  </div>
+  <p style="margin-top:10px;font-size:14px;color:var(--muted)">The values in this record are the example shape from the design spec, not a measured run.</p>
+
+  <h3>Compare and regressions (proposed decision D33)</h3>
+  <p>Comparing two records lists, for each suite, how the summaries moved, and every example whose score fell by more than a set tolerance. The tolerance is 0.01 for scores between 0 and 1, 10% for timings, and 1 for error counts.</p>
+  <p>A <b>regression</b> is an example that got worse. Here it is a line in a report, not a failed test. The gate tests remain the only thing that can block a change from being merged. Later, once there is a baseline, a project rule could ask that every change explain any regression it causes.</p>
+
+  <h3>When evals run, and what they will not do</h3>
+  <p>A developer runs tier 0 before and after changing the parser or the speech wording, and tier 1 when touching the voice or swapping it. At the end of each milestone a full tier 0 and tier 1 run is saved and linked from the milestone guide. When a new voice engine is tried, EVAL-5, 6 and 7 run on the same sentences for both voices, and the scorecard becomes the decision document.</p>
+  <p>Two things are ruled out (proposed decision D34). No AI model grades the output in this first version; every scorer is a fixed rule or a person, so the same input always gets the same score. And no user data is used: the datasets are the committed sample files and sentence lists, never anyone's uploads.</p>
+</section>
+
+<section id="scorecard">
+  <span class="sec-n">5</span>
+  <h2>A scorecard, illustrated</h2>
+  <p class="q">"What would I actually see after a run?"</p>
+  <p>Something like this: the baseline run, the new run, and the change, with any regression flagged.</p>
+  <div class="example-banner">Illustrative example · every value below is made up to show the format · no eval has been run</div>
+  <div class="scorecard" role="group" aria-label="Illustrative scorecard with made-up values">
+    <p class="sname">EVAL-1 Order · baseline run A → candidate run B</p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Measure</th><th class="num">Run A</th><th class="num">Run B</th><th class="num">Change</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>Mean, all PDFs</td><td class="num">0.990</td><td class="num">0.988</td><td class="num delta-down">−0.002</td><td></td></tr>
+        <tr><td>Worst PDF</td><td class="num">0.960</td><td class="num">0.952</td><td class="num delta-down">−0.008</td><td></td></tr>
+        <tr><td>Two-column paper (example)</td><td class="num">0.985</td><td class="num">0.968</td><td class="num delta-down">−0.017</td><td><span class="flag">regression</span></td></tr>
+        <tr><td>Report with tables (example)</td><td class="num">0.970</td><td class="num">0.981</td><td class="num delta-up">+0.011</td><td></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="sname">EVAL-4 Speech form · baseline run A → candidate run B</p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Category</th><th class="num">Run A</th><th class="num">Run B</th><th class="num">Change</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>Accuracy, all pairs</td><td class="num">0.90</td><td class="num">0.92</td><td class="num delta-up">+0.02</td><td></td></tr>
+        <tr><td>Numbers and units</td><td class="num">0.88</td><td class="num">0.94</td><td class="num delta-up">+0.06</td><td></td></tr>
+        <tr><td>Acronyms</td><td class="num">0.85</td><td class="num">0.82</td><td class="num delta-down">−0.03</td><td><span class="flag">regression</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <p style="margin-top:12px">Read it like this: in the made-up run B, the overall order score barely moved and every PDF still clears the 0.95 pass mark, so all gates pass. The eval still points at the one two-column paper that slipped by more than 0.01, which is exactly the silent slip from gap 2. In the same way, better number reading came with worse acronym reading, which a single yes/no test would hide.</p>
+</section>
+
+<section id="rollout">
+  <span class="sec-n">6</span>
+  <h2>Rollout</h2>
+  <p class="q">"In what order would this be built?"</p>
+  <p>In five phases, each with a clear check that it is done, following the project's habit of writing the acceptance check first.</p>
+  <ol class="timeline">
+    <li><span class="ph">E0</span><div class="c"><b>Runner and store</b><div class="del">The runner and the record store, with EVAL-1 and EVAL-2 wrapped.</div><div class="acc">one run record is written, and comparing two identical runs shows zero change.</div></div></li>
+    <li><span class="ph">E1</span><div class="c"><b>Fast suites</b><div class="del">EVAL-3, and EVAL-4 with its ~300-pair dataset.</div><div class="acc">all of tier 0 finishes in under 60 seconds, with accuracy printed per category.</div></div></li>
+    <li><span class="ph">E2</span><div class="c"><b>Model suites</b><div class="del">EVAL-5, 6 and 7 with the real voice; the speech recogniser passes the licence check.</div><div class="acc">one tier 1 record on this machine, with word error rate and sync gap reported per speed.</div></div></li>
+    <li><span class="ph">E3</span><div class="c"><b>Reporting</b><div class="del">Text and web-page scorecards; a baseline rule added to the project instructions.</div><div class="acc">a scorecard is linked from a milestone guide.</div></div></li>
+    <li><span class="ph">E4</span><div class="c"><b>Human and OCR</b><div class="del">The EVAL-9 listening sheet; EVAL-8 once tesseract is installed.</div><div class="acc">one listening session is recorded.</div></div></li>
+  </ol>
+</section>
+
+<section id="questions">
+  <span class="sec-n">7</span>
+  <h2>Decisions taken</h2>
+  <p class="q">"What was decided before work started?" All three were answered yes on 2026-10-17: the EVAL labels and D31–D34 stand, Whisper is allowed as a development-only recogniser, and run records are committed to the repository.</p>
+  <div class="decide">
+    <ol>
+      <li><b>Accept the EVAL labels and decisions D31–D34 as proposed?</b><span>Or fold evals into the existing requirement families instead of starting a new EVAL-n family.</span></li>
+      <li><b>Allow a speech recogniser (Whisper, MIT licence) as a development-only tool?</b><span>It would be used for EVAL-5 and EVAL-6 and never shipped to users. The alternative is to keep audio quality checks human-only for now.</span></li>
+      <li><b>Commit saved run records to the repository?</b><span>Keeping them in <code>evals/runs/</code> makes history visible to everyone; the alternative is to keep them out of version control.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section id="glossary">
+  <span class="sec-n">8</span>
+  <h2>Glossary</h2>
+  <dl class="gloss">
+    <dt>Test</dt><dd>A check with a yes-or-no answer about one behaviour, run on every change.</dd>
+    <dt>Eval</dt><dd>A measurement that scores many examples, keeps every score, and compares runs over time.</dd>
+    <dt>Gate</dt><dd>An eval or test with a pass mark that must be met before work can be merged.</dd>
+    <dt>Dataset</dt><dd>The fixed set of example inputs an eval runs over, the same every time.</dd>
+    <dt>Ground truth</dt><dd>The known-correct answer for each example, prepared and checked by hand.</dd>
+    <dt>Fixture</dt><dd>A sample file kept in the project for testing, such as one of the 20 sample PDFs.</dd>
+    <dt>Scorer</dt><dd>The rule that compares an output with its ground truth and returns a number.</dd>
+    <dt>Baseline</dt><dd>An earlier saved run that a new run is compared against.</dd>
+    <dt>Regression</dt><dd>An example whose score got worse between the baseline and the new run.</dd>
+    <dt>Precision, recall, F1</dt><dd>Precision is the share of the sentence breaks found that are real, recall is the share of real breaks that were found, and F1 combines the two into one number.</dd>
+    <dt>Word error rate</dt><dd>The share of words a listener (here a speech recogniser) gets wrong compared with the intended text; lower is better.</dd>
+    <dt>Character error rate</dt><dd>The same idea counted in letters instead of words, used for OCR.</dd>
+    <dt>Real-time factor</dt><dd>Time spent producing audio divided by the length of that audio; below 1 means faster than listening speed.</dd>
+    <dt>Time to first audio</dt><dd>How long a listener waits between pressing play and hearing the first word.</dd>
+  </dl>
+</section>
+</main>

@@ -19,7 +19,7 @@ import argparse
 import json
 import re
 import wave
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -195,17 +195,20 @@ def ingest(sheet: Path, out_dir: Path = LISTENING_DIR) -> tuple[dict[str, Any], 
     return session, path
 
 
-def cli(argv: Sequence[str]) -> int:
-    """``listening prepare|ingest`` (argv excludes the leading ``listening``)."""
-    parser = argparse.ArgumentParser(prog="python -m hearnarro.evals listening")
-    sub = parser.add_subparsers(dest="verb", required=True)
-    p_prep = sub.add_parser("prepare", help="render the clips and write a blank sheet")
+def register(sub: Any) -> None:
+    """Add the ``listening`` subparser (verbs ``prepare`` and ``ingest``) to ``main``'s parser."""
+    p_listen = sub.add_parser("listening", help="EVAL-9 listening sessions: prepare, ingest")
+    verbs = p_listen.add_subparsers(dest="verb", required=True)
+    p_prep = verbs.add_parser("prepare", help="render the clips and write a blank sheet")
     p_prep.add_argument("--out", required=True, help="directory for the clips and sheet.md")
     p_prep.add_argument("--backend", choices=("fake", "kokoro"), default="kokoro")
-    p_ing = sub.add_parser("ingest", help="validate a filled sheet and record the session")
+    p_ing = verbs.add_parser("ingest", help="validate a filled sheet and record the session")
     p_ing.add_argument("sheet", help="the filled sheet.md")
     p_ing.add_argument("--out", default=None, help="sessions directory (evals/listening/)")
-    args = parser.parse_args(list(argv))
+
+
+def run_verb(args: argparse.Namespace) -> int:
+    """Execute a parsed ``listening`` verb."""
     if args.verb == "prepare":
         sheet = prepare(Path(args.out), backend=args.backend)
         print(f"sheet: {sheet}\nclips: {len(list(sheet.parent.glob('*.wav')))}")
@@ -213,16 +216,3 @@ def cli(argv: Sequence[str]) -> int:
     _, path = ingest(Path(args.sheet), Path(args.out) if args.out else LISTENING_DIR)
     print(f"session: {path}")
     return 0
-
-
-def with_listening(main: Callable[[Sequence[str] | None], int]) -> Callable[..., int]:
-    """Wrap ``__main__.main`` so ``listening ...`` goes to ``cli`` and the rest to ``main``."""
-    import sys
-
-    def wrapped(argv: Sequence[str] | None = None) -> int:
-        args = list(sys.argv[1:] if argv is None else argv)
-        if args[:1] == ["listening"]:
-            return cli(args[1:])
-        return main(argv)
-
-    return wrapped

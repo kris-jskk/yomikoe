@@ -100,3 +100,20 @@ scratchpad; copy under `docs/guide/` when the milestone closes). Each new milest
    (one walkthrough per entry point), then every module and file with its responsibility, public
    functions, what it reads and writes, and a status (planned / stub / implemented / tested). It is
    updated in the same phase that lands or changes a module, and linked from the milestone's guide.
+
+## Rule: evals are the trend line; gates are the floor (D31–D34, 2026-10-17)
+
+- The eval layer lives in `api/hearnarro/evals/` (`docs/CODE_MAP_EVALS.md`); suites are `EVAL-1`..`EVAL-9`
+  (PRD "Evals"); run records are committed under `evals/runs/` and `evals/runs/latest.json` points at the
+  newest. Records are data: never edit one by hand.
+- Before and after any change to `api/hearnarro/ingestion/`, `api/hearnarro/synthesis/` or the lexicon
+  and acronym tables, run `api/.venv/bin/python -m hearnarro.evals run all --tier 0` (about 15 s) and cite
+  the compare output (`python -m hearnarro.evals compare <baseline> <candidate>`) in the commit message or
+  PR description. A regression (D33: a per-example drop over 0.01, 10 % on a timing, 1 on a count, or a
+  new failure) is not a test failure, but an unexplained one blocks the merge in review.
+- Tier 1 (`--tier 1`, real Kokoro plus faster-whisper, about 8 min) runs at every milestone close and once
+  per backend when a `TTSBackend` is swapped; the scorecard of that run is linked from the milestone guide.
+- `faster-whisper` is a development-only dependency (pyproject group `evals`), never imported by the
+  app; the ASR model is named and pinned in `settings.py` only. No LLM-as-judge; no user data in datasets.
+- Workers follow the same rule: a brief that touches ingestion or synthesis lists the tier-0 eval run under
+  EVIDENCE.

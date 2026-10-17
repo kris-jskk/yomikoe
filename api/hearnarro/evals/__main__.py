@@ -4,7 +4,8 @@
 prints the markdown scorecard (with deltas and regressions against the baseline if given);
 ``compare A B [--out DIR]`` prints the scorecard of B against A (run ids, paths or ``latest``);
 ``report RUN [--baseline RUN] [--html PATH] [--standalone] [--out DIR]`` writes the HTML
-scorecard (E3) to PATH, or prints the markdown scorecard when ``--html`` is not given.
+scorecard (E3) to PATH, or prints the markdown scorecard when ``--html`` is not given; ``listening prepare|ingest`` (E4, EVAL-9) prepares and
+records listening sessions.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from hearnarro.evals import report, store
+from hearnarro.evals import listening, report, store
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -37,7 +38,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--standalone", action="store_true", help="wrap the HTML in a full document skeleton"
     )
     p_rep.add_argument("--out", default=None, help="records directory (default evals/runs/)")
+    listening.register(sub)
     args = parser.parse_args(argv)
+    if args.command == "listening":
+        return listening.run_verb(args)
     out_dir = Path(args.out) if args.out else store.DEFAULT_RUNS_DIR
 
     if args.command == "run":
@@ -67,13 +71,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     a, b = store.read_record(args.a, out_dir), store.read_record(args.b, out_dir)
     print(report.scorecard(b, store.compare(a, b)))
     return 0
-
-
-# --- E4 (EVAL-9): `listening prepare|ingest` verbs, owned by hearnarro.evals.listening ---
-from hearnarro.evals.listening import with_listening
-
-main = with_listening(main)
-# --- end E4 block ---
 
 
 if __name__ == "__main__":
