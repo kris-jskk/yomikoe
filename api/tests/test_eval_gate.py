@@ -342,7 +342,9 @@ def test_eval6_sync_word_offsets(e2_examples: list[dict[str, Any]]) -> None:
 
     scores = [e6.score(ex) for ex in e2_examples]
     for s in scores:
-        assert {"id", "class", "speed", "voice", "mean_abs_offset_ms", "share_within_150ms"} <= set(s)
+        assert {"id", "class", "speed", "voice", "mean_abs_offset_ms", "share_within_150ms"} <= set(
+            s
+        )
         assert 0 < s["n_matched"] <= s["n_backend_words"]
         assert len(s["abs_offsets_ms"]) == s["n_matched"]
         assert s["score"] == s["mean_abs_offset_ms"] >= 0.0

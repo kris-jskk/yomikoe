@@ -1,0 +1,50 @@
+{"id": "academic_01_seahelm_audio#9", "text": "Results show substantial degradation, with accuracy drops of 9.00–18.50 percentage points for multiple-choice reasoning and 20.00–42.86 points for instruction following."}
+{"id": "academic_01_seahelm_audio#70", "text": "Written conventions that do not read naturally aloud are adapted per language: in Chinese, the option labels A–D and the answer marker are written as Chinese words."}
+{"id": "academic_01_seahelm_audio#77", "text": "Transcription quality is also measured directly, as Word Error Rate (WER) and Character Error Rate (CER) between the transcript and the original prompt."}
+{"id": "academic_01_seahelm_audio#177", "text": "Most notably, it outperformed Gemini in the Indonesian IFEval text baseline (94.29 percent vs. 89.52 percent)."}
+{"id": "academic_01_seahelm_audio#181", "text": "This study shows that a text-native benchmark, such as SEA-HELM, can be adapted to benchmark end-to-end voice pipelines, provided the evaluation tasks are highly deterministic."}
+{"id": "academic_01_seahelm_audio#191", "text": "Vienna, Austria: Association for Computational Linguistics, Jul. 2025, pp. 12 308 to 12 336."}
+{"id": "academic_02_memduet#4", "text": "Xi’an Jiaotong University 2Faculty of Electronic and Information Engineering, Xi’an Jiaotong University 3Imperial College London"}
+{"id": "academic_02_memduet#34", "text": "By combining small-model selective attention over raw chunks with large-model verification and memory updating, MemDuet balances reasoning performance and inference efficiency as context grows."}
+{"id": "academic_02_memduet#53", "text": "MemDuet instead scans raw chunks in parallel before recurrent updating and progressively coordinates evidence selection with memory consolidation."}
+{"id": "academic_02_memduet#61", "text": "CoALA organizes language agents around modular memory, decision-making, and action components derived from cognitive architectures (Sumers et al, 2024)."}
+{"id": "academic_02_memduet#113", "text": "Stage three jointly optimizes both systems with task rewards, coordinating selection with verification and memory updates."}
+{"id": "academic_03_pruned_reasoning#28", "text": "TGAS consistently improves termination and accuracy across six LRMs, three pruning pipelines, and math and code benchmarks by reducing repetitive reasoning."}
+{"id": "academic_03_pruned_reasoning#90", "text": "Despite reaching the correct answer, models continue generating to the token limit, often entering repetitive or corrective reasoning."}
+{"id": "academic_03_pruned_reasoning#117", "text": "Table 3: Log-probability ratio between cyclic and progressive continuations at decision points on AIME-25."}
+{"id": "academic_04_legislative_xml#23", "text": "Our working hypothesis is that exactness here owes more to harness engineering, the orchestration, tools, and deterministic constraints assembled around the model, than to the model itself."}
+{"id": "academic_04_legislative_xml#106", "text": "The rule we held to is that only the harness may vary across tiers, never the knowledge, so a capability T2 and T3 reach through a tool is written out in prose for T1 rather than withheld."}
+{"id": "academic_05_sparse_autoencoders#1", "text": "Salima Lamsiyah Adelaide Danilov Oleksandr Marchenko Breneur Aria Nourbakhsh Department of Computer Science (DCS), University of Luxembourg"}
+{"id": "academic_05_sparse_autoencoders#29", "text": "Building on these foundations, our survey examines how SAE construction and use jointly shape the comparability and interpretation of NLP findings."}
+{"id": "academic_05_sparse_autoencoders#41", "text": "We survey SAE methods for language-model analysis and NLP system construction, including relevant speech and multimodal extensions."}
+{"id": "academic_05_sparse_autoencoders#69", "text": "Residual streams contain accumulated information; attention and MLP outputs characterize component contributions."}
+{"id": "academic_05_sparse_autoencoders#84", "text": "Gated SAEs separate selection from magnitude estimation, while JumpReLU learns activation thresholds (Rajamanoharan et al, 2024a,b)."}
+{"id": "academic_05_sparse_autoencoders#119", "text": "A grammatical feature should track the specified contrast across appropriate lexical controls; a lexical feature need not survive word substitution."}
+{"id": "academic_05_sparse_autoencoders#135", "text": "Retaining e isolates the decoded change but does not ensure that the edited activation lies within the model’s natural distribution."}
+{"id": "report_01_zero_trust#35", "text": "Thus, until each publication is completed, current requirements, guidelines, and procedures, where they exist, remain operative."}
+{"id": "report_03_ssdf#39", "text": "National Institute of Standards and Technology Attn: Computer Security Division, Information Technology Laboratory"}
+{"id": "report_04_rmf#15", "text": "This guideline is consistent with requirements of the Office of Management and Budget (OMB) Circular A-130."}
+{"id": "report_04_rmf#32", "text": "All comments are subject to release under the Freedom of Information Act (FOIA) [FOIA96]."}
+{"id": "scanned_04_copula_subspaces#26", "text": "The marginal term Emarg consists of d one-dimensional divergences and two corrections; Edens is a divergence between r-dimensional laws."}
+{"id": "scanned_04_copula_subspaces#39", "text": "The bound minus this correction tends to zero as N →∞, under the stated assumptions on the marginal estimates and rank-transform error."}
+{"id": "scanned_04_copula_subspaces#51", "text": "The increment between two nested multi-index sets estimates the Hermite truncation error under a saturation assumption."}
+{"id": "scanned_04_copula_subspaces#67", "text": "This fit defines bS := ∇P α∈Λ bθd αHα (3.3), with coefficient vector bθd := (bθd α)α∈Λ."}
+{"id": "scanned_05_markov_kernel#9", "text": "As an application, we study one-step prediction of dynamical systems from a single trajectory, deriving fast learning rates for a nonlinear least-squares estimator."}
+{"id": "scanned_05_markov_kernel#47", "text": "Further examples and general properties of IPMs can be found in Müller (1997) and Rachev et al (2013)."}
+{"id": "scanned_05_markov_kernel#56", "text": "Let k : X× X →R be a measurable positive-definite kernel with separable RKHS H, and let ϕ(x) := k(x, ·) be its canonical feature map."}
+{"id": "scanned_05_markov_kernel#66", "text": "The same construction applies to any measurable feature map ϕ : X →H into a separable Hilbert space, subject to the same integrability requirement."}
+{"id": "scanned_05_markov_kernel#70", "text": "For independent observations with common law π, MMDϕ(bµT , π) admits bounds of order T −1/2, both in expectation and at each fixed confidence level (Gretton et al, 2012)."}
+{"id": "tables_01_pfn_bayes#37", "text": "A PFN assumes a prior Π over pairs (p, N) of a task and a context size, whose marginal over N is the size distribution Ψ."}
+{"id": "tables_01_pfn_bayes#94", "text": "We focus on the former and work towards its precise relation to the other two in Proposition 2."}
+{"id": "tables_01_pfn_bayes#178", "text": "The first, AΠ(¯q), is the error the members have in common as they jointly deviate from πΠ, which cannot be measured without a reference as in Section 2.3."}
+{"id": "tables_01_pfn_bayes#198", "text": "The weight λ ∈ is the fraction of deployment pairs reachable by reweighting the prior."}
+{"id": "tables_03_copula_subspaces#79", "text": "Composing this factor with the fitted rank transform and multiplying by the marginal estimates requires another normalization, by bZcomp."}
+{"id": "tables_03_copula_subspaces#151", "text": "The Stage-1 bounds follow from the next inequality, in which S′ is an arbitrary score field."}
+{"id": "tables_03_copula_subspaces#188", "text": "In the score-ratio-matching stability result of [5, Thm. 3.3], the divergence at the top-r eigenspace of C′ is bounded by ∥S −S′∥2 L2(πZ) + P i>r λi(C′)."}
+{"id": "tables_04_markov_kernel#94", "text": "Writing Σ and bΣ for the population and empirical covariance operators, and denoting Σλ := Σ + λI, we have"}
+{"id": "tables_04_markov_kernel#112", "text": "Section 2 collects background on Markov operators, martingales, integral probability metrics, and spectral gaps, together with preliminary results used throughout the paper."}
+{"id": "tables_04_markov_kernel#154", "text": "A sequence of H-valued random variables (dt)t≥1 is called a martingale difference sequence with respect to (Ft)t if dt is Ft-measurable and for every t ≥1, E[dt | Ft−1] equals 0."}
+{"id": "tables_05_decomposing_learner#60", "text": "Rather than interpreting poorly explained responses as corrupted observations, we allow the degree of predictability to vary across the feature space."}
+{"id": "tables_05_decomposing_learner#75", "text": "Similar combinations have appeared in previous work [Ng and McLachlan, 2004, Lathuilière et al, 2018], although the specific procedures vary according to the underlying probabilistic models."}
+{"id": "tables_05_decomposing_learner#85", "text": "For a neural classifier, the conditional distributions of the response, p(y | x, z equals 1) and prand(y), are simply class probabilities."}
+{"id": "tables_05_decomposing_learner#86", "text": "For a neural regressor, we further model these conditional distributions as Gaussian, i.e.,"}

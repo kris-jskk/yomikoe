@@ -16,7 +16,13 @@ DEFAULT_RUNS_DIR = Path(__file__).resolve().parents[3] / "evals" / "runs"
 LATEST = "latest.json"
 # D33: an example regresses when a 0..1 score falls by more than this (per suite); EVAL-3 is
 # junk per 1 000 words (lower is better), so a rise of more than 1 is a regression there.
-TOLERANCE: dict[str, float] = {"EVAL-1": 0.01, "EVAL-2": 0.01, "EVAL-3": 1.0, "EVAL-4": 0.01}
+TOLERANCE: dict[str, float] = {
+    "EVAL-1": 0.01,
+    "EVAL-2": 0.01,
+    "EVAL-3": 1.0,
+    "EVAL-4": 0.01,
+    "EVAL-5": 0.01,  # WER, 0..1
+}
 DEFAULT_TOLERANCE = 0.01
 _EPS = 1e-9
 
@@ -59,6 +65,20 @@ def _bools(example: dict[str, Any]) -> dict[str, bool]:
     return {k: v for k, v in example.items() if isinstance(v, bool)}
 
 
+def _rule(sid: str, metric: str, sign: float, tol: float) -> tuple[float, float, bool] | None:
+    """(sign, tolerance, relative) for one example metric; None when it is not compared.
+    Suite modules override the suite default with ``METRIC_RULES`` (D33)."""
+    from hearnarro.evals.suites import SUITES
+
+    rules = getattr(SUITES.get(sid), "METRIC_RULES", {})
+    if metric not in rules:
+        return sign, tol, False
+    way, m_tol, relative = rules[metric]
+    if way == "none":
+        return None
+    return (-1.0 if way == "lower" else 1.0), m_tol, relative
+
+
 def compare(baseline: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
     """Deltas (candidate - baseline) per suite and the regressions list (D33).
 
@@ -96,9 +116,14 @@ def compare(baseline: dict[str, Any], candidate: dict[str, Any]) -> dict[str, An
             flat_new = _flatten(other)
             for metric, value in {**_flatten(ex), **_bools(ex)}.items():
                 new = flat_new.get(metric, other.get(metric))
+                rule = _rule(sid, metric, sign, tol)
                 if _is_number(value) and _is_number(new):
                     deltas[metric] = new - value
-                    if sign * (new - value) < -tol - _EPS:
+                    if rule is None:
+                        continue
+                    m_sign, m_tol, relative = rule
+                    limit = m_tol * abs(value) if relative else m_tol
+                    if m_sign * (new - value) < -limit - _EPS:
                         fell[metric] = {"baseline": value, "candidate": new, "delta": new - value}
                 elif value is True and new is False:
                     fell[metric] = {"baseline": True, "candidate": False, "delta": None}

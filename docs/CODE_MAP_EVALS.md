@@ -1,4 +1,4 @@
-# HearNarro evals code map: runner, run records, compare (E0, E1)
+# HearNarro evals code map: runner, run records, compare (E0, E1, E2)
 
 This document explains how the eval layer works end to end and what every file under
 `api/hearnarro/evals/` does. It is written for an engineer who has read `docs/PRD.md`,
@@ -54,6 +54,48 @@ misaki's G2P, which tier 0 did not model.
 `_agent/results/568_e1b_tier0_run.txt`): EVAL-4 accuracy 0.6192, partial mean 0.8922, text
 accuracy 0.2748. Cardinal 1.0; time 0.0 because misaki drops "10:30"-style clock times
 entirely (no phonemes), so the listener hears nothing for them.
+
+### Phase E2 (2026-10-17): tier-1 suites with the real voice
+
+E2 adds three tier-1 suites (`TIER = 1`; `run all --tier 1` selects them, `--tier 0` never does).
+They need the `tts` extra (Kokoro) and the new `evals` extra (`faster-whisper==1.2.1`, MIT; the
+licence check covers it, `_agent/results/573_e2_licences.txt`). The recogniser is named and pinned
+in one place, `hearnarro.settings.ASR_MODEL_REPO` / `ASR_MODEL_REVISION`
+(`Systran/faster-whisper-base` at `ebe41f70…`, MIT weights); the app never imports it.
+
+- **EVAL-5 Intelligibility** (SYN-1, SYN-4): 50 fixture sentences
+  (`data/sentences_50.jsonl`, the bench rule plus a seeded sample) × 2 voices (`af_heart`,
+  `am_michael`) × speeds 1.0/2.0/3.0. Each clip is rendered the way the service renders a segment
+  (synthesize at min(speed, 2.0), SYN-1 silence trim, stretch above 2.0), transcribed, and scored
+  by WER against the input (lower case, hyphens split, punctuation stripped). Lower is better.
+- **EVAL-6 Sync** (SYN-1, PLAY-3): the same clips (one synthesis and one transcription per clip,
+  shared through `_voice.roundtrip`); recogniser words aligned to the backend's `WordTimestamp`
+  words by the word edit script, equal words only; mean absolute start offset (lower), share within
+  150 ms (higher), p95, match rate; pooled per speed and voice.
+- **EVAL-7 Speed** (SYN-5, PRD M2): `scripts/bench.py` loaded by path and used unchanged (its 20
+  sentences, 4 speeds, first voice, `run_one`); TTFA p50/p95, RTF mean/p50, share within 2 s.
+
+`store.compare` now honours a suite's `METRIC_RULES` (`{metric: (direction, tolerance,
+relative)}`): timings regress beyond 10 % relative (spec 3.5), EVAL-6's share regresses when it
+falls, and descriptive fields (`speed`, `audio_ms`, `chars`) are not compared. EVAL-4's `exact`
+became stress-insensitive (`strip_stress` removes ˈ and ˌ; `partial` likewise) and the
+stress-sensitive match is kept as `exact_stress` / `accuracy_stress`.
+
+E2 gate (in `api/tests/test_eval_gate.py`, `@pytest.mark.model`, 5 sentences at 1.0, both
+voices): red `_agent/results/574_e2_gate_red.txt`, green ``_agent/results/576_e2_gate_green.txt` (20 passed)`. First tier-1 record:
+`evals/runs/2026-10-17_d5f2e10.json` (EVAL-1..7, 438 s wall, `_agent/results/583_e2_tier1_run.txt`).
+
+First tier-1 numbers (this machine, CPU; 50 sentences × af_heart, am_michael × 1.0/2.0/3.0):
+
+| Speed | EVAL-5 mean WER | EVAL-6 mean offset | EVAL-6 within 150 ms | EVAL-7 TTFA p50 / p95 |
+| --- | --- | --- | --- | --- |
+| 1.0 | 0.147 | 186 ms | 0.451 | 816 / 1230 ms |
+| 2.0 | 0.347 | 107 ms | 0.836 | 417 / 635 ms |
+| 3.0 | 0.500 | 61 ms | 0.959 | 480 / 649 ms |
+| all | 0.331 | 128 ms (p95 308) | 0.709 | 645 / 2163 ms (incl. 0.5) |
+
+The recogniser's word starts come before the backend's: signed mean −200 ms at 1.0 and −103 ms
+at 2.0 on 8 sentences (`_agent/results/579_e2_signed_offset.txt`); the cause is not attributed.
 
 ### The gate
 
@@ -140,15 +182,21 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 | `__init__.py` | Package docstring (D31–D34) | none | none | implemented |
 | `__main__.py` | argparse CLI: `run`, `compare` | `main` | stdout; records via `store` | tested (by hand, `556`) |
 | `runner.py` | Runs the selected suites and writes one record | `run(suite_ids, out_dir=None, tier=0) -> (record, path)` | `git rev-parse`; fixtures via suites; record via `store` | tested (gate) |
-| `store.py` | Record files, `latest.json` pointer, compare per D33; honours suite `direction` and compares nested example metrics under dotted keys (E1) | `DEFAULT_RUNS_DIR`, `LATEST`, `TOLERANCE`, `DEFAULT_TOLERANCE`, `write_record`, `read_record`, `compare` | `evals/runs/*.json` | tested (gate) |
+| `store.py` | Record files, `latest.json` pointer, compare per D33; honours suite `direction`, compares nested example metrics under dotted keys (E1), and per-metric `METRIC_RULES` with relative tolerances (E2) | `DEFAULT_RUNS_DIR`, `LATEST`, `TOLERANCE`, `DEFAULT_TOLERANCE`, `write_record`, `read_record`, `compare` | `evals/runs/*.json` | tested (gate) |
 | `report.py` | Markdown scorecard; the worst example is the highest score for a lower-is-better suite | `scorecard(record, comparison=None)`, `lines_for_compare(comparison)` | none | tested (by hand, `556`) |
-| `scorers.py` | Pure scoring functions moved from `api/tests/golden_util.py` (D12/D14 word score, char-mass guard) and `api/tests/boundary_util.py` (boundary alignment, P/R/F1) | `PROSE_TYPES`, `CHAR_MASS_TOLERANCE`, `PUNCTUATION`, `norm`, `seq_levenshtein`, `prose_only`, `excluded_actual_texts`, `words`, `word_score`, `char_mass_ratio`, `char_mass_balanced`, `sentence_words`, `boundaries`, `align_boundaries`, `prf` | none | tested (`test_golden_util.py`, `test_boundary_util.py`, gate) |
-| `suites/__init__.py` | Suite registry (EVAL-1..4) | `SUITES`, `select(ids, tier)`, `direction(suite_id)` | none | tested (gate) |
+| `scorers.py` | Pure scoring functions moved from `api/tests/golden_util.py` (D12/D14 word score, char-mass guard) and `api/tests/boundary_util.py` (boundary alignment, P/R/F1) | `PROSE_TYPES`, `CHAR_MASS_TOLERANCE`, `PUNCTUATION`, `norm`, `seq_levenshtein`, `prose_only`, `excluded_actual_texts`, `words`, `word_score`, `char_mass_ratio`, `char_mass_balanced`, `sentence_words`, `boundaries`, `align_boundaries`, `prf`, `matched_pairs` (E2), `percentile` (E2) | none | tested (`test_golden_util.py`, `test_boundary_util.py`, gate) |
+| `suites/__init__.py` | Suite registry (EVAL-1..7); optional per-suite `DIRECTION` and `METRIC_RULES` | `SUITES`, `select(ids, tier)`, `direction(suite_id)` | none | tested (gate) |
 | `suites/_fixtures.py` | Fixture manifest, expected rows, truth sentences, one cached ingest per PDF | `FIXTURES`, `manifest`, `expected_rows`, `truth_sentences`, `ingest_result`, `ingested` | `api/tests/fixtures/pdfs/` (manifest, `*.pdf`, `*.expected.jsonl`, `*.sentences.txt`) | tested (gate) |
 | `suites/eval1_order.py` | EVAL-1: 20 fixtures (scanned skipped without tesseract); score = `word_score`; `char_mass_ok` per example | `ID`, `TITLE`, `TIER`, `dataset`, `score`, `aggregate` (mean, min, by_class) | via `_fixtures` | tested (gate) |
 | `suites/eval2_boundaries.py` | EVAL-2: 15 non-scanned fixtures; precision, recall, F1; score = F1 | `ID`, `TITLE`, `TIER`, `dataset`, `score`, `aggregate` (mean_f1, min_recall) | via `_fixtures` | tested (gate) |
 | `suites/eval3_clean.py` | EVAL-3: 15 text fixtures; per check count and rate per 1 000 words; score = `total_rate`; `DIRECTION = "lower"` | `ID`, `TITLE`, `TIER`, `DIRECTION`, `dataset`, `score`, `aggregate` (mean_rate per check, total_mean_rate) | `hearnarro.quality.check_pdf`; word count from `_fixtures.ingest_result` | tested (gate) |
 | `suites/eval4_speech_form.py` | EVAL-4: the dataset below through the app's text-to-voice path; exact and partial per pair | `ID`, `TITLE`, `TIER`, `DIRECTION`, `DATA`, `load_pairs`, `spoken(text, block)`, `canonical`, `phonemes`, `unavailable`, `dataset`, `score`, `aggregate` (accuracy, partial_mean, by_category, text_accuracy, text_partial_mean) | `data/speech_form.jsonl`; calls `ingestion.merge`, `ingestion.segment`, `ingestion.acronyms`, `synthesis.acronyms`, `synthesis.lexicon_overrides` | tested (gate) |
+| `suites/_asr.py` | E2: the pinned faster-whisper model, loaded once per process (CPU, int8); PCM16 → WAV → 16 kHz via faster-whisper's decoder; word timings | `AsrWord`, `unavailable`, `model`, `transcribe(pcm, sample_rate)` | HF cache (`settings.ASR_MODEL_REPO` @ `ASR_MODEL_REVISION`) | tested (E2 gate) |
+| `suites/_voice.py` | E2: one warmed `KokoroBackend` per process; `render` mirrors `SynthesisService._render` (trim, stretch, timestamp scale and clamp); `roundtrip` caches render + transcription per (text, voice, speed) | `Roundtrip`, `unavailable`, `backend`, `render`, `roundtrip` | Kokoro weights (D15 revision) | tested (E2 gate) |
+| `suites/eval5_intelligibility.py` | EVAL-5: WER per sentence × voice × speed | `ID`, `TITLE`, `TIER`, `DIRECTION`, `METRIC_RULES`, `VOICES`, `SPEEDS`, `SEED`, `DATA`, `select_sentences`, `load_sentences`, `norm_words`, `wer`, `unavailable`, `dataset(limit, speeds, voices)`, `score`, `aggregate` (mean_wer, worst, per_voice, per_speed) | `data/sentences_50.jsonl`; `_voice`, `_asr` | tested (E2 gate) |
+| `suites/eval6_sync.py` | EVAL-6: word-start offsets, recogniser vs backend timestamps | `ID`, `TITLE`, `TIER`, `DIRECTION`, `METRIC_RULES`, `WITHIN_MS`, `dataset` (EVAL-5's), `score`, `aggregate` (mean/p95 offset, share_within_150ms, n_matched, match_rate; per_speed, per_voice) | `_voice.roundtrip` | tested (E2 gate) |
+| `suites/eval7_speed.py` | EVAL-7: bench rows as examples | `ID`, `TITLE`, `TIER`, `DIRECTION`, `METRIC_RULES`, `bench()`, `dataset(limit, speeds)`, `score`, `aggregate` (ttfa_p50_ms, ttfa_p95_ms, rtf_mean, rtf_p50, share_within_2s; per_speed) | `api/scripts/bench.py` (by path); `_voice.backend` | tested (E2 gate) |
+| `data/sentences_50.jsonl` | E2: 50 `{id: "<fixture>#<row>", text}` (normalized), from `select_sentences()` (seed 34) | n/a | n/a | tested (E2 gate: 50, unique) |
 | `data/speech_form.jsonl` | 302 pairs: `id`, `category`, `text`, `expected`, optional `note`, optional `block` (`heading`, `table`: rows by line, cells by ` \| `; `equation`) | n/a | n/a | tested (gate: shape, ≥ 15 per category) |
 | `data/listening_rubric.md` | EVAL-9 form | n/a | n/a | planned |
 
@@ -158,7 +206,7 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 | --- | --- | --- |
 | `api/tests/golden_util.py` | Re-exports the reading-order scorers from `hearnarro.evals.scorers` (no logic) | tested (`554`) |
 | `api/tests/boundary_util.py` | Re-exports the boundary scorers (including `_alignment`) from `hearnarro.evals.scorers` | tested (`554`) |
-| `api/tests/test_eval_gate.py` | E0 gate: record shape, aggregates, compare zero/one-regression cases; E1: registry direction, `all` under 60 s, EVAL-3 rates, lower-is-better compare, EVAL-4 dataset shape, app path, aggregates | tested (`553`, `562`) |
+| `api/tests/test_eval_gate.py` | E0 gate: record shape, aggregates, compare zero/one-regression cases; E1: registry direction, `all` under 60 s, EVAL-3 rates, lower-is-better compare, EVAL-4 dataset shape, app path, aggregates; E2 (model-gated): registry tiers, sentence list, WER normalization, EVAL-5/6/7 on 5 sentences, per-metric compare rules | tested (`553`, `562`, `576`) |
 
 ### `evals/runs/` (repo root)
 
@@ -172,6 +220,7 @@ Record (one file per run; spec 3.4 plus the extra fields marked †):
 run_id   "<YYYY-MM-DD>_<shortsha>"      commit  "<shortsha>"      date  "<ISO UTC>Z"
 seconds† total wall time
 config   {backend: "fake", speed: 1.0, tesseract: bool, python†: "3.11.x", tier†: 0}
+         tier-1 runs: backend "kokoro", kokoro_revision, asr_model, asr_revision, voices, speeds, machine
 suites   {"EVAL-1": {title†, tier†, seconds†,
                      examples: [{id, class, score, char_mass_ok†}],
                      skipped†: [{id, class, reason}],
@@ -186,7 +235,23 @@ suites   {"EVAL-1": {title†, tier†, seconds†,
                      aggregate: {mean_rate: {name: rate}, total_mean_rate}},
           "EVAL-4": {title, tier, direction†: "higher", seconds,
                      examples: [{id, class (= category), exact, partial, score (= partial), actual}],
-                     aggregate: {accuracy, partial_mean, by_category: {category: accuracy}}}}
+                     aggregate: {accuracy, partial_mean, by_category: {category: accuracy}}},
+          "EVAL-5": {direction: "lower",
+                     examples: [{id "<sentence>@<voice>@<speed>", class (= speed), sentence_id, speed,
+                                 voice, reference, hypothesis, wer, score (= wer), direction}],
+                     aggregate: {mean_wer, worst: {id, wer, reference, hypothesis},
+                                 per_voice: {voice: mean_wer}, per_speed: {"1.0": mean_wer}}},
+          "EVAL-6": {direction: "lower",
+                     examples: [{id, class, sentence_id, speed, voice, mean_abs_offset_ms,
+                                 share_within_150ms, n_matched, n_backend_words, abs_offsets_ms,
+                                 score (= mean_abs_offset_ms)}],
+                     aggregate: {mean_abs_offset_ms, p95_abs_offset_ms, share_within_150ms,
+                                 n_matched, match_rate, per_speed: {…}, per_voice: {…}}},
+          "EVAL-7": {direction: "lower",
+                     examples: [{id "bench<i>@<speed>", class, speed, voice, chars, ttfa_ms,
+                                 audio_ms, rtf, score (= ttfa_ms)}],
+                     aggregate: {ttfa_p50_ms, ttfa_p95_ms, rtf_mean, rtf_p50, share_within_2s,
+                                 per_speed: {…}}}}
 ```
 
 Compare result: `{baseline, candidate, suites: {id: {aggregate: {key: Δ}, examples: {id: {field: Δ}}}},
@@ -221,13 +286,29 @@ regressions: [{suite, id, reason, metrics: {field: {baseline, candidate, delta}}
     `_agent/results/572_e1b_stress_check.txt`). The backend's post-G2P acronym re-read is still
     applied as text ("P D F"), not on phonemes.
 
+12. (E2) EVAL-5/6 sentences: spec 3.3 says `sample_sentences.py` picks them, but that script
+    holds 12 hand-written number sentences; the fixture rule lives in `bench.py`
+    (`bench_sentences`), so EVAL-5 uses that rule over all fixtures plus a seeded sample of 50.
+13. (E2) EVAL-5/6 speeds are 1.0, 2.0 and 3.0; 0.5 is left out to keep the full run under 15
+    minutes (spec 3.3 lists 0.5/1/2/3 for EVAL-6).
+14. (E2) WER compares words as written: numerals are not expanded on either side, so a sentence
+    with digits can score a miss where the recogniser writes the number differently.
+15. (E2) EVAL-7 measures on the run's shared warmed backend, so cold start is not in the record
+    (`bench.py` still prints and saves it); bench.py itself is unchanged.
+16. (E2) EVAL-4 `exact` is stress-insensitive (was stress-sensitive in E1b, deviation 11);
+    `exact_stress` keeps the old value.
+
 ## How to run
 
 From `api/`: `.venv/bin/python -m hearnarro.evals run all` (or `run EVAL-1 EVAL-2`), add
 `--baseline <run_id>` to see deltas; `.venv/bin/python -m hearnarro.evals compare <a> <b>`. Gate:
 `.venv/bin/python -m pytest tests/test_eval_gate.py`.
 
+Tier 1 (needs `pip install -e '.[tts,evals]'`; first run downloads the ~145 MB recogniser):
+`.venv/bin/python -m hearnarro.evals run all --tier 1` (no environment variable needed). E2 gate:
+`HEARNARRO_TEST_MODEL=1 .venv/bin/python -m pytest tests/test_eval_gate.py`.
+
 ## Open items
 
-- EVAL-5..9 suites, `data/listening_rubric.md`, the HTML scorecard (spec 3.3, 3.4).
+- EVAL-8, EVAL-9 suites, `data/listening_rubric.md`, the HTML scorecard (spec 3.3, 3.4).
 - EVAL-1 scanned class needs tesseract on this machine (5 fixtures skipped in the baseline).

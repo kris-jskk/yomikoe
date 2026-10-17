@@ -29,6 +29,10 @@ DEFAULT_LOOKAHEAD = 5
 BACKENDS = ("fake", "kokoro")
 # D15: hexgrad/Kokoro-82M revision used when HEARNARRO_TTS_BACKEND=kokoro names no revision.
 DEFAULT_KOKORO_REVISION = "f3ff3571791e39611d31c381e3a41a3af07b4987"
+# D31/D34: speech recogniser for the tier-1 evals (EVAL-5/6) only; never used by the app.
+# MIT-licensed CTranslate2 build of Whisper base, pinned like every Hugging Face model.
+ASR_MODEL_REPO = "Systran/faster-whisper-base"
+ASR_MODEL_REVISION = "ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66"
 # Import names of the `tts` extra (D15: no `kokoro` package; model code is vendored).
 TTS_MODULES = ("torch", "transformers", "misaki", "spacy", "inflect")
 

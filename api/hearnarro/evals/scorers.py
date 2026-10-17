@@ -196,3 +196,22 @@ def prf(tp: int, fp: int, fn: int) -> tuple[float, float, float]:
     recall = tp / (tp + fn) if tp + fn else 0.0
     f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
     return precision, recall, f1
+
+
+def matched_pairs(actual: list[str], expected: list[str]) -> list[tuple[int, int]]:
+    """(actual index, expected index) of words the edit script aligns and that are equal;
+    each expected word is used once (EVAL-6 sync)."""
+    pairs: list[tuple[int, int]] = []
+    used: set[int] = set()
+    for i, j in enumerate(_alignment(actual, expected)):
+        if 0 <= j < len(expected) and j not in used and actual[i] == expected[j]:
+            used.add(j)
+            pairs.append((i, j))
+    return pairs
+
+
+def percentile(values: list[float], q: float) -> float:
+    """Nearest-rank percentile (q in 0..100) of a non-empty list."""
+    ordered = sorted(values)
+    rank = max(1, -(-len(ordered) * q // 100))
+    return ordered[int(rank) - 1]

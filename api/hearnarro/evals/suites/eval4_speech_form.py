@@ -32,8 +32,10 @@ spell-out is applied as text in step 2 instead) and ``in_lexicon`` (false, so ru
 
 Score per pair: ``exact`` = the phoneme tokens of ``actual`` and ``expected`` are equal
 (in-word hyphens as spaces on both sides, whitespace collapsed, punctuation removed,
-punctuation-only tokens dropped; stress marks kept); ``partial`` =
-1 - phoneme-token edit distance / expected tokens, floored at 0; ``score`` = ``partial``. The
+punctuation-only tokens dropped) after primary and secondary stress marks are stripped
+(``strip_stress``), so a stress-only difference is not a reading error; ``exact_stress`` keeps
+the stress-sensitive comparison. ``partial`` = 1 - phoneme-token edit distance (stress
+stripped) / expected tokens, floored at 0; ``score`` = ``partial``. The
 word-level text comparison is kept as ``text_exact`` / ``text_partial`` (canonical forms: lower
 case, hyphens as spaces, punctuation other than in-word apostrophes removed). If misaki cannot
 be imported every pair is skipped with the reason instead of scored.
@@ -143,6 +145,14 @@ def canonical(text: str) -> list[str]:
     return re.sub(r"[^\w\s']", " ", text).split()
 
 
+_STRESS = str.maketrans("", "", "ˈˌ")
+
+
+def strip_stress(phonemes: str) -> str:
+    """Phoneme string with primary (ˈ) and secondary (ˌ) stress marks removed."""
+    return phonemes.translate(_STRESS)
+
+
 _PUNCT = set(";:,.!?¡¿—–-…\"«»“”()[]{}'’")
 
 
@@ -186,17 +196,20 @@ def dataset() -> list[dict[str, Any]]:
 
 
 def score(example: dict[str, Any]) -> dict[str, Any]:
-    """id, class, exact, partial (= score), actual, actual_ph, expected_ph, text_exact,
+    """id, class, exact, exact_stress, partial (= score), actual, actual_ph, expected_ph, text_exact,
     text_partial."""
     actual = spoken(example["text"], example.get("block"))
     got, want = canonical(actual), canonical(example["expected"])
     text_partial = max(0.0, 1 - seq_levenshtein(got, want) / max(1, len(want)))
     got_ph, want_ph = phonemes(actual), phonemes(example["expected"])
-    partial = max(0.0, 1 - seq_levenshtein(got_ph, want_ph) / max(1, len(want_ph)))
+    got_ns = [strip_stress(p) for p in got_ph]
+    want_ns = [strip_stress(p) for p in want_ph]
+    partial = max(0.0, 1 - seq_levenshtein(got_ns, want_ns) / max(1, len(want_ns)))
     return {
         "id": example["id"],
         "class": example["class"],
-        "exact": got_ph == want_ph,
+        "exact": got_ns == want_ns,
+        "exact_stress": got_ph == want_ph,
         "partial": partial,
         "score": partial,
         "actual": actual,
@@ -208,7 +221,8 @@ def score(example: dict[str, Any]) -> dict[str, Any]:
 
 
 def aggregate(scores: list[dict[str, Any]]) -> dict[str, Any]:
-    """Phoneme exact-match accuracy overall and per category, mean partial credit, and the
+    """Phoneme exact-match accuracy (stress-insensitive; stress-sensitive as accuracy_stress)
+    overall and per category, mean partial credit, and the
     word-level text accuracy and partial mean alongside."""
     if not scores:
         return {"accuracy": 0.0, "partial_mean": 0.0, "by_category": {}}
@@ -217,6 +231,7 @@ def aggregate(scores: list[dict[str, Any]]) -> dict[str, Any]:
         cats.setdefault(s["class"], []).append(s["exact"])
     return {
         "accuracy": sum(s["exact"] for s in scores) / len(scores),
+        "accuracy_stress": sum(s["exact_stress"] for s in scores) / len(scores),
         "partial_mean": sum(s["partial"] for s in scores) / len(scores),
         "by_category": {c: sum(v) / len(v) for c, v in sorted(cats.items())},
         "text_accuracy": sum(s["text_exact"] for s in scores) / len(scores),

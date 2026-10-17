@@ -27,16 +27,30 @@ def _short_sha() -> str:
     return out.stdout.strip()
 
 
-def _config(tier: int) -> dict[str, Any]:
+def _config(tier: int, model_tier: bool = False) -> dict[str, Any]:
     from hearnarro.ingestion.extract import ocr_available
 
-    return {
+    config: dict[str, Any] = {
         "backend": "fake",  # tier 0 runs no TTS model
         "speed": 1.0,
         "tesseract": ocr_available(),
         "python": platform.python_version(),
         "tier": tier,
     }
+    if model_tier:  # tier-1 suites ran: the real voice and the recogniser (D31, D34)
+        from hearnarro import settings
+        from hearnarro.evals.suites import eval5_intelligibility as e5
+
+        config.update(
+            backend="kokoro",
+            kokoro_revision=settings.DEFAULT_KOKORO_REVISION,
+            asr_model=settings.ASR_MODEL_REPO,
+            asr_revision=settings.ASR_MODEL_REVISION,
+            voices=list(e5.VOICES),
+            speeds=list(e5.SPEEDS),
+            machine=f"{platform.platform()} {platform.machine()}",
+        )
+    return config
 
 
 def run(
@@ -53,7 +67,7 @@ def run(
         "run_id": f"{now:%Y-%m-%d}_{sha}",
         "commit": sha,
         "date": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "config": _config(tier),
+        "config": _config(tier, any(m.TIER >= 1 for m in modules)),
         "suites": {},
     }
     started = time.perf_counter()

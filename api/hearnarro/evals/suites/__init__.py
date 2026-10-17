@@ -3,7 +3,9 @@ and aggregate(scores). Tier 0 needs no model; tier 1 needs Kokoro; tier 2 is a h
 
 A module may set ``DIRECTION`` to ``"lower"`` when a smaller score is better (EVAL-3 counts
 junk); the default is ``"higher"``. The runner writes it into the record and ``store.compare``
-honours it (D33).
+honours it (D33). A module may also set ``METRIC_RULES``: ``{metric: (direction, tolerance,
+relative)}`` for example metrics that differ from the suite default (EVAL-6's share improves
+upwards; timings use a 10 % relative tolerance; direction ``"none"`` is not compared).
 """
 
 from __future__ import annotations
@@ -15,10 +17,22 @@ from hearnarro.evals.suites import (
     eval2_boundaries,
     eval3_clean,
     eval4_speech_form,
+    eval5_intelligibility,
+    eval6_sync,
+    eval7_speed,
 )
 
 SUITES: dict[str, ModuleType] = {
-    m.ID: m for m in (eval1_order, eval2_boundaries, eval3_clean, eval4_speech_form)
+    m.ID: m
+    for m in (
+        eval1_order,
+        eval2_boundaries,
+        eval3_clean,
+        eval4_speech_form,
+        eval5_intelligibility,
+        eval6_sync,
+        eval7_speed,
+    )
 }
 
 
