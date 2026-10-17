@@ -1,0 +1,475 @@
+<title>HearNarro M5 Academic Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 920px) of guide sections; figures in their own overflow containers; same tokens as the M1-M4 guides so the five read as one set. */
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --fg: #1d2129; --muted: #5d6470; --line: #d9d6cd;
+  --accent: #8b4a1f; --accent-soft: #f3e8df; --hl: #ffe08a; --hl-seg: #f3ecd6;
+  --done: #2f7d4f; --done-soft: #e1f0e6; --run: #b36b00; --run-soft: #fbeedb; --next: #6b6f78; --next-soft: #ebebe8;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --hl: #7a5a12; --hl-seg: #2b2a22; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --hl: #7a5a12; --hl-seg: #2b2a22; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; }
+main { max-width: 920px; margin: 0 auto; display: grid; gap: 48px; }
+h1 { font-size: 28px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+h2 .k { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-right: 10px; font-weight: 500; }
+h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 18px 0 8px; }
+p { margin: 0 0 10px; max-width: 70ch; }
+.lede { font-size: 17px; color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--accent-soft); padding: 1px 5px; border-radius: 3px; }
+.gate { border-left: 3px solid var(--accent); padding: 8px 14px; background: var(--surface); display: grid; gap: 4px; margin-top: 16px; }
+.gate b { font-weight: 600; }
+.stamp { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 14px; font-family: var(--font-mono); }
+.stamp .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--run); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; margin-top: 14px; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { text-decoration: underline; outline: none; }
+figure { margin: 18px 0 6px; background: var(--surface); border: 1px solid var(--line); padding: 14px; overflow-x: auto; }
+figure svg { display: block; max-width: 100%; height: auto; font-family: var(--font-body); }
+figure svg .mono { font-family: var(--font-mono); }
+figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 80ch; }
+.why { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.why > div { background: var(--surface); border: 1px solid var(--line); padding: 12px 14px; min-width: 0; }
+.why b { display: block; font-weight: 600; margin-bottom: 4px; }
+.why p { font-size: 14px; color: var(--muted); margin: 0; }
+@media (max-width: 640px) { .why { grid-template-columns: 1fr; } }
+table.rules { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+table.rules th, table.rules td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.rules th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+.ledger { display: grid; border-top: 1px solid var(--line); margin-top: 14px; }
+.phase { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.phase .who { font-size: 13px; color: var(--muted); display: grid; gap: 4px; align-content: start; }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; width: fit-content; }
+.pill.done { background: var(--done-soft); color: var(--done); } .pill.run { background: var(--run-soft); color: var(--run); } .pill.next { background: var(--next-soft); color: var(--next); }
+.phase .what { min-width: 0; display: grid; gap: 6px; }
+.phase .what b { font-weight: 600; }
+.phase .what .why-line { font-size: 14px; color: var(--accent); }
+.phase ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+.phase li { margin: 2px 0; }
+@media (max-width: 520px) { .phase { grid-template-columns: 1fr; gap: 6px; } }
+.note ul { margin: 0; padding-left: 18px; } .note li { margin: 5px 0; }
+.sample { font-family: var(--font-body); background: var(--surface); border: 1px solid var(--line); padding: 10px 14px; max-width: 70ch; margin-top: 10px; }
+.sample .seg { background: var(--hl-seg); padding: 2px 4px; }
+.sample .w { background: var(--hl); padding: 0 2px; border-radius: 2px; }
+.pill.plan { background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 1px 7px; }
+.pill.next { background: var(--accent-soft); color: var(--accent); }
+.phases { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 12px; }
+.phases .pill { text-transform: none; letter-spacing: 0.02em; font-size: 12px; font-weight: 500; }
+.phases .pill b { font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; margin-left: 4px; }
+.stamp .dot.next { background: var(--accent); }
+.ev { margin-top: 2px; }
+.ev li.empty { list-style: none; margin-left: -18px; font-style: italic; }
+.ids { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+</style>
+<main>
+  <header>
+    <h1>HearNarro M5: formulas read aloud, terms said right</h1>
+    <p class="lede">Milestone 5 makes HearNarro a study narrator. A paper, a textbook chapter or lecture notes go in; display and inline formulas come out spoken as a person would read them, technical words are pronounced from an academic lexicon and the user's own overrides, code listings are cued, and playback gains an equation repeat, slower equations and pauses after theorems. A document profile decides which rules apply, so "[12]" stays a dropped citation in an essay while "[0, 1]" is read as an interval in a maths text. This page is the live status: one diagram per new mechanism and the phase ledger with evidence.</p>
+    <div class="stamp"><span class="dot next"></span> Updated 2026-10-17 · phase 0 Scope done · phase 1 Fixtures and red gate next · D36–D40 confirmed · branch m5-academic</div>
+    <div class="phases" aria-label="Phase status">
+      <span class="pill done">0 Scope <b>done</b></span>
+      <span class="pill next">1 Fixtures and red gate <b>next</b></span>
+      <span class="pill plan">2 Document profile <b>planned</b></span>
+      <span class="pill plan">3 Mathspeak and code listings <b>planned</b></span>
+      <span class="pill plan">4 Vocabulary <b>planned</b></span>
+      <span class="pill plan">5 Playback <b>planned</b></span>
+      <span class="pill plan">6 Close <b>planned</b></span>
+    </div>
+    <nav class="toc">
+      <a href="#ledger">1 Phase ledger</a>
+      <a href="#gate">2 What the milestone must prove</a>
+      <a href="#modes">3 Three modes, one engine</a>
+      <a href="#profile">4 Document profile</a>
+      <a href="#mathspeak">5 Mathspeak</a>
+      <a href="#code">6 Code listings</a>
+      <a href="#terms">7 Pronunciation chain</a>
+      <a href="#playback">8 Playback additions</a>
+      <a href="#decisions">9 Decisions</a>
+      <a href="#links">10 Links and status</a>
+    </nav>
+  </header>
+
+  <section id="ledger">
+    <h2><span class="k">1</span>Phase ledger</h2>
+    <p>Each phase ends with evidence under <code>_agent/results/</code> and a commit on <code>m5-academic</code>. Phases that touch ingestion or synthesis cite a tier-0 eval compare before and after. The supervisor republishes this page once per phase.</p>
+    <div class="ledger">
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 0</span><span>2026-10-17</span></div>
+        <div class="what"><b>Scope</b><span class="why-line">The user decided HearNarro is a study narrator; the requirements, the gate and the decisions had to exist in the PRD and the Technical Design before any code.</span>
+          <span class="ids">PRD Milestones item 5 · MATH-1..6 · TERM-1..5 · ING-10 · ING-11 · PLAY-10 · PLAY-11 · EVAL-10 · D36–D40</span>
+          <ul class="ev"><li>PRD commits <code>4d1bbfc</code> (M5 milestone, MATH, TERM, D36–D37), <code>9a197c2</code> (Sources milestone, maths-to-speech survey in D37), <code>76b7332</code> (Classroom view proposed), <code>afb4f00</code> (three usage modes, ING-10), <code>f853fc7</code> (D36–D39 confirmed, ING-11 and D40).</li><li>Licence survey: <code>_agent/research/m5-math-speech-options.md</code>, evidence <code>_agent/results/607_math_speech_licences.md</code>.</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill next">next</span><span>phase 1</span></div>
+        <div class="what"><b>Fixtures and red gate</b><span class="why-line">The gate is a score over expected spoken text, so the ten formula pages and their <code>*.spoken.txt</code> files have to exist, and the gate test has to fail, before mathspeak is written.</span>
+          <span class="ids">gate clauses (a), (b), (e) · EVAL-10 · MATH-1..4</span>
+          <ul><li>Ten formula-heavy pages: five from the existing table and equation fixtures, five new (two or more from textbooks, one scanned, two from a technical book with code listings).</li><li>A <code>&lt;stem&gt;.spoken.txt</code> per page; a <code>profile</code> field in each fixture's expected file.</li><li>EVAL-10 suite and <code>evals/data/math_speech.jsonl</code>; gate test in <code>api/tests/</code>, run red.</li></ul>
+          <h3>Evidence</h3><ul class="ev"><li class="empty">none yet</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill plan">planned</span><span>phase 2</span></div>
+        <div class="what"><b>Document profile</b><span class="why-line">Mathspeak and citation handling read the class as a parameter, so the profile lands before either of them.</span>
+          <span class="ids">ING-11 · D40 · gate clause (e)</span>
+          <ul><li>Stage-6 pass, <code>documents.profile_json</code> through an Alembic migration, class thresholds, LIB-1 badge, per-document override through <code>hearnarro renormalize</code>.</li></ul>
+          <h3>Evidence</h3><ul class="ev"><li class="empty">none yet</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill plan">planned</span><span>phase 3</span></div>
+        <div class="what"><b>Mathspeak and code listings</b><span class="why-line">This is the core of the milestone: formulas spoken in full instead of the one-word cue, with highlighting kept honest through <code>char_map</code>.</span>
+          <span class="ids">MATH-1..4 · D36 · D37 · ING-10 · gate clause (b)</span>
+          <ul><li>Glyph structure (fractions, sub- and superscripts, large operators), the MATH-3 symbol table, equation numbers and references, the fallback cue. Code listings typed <code>code</code> and cued.</li></ul>
+          <h3>Evidence</h3><ul class="ev"><li class="empty">none yet</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill plan">planned</span><span>phase 4</span></div>
+        <div class="what"><b>Vocabulary</b><span class="why-line">A formula spoken in the right words still fails if "Euler" or "eigenvalue" is mispronounced; the lexicon and the overrides fix the words the voice gets wrong.</span>
+          <span class="ids">TERM-1..4 · EVAL-4 · gate clause (c)</span>
+          <ul><li>Academic lexicon, per-document and global overrides with cache invalidation, author–year citations, academic abbreviations.</li></ul>
+          <h3>Evidence</h3><ul class="ev"><li class="empty">none yet</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill plan">planned</span><span>phase 5</span></div>
+        <div class="what"><b>Playback</b><span class="why-line">A student needs time to take in an equation: a repeat key, a slower rate for equation segments and pauses after theorem openers.</span>
+          <span class="ids">PLAY-10 · PLAY-11 · SYN-8 (pauses) · MATH-5 · D5 · D10</span>
+          <ul><li>Machine events and scheduling changes in the one reducer file; sentence-level highlight for equation segments.</li></ul>
+          <h3>Evidence</h3><ul class="ev"><li class="empty">none yet</li></ul></div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill plan">planned</span><span>phase 6</span></div>
+        <div class="what"><b>Close</b><span class="why-line">The PRD gate decides the milestone; tier 1 and the listening sheet check what the scores cannot hear.</span>
+          <span class="ids">gate clauses (a)–(e) · EVAL-9 · D31–D34</span>
+          <ul><li>Gate green, tier-0 compare against the M4 baseline, tier-1 run, listening sheet on 10 formula sentences across 2 voices, <code>docs/CODE_MAP_M5.md</code>, cost review 4, guide copied to <code>docs/guide/</code>.</li></ul>
+          <h3>Evidence</h3><ul class="ev"><li class="empty">none yet</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gate">
+    <h2><span class="k">2</span>What the milestone must prove</h2>
+    <p>Scope: MATH-1 to MATH-5, TERM-1 to TERM-4, PLAY-10, PLAY-11, the pause part of SYN-8, ING-10 cue and type, ING-11. After M5: MATH-6 (maths from scanned page images), TERM-5 (code identifiers) and line-by-line code reading. ING-7's "Equation." cue becomes the fallback of MATH-1.</p>
+    <div class="gate">
+      <b>Gate (PRD milestone 5)</b>
+      <span>(a) Ten formula-heavy fixture pages, each with a <code>&lt;stem&gt;.spoken.txt</code> holding the expected spoken text of every equation segment and every sentence with inline maths.</span>
+      <span>(b) Spoken-mathematics score, word-sequence edit distance as in D14: ≥ 0.90 per text-layer fixture, ≥ 0.75 for the scanned one, mean ≥ 0.92.</span>
+      <span>(c) EVAL-4 extended with MATH and TERM categories, no new failures against the M4 baseline.</span>
+      <span>(d) A tier-1 listening sheet (EVAL-9) on 10 formula sentences across 2 voices, pronunciation errors counted.</span>
+      <span>(e) The 20 fixture PDFs plus the 10 formula pages classified (ING-11): the expected <code>profile</code> class matched for at least 28 of 30.</span>
+    </div>
+  </section>
+
+  <section id="modes">
+    <h2><span class="k">3</span>Three modes, one engine (Usage modes, VIEW-4)</h2>
+    <p>The student, the technical learner and the book listener use the same pipeline. A mode is a preset: a set of playback and reading settings applied at once. Nothing below the preset knows which mode is on.</p>
+    <figure>
+      <svg viewBox="0 0 880 300" role="img" aria-label="Three usage modes each select one preset row of settings; all three rows feed the same ingestion, mathspeak, pronunciation, backend and playback chain">
+        <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="34" width="200" height="60" rx="4" fill="var(--accent-soft)"/>
+          <rect x="20" y="122" width="200" height="60" rx="4"/>
+          <rect x="20" y="210" width="200" height="60" rx="4"/>
+          <rect x="250" y="34" width="380" height="236" rx="4"/>
+          <line x1="250" y1="108" x2="630" y2="108" stroke="var(--line)"/><line x1="250" y1="196" x2="630" y2="196" stroke="var(--line)"/>
+          <rect x="670" y="34" width="190" height="236" rx="4"/>
+        </g>
+        <g font-size="11" fill="var(--muted)" text-anchor="middle">
+          <text x="297" y="24">pauses</text><text x="392" y="24">equations</text><text x="487" y="24">code listings</text><text x="582" y="24">captions, notes</text>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="120" y="60" text-anchor="middle" font-weight="600">Student (main focus)</text><text x="120" y="78" text-anchor="middle" class="mono" font-size="11">preset: classroom</text>
+          <text x="120" y="148" text-anchor="middle" font-weight="600">Technical learner</text><text x="120" y="166" text-anchor="middle" class="mono" font-size="11">preset: study</text>
+          <text x="120" y="236" text-anchor="middle" font-weight="600">Book listener</text><text x="120" y="254" text-anchor="middle" class="mono" font-size="11">preset: listen</text>
+        </g>
+        <g font-size="12" fill="currentColor" text-anchor="middle" class="mono">
+          <text x="297" y="68">on</text><text x="392" y="68">0.8×, repeat</text><text x="487" y="68">cue</text><text x="582" y="68">board on</text>
+          <text x="297" y="156">—</text><text x="392" y="156">—</text><text x="487" y="156">cue or read</text><text x="582" y="156">notes on</text>
+          <text x="297" y="244">none</text><text x="392" y="244">—</text><text x="487" y="244">cue</text><text x="582" y="244">captions muted</text>
+        </g>
+        <g font-size="10" fill="var(--muted)" text-anchor="middle">
+          <text x="297" y="84">SYN-8</text><text x="392" y="84">PLAY-10, PLAY-11</text><text x="487" y="84">ING-10</text><text x="582" y="84">VIEW-1 (M6)</text>
+          <text x="487" y="172">ING-10 toggle</text><text x="582" y="172">NOTE (M6)</text><text x="582" y="260">PLAY-8</text>
+        </g>
+        <g font-size="12" fill="currentColor" text-anchor="middle">
+          <text x="765" y="58" font-weight="600">one engine</text>
+          <text x="765" y="88">ingestion + profile</text><text x="765" y="128">mathspeak</text><text x="765" y="168">pronunciation</text><text x="765" y="208">TTSBackend</text><text x="765" y="248">scheduled playback</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#a1)">
+          <path d="M220 64 H248" stroke-width="2"/><path d="M220 152 H248"/><path d="M220 240 H248"/>
+          <path d="M630 152 H668"/>
+          <path d="M765 94 V114"/><path d="M765 134 V154"/><path d="M765 174 V194"/><path d="M765 214 V234"/>
+        </g>
+        <text x="634" y="144" font-size="10" fill="var(--muted)">settings</text>
+      </svg>
+      <figcaption>Each mode selects one row of settings and nothing else: all three rows feed the same five-step engine. A dash means the preset leaves the user's own setting as it is. Board and notes are M6 items the classroom and study presets will switch on once they exist.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why one engine</b><p>The usage modes (PRD, 2026-10-17) differ in pacing and in which blocks are read, not in how text becomes speech; one pipeline keeps one set of evals honest for all three.</p></div>
+      <div><b>What M5 builds of it</b><p>The settings the presets need: pauses (SYN-8), equation repeat and speed (PLAY-10, PLAY-11), code cues (ING-10). The preset switch itself is VIEW-4, in M6.</p></div>
+    </div>
+  </section>
+
+  <section id="profile">
+    <h2><span class="k">4</span>Document profile (ING-11, D40)</h2>
+    <p>One pass over the finished blocks measures the document, sorts it into a class and stores both in <code>documents.profile_json</code>. Normalization, mathspeak and citation handling take the profile as a parameter, so the eval runner can run any fixture under any class.</p>
+    <figure>
+      <svg viewBox="0 0 880 340" role="img" aria-label="Four measured shares go through thresholds to one of three classes; each class fires a different bracket rule, so [12] is dropped as a citation and [0, 1] inside maths is read as an interval">
+        <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="20" width="200" height="44" rx="4" fill="var(--accent-soft)"/><rect x="20" y="74" width="200" height="44" rx="4"/>
+          <rect x="20" y="128" width="200" height="44" rx="4"/><rect x="20" y="182" width="200" height="44" rx="4"/>
+          <rect x="260" y="20" width="230" height="206" rx="4"/>
+          <rect x="530" y="30" width="100" height="40" rx="20"/><rect x="530" y="103" width="100" height="40" rx="20"/><rect x="530" y="176" width="100" height="40" rx="20"/>
+          <rect x="660" y="20" width="200" height="206" rx="4"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="120" y="39" text-anchor="middle" font-weight="600">maths mass</text><text x="120" y="55" text-anchor="middle" font-size="10" fill="var(--muted)">equations + inline spans, by chars</text>
+          <text x="120" y="93" text-anchor="middle" font-weight="600">code share</text><text x="120" y="109" text-anchor="middle" font-size="10" fill="var(--muted)">ING-10 listings</text>
+          <text x="120" y="147" text-anchor="middle" font-weight="600">citation style</text><text x="120" y="163" text-anchor="middle" font-size="10" fill="var(--muted)">numeric, author–year, none</text>
+          <text x="120" y="201" text-anchor="middle" font-weight="600">scanned share</text><text x="120" y="217" text-anchor="middle" font-size="10" fill="var(--muted)">ING-2 OCR pages</text>
+          <text x="375" y="42" text-anchor="middle" font-weight="600">thresholds (proposed)</text>
+          <text x="272" y="70" class="mono" font-size="11">math:</text><text x="272" y="86" font-size="11">mass ≥ 15 %, or ≥ 1 display</text><text x="272" y="100" font-size="11">equation per page</text>
+          <text x="272" y="126" class="mono" font-size="11">prose:</text><text x="272" y="142" font-size="11">mass &lt; 2 % and no display</text><text x="272" y="156" font-size="11">equations</text>
+          <text x="272" y="182" class="mono" font-size="11">mixed:</text><text x="272" y="198" font-size="11">otherwise</text>
+          <text x="580" y="55" text-anchor="middle" class="mono" font-weight="600">math</text><text x="580" y="128" text-anchor="middle" class="mono" font-weight="600">mixed</text><text x="580" y="201" text-anchor="middle" class="mono" font-weight="600">prose</text>
+          <text x="760" y="42" text-anchor="middle" font-weight="600">bracket rule fired</text>
+          <text x="672" y="64" font-size="11">in a maths span: interval</text><text x="672" y="78" font-size="11">or matrix, read; outside:</text><text x="672" y="92" font-size="11">citation shape dropped</text>
+          <text x="672" y="122" font-size="11">per span: inside maths the</text><text x="672" y="136" font-size="11">maths rule, elsewhere the</text><text x="672" y="150" font-size="11">prose rule</text>
+          <text x="672" y="190" font-size="11">bracketed numbers are</text><text x="672" y="204" font-size="11">citations, dropped (ING-6)</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#a2)">
+          <path d="M220 42 H258" stroke-width="2"/><path d="M220 96 H258"/><path d="M220 150 H258"/><path d="M220 204 H258"/>
+          <path d="M490 90 L528 54"/><path d="M490 123 H528"/><path d="M490 160 L528 194"/>
+          <path d="M630 50 H658"/><path d="M630 123 H658"/><path d="M630 196 H658"/>
+        </g>
+        <line x1="20" y1="248" x2="860" y2="248" stroke="var(--line)"/>
+        <g font-size="12" fill="currentColor">
+          <text x="20" y="274" font-weight="600">prose essay</text>
+          <text x="140" y="274" class="mono">"as shown in [12]."</text><text x="420" y="274" fill="var(--muted)">→</text><text x="450" y="274" class="mono">"as shown in."</text>
+          <text x="20" y="304" font-weight="600">maths text</text>
+          <text x="140" y="304" class="mono">"for x in [0, 1]"</text><text x="420" y="304" fill="var(--muted)">→</text><text x="450" y="304" class="mono">"for x in the interval from 0 to 1"</text>
+          <text x="20" y="330" font-size="11" fill="var(--muted)">Stored in documents.profile_json; shown as a LIB-1 badge; a user override of the class re-normalizes through hearnarro renormalize, no re-ingest.</text>
+        </g>
+      </svg>
+      <figcaption>The same bracket characters get different rules by class: four shares decide math, mixed or prose, and the class decides whether "[12]" is a citation to drop or "[0, 1]" is an interval to read. The spoken interval wording is illustrative; the reading convention fixes it in phase 3.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>A per-sentence guess cannot tell "[12]" from "[0, 1]" in a paper that uses both (D40). The class carries the document context the guess lacks.</p></div>
+      <div><b>Why a stage-6 pass</b><p>The shares are only known once every block is typed; running after the blocks are final keeps stages 1–5 unchanged and lets a class override re-normalize without re-ingesting.</p></div>
+    </div>
+  </section>
+
+  <section id="mathspeak">
+    <h2><span class="k">5</span>Mathspeak (MATH-1..4, D36, D37)</h2>
+    <p>A new step after stage 5 rebuilds each expression's structure from the glyphs stage 1 already keeps, speaks it in a standard reading convention, and writes the words into <code>normalized_text</code> with <code>char_map</code> entries. Inline maths inside a sentence (MATH-2) goes through the same step. The backend still receives only words.</p>
+    <figure>
+      <svg viewBox="0 0 880 370" role="img" aria-label="Glyphs with font and position flags become a structure tree, then spoken words, then a char_map back to the equation's source characters; an expression that cannot be structured takes the fallback cue path">
+        <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="30" width="190" height="196" rx="4"/>
+          <rect x="240" y="30" width="200" height="196" rx="4"/>
+          <rect x="470" y="30" width="190" height="196" rx="4" fill="var(--accent-soft)"/>
+          <rect x="690" y="30" width="170" height="196" rx="4"/>
+          <rect x="240" y="274" width="420" height="64" rx="4" stroke-dasharray="5 3"/>
+        </g>
+        <g font-size="11" fill="var(--muted)"><text x="20" y="20">1 glyphs (stage 1, D37)</text><text x="240" y="20">2 structure</text><text x="470" y="20">3 spoken words (MATH-1, 3)</text><text x="690" y="20">4 char_map (D36)</text></g>
+        <g font-size="11" fill="currentColor" class="mono">
+          <text x="32" y="54">∑   CMEX, large op</text>
+          <text x="32" y="74">n   above ∑</text>
+          <text x="32" y="94">i=1 below ∑</text>
+          <text x="32" y="114">x   CMMI</text>
+          <text x="32" y="134">i   baseline −, sub</text>
+          <text x="32" y="154">─   rule, stacked</text>
+          <text x="32" y="174">n   under the rule</text>
+          <text x="32" y="198" font-family="var(--font-body)" fill="var(--muted)">font names, superscript</text>
+          <text x="32" y="212" font-family="var(--font-body)" fill="var(--muted)">flag, baseline, bboxes</text>
+        </g>
+        <g font-size="11" fill="currentColor" text-anchor="middle">
+          <text x="340" y="56" class="mono" font-weight="600">fraction</text>
+          <text x="290" y="96" class="mono">sum</text><text x="395" y="96" class="mono">n</text>
+          <text x="262" y="136" class="mono">i=1</text><text x="302" y="136" class="mono">n</text><text x="344" y="136" class="mono">x</text>
+          <text x="344" y="176" class="mono">i</text>
+          <text x="262" y="150" font-size="9" fill="var(--muted)">lower</text><text x="302" y="150" font-size="9" fill="var(--muted)">upper</text><text x="369" y="166" font-size="9" fill="var(--muted)">sub</text>
+          <text x="340" y="212" fill="var(--muted)">stacked boxes → fraction</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1" fill="none">
+          <path d="M330 62 L292 84"/><path d="M350 62 L393 84"/>
+          <path d="M282 102 L264 124"/><path d="M290 102 L302 124"/><path d="M298 102 L340 124"/>
+          <path d="M344 142 V164"/>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="482" y="58">"the sum from</text><text x="482" y="76">i equals 1 to n</text><text x="482" y="94">of x sub i,</text><text x="482" y="112">all over n"</text>
+          <text x="482" y="146" font-size="11" fill="var(--muted)">a display "(3)" adds</text><text x="482" y="160" font-size="11" fill="var(--muted)">"equation 3" before it;</text><text x="482" y="174" font-size="11" fill="var(--muted)">"Eqs. 3–5" in prose →</text><text x="482" y="188" font-size="11" fill="var(--muted)">"equations 3 to 5"</text><text x="482" y="208" font-size="11" fill="var(--muted)">(MATH-4)</text>
+        </g>
+        <g font-size="11" fill="currentColor">
+          <rect x="702" y="50" width="146" height="22" fill="var(--hl-seg)" stroke="currentColor" stroke-width="0.8"/><text x="775" y="65" text-anchor="middle" class="mono">every spoken char</text>
+          <rect x="702" y="130" width="146" height="22" fill="var(--hl)" stroke="currentColor" stroke-width="0.8"/><text x="775" y="145" text-anchor="middle" class="mono">whole source range</text>
+          <text x="702" y="176" fill="var(--muted)">one equation maps to</text><text x="702" y="190" fill="var(--muted)">its spoken words; the</text><text x="702" y="204" fill="var(--muted)">highlight is the whole</text><text x="702" y="218" fill="var(--muted)">segment (MATH-5)</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#a3)">
+          <path d="M210 128 H238" stroke-width="2"/><path d="M440 128 H468" stroke-width="2"/><path d="M660 128 H688" stroke-width="2"/>
+          <path d="M775 72 V128"/>
+          <path d="M340 226 V272" stroke-dasharray="4 3"/>
+          <path d="M660 306 H775 V228" stroke-dasharray="4 3"/>
+        </g>
+        <g font-size="11" fill="var(--muted)"><text x="348" y="252">cannot be structured</text><text x="680" y="300">same char_map rule</text></g>
+        <g font-size="12" fill="currentColor">
+          <text x="252" y="298" font-weight="600">fallback (MATH-1, was the ING-7 cue)</text>
+          <text x="252" y="320" class="mono" font-size="11">"Equation 3: sum, n, i, equals, 1, x, i, n"</text>
+          <text x="252" y="356" font-size="11" fill="var(--muted)">"Equation N", then each symbol by name from the MATH-3 table, left to right; never silence.</text>
+        </g>
+      </svg>
+      <figcaption>An expression is spoken from its glyphs: font names and position flags give the structure, the structure gives the words, and <code>char_map</code> points all of those words back at the equation's own characters. When the structure cannot be recovered, the dashed path still speaks every symbol by name. The example glyph rows and wording are illustrative.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why at ingestion</b><p>Speaking maths inside the TTS backend would tie the reading convention to one model and have to be rebuilt for each new voice (D36, SYN-4, SYN-7). Writing words at ingestion keeps the backend unchanged.</p></div>
+      <div><b>Why glyphs first</b><p>PDFs carry no LaTeX source; stage 1 already keeps math fonts, sub- and superscript offsets and stacked boxes, so the first engine needs no new dependency or model (D37). Scanned pages use the fallback until MATH-6.</p></div>
+    </div>
+  </section>
+
+  <section id="code">
+    <h2><span class="k">6</span>Code listings (ING-10)</h2>
+    <p>A technical book's listing read aloud as text is noise. Ingestion gives code its own block type, the default speaks a short cue, and a toggle (after M5, with TERM-5) reads it line by line. Inline code inside a sentence is read as its words.</p>
+    <figure>
+      <svg viewBox="0 0 880 190" role="img" aria-label="A block with monospace runs, indentation and code punctuation is typed code and spoken as a cue with its line count; inline code in a sentence stays in the sentence">
+        <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="20" width="240" height="110" rx="4"/>
+          <rect x="310" y="40" width="220" height="70" rx="4" fill="var(--accent-soft)"/>
+          <rect x="580" y="20" width="280" height="50" rx="4"/>
+          <rect x="580" y="80" width="280" height="50" rx="4" stroke-dasharray="5 3"/>
+        </g>
+        <g font-size="11" fill="currentColor" class="mono">
+          <text x="32" y="42">def mean(xs):</text><text x="32" y="60">    total = sum(xs)</text><text x="32" y="78">    return total / len(xs)</text>
+        </g>
+        <g font-size="11" fill="var(--muted)"><text x="32" y="104">monospace font run, indentation,</text><text x="32" y="118">code punctuation ( ) : = /</text></g>
+        <g font-size="12" fill="currentColor" text-anchor="middle">
+          <text x="420" y="68" font-weight="600">block type code</text><text x="420" y="88" font-size="11" fill="var(--muted)">extends the ING-3 classes</text>
+        </g>
+        <g font-size="12" fill="currentColor">
+          <text x="592" y="42" font-weight="600">default: cue</text><text x="592" y="60" class="mono" font-size="11">"Code listing, 3 lines."</text>
+          <text x="592" y="102" font-weight="600">toggle (after M5): line by line</text><text x="592" y="120" font-size="11" fill="var(--muted)">identifiers through TERM-5</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#a4)">
+          <path d="M260 75 H308" stroke-width="2"/><path d="M530 66 L578 46" stroke-width="2"/><path d="M530 86 L578 104" stroke-dasharray="4 3"/>
+        </g>
+        <text x="20" y="168" font-size="12" fill="currentColor">Inline: <tspan class="mono">"call mean on the list"</tspan> <tspan fill="var(--muted)">keeps the span in the sentence and reads it as its words; no cue.</tspan></text>
+      </svg>
+      <figcaption>Layout and punctuation, not content, mark a block as code; a code block becomes one cue segment with its line count, and the full reading is an opt-in that waits for TERM-5's identifier rules.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>The technical-learner mode (Usage modes) works through books with listings; without a type, a listing is read as broken sentences of symbols.</p></div>
+      <div><b>Why a cue by default</b><p>A listing is studied by eye; the cue says it is there and how long it is, and the board (VIEW-1, M6) shows it.</p></div>
+    </div>
+  </section>
+
+  <section id="terms">
+    <h2><span class="k">7</span>Pronunciation chain (TERM-1, TERM-2)</h2>
+    <p>Every word the voice will say is looked up in a fixed order; the first source that knows the word decides. The user's own choices come first, the shipped academic lexicon comes before the backend's general one, and the fallback guess comes last.</p>
+    <figure>
+      <svg viewBox="0 0 880 230" role="img" aria-label="Six lookup sources in order; a miss passes the word right, a hit sends the pronunciation down to the voice">
+        <defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="40" width="125" height="64" rx="4"/><rect x="166" y="40" width="125" height="64" rx="4"/>
+          <rect x="312" y="40" width="125" height="64" rx="4"/><rect x="458" y="40" width="125" height="64" rx="4" fill="var(--accent-soft)"/>
+          <rect x="604" y="40" width="125" height="64" rx="4"/><rect x="750" y="40" width="125" height="64" rx="4" stroke-dasharray="5 3"/>
+          <rect x="20" y="160" width="855" height="34" rx="4"/>
+        </g>
+        <g font-size="11" fill="var(--muted)" text-anchor="middle"><text x="82" y="30">1</text><text x="228" y="30">2</text><text x="374" y="30">3</text><text x="520" y="30">4</text><text x="666" y="30">5</text><text x="812" y="30">6</text></g>
+        <g font-size="12" fill="currentColor" text-anchor="middle">
+          <text x="82" y="64" font-weight="600">per-document</text><text x="82" y="80" font-weight="600">override</text><text x="82" y="96" font-size="10" fill="var(--muted)">TERM-2</text>
+          <text x="228" y="64" font-weight="600">global user</text><text x="228" y="80" font-weight="600">lexicon</text><text x="228" y="96" font-size="10" fill="var(--muted)">TERM-2</text>
+          <text x="374" y="64" font-weight="600">document</text><text x="374" y="80" font-weight="600">definitions</text><text x="374" y="96" font-size="10" fill="var(--muted)">acronyms_json</text>
+          <text x="520" y="64" font-weight="600">academic</text><text x="520" y="80" font-weight="600">lexicon</text><text x="520" y="96" font-size="10" fill="var(--muted)">TERM-1, new</text>
+          <text x="666" y="64" font-weight="600">backend</text><text x="666" y="80" font-weight="600">lexicon</text><text x="666" y="96" font-size="10" fill="var(--muted)">TTSBackend</text>
+          <text x="812" y="64" font-weight="600">OOV</text><text x="812" y="80" font-weight="600">fallback</text><text x="812" y="96" font-size="10" fill="var(--muted)">heuristic guess</text>
+          <text x="447" y="182">pronunciation passed to the voice</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#a5)">
+          <path d="M145 72 H164"/><path d="M291 72 H310"/><path d="M437 72 H456"/><path d="M583 72 H602"/><path d="M729 72 H748"/>
+          <path d="M82 104 V158"/><path d="M228 104 V158"/><path d="M374 104 V158"/><path d="M520 104 V158" stroke-width="2.2"/><path d="M666 104 V158"/><path d="M812 104 V158"/>
+        </g>
+        <g font-size="10" fill="var(--muted)"><text x="146" y="66">miss</text><text x="292" y="66">miss</text><text x="438" y="66">miss</text><text x="88" y="134">hit</text><text x="526" y="134">hit: "Euler" → OY-ler</text></g>
+        <text x="20" y="220" font-size="11" fill="var(--muted)">Changing an override invalidates the cached audio of the segments that contain the word (SYN-6 keys stay by segment id).</text>
+      </svg>
+      <figcaption>The order is the decision: a word stops at the first source that knows it, so a user override beats every lexicon and the academic lexicon beats the backend's general one. The "Euler" path is an example; the lexicon contents are built in phase 4.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why this order</b><p>The user knows their field best (TERM-2); a term the document defines itself comes next, as acronyms already do; the academic lexicon (TERM-1) covers what a general voice lexicon gets wrong.</p></div>
+      <div><b>Why the cache is part of it</b><p>An override that does not reach already-synthesized audio would leave the old pronunciation playing; invalidation is in the requirement (TERM-2, SYN-6).</p></div>
+    </div>
+  </section>
+
+  <section id="playback">
+    <h2><span class="k">8</span>Playback additions (PLAY-10, PLAY-11, SYN-8, MATH-5)</h2>
+    <p>Playback stays per-segment HTTP fetch plus Web Audio buffers scheduled on one clock (D5), driven by the one reducer (D10). The three additions only change when a buffer starts and how long it lasts.</p>
+    <figure>
+      <svg viewBox="0 0 880 270" role="img" aria-label="Three rows on the same scheduled-buffer timeline: the plain schedule, the classroom schedule with pauses and a slower equation, and a repeat that re-schedules the equation from its start">
+        <defs><marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g font-size="12" fill="currentColor">
+          <text x="20" y="48" font-weight="600">today</text><text x="20" y="64" font-size="10" fill="var(--muted)">M4 schedule</text>
+          <text x="20" y="118" font-weight="600">classroom</text><text x="20" y="134" font-size="10" fill="var(--muted)">pauses, eq 0.8×</text>
+          <text x="20" y="188" font-weight="600">repeat</text><text x="20" y="204" font-size="10" fill="var(--muted)">key during eq</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1" font-size="11">
+          <rect x="150" y="36" width="140" height="34" fill="var(--surface)"/><rect x="290" y="36" width="140" height="34" fill="var(--accent-soft)"/><rect x="430" y="36" width="130" height="34" fill="var(--surface)"/><rect x="560" y="36" width="140" height="34" fill="var(--surface)"/>
+          <rect x="150" y="106" width="140" height="34" fill="var(--surface)"/><rect x="290" y="106" width="30" height="34" fill="none" stroke-dasharray="3 3"/><rect x="320" y="106" width="175" height="34" fill="var(--accent-soft)"/><rect x="495" y="106" width="30" height="34" fill="none" stroke-dasharray="3 3"/><rect x="525" y="106" width="130" height="34" fill="var(--surface)"/><rect x="655" y="106" width="140" height="34" fill="var(--surface)"/>
+          <rect x="150" y="176" width="140" height="34" fill="var(--surface)"/><rect x="290" y="176" width="90" height="34" fill="var(--accent-soft)"/><rect x="380" y="176" width="140" height="34" fill="var(--accent-soft)" stroke-width="2"/><rect x="520" y="176" width="130" height="34" fill="var(--surface)"/><rect x="650" y="176" width="140" height="34" fill="var(--surface)"/>
+        </g>
+        <g font-size="11" fill="currentColor" text-anchor="middle">
+          <text x="220" y="57">Theorem 2.1.</text><text x="360" y="57" class="mono">eq (3)</text><text x="495" y="57">sentence</text><text x="630" y="57">sentence</text>
+          <text x="220" y="127">Theorem 2.1.</text><text x="305" y="100" font-size="9" fill="var(--muted)">pause</text><text x="407" y="127" class="mono">eq (3) at 0.8×</text><text x="510" y="100" font-size="9" fill="var(--muted)">pause</text><text x="590" y="127">sentence</text><text x="725" y="127">sentence</text>
+          <text x="220" y="197">Theorem 2.1.</text><text x="335" y="197" class="mono">eq (3)…</text><text x="450" y="197" class="mono">eq (3) again</text><text x="585" y="197">sentence</text><text x="720" y="197">sentence</text>
+        </g>
+        <line x1="380" y1="168" x2="380" y2="218" stroke="var(--accent)" stroke-width="2"/>
+        <text x="384" y="166" font-size="10" fill="var(--accent)">repeat pressed: later sources stopped, eq re-scheduled</text>
+        <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#a6)"><path d="M150 240 H860"/></g>
+        <g font-size="10" fill="var(--muted)"><text x="150" y="256" class="mono">AudioContext.currentTime →</text><text x="560" y="256">highlight during eq: whole segment (MATH-5)</text></g>
+      </svg>
+      <figcaption>Pauses are gaps between start times, the slower equation is a longer buffer, and repeat stops the later sources and schedules the equation again from its start; all three live on the existing scheduled-buffer timeline, with no MSE and no audio tags (D5). Lengths are illustrative; pause lengths are set in phase 5.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why it is needed</b><p>A spoken formula is dense; the student needs to hear it again or slower without losing their place in the sentence stream (PLAY-10, PLAY-11), and a pause after "Theorem 2.1." marks the statement (SYN-8, MATH-4).</p></div>
+      <div><b>Why on the same timeline</b><p>Highlighting, skip and resume already depend on one scheduled clock and one reducer (D5, D10); a second playback path would split them.</p></div>
+    </div>
+  </section>
+
+  <section id="decisions">
+    <h2><span class="k">9</span>Decisions</h2>
+    <p>All five were confirmed on 2026-10-17 (D36–D39 by the user; D40 on the user's direction, thresholds proposed by the supervisor and open to tuning on the fixtures). D38 and D39 belong to M6 and are listed so the M5 data shapes leave room for them.</p>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>ID</th><th>Decision</th><th>Status</th></tr>
+      <tr><td>D36</td><td>Mathematics is spoken at ingestion: a mathspeak step after stage 5 writes <code>normalized_text</code> and <code>char_map</code>; the ING-7 cue is its fallback; the backend is unchanged.</td><td>confirmed 2026-10-17</td></tr>
+      <tr><td>D37</td><td>Structure comes from the stage-1 glyphs first (math fonts, superscript flag, baselines, stacked boxes, CMEX operators); an image-to-LaTeX model only later, behind a flag, if licence-clean.</td><td>confirmed 2026-10-17</td></tr>
+      <tr><td>D38</td><td>The board (M6) is a server-rendered page image plus an overlay of word boxes stored at ingestion; a second renderer of the same player state.</td><td>confirmed 2026-10-17</td></tr>
+      <tr><td>D39</td><td>Annotations (M6) live in one table, anchored by segment id plus character offsets; local only.</td><td>confirmed 2026-10-17</td></tr>
+      <tr><td>D40</td><td>A stage-6 document profile with class prose, mixed or math gates the speech rules; stored in <code>documents.profile_json</code>; passed as a parameter.</td><td>confirmed 2026-10-17</td></tr>
+    </table></div>
+    <h3>Licence survey outcome (D37)</h3>
+    <div class="note"><ul>
+      <li>M5 builds its own rule engine over the glyphs: nothing to license, CPU only.</li>
+      <li>Optional later: MathML from the glyph structure, spoken by MathCAT (MIT) or Speech Rule Engine (Apache-2.0, needs Node).</li>
+      <li>Scanned pages later (MATH-6): Pix2Text MFR weights (MIT) run without the pix2text package, or UniMERNet once its weight licence is confirmed.</li>
+      <li>Excluded: Nougat weights (CC-BY-NC), pix2tex weights (reported CC BY-NC-SA, unverified), the pix2text package (AGPL-3.0 through doclayout-yolo).</li>
+    </ul></div>
+  </section>
+
+  <section id="links">
+    <h2><span class="k">10</span>Links and status</h2>
+    <p>As of 2026-10-17: phase 0 Scope is done (PRD and Technical Design carry M5, D36–D40 confirmed). Phase 1 Fixtures and red gate is next; phases 2–6 are planned.</p>
+    <div class="note"><ul>
+      <li>Previous milestone: <a href="m4-library-map.html">HearNarro M4 Library Map</a> (repo copy).</li>
+      <li>Eval layer: <a href="evals-primer.html">evals primer</a> (EVAL-1..9; EVAL-10 joins in phase 1).</li>
+      <li>Code map: <a href="../CODE_MAP_M5.md">docs/CODE_MAP_M5.md</a> (planned, written in the phase that lands each module).</li>
+      <li>Sources: <code>docs/PRD.md</code> (Usage modes, MATH, TERM, ING-10, ING-11, PLAY-10, PLAY-11, EVAL-10, Milestones item 5); <code>docs/TECHNICAL_DESIGN.md</code> (M5–M6 decisions); <code>_agent/research/m5-math-speech-options.md</code>.</li>
+    </ul></div>
+  </section>
+</main>
