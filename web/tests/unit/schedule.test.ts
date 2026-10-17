@@ -5,10 +5,13 @@ import type { WordTimestamp } from '../../src/api/types'
 import {
   chainStart,
   findActiveWord,
+  isScrollKey,
   locate,
   mapTimestampsToTokens,
   nextPlayable,
   onFetchFailure,
+  SCROLL_COOLDOWN_MS,
+  shouldAutoScroll,
   tokenize,
   type MappedTimestamp,
   type ScheduleEntryView,
@@ -215,5 +218,43 @@ describe('PLAY-5: empty clips and skipped segments', () => {
     expect(onFetchFailure(222, 220)).toBe('skip')
     expect(onFetchFailure(222, null)).toBe('skip')
     expect(onFetchFailure(220, 220)).toBe('error')
+  })
+})
+
+describe('PLAY-3 shouldAutoScroll: navigation always scrolls, the advance respects the cooldown', () => {
+  it('navigate scrolls even right after reading-column input', () => {
+    expect(shouldAutoScroll('navigate', 1000, 1000)).toBe(true)
+    expect(shouldAutoScroll('navigate', 1000, 1001)).toBe(true)
+    expect(shouldAutoScroll('navigate', null, 0)).toBe(true)
+  })
+  it('advance scrolls when there was no input', () => {
+    expect(shouldAutoScroll('advance', null, 0)).toBe(true)
+  })
+  it('advance is suppressed within the cooldown, inclusive of its edge', () => {
+    expect(SCROLL_COOLDOWN_MS).toBe(3000)
+    expect(shouldAutoScroll('advance', 1000, 1000)).toBe(false)
+    expect(shouldAutoScroll('advance', 1000, 4000)).toBe(false)
+    expect(shouldAutoScroll('advance', 1000, 4001)).toBe(true)
+  })
+  it('honours a custom cooldown', () => {
+    expect(shouldAutoScroll('advance', 0, 500, 400)).toBe(true)
+    expect(shouldAutoScroll('advance', 0, 300, 400)).toBe(false)
+  })
+})
+
+describe('PLAY-3 isScrollKey: only document-scrolling keys outside controls arm the cooldown', () => {
+  it('scroll keys on the page count', () => {
+    for (const k of ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '])
+      expect(isScrollKey(k, 'BODY')).toBe(true)
+    expect(isScrollKey('PageDown', null)).toBe(true)
+  })
+  it('keys on buttons, links and form controls do not', () => {
+    for (const t of ['BUTTON', 'button', 'INPUT', 'SELECT', 'TEXTAREA', 'A'])
+      expect(isScrollKey(' ', t)).toBe(false)
+    expect(isScrollKey('ArrowDown', 'INPUT')).toBe(false)
+  })
+  it('other keys do not', () => {
+    expect(isScrollKey('Enter', 'BODY')).toBe(false)
+    expect(isScrollKey('Tab', 'BODY')).toBe(false)
   })
 })

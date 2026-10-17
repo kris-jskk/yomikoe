@@ -10,11 +10,14 @@ import { initialState, reduce, type PlayerEvent, type PlayerState } from './mach
 import {
   chainStart,
   findActiveWord,
+  isScrollKey,
   locate,
   nextPlayable,
   onFetchFailure,
   mapTimestampsToTokens,
+  shouldAutoScroll,
   type MappedTimestamp,
+  type ScrollReason,
   type ScheduleEntryView,
   type Token,
 } from './schedule'
@@ -25,8 +28,6 @@ export const PREFETCH_DEPTH = 2
 const START_LEAD_SEC = 0.05
 /** POSITION is dispatched at most this often (4 Hz). */
 const POSITION_MS = 250
-/** Auto-scroll is suppressed this long after a wheel/touchmove/keydown. */
-const SCROLL_COOLDOWN_MS = 3000
 /** Entries kept for `window.__hearnarro.entries` per generation. */
 const LOG_CAP = 500
 
@@ -66,6 +67,8 @@ export interface Player {
   dispatch: (e: PlayerEvent) => void
   /** Reader registers each segment's element and its tokens (from `tokenize(text)`) on mount. */
   registerSegmentEl: (id: number, el: HTMLElement | null, tokens?: Token[]) => void
+  /** Reader registers its reading column: wheel/touchmove inside it arm the auto-scroll cooldown. */
+  registerReaderEl: (el: HTMLElement | null) => void
   /** Play from the current position, or resume (creates the AudioContext inside the gesture). */
   play: () => void
   pause: () => void
@@ -113,7 +116,12 @@ export class PlayerEngine {
     key: '',
   }
   lastPos = 0
-  lastInput = -Infinity
+  /** performance.now() of the last scroll input in the reading column (null: none yet). */
+  lastInput: number | null = null
+  /** Set by an explicit navigation; the next render scrolls to `state.current` with 'navigate'. */
+  navPending = false
+  private readerEl: HTMLElement | null = null
+  private readonly onReaderInput = () => this.noteInput()
   readonly hooks: HearnarroHooks
   private readonly dispatch: (e: PlayerEvent) => void
   private readonly onClip: (s: ClipStats) => void
@@ -141,6 +149,32 @@ export class PlayerEngine {
 
   noteInput() {
     this.lastInput = performance.now()
+  }
+
+  /** An explicit navigation was requested: the next render scrolls to its target. */
+  markNavigate() {
+    this.navPending = true
+  }
+
+  /** Consume the pending navigation flag. */
+  takeNavigate(): boolean {
+    const p = this.navPending
+    this.navPending = false
+    return p
+  }
+
+  /** Move the wheel/touchmove listeners to the reading column `el` (null detaches). */
+  attachReader(el: HTMLElement | null) {
+    if (this.readerEl === el) return
+    if (this.readerEl) {
+      this.readerEl.removeEventListener('wheel', this.onReaderInput)
+      this.readerEl.removeEventListener('touchmove', this.onReaderInput)
+    }
+    this.readerEl = el
+    if (el) {
+      el.addEventListener('wheel', this.onReaderInput, { passive: true })
+      el.addEventListener('touchmove', this.onReaderInput, { passive: true })
+    }
   }
 
   ensureCtx(): AudioContext {
@@ -385,7 +419,7 @@ export class PlayerEngine {
         }
         this.ensureWindow(loc.segmentId)
         this.scheduleReady()
-        this.autoScroll(loc.segmentId)
+        this.scrollTo(loc.segmentId, 'advance')
       }
       const t = performance.now()
       if (s.status === 'playing' && t - this.lastPos >= POSITION_MS) {
@@ -415,9 +449,10 @@ export class PlayerEngine {
     }
   }
 
-  private autoScroll(segmentId: number) {
+  /** Scroll `segmentId` to the centre: always for 'navigate', outside the cooldown for 'advance'. */
+  scrollTo(segmentId: number, reason: ScrollReason) {
     const el = this.segEls.get(segmentId)
-    if (!el || performance.now() - this.lastInput <= SCROLL_COOLDOWN_MS) return
+    if (!el || !shouldAutoScroll(reason, this.lastInput, performance.now())) return
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
     el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' })
   }
@@ -440,20 +475,26 @@ export function usePlayer(): Player {
 
   useLayoutEffect(() => {
     engine.sync(state)
+    // an explicit navigation scrolls to its target at once, before any audio arrives (PLAY-3)
+    if (state.current !== null && engine.takeNavigate()) {
+      engine.scrollTo(state.current.segmentId, 'navigate')
+    }
   }, [engine, state])
 
-  // instrumentation hooks (always set; the gate reads them) and user-input tracking for auto-scroll
+  // instrumentation hooks (always set; the gate reads them). Wheel/touchmove are tracked on the reading
+  // column (attachReader); keydown stays on window because keyboard page scrolling has no element
+  // target, but only scroll keys outside form controls count, so Toc/button keys never arm it.
   useEffect(() => {
     const w = hookWindow()
     w.__hearnarro = engine.hooks
-    const onInput = () => engine.noteInput()
-    window.addEventListener('wheel', onInput, { passive: true })
-    window.addEventListener('touchmove', onInput, { passive: true })
-    window.addEventListener('keydown', onInput)
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target instanceof HTMLElement ? e.target.tagName : null
+      if (isScrollKey(e.key, t)) engine.noteInput()
+    }
+    window.addEventListener('keydown', onKey)
     return () => {
-      window.removeEventListener('wheel', onInput)
-      window.removeEventListener('touchmove', onInput)
-      window.removeEventListener('keydown', onInput)
+      window.removeEventListener('keydown', onKey)
+      engine.attachReader(null)
       engine.dispose()
       if (w.__hearnarro === engine.hooks) delete w.__hearnarro
     }
@@ -489,12 +530,27 @@ export function usePlayer(): Player {
     [engine],
   )
 
+  const registerReaderEl = useCallback(
+    (el: HTMLElement | null) => engine.attachReader(el),
+    [engine],
+  )
+
+  // components dispatch through this: a sentence or section skip is an explicit navigation
+  const userDispatch = useCallback(
+    (e: PlayerEvent) => {
+      if (e.type === 'SKIP' || e.type === 'SKIP_SECTION') engine.markNavigate()
+      dispatch(e)
+    },
+    [engine],
+  )
+
   const play = useCallback(() => {
     const s = engine.state
     const ctx = engine.ensureCtx() // inside the click: autoplay policy
     const at = performance.now()
     if (s.status === 'paused') {
       if (engine.ended) {
+        engine.markNavigate()
         dispatch({ type: 'PLAY', at, segmentId: s.orderedIds[0], offsetMs: 0 })
       } else if (settingsKey(s.voice, s.speed) !== engine.builtKey) {
         dispatch({ type: 'PLAY', at }) // voice/speed changed while paused: applies on PLAY (§5)
@@ -503,6 +559,7 @@ export function usePlayer(): Player {
         dispatch({ type: 'RESUME' })
       }
     } else if (s.status === 'idle' || s.status === 'error') {
+      engine.markNavigate() // Play from the saved position scrolls to it
       dispatch({ type: 'PLAY', at })
     }
   }, [engine])
@@ -518,6 +575,7 @@ export function usePlayer(): Player {
       const offsetMs = tokenIndex === undefined ? 0 : engine.offsetFor(segmentId, tokenIndex)
       const st = engine.state.status
       engine.ensureCtx()
+      engine.markNavigate()
       if (st === 'idle' || st === 'error') {
         dispatch({ type: 'PLAY', at: performance.now(), segmentId, offsetMs })
       } else {
@@ -527,5 +585,14 @@ export function usePlayer(): Player {
     [engine],
   )
 
-  return { state, dispatch, registerSegmentEl, play, pause, seekTo, lastClip }
+  return {
+    state,
+    dispatch: userDispatch,
+    registerSegmentEl,
+    registerReaderEl,
+    play,
+    pause,
+    seekTo,
+    lastClip,
+  }
 }

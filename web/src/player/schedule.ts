@@ -130,3 +130,34 @@ export function nextPlayable(
 export function onFetchFailure(failedId: number, targetId: number | null): 'error' | 'skip' {
   return failedId === targetId ? 'error' : 'skip'
 }
+
+/** Automatic advance scrolling is suppressed this long after user scroll input in the reading column. */
+export const SCROLL_COOLDOWN_MS = 3000
+
+/** Why the reader scrolls: an explicit user navigation, or the automatic advance during playback. */
+export type ScrollReason = 'navigate' | 'advance'
+
+/**
+ * PLAY-3: an explicit navigation (Toc, word or sentence click, skip buttons, Play from the saved
+ * position) always scrolls to its target; the automatic advance scrolls only when no scroll input was
+ * seen in the reading column within the last `cooldownMs` (`lastInputAt` null: never).
+ */
+export function shouldAutoScroll(
+  reason: ScrollReason,
+  lastInputAt: number | null,
+  now: number,
+  cooldownMs: number = SCROLL_COOLDOWN_MS,
+): boolean {
+  if (reason === 'navigate') return true
+  return lastInputAt === null || now - lastInputAt > cooldownMs
+}
+
+/** Keys that scroll the page when focus is not in a form control (arm the cooldown like a wheel). */
+const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '])
+
+/** True for a keydown that scrolls the document rather than operating a control. */
+export function isScrollKey(key: string, targetTag: string | null): boolean {
+  if (!SCROLL_KEYS.has(key)) return false
+  const tag = (targetTag ?? '').toUpperCase()
+  return !['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'A'].includes(tag)
+}

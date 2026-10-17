@@ -30,7 +30,7 @@ function orderedHas(segments: Segment[], pos: { segment_id: number }): boolean {
 
 function DocView({ documentId }: { documentId: number }) {
   const player = usePlayer()
-  const { dispatch, registerSegmentEl, seekTo } = player
+  const { dispatch, registerSegmentEl, registerReaderEl, seekTo } = player
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -87,6 +87,7 @@ function DocView({ documentId }: { documentId: number }) {
           segments={loaded.segments}
           sections={sections}
           registerSegmentEl={registerSegmentEl}
+          registerReaderEl={registerReaderEl}
           onSeek={onSeek}
         />
       </div>

@@ -10,6 +10,8 @@ export interface ReaderProps {
   segments: Segment[]
   sections: Section[]
   registerSegmentEl: (id: number, el: HTMLElement | null, tokens?: Token[]) => void
+  /** The reading column element; the player listens for wheel/touchmove on it (auto-scroll cooldown). */
+  registerReaderEl?: (el: HTMLElement | null) => void
   onSeek: (segmentId: number, tokenIndex?: number) => void
 }
 
@@ -59,7 +61,13 @@ function SegmentView({
   )
 }
 
-function ReaderImpl({ segments, sections, registerSegmentEl, onSeek }: ReaderProps) {
+function ReaderImpl({
+  segments,
+  sections,
+  registerSegmentEl,
+  registerReaderEl,
+  onSeek,
+}: ReaderProps) {
   const byFirst = useMemo(() => new Map(sections.map((s) => [s.first_segment_id, s])), [sections])
   const onClick = (e: MouseEvent<HTMLElement>) => {
     const target = e.target as HTMLElement
@@ -71,7 +79,7 @@ function ReaderImpl({ segments, sections, registerSegmentEl, onSeek }: ReaderPro
     else onSeek(id)
   }
   return (
-    <article className="reader" onClick={onClick}>
+    <article className="reader" ref={registerReaderEl} onClick={onClick}>
       {segments.map((seg) => (
         <SegmentView
           key={seg.id}
