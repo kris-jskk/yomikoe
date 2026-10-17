@@ -58,6 +58,19 @@ _RANGE = (
     r"(?P<range>(?<![\w.,:/-])\d{1,4}(?P<rsep>[–—-]| [–—-] )"
     r"(?=\d{1,4}(?![.,:]?\d| ?[–—-] ?\d)))"
 )
+# "=" between terms is spoken "equals" ("Happiness = Health + Wealth", "2+2=4"), as misaki
+# already speaks "+" as "plus"; misaki drops a lone "=" and the whole token "2+2=4". Spaced:
+# one or more spaces or tabs each side and a non-space on both sides on the same line.
+# Unspaced: only between a number or single letter and a number or single letter ("x=5"),
+# so URL fragments ("v=2htl-O1oDcI", "campaign=platform") stay as written. "==", "=>",
+# "<=", ">=", "!=" are not operators here. "≠" is spoken "does not equal" the same way.
+_OPERAND = r"(?:\d+(?:\.\d+)?|[A-Za-z])"
+_EQUALS = (
+    r"(?P<eqspaced>(?<=[^\s=<>!])[ \t]+(?P<eqs_op>[=≠])[ \t]+(?=[^\s=>]))"
+    rf"|(?P<eqtight>(?<![\w.=<>!]){_OPERAND}(?P<eqt_op>[=≠])"
+    rf"(?={_OPERAND}(?![\w=]|[.,]\d)))"
+)
+_EQUALS_WORDS = {"=": " equals ", "≠": " does not equal "}
 
 
 _PATTERN = re.compile(
@@ -70,6 +83,7 @@ _PATTERN = re.compile(
     rf"|(?P<domain>(?<![\w@./:-])(?:{_LABEL}\.)+(?:{_TLDS})(?![\w-]|\.\w)(?:/\S*)?)"
     rf"|(?P<roman>(?i:\b(?P<kw>{_STRUCTURAL})[ \t]+)(?P<num>{_ROMAN})\b(?![-'’]?\w))"
     rf"|{_RANGE}"
+    rf"|{_EQUALS}"
 )
 _URL_PREFIX = re.compile(r"(?:https?://\s?(?:www\.)?|www\.\s?)")
 _URL_TRAILING = ".,;:!?)]}'\"”’"
@@ -134,6 +148,13 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
     10", "5–10%" -> "5 to 10 percent"). Excluded: a first number after a letter, digit or
     ". , : / -" ("A-1", "COVID-19", "1.5-2", "9:00-10:00") and a second number followed by a
     digit, ". , :" plus digit, or another dash and number ("978-0-12-...", "2026-10-17").
+
+    An equals sign between terms becomes " equals " ("≠" becomes " does not equal "): with
+    spaces or tabs on both sides and a non-space on both sides on the same line, the spaces
+    collapse into the expansion, which maps onto the spaces and the sign; with no spaces,
+    only between a number or a single letter on each side ("x=5", "2+2=4"), the expansion
+    maps onto the sign. "==", "=>", "<=", ">=", "!=", a sign at the start or end of a line,
+    one-sided spacing ("x =5") and unspaced words ("key=value", "v=2htl") are untouched.
     """
     out: list[str] = []
     cmap: list[int] = []
@@ -228,6 +249,14 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
                 out.append(text[i])
                 cmap.append(i)
             emit(" to ", sep_start, end - sep_start)  # the second number is matched on its own
+        elif kind == "eqspaced":
+            emit(_EQUALS_WORDS[m.group("eqs_op")], start, end - start)
+        elif kind == "eqtight":
+            op = m.start("eqt_op")
+            for i in range(start, op):
+                out.append(text[i])
+                cmap.append(i)
+            emit(_EQUALS_WORDS[text[op]], op, 1)
         for i in range(suffix_start, end):
             out.append(text[i])
             cmap.append(i)

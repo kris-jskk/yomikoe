@@ -342,3 +342,72 @@ def test_ing6_numeric_range_char_map_round_trip() -> None:
     o = out.index(" to ")
     assert all(spaced.index(" - ") <= i < spaced.index(" - ") + 3 for i in cmap[o : o + 4])
     assert cmap[o + 4 :] == list(range(spaced.index("5"), len(spaced)))
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "Happiness = Health + Wealth + Good Relationships",
+            "Happiness equals Health + Wealth + Good Relationships",
+        ),
+        ("x = 5", "x equals 5"),
+        ("x=5", "x equals 5"),
+        ("y=2.5 here", "y equals 2.5 here"),
+        ("Very few people disagree 2+2=4, right?", "Very few people disagree 2+2 equals 4, right?"),
+        ("a  =  b", "a equals b"),
+        ("Sleep = No alarms + 8–9 hours", "Sleep equals No alarms + 8 to 9 hours"),
+        (
+            "Return on Investment = “Buy-and-Hold” + Valuation",
+            "Return on Investment equals “Buy-and-Hold” + Valuation",
+        ),
+        ("a ≠ b", "a does not equal b"),
+        ("x≠5.", "x does not equal 5."),
+    ],
+)
+def test_ing6_equals_sign_read_as_equals(text: str, expected: str) -> None:
+    out, cmap = normalize(text)
+    assert out == expected
+    assert len(cmap) == len(out)
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "if a == b then",
+        "x => y",
+        "a <= b",
+        "a >= b",
+        "a != b",
+        "= starts the line",
+        "the line ends with =",
+        "first line\n= second line",
+        "first line =\nsecond line",
+        "=== Header ===",
+        "x =5 and x= 5",
+        "v=2htl-O1oDcI.",
+        "utm_ campaign=platform-newsletter&utm_medium=email.",
+        "key=value",
+        "x=5x",
+    ],
+)
+def test_ing6_equals_sign_negative_cases(text: str) -> None:
+    assert normalize(text) == (text, list(range(len(text))))
+
+
+def test_ing6_equals_sign_char_map_round_trip() -> None:
+    text = "Health = Exercise + Diet"
+    out, cmap = normalize(text)
+    assert out == "Health equals Exercise + Diet"
+    o = out.index(" equals ")
+    span = range(text.index(" = "), text.index(" = ") + 3)
+    assert all(i in span for i in cmap[o : o + 8])  # " equals " maps onto " = "
+    assert cmap[:o] == list(range(o))
+    assert cmap[o + 8 :] == list(range(text.index("Exercise"), len(text)))
+    tight = "so 2+2=4, right"
+    out, cmap = normalize(tight)
+    o = out.index(" equals ")
+    assert cmap[o : o + 8] == [tight.index("=")] * 8
+    assert cmap[:o] == list(range(o))
+    assert cmap[o + 8 :] == list(range(tight.index("=") + 1, len(tight)))
