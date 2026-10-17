@@ -58,7 +58,7 @@ def test_math1_blackboard_bold_is_a_letter(sym: str, letter: str) -> None:
         ("if x>0 then", "if x greater than 0 then"),
         ("times t1<t2", "times t1 less than t2"),
         ("a < b", "a less than b"),
-        ("supp u(·, t)", "supp u(dot, t)"),
+        ("supp u(·, t)", "supp u of (dot, t)"),
         ("a·b", "a dot b"),
         ("a ⋅ b", "a dot b"),
         ("x − y", "x minus y"),
@@ -76,6 +76,56 @@ def test_math1_context_and_spacing(text: str, expected: str) -> None:
     out, cmap = normalize(text)
     assert out == expected
     _check_map(text, out, cmap)
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("f = O(1)", "f equals O of (1)"),  # a line-leading "=" is not read (pass one)
+        ("E(X, η)", "E of (X, eta)"),
+        ("u(x, t)", "u of (x, t)"),
+        ("O(X−1)", "O of (X minus 1)"),
+        (
+            "with E(X, η) = O(1) as X → ∞.",
+            "with E of (X, eta) equals O of (1) as X goes to infinity.",
+        ),
+        ("f(η(x))", "f of (eta of (x))"),
+        ("[g(x)]", "[g of (x)]"),
+        ("cost O(n log n)", "cost O of (n log n)"),
+    ],
+)
+def test_math1_function_application_of(text: str, expected: str) -> None:
+    """MATH-1 fallback / MATH-2 (ClearSpeak "f of x"): a lone letter glued to "(" is applied."""
+    out, cmap = normalize(text)
+    assert out == expected
+    _check_map(text, out, cmap)
+    assert "  " not in out
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "the word(s) here",
+        "see Table(s) 2",
+        "log(x)",
+        "item 2(a)",
+        "a (b)",
+        "E (1)",
+        "uθ(x)",
+        "2x(y)",
+    ],
+)
+def test_math1_function_application_negatives(text: str) -> None:
+    out, cmap = normalize(text)
+    assert " of " not in out
+    _check_map(text, out, cmap)
+
+
+def test_math1_function_application_maps_of_to_letter() -> None:
+    text = "E(X)"
+    out, cmap = normalize(text)
+    assert out == "E of (X)"
+    assert cmap[: len("E of ")] == [0] * len("E of ")
 
 
 def test_math1_every_greek_letter_named() -> None:
@@ -132,8 +182,8 @@ CASES = [
         244,
         "such that supp u(·, t) ∪ supp p(·, t) ⊂K for every 0 ≤t < 1,",
         (
-            "such that supp u(dot, t) union supp p(dot, t) subset of K for every 0 less than or "
-            "equal to t less than 1,"
+            "such that supp u of (dot, t) union supp p of (dot, t) subset of K for every 0 less "
+            "than or equal to t less than 1,"
         ),
     ),
     (
@@ -170,9 +220,9 @@ CASES = [
             "c∞X−1/2−h(︁1 + O(X−1))︁ (X →∞), c∞ > 0,"
         ),
         (
-            "Outside a fixed radial interval in X, U equals V0 equals 0, while E(X, eta) equals "
-            "c infinity X minus 1/2 minus h(1 + O(X minus 1)) (X goes to infinity), c infinity "
-            "greater than 0,"
+            "Outside a fixed radial interval in X, U equals V0 equals 0, while E of (X, eta) "
+            "equals c infinity X minus 1/2 minus h(1 + O of (X minus 1)) (X goes to infinity), c "
+            "infinity greater than 0,"
         ),
     ),
     (

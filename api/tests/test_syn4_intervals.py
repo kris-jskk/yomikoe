@@ -56,3 +56,13 @@ def test_math1_fallback_case1_every_token_voiced() -> None:
     assert silent == []
     for word in ("nu", "greater", "infinity", "times", "subset"):
         assert word in [t.text for t in tokens]
+
+
+@pytest.mark.model
+def test_math1_function_application_argument_voiced() -> None:
+    """MATH-1 fallback / MATH-2: "O of (1)" keeps the argument; misaki no longer glues "O(1"."""
+    tokens = _tokens("equals O of (1) as X goes to infinity")
+    by_text = {t.text: t.phonemes for t in tokens}
+    assert by_text.get("O") and by_text.get("of")
+    assert by_text.get("1") == "wˈʌn"
+    assert [t.text for t in tokens if not t.phonemes and t.text.strip("()")] == []

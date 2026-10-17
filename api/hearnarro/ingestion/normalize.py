@@ -208,6 +208,22 @@ _GREEK_WORD_MIN = 3
 # Something shaped like a markup tag or an angle-bracketed address ("<div>", "<h1>", "</p>",
 # "<name at host dot com>" after pass one): its "<" and ">" are never relations.
 _TAG = re.compile(r"</?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>\n]*)?>")
+# Function application (MATH-2 ClearSpeak "f of x"): a lone letter glued to "(" ("O(1)", "u(x, t)").
+_APPLY_BEFORE = "([{"
+_APPLY = re.compile(r"(?:^|[\s(\[{])[A-Za-z]\(")
+_OF = " of "
+
+
+def _applied(s: str, i: int) -> bool:
+    """Whether the letter (or Greek letter) at ``s[i]`` stands alone and is glued to a "(".
+
+    It must start the text or follow whitespace or an opening bracket (so the last letter of a
+    word, "word(s)", "log(x)", or of a glued term, "2x(y)", "uθ(x)", is never applied), and the
+    very next char must be "(" ("E (1)" is left as written).
+    """
+    if i + 1 >= len(s) or s[i + 1] != "(":
+        return False
+    return i == 0 or s[i - 1].isspace() or s[i - 1] in _APPLY_BEFORE
 
 
 def _is_greek(ch: str) -> bool:
@@ -269,8 +285,15 @@ def _speak_symbols(s: str, cmap: list[int]) -> tuple[str, list[int]]:
     inside a tag-shaped "<...>", never next to "-", "=", "<", ">"; a "−" with an operand on each
     side, spaces allowed, so "H = −∑ p" reads "H equals minus sum p"); a Greek
         letter inside a run of three or more Greek characters (a Greek word) is left as written.
+
+        Function application (MATH-2 ClearSpeak "f of x"): a single Latin letter, or a Greek letter
+        this pass names, that starts the text or follows whitespace or an opening bracket and is
+        immediately followed by "(" gets " of " after it, mapped onto the letter; the parentheses
+        stay and are silent ("O(1)" -> "O of (1)", "E(X, η)" -> "E of (X, eta)"). Without this
+        misaki reads "O(1" as one word and keeps only the letter. A longer word ("log(x)",
+        "word(s)"), a digit ("2(a)"), a letter ending a term ("uθ(x)") and "E (1)" are untouched.
     """
-    if not any(
+    if not _APPLY.search(s) and not any(
         c in SYMBOL_NAMES or c in CONTEXT_NAMES or c in LETTER_NAMES or c in VARIATION_SELECTORS
         for c in s
     ):
@@ -296,6 +319,9 @@ def _speak_symbols(s: str, cmap: list[int]) -> tuple[str, list[int]]:
         if name is None:
             out.append(ch)
             omap.append(cmap[i])
+            if ch.isascii() and ch.isalpha() and _applied(s, i):
+                out.extend(_OF)
+                omap.extend([cmap[i]] * len(_OF))
             continue
         j = i + 1
         while j < n and s[j] in VARIATION_SELECTORS:
@@ -303,7 +329,10 @@ def _speak_symbols(s: str, cmap: list[int]) -> tuple[str, list[int]]:
         nxt = s[j] if j < n else ""
         left = bool(out) and (out[-1].isalnum() or out[-1] in _PAD_LEFT_AFTER)
         right = bool(nxt) and (nxt.isalnum() or nxt in _PAD_RIGHT_BEFORE)
-        words = (" " if left else "") + name + (" " if right else "")
+        if ch in GREEK and _applied(s, i):
+            words = (" " if left else "") + name + _OF
+        else:
+            words = (" " if left else "") + name + (" " if right else "")
         out.extend(words)
         omap.extend([cmap[i]] * len(words))
     return "".join(out), omap
