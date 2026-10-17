@@ -99,6 +99,12 @@ def _first_heading(result: IngestResult) -> str | None:
     return next((b.text for b in result.blocks if b.type == "heading" and b.text.strip()), None)
 
 
+def _math_json(seg: object) -> str | None:
+    """``segments.math_json`` for one segment: the entries ``apply_mathspeak`` set, or NULL."""
+    entries = getattr(seg, "math_json", None)
+    return json.dumps(entries, sort_keys=True) if entries else None
+
+
 def _write_result(
     conn: sqlite3.Connection,
     document_id: int,
@@ -143,8 +149,8 @@ def _write_result(
                 section_id = cur.lastrowid
             cur = conn.execute(
                 'INSERT INTO segments (document_id, block_id, section_id, "order", text, '
-                "normalized_text, char_start, char_end, char_map) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "normalized_text, char_start, char_end, char_map, math_json) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     document_id,
                     block_ids[seg.block_id],
@@ -155,6 +161,8 @@ def _write_result(
                     seg.char_start,
                     seg.char_end,
                     pack_char_map(seg.char_map),
+                    # MATH-1..4, D36: the spans mathspeak spoke, so renormalize needs no PDF.
+                    _math_json(seg),
                 ),
             )
             if new_section:

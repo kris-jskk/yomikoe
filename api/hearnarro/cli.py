@@ -54,6 +54,15 @@ def _serve(data_dir: str | None, host: str, port: int) -> int:
     return 0
 
 
+def _needs_mathspeak(text: str) -> bool:
+    """True when ``apply_mathspeak`` rewrites a segment without maths spans (MATH-3 units,
+    MATH-4 references), so renormalize takes the same path as ingestion."""
+    from hearnarro.ingestion.mathspeak.references import rewrite_references
+    from hearnarro.ingestion.mathspeak.symbols import rewrite_units
+
+    return bool(rewrite_references(text) or rewrite_units(text))
+
+
 def renormalize_document(
     conn: sqlite3.Connection, document_id: int, data_dir: Path
 ) -> tuple[int, int, int]:
@@ -62,23 +71,29 @@ def renormalize_document(
     Returns (segments changed, audio_cache rows removed, cached files left on disk). Only the
     changed segments lose their cache rows; their files stay as orphans.
     """
+    from hearnarro.ingestion.mathspeak import speak_segment
     from hearnarro.ingestion.normalize import normalize
     from hearnarro.storage.db import pack_char_map
     from hearnarro.storage.repo import get_document_profile
 
     # ING-11, D40: the stored profile (override wins) drives the bracket rule, as at ingestion.
-    # Phase 3 adds each segment's math_json spans here (MATH-2); until then no maths spans.
+    # MATH-1..4, D36: a segment with math_json is re-spoken from its stored spans, as ingest()
+    # did after stage 5; the rest go through normalize alone, as split_sentences did.
     profile = get_document_profile(conn, document_id)
 
     rows = conn.execute(
-        "SELECT s.id, s.text, s.normalized_text, s.char_map, b.type FROM segments s "
+        "SELECT s.id, s.text, s.normalized_text, s.char_map, b.type, s.math_json FROM segments s "
         "JOIN blocks b ON b.id = s.block_id WHERE s.document_id = ?",
         (document_id,),
     ).fetchall()
     changed = removed = orphans = 0
     with conn:
-        for seg_id, text, old_norm, old_map, block_type in rows:
-            norm, cmap = normalize(text, heading=block_type == "heading", profile=profile)
+        for seg_id, text, old_norm, old_map, block_type, math_json in rows:
+            spans = json.loads(math_json) if math_json else []
+            if spans or _needs_mathspeak(text):
+                norm, cmap = speak_segment(text, spans, profile)
+            else:
+                norm, cmap = normalize(text, heading=block_type == "heading", profile=profile)
             packed = pack_char_map(cmap)
             if norm == old_norm and packed == bytes(old_map):
                 continue

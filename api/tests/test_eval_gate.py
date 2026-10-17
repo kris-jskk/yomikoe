@@ -208,7 +208,14 @@ def test_eval4_spoken_uses_the_app_path() -> None:
 
     assert spoken("Read the PDF from NASA.") == "Read the P D F from NASA."
     assert spoken("See shopping.com now.") == "See shopping dot com now."
-    assert spoken("x = √(a² + b²)          (12)", block="equation") == "Equation 12."
+    # MATH-1: the display keeps its text for mathspeak; the "Equation N" cue is now the reader's
+    # fallback, used only when the expression cannot be structured.
+    from hearnarro.ingestion.mathspeak.reader import fallback
+    from hearnarro.ingestion.models import MathSpan
+
+    raw = "x = √(a² + b²)          (12)"
+    assert spoken(raw, block="equation") != "Equation 12."
+    assert fallback(MathSpan(0, len(raw), True, []), raw).startswith("equation 12")
     assert spoken("Name | Role\nAda | Analyst", block="table").startswith("Table 1, 2 rows.")
 
 

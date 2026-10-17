@@ -211,8 +211,10 @@ def test_ing5_merge_blocks_joins_inline_fragment_into_previous_block() -> None:
 def test_ing5_merge_blocks_keeps_fragment_not_marked_inline() -> None:
     host = make_block(0, 0, ["and E[P"], x0=72, width=100, y0=100)
     frag = make_block(0, 1, ["i D(p, q)] = O(1)."], x0=172, width=80, y0=100, type="equation")
-    # ING-7: an equation block is read as the cue "Equation.", not its raw text.
-    assert [b.text for b in merge_blocks([host, frag])] == ["and E[P", "Equation."]
+    # MATH-1: an equation block keeps its raw text with one display span (no ING-7 cue).
+    out = merge_blocks([host, frag])
+    assert [b.text for b in out] == ["and E[P", "i D(p, q)] = O(1)."]
+    assert [(s.start, s.end, s.display) for s in out[1].math_spans] == [(0, 18, True)]
 
 
 # --- D12 rule 2: inline maths joins its host sentence whatever the extraction order --------
@@ -253,9 +255,10 @@ def test_ing5_d12_display_equation_stays_separate() -> None:
     out = merge_blocks(attach_inline([host, eq, nxt]))
     assert [(b.type, b.text) for b in out] == [
         ("body", "We minimise the following objective:"),
-        ("equation", "Equation."),  # ING-7: the cue replaces the raw text
+        ("equation", "L = ∑ ∥x − y∥2"),  # MATH-1: raw text kept, read by mathspeak
         ("body", "where x is the input."),
     ]
+    assert [s.display for s in out[1].math_spans] == [True]
     assert not eq.inline
 
 

@@ -24,7 +24,8 @@ def _indices(blocks: list[Block]) -> list[int]:
 
 
 def test_ing4_read_types() -> None:
-    assert READ_TYPES == {"body", "heading", "list", "caption", "equation", "table"}
+    # ING-10: code listings are read (as their cue), so "code" joins the read types.
+    assert READ_TYPES == {"body", "heading", "list", "caption", "equation", "table", "code"}
 
 
 def test_ing4_detect_columns_two_clusters() -> None:

@@ -8,9 +8,10 @@ re-normalizes the stored segments without re-ingesting.
 
 Shares are over the characters a listener would hear: every block whose type is read
 (``_READ_TYPES``); an equation or table block counts its raw merged text (``raw_text``), not
-its spoken cue. Inline maths mass comes from ``LogicalBlock.math_spans`` (MATH-2, phase 3);
-until that attribute exists it is estimated from the prose tokens that carry a maths glyph
-(Unicode ``Sm``, Greek, mathematical alphanumerics), which is also ``inline_token_share``.
+its spoken cue. Inline maths mass is the larger of the inline (non-display) ``LogicalBlock.math_spans``
+characters (MATH-2) and the characters of prose tokens that carry a maths glyph (Unicode
+``Sm``, Greek, mathematical alphanumerics; their share is also ``inline_token_share``). The
+token estimate is the floor because OCR pages carry no span geometry.
 
 Tuning on the 30 gate (e) fixtures (``_agent/results/677``..``681``), D40's first thresholds
 matched 17 of 30. Three changes, each a reading of D40 rather than a new rule:
@@ -200,10 +201,13 @@ def compute_profile(pages: list[Page], blocks: list[LogicalBlock]) -> DocumentPr
     eq_chars = sum(len(b.raw_text or b.text) for b in read if b.type == "equation")
     tokens = " ".join(prose).split()
     math_tokens = [t for t in tokens if any(_is_math_char(c) for c in t)]
-    if any(hasattr(b, "math_spans") for b in read):
-        inline = sum(_span_chars(getattr(b, "math_spans", None) or ()) for b in read)
-    else:
-        inline = sum(len(t) for t in math_tokens)
+    # Inline mass: inline (non-display) MathSpans only, since a display span covers an equation
+    # block already counted in eq_chars. The maths-glyph token estimate is its floor: OCR pages
+    # carry no span geometry (MATH-2), and a maths glyph set in a text font is no math-font run.
+    inline_spans = [
+        s for b in read for s in (getattr(b, "math_spans", None) or ()) if not s.display
+    ]
+    inline = max(_span_chars(inline_spans), sum(len(t) for t in math_tokens))
     code_chars = sum(len(b.raw_text or b.text) for b in read if b.type == "code")
     code_share = code_chars / total if code_chars and total else _monospace_share(pages)
     text_pages = sum(1 for p in pages if p.has_text_layer) or len(pages) or 1

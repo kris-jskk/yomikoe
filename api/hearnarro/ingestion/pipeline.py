@@ -9,6 +9,7 @@ from pathlib import Path
 from hearnarro.ingestion.acronyms import document_definitions
 from hearnarro.ingestion.classify import classify_pages
 from hearnarro.ingestion.extract import extract_pages
+from hearnarro.ingestion.mathspeak import apply_mathspeak
 from hearnarro.ingestion.merge import merge_blocks
 from hearnarro.ingestion.models import LogicalBlock, Page, Segment
 from hearnarro.ingestion.ocr import (
@@ -42,9 +43,10 @@ def ingest(
     ocr_backend: OCRBackend | None | _Default = DEFAULT_OCR,
 ) -> IngestResult:
     """extract_pages -> classify_pages -> order_document -> merge_blocks -> compute_profile
-    -> split_sentences; the profile (ING-11, D40) is computed on the merged blocks and passed
+    -> split_sentences -> apply_mathspeak; the profile (ING-11, D40) is computed on the merged blocks and passed
     to stage 5, whose normalizer needs the class for the bracket rule;
-    acronym definitions are collected from the merged block texts (stage 5).
+    acronym definitions are collected from the merged block texts (stage 5); mathspeak
+    (MATH-1..4) then rewrites the segments holding maths and stores their ``math_json``.
 
     ``on_page(pages_done, total)`` is forwarded to ``extract_pages``; it does not change the
     result.
@@ -72,6 +74,8 @@ def ingest(
                 profile=profile,
             )
         )
+    # MATH-1..4, D36, D37 (spec m5 §2b, §3b): maths spans spoken, Segment.math_json filled.
+    apply_mathspeak(segments, blocks, pages, profile)
     return IngestResult(
         pages=pages,
         blocks=blocks,
