@@ -1,0 +1,42 @@
+{"order": 0, "page": 0, "type": "header", "text": "Chapter 6 | The Normal Distribution 367"}
+{"order": 1, "page": 0, "type": "body", "text": "The z-score is three."}
+{"order": 2, "page": 0, "type": "body", "text": "The mean for the standard normal distribution is zero, and the standard deviation is one."}
+{"order": 3, "page": 0, "type": "body", "text": "The transformation z = (x − µ)/σ produces the distribution Z ~ N(0, 1)."}
+{"order": 4, "page": 0, "type": "body", "text": "The value x in the given equation comes from a normal distribution with mean μ and standard deviation σ."}
+{"order": 5, "page": 0, "type": "heading", "text": "Z-Scores"}
+{"order": 6, "page": 0, "type": "body", "text": "If X is a normally distributed random variable and X ~ N(μ, σ), then the z-score is:"}
+{"order": 7, "page": 0, "type": "equation", "text": "z = (x – µ)/σ"}
+{"order": 8, "page": 0, "type": "body", "text": "The z-score tells you how many standard deviations the value x is above (to the right of) or below (to the left of) the mean, μ."}
+{"order": 9, "page": 0, "type": "body", "text": "Values of x that are larger than the mean have positive z-scores, and values of x that are smaller than the mean have negative z-scores."}
+{"order": 10, "page": 0, "type": "body", "text": "If x equals the mean, then x has a z-score of zero."}
+{"order": 11, "page": 0, "type": "heading", "text": "Example 6.1"}
+{"order": 12, "page": 0, "type": "body", "text": "Suppose X ~ N(5, 6)."}
+{"order": 13, "page": 0, "type": "body", "text": "This says that X is a normally distributed random variable with mean μ = 5 and standard deviation σ = 6."}
+{"order": 14, "page": 0, "type": "body", "text": "Suppose x = 17."}
+{"order": 15, "page": 0, "type": "body", "text": "Then:"}
+{"order": 16, "page": 0, "type": "equation", "text": "z = (x – µ)/σ = (17 – 5)/6 = 2"}
+{"order": 17, "page": 0, "type": "body", "text": "This means that x = 17 is two standard deviations (2σ) above or to the right of the mean μ = 5."}
+{"order": 18, "page": 0, "type": "body", "text": "Notice that: 5 + (2)(6) = 17 (The pattern is μ + zσ = x)"}
+{"order": 19, "page": 0, "type": "body", "text": "Now suppose x = 1."}
+{"order": 20, "page": 0, "type": "body", "text": "Then: z = (x – µ)/σ = (1 – 5)/6 = –0.67 (rounded to two decimal places)"}
+{"order": 21, "page": 0, "type": "body", "text": "This means that x = 1 is 0.67 standard deviations (–0.67σ) below or to the left of the mean μ = 5."}
+{"order": 22, "page": 0, "type": "body", "text": "Notice that: 5 + (–0.67)(6) is approximately equal to one (This has the pattern μ + (–0.67)σ = 1)"}
+{"order": 23, "page": 0, "type": "body", "text": "Summarizing, when z is positive, x is above or to the right of μ and when z is negative, x is to the left of or below μ."}
+{"order": 24, "page": 0, "type": "body", "text": "Or, when z is positive, x is greater than μ, and when z is negative, x is less than μ."}
+{"order": 25, "page": 0, "type": "heading", "text": "Try It"}
+{"order": 26, "page": 0, "type": "body", "text": "6.1 What is the z-score of x, when x = 1 and X ~ N(12,3)?"}
+{"order": 27, "page": 0, "type": "heading", "text": "Example 6.2"}
+{"order": 28, "page": 0, "type": "body", "text": "Some doctors believe that a person can lose five pounds, on the average, in a month by reducing his or her fat intake and by exercising consistently."}
+{"order": 29, "page": 0, "type": "body", "text": "Suppose weight loss has a normal distribution."}
+{"order": 30, "page": 0, "type": "body", "text": "Let X = the amount of weight lost (in pounds) by a person in a month."}
+{"order": 31, "page": 0, "type": "body", "text": "Use a standard deviation of two pounds."}
+{"order": 32, "page": 0, "type": "body", "text": "X ~ N(5, 2)."}
+{"order": 33, "page": 0, "type": "body", "text": "Fill in the blanks."}
+{"order": 34, "page": 0, "type": "body", "text": "a. Suppose a person lost ten pounds in a month."}
+{"order": 35, "page": 0, "type": "body", "text": "The z-score when x = 10 pounds is z = 2.5 (verify)."}
+{"order": 36, "page": 0, "type": "body", "text": "This z-score tells you that x = 10 is ________ standard deviations to the ________ (right or left) of the mean _____ (What is the mean?)."}
+{"order": 37, "page": 0, "type": "heading", "text": "Solution 6.2"}
+{"order": 38, "page": 0, "type": "body", "text": "a. This z-score tells you that x = 10 is 2.5 standard deviations to the right of the mean five."}
+{"order": 39, "page": 0, "type": "body", "text": "b. Suppose a person gained three pounds (a negative weight loss)."}
+{"order": 40, "page": 0, "type": "body", "text": "Then z = __________."}
+{"order": 41, "page": 0, "type": "body", "text": "This z-score tells you"}

@@ -1,0 +1,17 @@
+{"order": 0, "page": 0, "type": "header", "text": "Scientific Python Lectures, Edition 2024.1"}
+{"order": 1, "page": 0, "type": "body", "text": "(continued from previous page)"}
+{"order": 2, "page": 0, "type": "code", "text": "1 + -- + ---- + O\\x /\n    2     24"}
+{"order": 3, "page": 0, "type": "heading", "text": "Exercises"}
+{"order": 4, "page": 0, "type": "list", "text": "1. Calculate lim_{x→0} sin(x)/x"}
+{"order": 5, "page": 0, "type": "list", "text": "2. Calculate the derivative of log(x) for x."}
+{"order": 6, "page": 0, "type": "heading", "text": "16.3.4 Integration"}
+{"order": 7, "page": 0, "type": "body", "text": "SymPy has support for indefinite and definite integration of transcendental elementary and special functions via integrate() facility, which uses the powerful extended Risch-Norman algorithm and some heuristics and pattern matching."}
+{"order": 8, "page": 0, "type": "body", "text": "You can integrate elementary functions:"}
+{"order": 9, "page": 0, "type": "code", "text": ">>> sym.integrate(6 * x ** 5, x)\n 6\nx\n>>> sym.integrate(sym.sin(x), x)\n-cos(x)\n>>> sym.integrate(sym.log(x), x)\nx*log(x) - x\n>>> sym.integrate(2 * x + sym.sinh(x), x)\n 2\nx  + cosh(x)"}
+{"order": 10, "page": 0, "type": "body", "text": "Also special functions are handled easily:"}
+{"order": 11, "page": 0, "type": "code", "text": ">>> sym.integrate(sym.exp(-x ** 2) * sym.erf(x), x)\n  ____    2\n\\/ pi *erf (x)\n--------------\n      4"}
+{"order": 12, "page": 0, "type": "body", "text": "It is possible to compute definite integral:"}
+{"order": 13, "page": 0, "type": "code", "text": ">>> sym.integrate(x**3, (x, -1, 1))\n0\n>>> sym.integrate(sym.sin(x), (x, 0, sym.pi / 2))\n1\n>>> sym.integrate(sym.cos(x), (x, -sym.pi / 2, sym.pi / 2))\n2"}
+{"order": 14, "page": 0, "type": "body", "text": "Also improper integrals are supported as well:"}
+{"order": 15, "page": 0, "type": "code", "text": ">>> sym.integrate(sym.exp(-x), (x, 0, sym.oo))\n1\n>>> sym.integrate(sym.exp(-x ** 2), (x, -sym.oo, sym.oo))\n  ____\n\\/ pi"}
+{"order": 16, "page": 0, "type": "footer", "text": "16.3. Calculus 572"}

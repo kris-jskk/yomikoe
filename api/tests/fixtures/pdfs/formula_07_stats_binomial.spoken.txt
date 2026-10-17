@@ -1,0 +1,27 @@
+# M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c
+p equals the probability of a success for any trial
+q equals the probability of a failure for any trial
+p plus q equals 1
+q equals 1 minus p
+the mean of x is mu equals n p.
+the standard deviation of x is sigma equals the square root of n p q.
+x distributed as g of p means that the discrete random variable x has a geometric probability distribution with probability of success in a single trial p.
+x equals the number of independent trials until the first success
+x takes on the values x equals 1, 2, 3, ...
+p equals the probability of a success for any trial
+q equals the probability of a failure for any trial p plus q equals 1
+q equals 1 minus p
+the mean is mu equals 1 over p.
+the standard deviation is sigma equals the square root of the fraction 1 minus p over p squared, end fraction equals the square root of 1 over p times 1 over p minus 1.
+x distributed as h of r, b, n means that the discrete random variable x has a hypergeometric probability distribution with r equals the size of the group of interest first group, b equals the size of the second group, and n equals the size of the chosen sample.
+x equals the number of items from the group of interest that are in the chosen sample, and x may take on the values x equals 0, 1, ..., up to the size of the group of interest.
+the minimum value for x may be larger than zero in some instances.
+n is less than or equal to r plus b
+the mean of x is given by the formula mu equals the fraction n r over r plus b, end fraction and the standard deviation is equals the square root of the fraction r b n times r plus b minus n over r plus b squared times r plus b minus 1, end fraction.
+x distributed as p of mu means that x has a poisson probability distribution where x equals the number of occurrences in the interval of interest.
+x takes on the values x equals 0, 1, 2, 3, ...
+the mean mu is typically given.
+the variance is sigma squared equals mu, and the standard deviation is sigma equals the square root of mu.
+when p of mu is used to approximate a binomial distribution, mu equals n p where n represents the number of independent trials and p represents the probability of success in a single trial.
+let x equals the number of years a new hire will stay with the company.
+let p of x equals the probability that a new hire will stay with the company x years.

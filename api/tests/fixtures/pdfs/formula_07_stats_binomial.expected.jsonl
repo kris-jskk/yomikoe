@@ -1,0 +1,33 @@
+{"order": 0, "page": 0, "type": "body", "text": "p = the probability of a success for any trial"}
+{"order": 1, "page": 0, "type": "body", "text": "q = the probability of a failure for any trial"}
+{"order": 2, "page": 0, "type": "body", "text": "p + q = 1"}
+{"order": 3, "page": 0, "type": "body", "text": "q = 1 – p"}
+{"order": 4, "page": 0, "type": "body", "text": "The mean of X is μ = np."}
+{"order": 5, "page": 0, "type": "body", "text": "The standard deviation of X is σ = √(npq)."}
+{"order": 6, "page": 0, "type": "heading", "text": "4.4 Geometric Distribution"}
+{"order": 7, "page": 0, "type": "body", "text": "X ~ G(p) means that the discrete random variable X has a geometric probability distribution with probability of success in a single trial p."}
+{"order": 8, "page": 0, "type": "body", "text": "X = the number of independent trials until the first success"}
+{"order": 9, "page": 0, "type": "body", "text": "X takes on the values x = 1, 2, 3, ..."}
+{"order": 10, "page": 0, "type": "body", "text": "p = the probability of a success for any trial"}
+{"order": 11, "page": 0, "type": "body", "text": "q = the probability of a failure for any trial p + q = 1"}
+{"order": 12, "page": 0, "type": "body", "text": "q = 1 – p"}
+{"order": 13, "page": 0, "type": "body", "text": "The mean is μ = 1/p."}
+{"order": 14, "page": 0, "type": "body", "text": "The standard deviation is σ = √((1 – p)/p²) = √((1/p)(1/p − 1))."}
+{"order": 15, "page": 0, "type": "heading", "text": "4.5 Hypergeometric Distribution"}
+{"order": 16, "page": 0, "type": "body", "text": "X ~ H(r, b, n) means that the discrete random variable X has a hypergeometric probability distribution with r = the size of the group of interest (first group), b = the size of the second group, and n = the size of the chosen sample."}
+{"order": 17, "page": 0, "type": "body", "text": "X = the number of items from the group of interest that are in the chosen sample, and X may take on the values x = 0, 1, ..., up to the size of the group of interest."}
+{"order": 18, "page": 0, "type": "body", "text": "(The minimum value for X may be larger than zero in some instances.)"}
+{"order": 19, "page": 0, "type": "body", "text": "n ≤ r + b"}
+{"order": 20, "page": 0, "type": "body", "text": "The mean of X is given by the formula μ = nr/(r + b) and the standard deviation is = √(rbn(r + b − n) / ((r + b)²(r + b − 1)))."}
+{"order": 21, "page": 0, "type": "heading", "text": "4.6 Poisson Distribution"}
+{"order": 22, "page": 0, "type": "body", "text": "X ~ P(μ) means that X has a Poisson probability distribution where X = the number of occurrences in the interval of interest."}
+{"order": 23, "page": 0, "type": "body", "text": "X takes on the values x = 0, 1, 2, 3, ..."}
+{"order": 24, "page": 0, "type": "body", "text": "The mean μ is typically given."}
+{"order": 25, "page": 0, "type": "body", "text": "The variance is σ² = μ, and the standard deviation is σ = √μ."}
+{"order": 26, "page": 0, "type": "body", "text": "When P(μ) is used to approximate a binomial distribution, μ = np where n represents the number of independent trials and p represents the probability of success in a single trial."}
+{"order": 27, "page": 0, "type": "heading", "text": "PRACTICE"}
+{"order": 28, "page": 0, "type": "heading", "text": "4.1 Probability Distribution Function (PDF) for a Discrete Random Variable"}
+{"order": 29, "page": 0, "type": "body", "text": "Use the following information to answer the next five exercises: A company wants to evaluate its attrition rate, in other words, how long new hires stay with the company."}
+{"order": 30, "page": 0, "type": "body", "text": "Over the years, they have established the following probability distribution."}
+{"order": 31, "page": 0, "type": "body", "text": "Let X = the number of years a new hire will stay with the company."}
+{"order": 32, "page": 0, "type": "body", "text": "Let P(x) = the probability that a new hire will stay with the company x years."}

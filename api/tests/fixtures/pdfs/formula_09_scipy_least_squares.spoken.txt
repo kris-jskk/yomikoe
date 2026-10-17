@@ -1,0 +1,4 @@
+# M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c; code listings are cued (ING-10), not listed here
+consider the function exp of minus 1 over .1 times x squared plus y squared.
+this function admits a minimum in 0, 0.
+starting from an initialization at 1, 1, try to get within 10 to the minus 8 of this minimum point.

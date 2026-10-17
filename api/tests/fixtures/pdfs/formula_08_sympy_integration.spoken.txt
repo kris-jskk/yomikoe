@@ -1,0 +1,3 @@
+# M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c; code listings are cued (ING-10), not listed here
+1. calculate the limit as x approaches 0 of sin of x over x
+2. calculate the derivative of log of x for x.

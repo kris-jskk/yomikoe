@@ -1,0 +1,13 @@
+{"order": 0, "page": 0, "type": "header", "text": "Scientific Python Lectures, Edition 2024.1"}
+{"order": 1, "page": 0, "type": "heading", "text": "Exercice: A locally flat minimum"}
+{"order": 2, "page": 0, "type": "body", "text": "Consider the function exp(-1/(.1*x**2 + y**2))."}
+{"order": 3, "page": 0, "type": "body", "text": "This function admits a minimum in (0, 0)."}
+{"order": 4, "page": 0, "type": "body", "text": "Starting from an initialization at (1, 1), try to get within 1e-8 of this minimum point."}
+{"order": 5, "page": 0, "type": "heading", "text": "13.6 Special case: non-linear least-squares"}
+{"order": 6, "page": 0, "type": "heading", "text": "13.6.1 Minimizing the norm of a vector function"}
+{"order": 7, "page": 0, "type": "body", "text": "Least square problems, minimizing the norm of a vector function, have a specific structure that can be used in the Levenberg–Marquardt algorithm implemented in scipy.optimize.leastsq()."}
+{"order": 8, "page": 0, "type": "body", "text": "Lets try to minimize the norm of the following vectorial function:"}
+{"order": 9, "page": 0, "type": "code", "text": ">>> def f(x):\n...     return np.arctan(x) - np.arctan(np.linspace(0, 1, len(x)))\n\n>>> x0 = np.zeros(10)\n>>> sp.optimize.leastsq(f, x0)\n(array([0.        , 0.11111111, 0.22222222, 0.33333333, 0.44444444,\n       0.55555556, 0.66666667, 0.77777778, 0.88888889, 1.        ]), 2)"}
+{"order": 10, "page": 0, "type": "body", "text": "This took 67 function evaluations (check it with ‘full_output=1’)."}
+{"order": 11, "page": 0, "type": "body", "text": "What if we compute the norm ourselves and use a good generic optimizer (BFGS):"}
+{"order": 12, "page": 0, "type": "footer", "text": "13.6. Special case: non-linear least-squares 486"}

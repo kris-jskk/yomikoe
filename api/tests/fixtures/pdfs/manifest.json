@@ -223,5 +223,50 @@
     "license": "CC-BY-4.0",
     "profile": "mixed",
     "pages": 1
+  },
+  {
+    "name": "formula_06_stats_stddev",
+    "class": "formula",
+    "two_column": false,
+    "source": "https://assets.openstax.org/oscms-prodcms/media/documents/IntroductoryStatistics-OP_i6tAI7e.pdf",
+    "license": "CC-BY-4.0",
+    "profile": "math",
+    "pages": 1
+  },
+  {
+    "name": "formula_07_stats_binomial",
+    "class": "formula",
+    "two_column": true,
+    "source": "https://assets.openstax.org/oscms-prodcms/media/documents/IntroductoryStatistics-OP_i6tAI7e.pdf",
+    "license": "CC-BY-4.0",
+    "profile": "math",
+    "pages": 1
+  },
+  {
+    "name": "formula_08_sympy_integration",
+    "class": "formula",
+    "two_column": false,
+    "source": "https://github.com/scipy-lectures/scientific-python-lectures/releases/download/2024.1/ScientificPythonLectures.pdf",
+    "license": "CC-BY-4.0",
+    "profile": "mixed",
+    "pages": 1
+  },
+  {
+    "name": "formula_09_scipy_least_squares",
+    "class": "formula",
+    "two_column": false,
+    "source": "https://github.com/scipy-lectures/scientific-python-lectures/releases/download/2024.1/ScientificPythonLectures.pdf",
+    "license": "CC-BY-4.0",
+    "profile": "mixed",
+    "pages": 1
+  },
+  {
+    "name": "formula_10_stats_zscore_scan",
+    "class": "formula",
+    "two_column": false,
+    "source": "https://assets.openstax.org/oscms-prodcms/media/documents/IntroductoryStatistics-OP_i6tAI7e.pdf",
+    "license": "CC-BY-4.0",
+    "profile": "math",
+    "pages": 1
   }
 ]

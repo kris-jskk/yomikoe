@@ -1,0 +1,41 @@
+{"order": 0, "page": 0, "type": "list", "text": "• One is two standard deviations less than the mean of five because: 1 = 5 + (–2)(2)."}
+{"order": 1, "page": 0, "type": "body", "text": "The equation value = mean + (#ofSTDEVs)(standard deviation) can be expressed for a sample and for a population."}
+{"order": 2, "page": 0, "type": "list", "text": "• sample: x = x̄ + (#ofSTDEV)(s)"}
+{"order": 3, "page": 0, "type": "list", "text": "• Population: x = µ + ( # ofSTDEV)(σ)"}
+{"order": 4, "page": 0, "type": "body", "text": "The lower case letter s represents the sample standard deviation and the Greek letter σ (sigma, lower case) represents the population standard deviation."}
+{"order": 5, "page": 0, "type": "body", "text": "The symbol x̄ is the sample mean and the Greek symbol µ is the population mean."}
+{"order": 6, "page": 0, "type": "heading", "text": "Calculating the Standard Deviation"}
+{"order": 7, "page": 0, "type": "body", "text": "If x is a number, then the difference \"x – mean\" is called its deviation."}
+{"order": 8, "page": 0, "type": "body", "text": "In a data set, there are as many deviations as there are items in the data set."}
+{"order": 9, "page": 0, "type": "body", "text": "The deviations are used to calculate the standard deviation."}
+{"order": 10, "page": 0, "type": "body", "text": "If the numbers belong to a population, in symbols a deviation is x – μ."}
+{"order": 11, "page": 0, "type": "body", "text": "For sample data, in symbols a deviation is x – x̄."}
+{"order": 12, "page": 0, "type": "body", "text": "The procedure to calculate the standard deviation depends on whether the numbers are the entire population or are data from a sample."}
+{"order": 13, "page": 0, "type": "body", "text": "The calculations are similar, but not identical."}
+{"order": 14, "page": 0, "type": "body", "text": "Therefore the symbol used to represent the standard deviation depends on whether it is calculated from a population or a sample."}
+{"order": 15, "page": 0, "type": "body", "text": "The lower case letter s represents the sample standard deviation and the Greek letter σ (sigma, lower case) represents the population standard deviation."}
+{"order": 16, "page": 0, "type": "body", "text": "If the sample has the same characteristics as the population, then s should be a good estimate of σ."}
+{"order": 17, "page": 0, "type": "body", "text": "To calculate the standard deviation, we need to calculate the variance first."}
+{"order": 18, "page": 0, "type": "body", "text": "The variance is the average of the squares of the deviations (the x – x̄ values for a sample, or the x – μ values for a population)."}
+{"order": 19, "page": 0, "type": "body", "text": "The symbol σ2 represents the population variance; the population standard deviation σ is the square root of the population variance."}
+{"order": 20, "page": 0, "type": "body", "text": "The symbol s2 represents the sample variance; the sample standard deviation s is the square root of the sample variance."}
+{"order": 21, "page": 0, "type": "body", "text": "You can think of the standard deviation as a special average of the deviations."}
+{"order": 22, "page": 0, "type": "body", "text": "If the numbers come from a census of the entire population and not a sample, when we calculate the average of the squared deviations to find the variance, we divide by N, the number of items in the population."}
+{"order": 23, "page": 0, "type": "body", "text": "If the data are from a sample rather than a population, when we calculate the average of the squared deviations, we divide by n – 1, one less than the number of items in the sample."}
+{"order": 24, "page": 0, "type": "heading", "text": "Formulas for the Sample Standard Deviation"}
+{"order": 25, "page": 0, "type": "equation", "text": "• s = √(Σ(x − x̄)² / (n − 1)) or s = √(Σ f(x − x̄)² / (n − 1))"}
+{"order": 26, "page": 0, "type": "list", "text": "• For the sample standard deviation, the denominator is n - 1, that is the sample size MINUS 1."}
+{"order": 27, "page": 0, "type": "heading", "text": "Formulas for the Population Standard Deviation"}
+{"order": 28, "page": 0, "type": "equation", "text": "• σ = √(Σ(x − µ)² / N) or σ = √(Σ f(x – µ)² / N)"}
+{"order": 29, "page": 0, "type": "list", "text": "• For the population standard deviation, the denominator is N, the number of items in the population."}
+{"order": 30, "page": 0, "type": "body", "text": "In these formulas, f represents the frequency with which a value appears."}
+{"order": 31, "page": 0, "type": "body", "text": "For example, if a value appears once, f is one."}
+{"order": 32, "page": 0, "type": "body", "text": "If a value appears three times in the data set or population, f is three."}
+{"order": 33, "page": 0, "type": "heading", "text": "Sampling Variability of a Statistic"}
+{"order": 34, "page": 0, "type": "body", "text": "The statistic of a sampling distribution was discussed in Descriptive Statistics: Measuring the Center of the Data."}
+{"order": 35, "page": 0, "type": "body", "text": "How much the statistic varies from one sample to another is known as the sampling variability of a statistic."}
+{"order": 36, "page": 0, "type": "body", "text": "You typically measure the sampling variability of a statistic by its standard error."}
+{"order": 37, "page": 0, "type": "body", "text": "The standard error of the mean is an example of a standard error."}
+{"order": 38, "page": 0, "type": "body", "text": "It is a special standard deviation and is known as the standard deviation of the sampling distribution of the mean."}
+{"order": 39, "page": 0, "type": "body", "text": "You will cover the standard error of the mean in the chapter The Central Limit Theorem (not now)."}
+{"order": 40, "page": 0, "type": "body", "text": "The notation for the standard error of the mean is σ/√n where σ is the standard deviation of the population and n is the size of the sample."}
