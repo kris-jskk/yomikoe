@@ -94,8 +94,17 @@ export async function resetState(api: Api): Promise<void> {
 }
 
 /** Upload a fixture PDF from api/tests/fixtures/pdfs and wait until it is ready. */
-export async function uploadPdf(apiBase: string, name: string): Promise<Api> {
-  const pdf = path.join(API_DIR, 'tests/fixtures/pdfs', name)
+export function uploadPdf(apiBase: string, name: string): Promise<Api> {
+  return uploadPdfFile(apiBase, path.join(API_DIR, 'tests/fixtures/pdfs', name))
+}
+
+/** Upload a PDF from any absolute path and wait until it is ready (default 60 s). */
+export async function uploadPdfFile(
+  apiBase: string,
+  pdf: string,
+  timeoutMs = 60_000,
+): Promise<Api> {
+  const name = path.basename(pdf)
   const form = new FormData()
   form.append('file', new Blob([fs.readFileSync(pdf)], { type: 'application/pdf' }), name)
   const up = await fetch(`${apiBase}/documents`, { method: 'POST', body: form })
@@ -106,10 +115,20 @@ export async function uploadPdf(apiBase: string, name: string): Promise<Api> {
     const doc = await getDocument({ apiBase, documentId: id })
     if (doc.status === 'ready') return { apiBase, documentId: id }
     if (doc.status === 'failed') throw new Error(`document ${id} (${name}) failed`)
-    if (Date.now() - t1 > 60_000) throw new Error(`document ${id} (${name}) not ready after 60 s`)
+    if (Date.now() - t1 > timeoutMs)
+      throw new Error(`document ${id} (${name}) not ready after ${timeoutMs} ms`)
     await sleep(250)
   }
 }
+
+/** DELETE a document (and its cached audio) so it does not leak into other specs. */
+export async function deleteDocument(api: Api): Promise<void> {
+  const r = await fetch(`${api.apiBase}/documents/${api.documentId}`, { method: 'DELETE' })
+  if (!r.ok && r.status !== 404) throw new Error(`DELETE document ${api.documentId} -> ${r.status}`)
+}
+
+/** Absolute path of the repo's api/ directory (for the venv Python and generators). */
+export const API_ROOT = API_DIR
 
 /** Every PATCH /documents/{id} body the page sends, in order. */
 export type PatchLog = { documentId: number; body: Record<string, unknown>; at: number }[]

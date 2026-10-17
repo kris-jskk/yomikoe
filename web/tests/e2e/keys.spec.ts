@@ -5,7 +5,6 @@
 import type { Page } from '@playwright/test'
 import { expect, resetState, test, type Api } from './fixtures'
 
-test.skip(({ browserName }) => browserName !== 'chromium', 'M4 phase 2 asserted on Chromium')
 test.describe.configure({ timeout: 90_000 })
 
 test.beforeEach(async ({ api }) => {

@@ -6,7 +6,6 @@
 import type { Page } from '@playwright/test'
 import { expect, getSegments, test, uploadPdf } from './fixtures'
 
-test.skip(({ browserName }) => browserName !== 'chromium', 'M4 phase 2 asserted on Chromium')
 test.describe.configure({ timeout: 150_000 })
 
 const SKIP_PDF = 'academic_02_memduet.pdf'

@@ -4,7 +4,6 @@
  */
 import { expect, listDocuments, resetState, test, uploadPdf } from './fixtures'
 
-test.skip(({ browserName }) => browserName !== 'chromium', 'M4 phase 2 asserted on Chromium')
 test.describe.configure({ timeout: 120_000 })
 
 /** A second, small fixture PDF used only by the delete test, so the shared document survives. */
