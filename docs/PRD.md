@@ -31,7 +31,7 @@ v1 ships a working reader for born-digital and scanned PDFs with at least 6 voic
 - Mobile native apps (web app must work on a phone browser, that is enough)
 - Summaries, chat-with-PDF, mind maps
 - Multi-user accounts, sharing, billing
-- Non-PDF formats (EPUB, DOCX, web pages); keep the ingestion interface open for them (revisited 2026-10-17: SRC-1 to SRC-4, M6)
+- Non-PDF formats (EPUB, DOCX, web pages); keep the ingestion interface open for them (revisited 2026-10-17: SRC-1 to SRC-4, M7)
 
 **Success metrics**
 
@@ -134,7 +134,7 @@ Added 2026-10-17 (M5, Technical Design D36–D37). Mathematics is spoken as Engl
 | MATH-2 | P0 | Inline mathematics inside a sentence (joined by stage 3, D12) is spoken in place with the same rules, so "where x_i is the i-th sample" reads as "where x sub i is the i-th sample" |
 | MATH-3 | P0 | A symbol-to-words table covers Greek letters, mathematical operators and relations (at least ≤ ≥ ≈ ≠ ± × ÷ · ∂ ∇ ∞ ∈ ∉ ⊂ ∑ ∏ ∫ √ → ⇒ ∀ ∃ ¬ ∧ ∨), units and SI prefixes (km, ms, μm, kHz, MPa, mol; °C already handled by ING-6), and chemical formulas (H2O, CO2, CH4 spoken letter by letter with numbers), so no symbol reaches the voice as an unknown word |
 | MATH-4 | P1 | Equation numbers and references: a display equation's "(3)" is spoken as "equation 3" before the equation; "Eq. (3)", "Eqs. 3–5" and "Equation (3)" in prose become "equation 3" and "equations 3 to 5"; "Theorem 2.1", "Lemma 3", "Definition", "Proof" and "Corollary" openers are spoken with a short pause after them |
-| MATH-5 | P1 | While an equation segment plays, the reader highlights the whole segment (sentence-level) and shows the equation as it appears on the page (a rendered crop from the stored block bbox); word-level sync inside mathematics is not required |
+| MATH-5 | P1 | While an equation segment plays, the reader highlights the whole segment (sentence-level) and shows the equation as it appears on the page, shown and boxed on the board (VIEW-2; was "a rendered crop from the stored block bbox", changed 2026-10-17); word-level sync inside mathematics is not required |
 | MATH-6 | P2 | Scanned pages: mathematics recovered from the page image (equation image to structure) behind an interface like `OCRBackend` (D28); until then OCR'd equations use the MATH-1 fallback |
 
 **Technical vocabulary (TERM)**
@@ -151,7 +151,7 @@ Added 2026-10-17 (M5). Extends the pronunciation layer the Kokoro backend alread
 
 **Sources (SRC)**
 
-Added 2026-10-17 (user direction: read the books and documents the user already has in other apps). Proposed for M6, after M5; not M5 scope.
+Added 2026-10-17 (user direction: read the books and documents the user already has in other apps). Proposed for M7, after M6 Classroom view; not M5 scope (renumbered from M6 2026-10-17).
 
 | ID | Pri | Requirement |
 | --- | --- | --- |
@@ -161,6 +161,34 @@ Added 2026-10-17 (user direction: read the books and documents the user already 
 | SRC-4 | P2 | Kindle: narrate what Amazon exposes to the user, the notes and highlights export ("My Clippings.txt" and the notebook export), not the books |
 
 DRM boundary: purchased Kindle titles and purchased Apple Books titles are encrypted (Amazon has no content API; Apple uses FairPlay). HearNarro never removes DRM, so those titles are out of scope in every milestone.
+
+**Classroom view (VIEW)**
+
+Added 2026-10-17 (user direction: a student learns as in a real classroom, where the teacher, the narrator, teaches from printed notes, a textbook or the board, and the student sees exactly what is being taught). Proposed for M6, after M5 (Technical Design D38).
+
+| ID | Pri | Requirement |
+| --- | --- | --- |
+| VIEW-1 | P0 | Board view: the reader can show the rendered page image (the "board") instead of, or beside, the extracted text; the current sentence and word are highlighted on the page image from boxes stored at ingestion; the board turns to the page of the segment being spoken, so the student always sees what is being read. Today a block stores one bbox (the `blocks` row stores the bbox of `source[0]`, `docs/CODE_MAP_M1.md`) and word boxes are not stored, so ingestion must keep word boxes |
+| VIEW-2 | P0 | Pointer: on the board a pointer or underline moves with the narration, like a teacher's finger on the page; an equation segment is boxed whole while it is spoken |
+| VIEW-3 | P1 | Figures and tables are shown when discussed: when a caption is read, the pointer boxes the figure or table; a "Figure 3" or "Table 2" reference in prose can turn the board to it and back (toggle, default on in classroom mode). Figure-internal text stays unread (ING-3, D12) |
+| VIEW-4 | P1 | Classroom mode preset: pauses after definitions, theorem statements and equations (SYN-8 pause part), repeat the current sentence or equation (PLAY-10), slower equations (PLAY-11), board view on; one switch turns them all on |
+| VIEW-5 | P2 | Phone layout for the board: pinch zoom with the pointer kept in view; lock-screen controls (PLAY-7) |
+
+The narrator reads and paces the author's own text. It does not explain, summarize or answer questions; the "Summaries, chat-with-PDF" non-goal stands until the user decides otherwise (open question below).
+
+**Study tools (NOTE)**
+
+Added 2026-10-17 (user direction: in the classroom the student can pause, take notes and highlight; pause already exists, PLAY-1, D24). Proposed for M6 with VIEW (Technical Design D39).
+
+| ID | Pri | Requirement |
+| --- | --- | --- |
+| NOTE-1 | P0 | Highlight a passage, by selecting text in the text view or dragging on the board, stored per document as segment id plus character offsets (the same coordinates the player uses, see Technical Design "Segment model"), shown in both views, removable |
+| NOTE-2 | P0 | Notes: while paused (or without pausing), type a note attached to the current segment or to a highlight; stored with the document; a notes panel lists them in reading order and clicking one seeks there (PLAY-3) |
+| NOTE-3 | P1 | Bookmarks: mark the current position with one key; the library (LIB-1) shows the count; jump between bookmarks |
+| NOTE-4 | P1 | Export highlights, notes and bookmarks as Markdown with page numbers and the quoted text; import back is not required |
+| NOTE-5 | P2 | Review mode: play only the highlighted passages of a document, in order |
+
+Notes and highlights are the student's own data and stay local with the library: no accounts, no sync; the multi-user non-goal stands.
 
 **Evals (EVAL)**
 
@@ -305,9 +333,13 @@ v1 runs on one laptop (8 GB RAM, no GPU) and must feel instant; everything else 
 ## Milestones
 
 ```
-M1 Ingest + skeleton  -->  M2 Synthesis + stream  -->  M3 Reader UI  -->  M4 Library + polish  -->  M5 Academic reading         -->  M6 Sources and formats (proposed)
-Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate: 300-page soak       Gate: 10 formula pages,          Gate: EPUB/DOCX re-exports within
-parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up         spoken-maths score >= 0.90       0.02 of PDF EVAL-1; Apple Books EPUB opens
+M1 Ingest + skeleton  -->  M2 Synthesis + stream  -->  M3 Reader UI  -->  M4 Library + polish  -->
+Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate: 300-page soak
+parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up
+
+-->  M5 Academic reading         -->  M6 Classroom view (proposed)    -->  M7 Sources and formats (proposed)
+     Gate: 10 formula pages,          Gate: board highlight on the         Gate: EPUB/DOCX re-exports within
+     spoken-maths score >= 0.90       word box for >= 95% of 200 words     0.02 of PDF EVAL-1; Apple Books EPUB opens
 ```
 
 M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments. The score is word-level (D14): word-sequence edit distance over the ordered prose, ≥ 0.95 per PDF (scanned fixtures at a 0.85 floor, D35) and ≥ 0.97 mean; the sentence-level score is printed as a diagnostic only.
@@ -327,9 +359,14 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
    (b) a spoken-mathematics score defined like D14 (word-sequence edit distance over the spoken text, lowercased, punctuation stripped) ≥ 0.90 per text-layer fixture, ≥ 0.75 for the scanned one, mean ≥ 0.92;
    (c) EVAL-4 extended with MATH and TERM categories and no new failures against the M4 baseline;
    (d) a tier-1 listening sheet (EVAL-9) on 10 formula sentences across 2 voices with pronunciation errors counted.
-6. M6 Sources and formats (proposed 2026-10-17, after M5; user direction: read the books and documents the user already has in Apple Books, Kindle, cloud drives and other apps). Scope: SRC-1 to SRC-3 and LIB changes for multi-format rows (file type shown in LIB-1); SRC-4 if cheap. DRM-protected titles are out of scope (see the DRM boundary under Sources). Gate: the 15 text fixtures re-exported as EPUB and DOCX parse to the same prose at an EVAL-1 score within 0.02 of the PDF score, and one DRM-free Apple Books EPUB opens from the library folder.
+6. M6 Classroom view (proposed 2026-10-17, after M5; user direction: the student sees exactly what the narrator is reading, as in a classroom). Scope: VIEW-1 to VIEW-4, NOTE-1 to NOTE-4 and the word-box storage change at ingestion (Technical Design D38, D39); VIEW-5 and NOTE-5 after M6. Gate:
+   (a) on the 20 fixture PDFs, the board highlight for a sampled spoken word lands on that word's box for at least 95 % of 200 sampled words (the box comes from ingestion, the sampled position from the same timestamps the text view uses);
+   (b) 10 minutes of playback keeps the board on the spoken segment's page with no page lag over one segment;
+   (c) a Chromium-asserted e2e spec like M3's;
+   (d) a highlight and a note made in the browser survive a reload and appear in the export (NOTE-4).
+7. M7 Sources and formats (proposed 2026-10-17, renumbered from M6 the same day, after M6; user direction: read the books and documents the user already has in Apple Books, Kindle, cloud drives and other apps). Scope: SRC-1 to SRC-3 and LIB changes for multi-format rows (file type shown in LIB-1); SRC-4 if cheap. DRM-protected titles are out of scope (see the DRM boundary under Sources). Gate: the 15 text fixtures re-exported as EPUB and DOCX parse to the same prose at an EVAL-1 score within 0.02 of the PDF score, and one DRM-free Apple Books EPUB opens from the library folder.
 
-After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export (ING-9 more formats is now M6, SRC-1).
+After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export (ING-9 more formats is now M7, SRC-1).
 
 ## Open questions and risks
 
@@ -365,5 +402,10 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 - [ ] OCR of mathematics: Tesseract misreads inline and display maths on scanned_04/05; equation detection on OCR blocks or a maths-capable engine is MATH-6, after M5 (D35, `_agent/results/591_golden_scanned_after.txt`)
 - [ ] M5: which maths-to-speech approach, and under what licence? Survey done 2026-10-17 (`_agent/research/m5-math-speech-options.md`, licence evidence `_agent/results/607_math_speech_licences.md`), recommendation pending user confirmation (D37): own rule engine over pdfplumber glyphs first; MathCAT (MIT) or Speech Rule Engine (Apache-2.0, needs Node) as an optional MathML layer later; for scanned pages only the Pix2Text MFR weights (MIT on Hugging Face) or UniMERNet (Apache-2.0 code, weights licence unverified) are candidates; excluded: Nougat weights (CC-BY-NC), pix2tex weights (reported CC BY-NC-SA, unverified) and the pix2text package (AGPL-3.0 via doclayout-yolo)
 - [ ] M5: do equation crops (MATH-5) need word boxes stored? Block bboxes are stored in `blocks` rows (the bbox of the block's first source fragment, `docs/CODE_MAP_M1.md`); word boxes are not; added 2026-10-17
-- [ ] M6: iOS has no share target for web apps, so "open in HearNarro" from another iOS app needs a native shell or the Files picker (SRC-3); see the phone-browser question above on iOS background playback; added 2026-10-17
-- [ ] M6: is the Apple Books folder path (`~/Library/Containers/com.apple.BKAgentService/Data/Documents/iBooks/Books`) stable across macOS versions? Unverified; added 2026-10-17
+- [ ] M7: iOS has no share target for web apps, so "open in HearNarro" from another iOS app needs a native shell or the Files picker (SRC-3); see the phone-browser question above on iOS background playback; added 2026-10-17
+- [ ] M7: is the Apple Books folder path (`~/Library/Containers/com.apple.BKAgentService/Data/Documents/iBooks/Books`) stable across macOS versions? Unverified; added 2026-10-17
+- [ ] M6: does "teaches" include explaining beyond the text? That would need a language model, is a non-goal today ("Summaries, chat-with-PDF"), and changes the offline and licensing story; user to decide. Added 2026-10-17
+- [ ] M6: word boxes at ingestion need a schema migration (per-word boxes per segment, or per span); storage cost unverified. Added 2026-10-17
+- [ ] M6: page rendering for the board: pypdfium2 already renders pages at 300 dpi for OCR (ING-2) and can render the board; image cache size unverified. Added 2026-10-17
+- [ ] M6: should the board be rendered in the browser with pdf.js (Apache-2.0) instead, so the server ships only coordinates? Decide in the M6 spec (D38). Added 2026-10-17
+- [ ] M6: annotations are anchored to segment id plus offsets (D39), so a re-ingested document (new ids, D7) loses them unless they are re-anchored by text match; whether to re-anchor, and how, is open. Added 2026-10-17
