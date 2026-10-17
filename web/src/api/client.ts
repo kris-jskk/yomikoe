@@ -151,7 +151,18 @@ export function parseTimestamps(header: string | null, url: string): WordTimesta
   }
 }
 
-/** GET /audio/{id}, decode it, and time both steps. */
+/** Bytes of a canonical WAV header with no samples; a body this size or smaller carries no audio. */
+export const WAV_HEADER_BYTES = 44
+
+/** True when a response carries no audio: X-Duration-Ms is 0, or the body is at most a WAV header. */
+export function isEmptyAudio(durationMs: number, byteLength: number): boolean {
+  return durationMs === 0 || byteLength <= WAV_HEADER_BYTES
+}
+
+/**
+ * GET /audio/{id}, decode it, and time both steps. An empty response (see `isEmptyAudio`) is returned
+ * as a zero-length clip without calling decodeAudioData, which rejects a zero-sample WAV.
+ */
 export async function fetchAudio(
   ctx: AudioContext,
   segmentId: number,
@@ -173,6 +184,22 @@ export async function fetchAudio(
     signal,
   )
   const t1 = performance.now()
+  const durationMs = got.durationHeader === null ? NaN : Number(got.durationHeader)
+  if (isEmptyAudio(durationMs, got.bytes.byteLength)) {
+    // PLAY-5: a segment with nothing to say (e.g. a page marker) is a zero-length clip, not an error
+    return {
+      segmentId,
+      voice,
+      speed,
+      buffer: null,
+      durationSec: 0,
+      timestamps: got.timestamps,
+      durationMs: 0,
+      mediaType: got.mediaType,
+      fetchMs: t1 - t0,
+      decodeMs: 0,
+    }
+  }
   let buffer: AudioBuffer
   try {
     // decodeAudioData detaches its argument; decode a copy so the fetched bytes stay intact
@@ -185,12 +212,12 @@ export async function fetchAudio(
     )
   }
   const t2 = performance.now()
-  const durationMs = got.durationHeader === null ? NaN : Number(got.durationHeader)
   return {
     segmentId,
     voice,
     speed,
     buffer,
+    durationSec: buffer.duration,
     timestamps: got.timestamps,
     durationMs: Number.isFinite(durationMs) ? durationMs : Math.round(buffer.duration * 1000),
     mediaType: got.mediaType,

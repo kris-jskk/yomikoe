@@ -10,6 +10,7 @@ import {
   getDocument,
   getDocuments,
   getVoices,
+  isEmptyAudio,
 } from '../../src/api/client'
 import type { Segment, SegmentsPage, WordTimestamp } from '../../src/api/types'
 
@@ -104,7 +105,7 @@ describe('fetchAudio', () => {
   ]
 
   it('parses X-Timestamps and X-Duration-Ms and decodes a copy of the bytes', async () => {
-    const bytes = new Uint8Array([1, 2, 3, 4])
+    const bytes = Uint8Array.from({ length: 64 }, (_, i) => i + 1) // more than a WAV header
     fetchMock.mockResolvedValueOnce(
       new Response(bytes, {
         status: 200,
@@ -124,12 +125,51 @@ describe('fetchAudio', () => {
     expect(clip.timestamps).toEqual(TS)
     expect(clip.durationMs).toBe(1480)
     expect(clip.mediaType).toBe('audio/ogg')
-    expect(clip.buffer.duration).toBe(1.5)
+    expect(clip.buffer?.duration).toBe(1.5)
+    expect(clip.durationSec).toBe(1.5)
     expect(clip.fetchMs).toBeGreaterThanOrEqual(0)
     expect(clip.decodeMs).toBeGreaterThanOrEqual(0)
     expect(decodeAudioData).toHaveBeenCalledTimes(1)
     const decoded = decodeAudioData.mock.calls[0][0]
-    expect(Array.from(new Uint8Array(decoded))).toEqual([1, 2, 3, 4])
+    expect(Array.from(new Uint8Array(decoded))).toEqual(Array.from(bytes))
+  })
+
+  it('PLAY-5: a 44-byte header-only WAV is a zero-length clip and is not decoded', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(new Uint8Array(44), {
+        status: 200,
+        headers: { 'Content-Type': 'audio/wav', 'X-Timestamps': '[]' },
+      }),
+    )
+    const { ctx, decodeAudioData } = fakeCtx(1.5)
+    const clip = await fetchAudio(ctx, 32307, 'af_heart', 1)
+    expect(clip.durationSec).toBe(0)
+    expect(clip.durationMs).toBe(0)
+    expect(clip.buffer).toBeNull()
+    expect(clip.timestamps).toEqual([])
+    expect(decodeAudioData).not.toHaveBeenCalled()
+  })
+
+  it('PLAY-5: X-Duration-Ms 0 is a zero-length clip even with a longer body', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(new Uint8Array(200), {
+        status: 200,
+        headers: { 'Content-Type': 'audio/wav', 'X-Timestamps': '[]', 'X-Duration-Ms': '0' },
+      }),
+    )
+    const { ctx, decodeAudioData } = fakeCtx(1.5)
+    const clip = await fetchAudio(ctx, 32307, 'af_heart', 1)
+    expect(clip.durationSec).toBe(0)
+    expect(clip.buffer).toBeNull()
+    expect(decodeAudioData).not.toHaveBeenCalled()
+  })
+
+  it('PLAY-5: isEmptyAudio is true at 0 ms or <= 44 bytes and false otherwise', () => {
+    expect(isEmptyAudio(0, 1000)).toBe(true)
+    expect(isEmptyAudio(NaN, 44)).toBe(true)
+    expect(isEmptyAudio(NaN, 0)).toBe(true)
+    expect(isEmptyAudio(NaN, 45)).toBe(false)
+    expect(isEmptyAudio(1480, 9000)).toBe(false)
   })
 
   it('a non-2xx response throws ApiError {status, url, message}', async () => {

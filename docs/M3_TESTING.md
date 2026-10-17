@@ -235,3 +235,8 @@ the same word. Steps 3, 6 and 7 need your eyes, Safari and your ears.
   LIB-3, PLAY-6, PLAY-7 in M4).
 - Every segment is rendered up front; very long documents are not virtualised yet (M4 soak).
 - iOS Safari background playback is unverified.
+- Segments with no speakable text (print page markers such as `[47]`, about 230 of them in
+  document 17) are kept by the parser; the server returns a header-only WAV and the reader plays
+  them as zero-length clips, skipped silently with no gap. A failed prefetch of a later segment is
+  skipped with a `hearnarro:skip-segment` console warning. Dropping page markers in the parser is an
+  M4 item (ING-4).

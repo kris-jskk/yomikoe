@@ -56,7 +56,7 @@ both run with `HEARNARRO_E2E_ALL_ENGINES=1`. Unit tests: `_agent/results/432_uni
 | --- | --- |
 | `src/api/client.ts`, `src/api/types.ts` | tested (unit `client.test.ts`, e2e) |
 | `src/player/machine.ts` (reducer, D10) | tested (unit `machine.test.ts`, 35 cases) |
-| `src/player/schedule.ts` (tokenize, map, locate, findActiveWord) | tested (unit `schedule.test.ts`, 16 cases) |
+| `src/player/schedule.ts` (tokenize, map, locate, findActiveWord, chainStart, nextPlayable, onFetchFailure) | tested (unit `schedule.test.ts`, 21 cases) |
 | `src/player/usePlayer.ts` (engine + hook) | tested (e2e only) |
 | `src/components/*.tsx`, `src/App.tsx`, `src/main.tsx` | tested (e2e only), except `Picker.tsx` and `Toc.tsx`: implemented |
 | `src/styles/app.css` | implemented (contrast computed in `_agent/results/428b_contrast.txt`) |
@@ -147,6 +147,13 @@ PlayerBar        usePlayer.play     reduce          engine.build / ensureWindow 
    (`parseTimestamps`), `X-Duration-Ms` and `Content-Type`, decodes a copy of the bytes with
    `ctx.decodeAudioData`, and returns an `AudioClip` with `fetchMs` and `decodeMs`. The server
    synthesizes the target and enqueues the next five (CODE_MAP_M2 §e).
+   **Empty clip.** When `X-Duration-Ms` is 0 or the body is at most a 44-byte WAV header
+   (`isEmptyAudio`), `fetchAudio` returns `{buffer: null, durationSec: 0}` without calling
+   `decodeAudioData`, which rejects a zero-sample WAV; page-marker segments such as `[47]` (empty
+   `normalized_text`) arrive this way. **Failed prefetch.** A rejected fetch dispatches `FETCH_FAILED`
+   (→ `error`) only when `onFetchFailure(id, engine.targetId)` says the failed id is the segment the
+   schedule is blocked on (the play/seek target, or the next clip while buffering); any other failure
+   logs `console.warn('hearnarro:skip-segment', {segmentId, reason})` and adds the id to `engine.skipped`.
 5. **Start.** On arrival `engine.scheduleReady()` (generation guarded): with an empty schedule it
    calls `startClip(clip, ctx.currentTime + 0.05, offsetSec)`: an `AudioBufferSourceNode`,
    `playbackRate = 1.0` (speed is in the audio, D5), `source.start(when, offset)`, entry
@@ -163,7 +170,14 @@ PlayerBar        usePlayer.play     reduce          engine.build / ensureWindow 
 1. **Chain early.** Every time a clip arrives, `engine.scheduleReady()` loops: for the schedule's
    tail entry it takes `orderedIds[idx(tail) + 1]`; if that clip is decoded and the tail has not
    ended, `startClip(clip, tail.startAt + tail.durationSec, 0)` so the audio thread splices
-   sample-accurately. `durationSec` is always the decoded `buffer.duration`, never `X-Duration-Ms`.
+   sample-accurately (`schedule.ts` → `chainStart`). `durationSec` is always the decoded
+   `buffer.duration`, never `X-Duration-Ms`. The next id is `nextPlayable(orderedIds, tail, skipped)`,
+   so a skipped segment is stepped over, and `ENDED` fires when no playable id is left.
+   **Empty clip.** A zero-length clip gets an entry with `durationSec 0` and `source: null` (it stays in
+   `window.__hearnarro.entries`), so the next clip chains at the same `startAt` with no gap;
+   `startClip` then calls `ensureWindow(emptyId)`, because an entry of zero length is never under the
+   clock and so never triggers step 2. Live check on document 17 orders 220–223:
+   `_agent/results/463_live_doc17_order222.txt`.
 2. **Advance the window.** `engine.tick()` (flow e) notices the segment under the clock changed,
    dispatches `SEGMENT_STARTED{segmentId, generation}` (sets `current`), calls
    `ensureWindow(newId)` (keeps two ahead) and `scheduleReady()`.

@@ -8,8 +8,11 @@ import { fetchAudio } from '../api/client'
 import type { AudioClip } from '../api/types'
 import { initialState, reduce, type PlayerEvent, type PlayerState } from './machine'
 import {
+  chainStart,
   findActiveWord,
   locate,
+  nextPlayable,
+  onFetchFailure,
   mapTimestampsToTokens,
   type MappedTimestamp,
   type ScheduleEntryView,
@@ -28,7 +31,8 @@ const SCROLL_COOLDOWN_MS = 3000
 const LOG_CAP = 500
 
 export interface ScheduleEntry extends ScheduleEntryView {
-  source: AudioBufferSourceNode
+  /** Null for a zero-length clip: it has an entry (durationSec 0) but nothing plays. */
+  source: AudioBufferSourceNode | null
   generation: number
   mapped: MappedTimestamp[]
 }
@@ -97,6 +101,10 @@ export class PlayerEngine {
   buffering = false
   ended = false
   startedId: number | null = null
+  /** Segments whose prefetch failed this generation; the boundary logic steps over them (PLAY-5). */
+  readonly skipped = new Set<number>()
+  /** The segment the schedule is blocked on (play/seek target, or the next clip while buffering). */
+  targetId: number | null = null
   readonly segEls = new Map<number, HTMLElement>()
   readonly tokens = new Map<number, Token[]>()
   active: { seg: HTMLElement | null; w: HTMLElement | null; key: string } = {
@@ -152,7 +160,7 @@ export class PlayerEngine {
   }
 
   private clearSchedule() {
-    for (const e of this.entries.values()) stopSource(e.source)
+    for (const e of this.entries.values()) if (e.source) stopSource(e.source)
     this.entries.clear()
     this.sorted = []
   }
@@ -166,6 +174,8 @@ export class PlayerEngine {
     this.buffering = false
     this.ended = false
     this.startedId = null
+    this.skipped.clear()
+    this.targetId = s.current.segmentId
     this.clearSchedule()
     this.ensureWindow(s.current.segmentId)
     this.scheduleReady()
@@ -212,7 +222,7 @@ export class PlayerEngine {
   private fetchClip(id: number, k: string) {
     const ctx = this.ctx
     const s = this.state
-    if (!ctx || this.entries.has(id)) return
+    if (!ctx || this.entries.has(id) || this.skipped.has(id)) return
     const have = this.pending.get(id)
     if (have && have.key === k) return
     have?.ctrl.abort()
@@ -231,7 +241,14 @@ export class PlayerEngine {
         if (this.pending.get(id) !== p || p.ctrl.signal.aborted) return
         this.pending.delete(id)
         const message = err instanceof Error ? err.message : String(err)
-        this.dispatch({ type: 'FETCH_FAILED', message, generation: this.builtGen })
+        if (onFetchFailure(id, this.targetId) === 'error') {
+          this.dispatch({ type: 'FETCH_FAILED', message, generation: this.builtGen })
+          return
+        }
+        // a failed prefetch: skip the segment and keep playing (PLAY-5)
+        console.warn('hearnarro:skip-segment', { segmentId: id, reason: message })
+        this.skipped.add(id)
+        this.scheduleReady()
       },
     )
   }
@@ -240,28 +257,36 @@ export class PlayerEngine {
   private startClip(clip: AudioClip, when: number, offsetSec: number) {
     const ctx = this.ctx!
     const gen = this.builtGen
-    const source = ctx.createBufferSource()
-    source.buffer = clip.buffer
-    source.playbackRate.value = 1.0 // speed is in the audio (D5)
-    source.connect(ctx.destination)
-    source.start(when, offsetSec)
+    // a zero-length clip (PLAY-5) gets an entry of durationSec 0 and no source: the next clip chains
+    // at the same startAt
+    let source: AudioBufferSourceNode | null = null
+    if (clip.buffer !== null) {
+      const src = ctx.createBufferSource()
+      src.buffer = clip.buffer
+      src.playbackRate.value = 1.0 // speed is in the audio (D5)
+      src.connect(ctx.destination)
+      src.start(when, offsetSec)
+      // fallback advance when rAF is throttled (background tab); ignored once the generation moved
+      src.onended = () => {
+        if (this.builtGen === gen) this.tick()
+      }
+      source = src
+    }
     const entry: ScheduleEntry = {
       segmentId: clip.segmentId,
       source,
       startAt: when - offsetSec,
-      durationSec: clip.buffer.duration, // decoded duration, never X-Duration-Ms
+      durationSec: clip.durationSec, // decoded duration (0 when empty), never X-Duration-Ms
       generation: gen,
       mapped: mapTimestampsToTokens(this.tokens.get(clip.segmentId) ?? [], clip.timestamps),
-    }
-    // fallback advance when rAF is throttled (background tab); ignored once the generation moved
-    source.onended = () => {
-      if (this.builtGen === gen) this.tick()
     }
     this.entries.set(clip.segmentId, entry)
     this.sorted.push(entry)
     if (this.sorted.length > LOG_CAP) this.sorted.shift()
     this.pending.delete(clip.segmentId)
     if (this.hooks.firstStartAt === null) this.hooks.firstStartAt = entry.startAt
+    // an empty clip is never located, so no SEGMENT_STARTED moves the window past it: move it here
+    if (clip.buffer === null) this.ensureWindow(clip.segmentId)
     return entry
   }
 
@@ -276,7 +301,7 @@ export class PlayerEngine {
       if (tail === null) {
         const clip = this.pending.get(s.current.segmentId)?.clip
         if (!clip) return
-        const offsetSec = Math.min(s.current.offsetMs / 1000, clip.buffer.duration)
+        const offsetSec = Math.min(s.current.offsetMs / 1000, clip.durationSec)
         const first = this.startClip(clip, ctx.currentTime + START_LEAD_SEC, offsetSec)
         // show the target word now, so the DOM agrees with `playing` during the 50 ms lead
         this.highlight(first.segmentId, findActiveWord(first.mapped, offsetSec * 1000) ?? 0)
@@ -295,20 +320,16 @@ export class PlayerEngine {
         this.dispatch({ type: 'AUDIO_READY', generation: gen, at })
         continue
       }
-      const ids = s.orderedIds
-      const nextId = ids[ids.indexOf(tail.segmentId) + 1]
-      if (nextId === undefined) return
+      const nextId = nextPlayable(s.orderedIds, tail.segmentId, this.skipped)
+      if (nextId === null) return
       const clip = this.pending.get(nextId)?.clip
       if (!clip) return
-      const end = tail.startAt + tail.durationSec
-      if (!this.buffering && end > ctx.currentTime) {
-        this.startClip(clip, end, 0) // PLAY-5: sample-accurate splice
-      } else {
-        this.startClip(clip, ctx.currentTime + START_LEAD_SEC, 0) // a gap: the server was behind
-        if (this.buffering) {
-          this.buffering = false
-          this.dispatch({ type: 'AUDIO_READY', generation: gen, at: performance.now() })
-        }
+      // PLAY-5: sample-accurate splice, or a gap when the server was behind
+      const { when, gap } = chainStart(tail, ctx.currentTime, this.buffering, START_LEAD_SEC)
+      this.startClip(clip, when, 0)
+      if (gap && this.buffering) {
+        this.buffering = false
+        this.dispatch({ type: 'AUDIO_READY', generation: gen, at: performance.now() })
       }
     }
   }
@@ -379,9 +400,8 @@ export class PlayerEngine {
     }
     const tail = this.sorted.length > 0 ? this.sorted[this.sorted.length - 1] : null
     if (s.status !== 'playing' || tail === null || now < tail.startAt + tail.durationSec) return
-    const ids = s.orderedIds
-    const idx = ids.indexOf(tail.segmentId)
-    if (idx === ids.length - 1) {
+    const next = nextPlayable(s.orderedIds, tail.segmentId, this.skipped)
+    if (next === null) {
       this.ended = true
       this.dispatch({ type: 'ENDED', offsetMs: Math.round(tail.durationSec * 1000) })
       return
@@ -389,7 +409,8 @@ export class PlayerEngine {
     if (!this.buffering) {
       this.buffering = true
       this.dispatch({ type: 'BUFFERING', generation: gen })
-      this.ensureWindow(ids[idx + 1])
+      this.targetId = next // a failure on the clip we now wait for is an error, not a skip
+      this.ensureWindow(next)
       this.scheduleReady()
     }
   }
