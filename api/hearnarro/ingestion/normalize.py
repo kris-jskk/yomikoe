@@ -123,6 +123,15 @@ _RATING = r"(?P<rating>(?<![\w/])(?:100|[1-9]?\d)(?P<rslash>/)(?:100|10)(?![\w/]
 # line is multiplication ("Wealth * (Return on Investment)"), spoken "times"; misaki is
 # silent on it. "**", footnote marks ("word*", "*word") and a leading "* " bullet stay.
 _TIMES = r"(?P<times>(?<=[^\s*])[ \t]+\*[ \t]+(?=[^\s*]))"
+# A degree sign after a number (ING-6, user verdict on sampler sentence 11, 2026-10-17):
+# "40°C" / "40 °C" / "40° C" -> "40 degrees Celsius", "°F" -> "Fahrenheit", a bare "90°"
+# (angles) -> "90 degrees"; "1°C" is singular. The number and any sign before it are copied
+# as written; a "°" with no digit before it and a bare "40C" without the sign stay as written.
+_DEGREES = (
+    r"(?P<deg>(?<![\w.])(?P<dnum>\d+(?:\.\d+)?)(?P<dsp>[ \t]?)°"
+    r"(?:[ \t]?(?P<dunit>[CF])(?![A-Za-z]))?)"
+)
+_DEGREE_UNITS = {"C": " Celsius", "F": " Fahrenheit", None: ""}
 
 
 _PATTERN = re.compile(
@@ -135,6 +144,7 @@ _PATTERN = re.compile(
     rf"|(?P<domain>(?<![\w@./:-])(?:{_LABEL}\.)+(?:{_TLDS})(?![\w-]|\.\w)(?:/\S*)?)"
     rf"|(?P<roman>(?i:\b(?P<kw>{_STRUCTURAL})[ \t]+)(?P<num>{_ROMAN})\b(?![-'’]?\w))"
     rf"|{_HOUR_PAIR}"
+    rf"|{_DEGREES}"
     rf"|{_CLOCK}"
     rf"|{_PHONE}"
     rf"|{_RATING}"
@@ -389,6 +399,13 @@ def normalize(text: str, *, heading: bool = False) -> tuple[str, list[int]]:
                 cmap.append(i)
             emit(" out of ", slash, 1)
             suffix_start = slash + 1  # the denominator is copied as written
+        elif kind == "deg":
+            num_end = m.end("dnum")
+            for i in range(start, num_end):
+                out.append(text[i])
+                cmap.append(i)
+            noun = " degree" if m.group("dnum") == "1" else " degrees"
+            emit(noun + _DEGREE_UNITS[m.group("dunit")], num_end, end - num_end)
         elif kind == "times":
             emit(" times ", start, end - start)
         elif kind == "eqspaced":

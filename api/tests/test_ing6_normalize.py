@@ -665,3 +665,60 @@ def test_ing6_clock_hours_char_map_round_trip() -> None:
     o = out.index(" p.m")
     assert cmap[o : o + 4] == [pair.index("5")] * 4
     assert cmap[-1] == len(pair) - 1  # the sentence period completes "p.m."
+
+
+# Degrees (ING-6, user verdict on sampler sentence 11, 2026-10-17): never a bare letter.
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "Temperatures reached 40°C, a 15% rise.",
+            "Temperatures reached 40 degrees Celsius, a 15 percent rise.",
+        ),
+        ("It was 40 °C outside.", "It was 40 degrees Celsius outside."),
+        ("It was 40° C outside.", "It was 40 degrees Celsius outside."),
+        ("Bake at 350°F for an hour.", "Bake at 350 degrees Fahrenheit for an hour."),
+        ("Make a 90° turn.", "Make a 90 degrees turn."),
+        ("It fell to -5°.", "It fell to -5 degrees."),
+        ("It fell to -5°F overnight.", "It fell to -5 degrees Fahrenheit overnight."),
+        ("Only 1°C warmer.", "Only 1 degree Celsius warmer."),
+        ("Only 1° off.", "Only 1 degree off."),
+        ("A 0.5°C rise.", "A 0.5 degrees Celsius rise."),
+        ("From 10°C to 20°C.", "From 10 degrees Celsius to 20 degrees Celsius."),
+    ],
+)
+def test_ing6_degrees_spoken(text: str, expected: str) -> None:
+    out, cmap = normalize(text)
+    assert out == expected
+    assert len(cmap) == len(out)
+    assert all(a <= b for a, b in pairwise(cmap))
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "It was 40C outside.",
+        "It was 40 C outside.",
+        "The ° sign alone.",
+        "Units in °C are metric.",
+        "Version v2° is odd.",
+    ],
+)
+def test_ing6_degrees_negative_cases(text: str) -> None:
+    assert normalize(text) == (text, list(range(len(text))))
+
+
+def test_ing6_degrees_char_map_round_trip() -> None:
+    text = "Temperatures reached 40°C, a 15% rise."
+    out, cmap = normalize(text)
+    four, deg = text.index("40"), text.index("°")
+    o = out.index(" degrees Celsius")
+    assert cmap[:o] == list(range(four + 2))
+    assert all(deg <= i < deg + 2 for i in cmap[o : o + len(" degrees Celsius")])
+    assert cmap[o + len(" degrees Celsius")] == deg + 2  # the comma
+    spaced = "It was 40 °C outside."
+    out, cmap = normalize(spaced)
+    o = out.index(" degrees")
+    sp = spaced.index(" °")
+    assert all(sp <= i < sp + 3 for i in cmap[o : o + len(" degrees Celsius")])
+    assert cmap[-1] == len(spaced) - 1
