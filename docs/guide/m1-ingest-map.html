@@ -756,7 +756,8 @@ unit tests 127 passed · ruff clean · scanned x5 skipped (no Tesseract) · comm
       <li><b>PyMuPDF is gone.</b> It was AGPL-3.0, in conflict with the licensing rule in CLAUDE.md; found by the prior-art survey and replaced the same day by pdfplumber and pypdfium2 (D13). The fixture set absorbed the cost: scores dropped on the swap and round 3 is recovering them against a frozen truth.</li>
       <li><b>The arXiv PDFs logged a font-subsetting warning</b> when trimmed. Text extraction was unaffected and the page renders looked normal to the reviewers.</li>
       <li><b>Three rough edges seen while driving the API by hand</b>, left for M2: a scanned PDF without OCR ends "ready" with zero segments and no warning; report_02's cover-page headings appear twice in its segments (the golden still scores it 1.0 because the truth was drawn the same way, so it is a truth-and-parser artifact to review); the upload response has no poll URL, you poll <code>GET /documents/{id}</code> yourself.</li>
-      <li><b>Nothing has been pushed.</b> All commits are local on the <code>m1-ingest</code> branch.</li>
+      <li><b>The code map</b> for this milestone is <code>docs/CODE_MAP_M1.md</code> in the repo (added 2026-10-16 during M2): the upload and ingestion flows traced file by file, the exact stage rules with their thresholds and the tests that pin them, the gates, every module with signatures and status, data structures, how to run. Its review found one dead branch in stage 3 (a float-break constant set so high it never fires) and a docstring off by one; both are listed in its open items.</li>
+      <li><b>M1 is merged into main and pushed</b> (2026-10-16); M2 continues on branch <code>m2-synthesis</code> with its own guide: <a href="https://claude.ai/artifact/J7wJUWammFqBxc22s121Pr">HearNarro M2 Synthesis Map</a>.</li>
     </ul></div>
   </section>
 </main>
