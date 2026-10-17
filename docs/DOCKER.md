@@ -30,7 +30,7 @@ To run it in the background instead: `docker compose up --build -d`, and `docker
 
 | Mount | Kind | Holds |
 | --- | --- | --- |
-| `./data` → `/data` | bind mount (`HEARNARRO_DATA_DIR=/data`) | SQLite database, uploaded PDFs, audio cache. Created next to `docker-compose.yml` on first run. |
+| `hearnarro_data` → `/data` | named volume (`HEARNARRO_DATA_DIR=/data`) | SQLite database, uploaded PDFs, audio cache. Upload PDFs through the page or `curl -F`; export the library with `docker compose cp api:/data ./data-export`. A bind mount (`./data:/data`) is an option on Linux hosts; on macOS with colima's virtiofs it failed with SQLite "disk I/O error" (`_agent/results/577`). |
 | `hf_home` → `/hf_home` | named volume (`HF_HOME=/hf_home`) | Hugging Face downloads (the Kokoro-82M model). Survives rebuilds; `docker compose down -v` deletes it. |
 
 ## First run

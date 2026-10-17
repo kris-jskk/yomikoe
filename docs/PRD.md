@@ -172,7 +172,7 @@ The browser never touches a model or the PDF; it asks the API for parsed segment
 | Storage | SQLite + local filesystem | Single-user v1; swap to Postgres + S3 when multi-user |
 | Job queue | In-process asyncio task queue | No Redis until there is more than one worker |
 | Frontend | React + TypeScript, Vite | Web Audio API scheduled buffers for gapless playback (decided 2026-10-15, see Technical Design D5), Media Session API |
-| Packaging | Docker Compose | One command, one service (`api`) that serves the API and the built web app (D30, confirmed by the user 2026-10-17; `docs/DOCKER.md`) |
+| Packaging | Docker Compose | One command, one service (`api`) that serves the API and the built web app (D30, confirmed by the user 2026-10-17; `docs/DOCKER.md`); library on a named volume; a bind mount failed with SQLite disk I/O errors on colima's virtiofs, `_agent/results/577` |
 | Tests | pytest, a fixture set of 20 PDFs | Reading-order and timestamp regressions are the main risk |
 
 **Hugging Face models**
