@@ -19,7 +19,7 @@ where the rank term is fixed by c and r.
 the remaining term delta sub subopt is of order the norm of sine capital theta of v hat sub r sup c, v sub r sup c, sub f, squared.
 it is zero whenever span of v hat sub r sup c equals span of v sub r sup c, and only in this case if lambda sub r of c is greater than lambda sub r plus 1 of c.
 to prove proposition 3.1, apply the triangle inequality in l 2 of pi sub z; r to the d to the gaussian-reference bound 2.5 of part i appendix a.
-in the score-ratio-matching stability result of 5, theorem 3.3, the divergence at the top-r eigenspace of c prime is bounded by the norm of s minus s prime squared sub l 2 of pi sub z plus the sum over i greater than r of lambda sub i of c prime.
+in the score-ratio-matching stability result of 5, theorem 3.3, the divergence at the top-r eigenspace of c prime is bounded by the norm of s minus s prime sub l 2 of pi sub z, squared, plus the sum over i greater than r of lambda sub i of c prime.
 this follows from equation 3.3 at that eigenprojector after applying a plus b squared is less than or equal to 2 a squared plus 2 b squared.
 our bound retains the square root and applies to the estimated projector p hat sub r.
 projecting s onto the gradient space f sub capital lambda in l 2 of pi sub z defines s sub capital lambda, its second-moment matrix c sub capital lambda, and the top-r projector p sub r sup capital lambda star.

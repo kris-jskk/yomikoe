@@ -14,8 +14,8 @@
 {"id": "display_14", "class": "display", "raw": "F = ∫_{0}^{1} g(t) dt", "spoken": "f equals the integral from 0 to 1 of g of t d t", "block": "equation"}
 {"id": "display_15", "class": "display", "raw": "f(x) = x³", "spoken": "f of x equals x cubed", "block": "equation"}
 {"id": "display_16", "class": "display", "raw": "g(t) = t² + 1", "spoken": "g of t equals t squared plus 1", "block": "equation"}
-{"id": "display_17", "class": "display", "raw": "x ∈ [0, 1]", "spoken": "x is an element of the interval from 0 to 1", "block": "equation"}
-{"id": "display_18", "class": "display", "raw": "t ∈ (0, 1]", "spoken": "t is an element of the interval from 0, exclusive, to 1", "block": "equation"}
+{"id": "display_17", "class": "display", "raw": "x ∈ [0, 1]", "spoken": "x in the interval from 0 to 1", "block": "equation"}
+{"id": "display_18", "class": "display", "raw": "t ∈ (0, 1]", "spoken": "t in the interval from 0, exclusive, to 1", "block": "equation"}
 {"id": "display_19", "class": "display", "raw": "y_{i} = w x_{i} + b", "spoken": "y sub i equals w x sub i plus b", "block": "equation"}
 {"id": "display_20", "class": "display", "raw": "x_{t+1} = x_{t} − η g_{t}", "spoken": "x sub t plus 1 equals x sub t minus eta g sub t", "block": "equation"}
 {"id": "display_21", "class": "display", "raw": "P(A | B) = P(B | A) P(A) / P(B)", "spoken": "p of a given b equals p of b given a p of a over p of b", "block": "equation"}
@@ -24,22 +24,22 @@
 {"id": "display_24", "class": "display", "raw": "L = −∑_{c} y_{c} log p_{c}", "spoken": "l equals minus the sum over c of y sub c log p sub c", "block": "equation"}
 {"id": "display_25", "class": "display", "raw": "∂f/∂x = 2x", "spoken": "partial f over partial x equals 2 x", "block": "equation"}
 {"id": "display_26", "class": "display", "raw": "∇f = 0", "spoken": "del f equals 0", "block": "equation"}
-{"id": "display_27", "class": "display", "raw": "lim_{n→∞} 1/n = 0", "spoken": "the limit as n goes to infinity of 1 over n equals 0", "block": "equation"}
+{"id": "display_27", "class": "display", "raw": "lim_{n→∞} 1/n = 0", "spoken": "the limit as n approaches infinity of 1 over n equals 0", "block": "equation"}
 {"id": "display_28", "class": "display", "raw": "a ≤ x ≤ b", "spoken": "a is less than or equal to x is less than or equal to b", "block": "equation"}
 {"id": "display_29", "class": "display", "raw": "|x − y| < ε", "spoken": "the absolute value of x minus y is less than epsilon", "block": "equation"}
 {"id": "display_30", "class": "display", "raw": "‖v‖ = 1", "spoken": "the norm of v equals 1", "block": "equation"}
 {"id": "display_31", "class": "display", "raw": "e^{iπ} + 1 = 0", "spoken": "e to the i pi plus 1 equals 0", "block": "equation"}
 {"id": "display_32", "class": "display", "raw": "x^{2n}", "spoken": "x to the 2 n", "block": "equation"}
 {"id": "display_33", "class": "display", "raw": "A = πr²", "spoken": "a equals pi r squared", "block": "equation"}
-{"id": "display_34", "class": "display", "raw": "c² = a² + b² − 2ab cos θ", "spoken": "c squared equals a squared plus b squared minus 2 a b cos theta", "block": "equation"}
+{"id": "display_34", "class": "display", "raw": "c² = a² + b² − 2ab cos θ", "spoken": "c squared equals a squared plus b squared minus 2 a b cosine theta", "block": "equation"}
 {"id": "display_35", "class": "display", "raw": "1\n1 + e^{−x}", "spoken": "the fraction 1 over 1 plus e to the minus x, end fraction", "block": "equation"}
-{"id": "display_36", "class": "display", "raw": "x = −b ± √(b² − 4ac)\n2a", "spoken": "the fraction x equals minus b plus or minus the square root of b squared minus 4 a c over 2 a, end fraction", "block": "equation"}
-{"id": "display_37", "class": "display", "raw": "∀x ∈ S, f(x) ≥ 0", "spoken": "for all x an element of s, f of x is greater than or equal to 0", "block": "equation"}
+{"id": "display_36", "class": "display", "raw": "x = −b ± √(b² − 4ac)\n2a", "spoken": "x equals the fraction minus b plus or minus the square root of b squared minus 4 a c over 2 a, end fraction", "block": "equation"}
+{"id": "display_37", "class": "display", "raw": "∀x ∈ S, f(x) ≥ 0", "spoken": "for all x in s, f of x is greater than or equal to 0", "block": "equation"}
 {"id": "display_38", "class": "display", "raw": "∃y : g(y) = 0", "spoken": "there exists y such that g of y equals 0", "block": "equation"}
 {"id": "display_39", "class": "display", "raw": "p ⇒ q", "spoken": "p implies q", "block": "equation"}
 {"id": "display_40", "class": "display", "raw": "¬(p ∧ q) = ¬p ∨ ¬q", "spoken": "not p and q equals not p or not q", "block": "equation"}
 {"id": "display_41", "class": "display", "raw": "A ⊂ B", "spoken": "a is a subset of b", "block": "equation"}
-{"id": "display_42", "class": "display", "raw": "x ∉ A", "spoken": "x is not an element of a", "block": "equation"}
+{"id": "display_42", "class": "display", "raw": "x ∉ A", "spoken": "x not in a", "block": "equation"}
 {"id": "display_43", "class": "display", "raw": "a ≈ b", "spoken": "a is approximately equal to b", "block": "equation"}
 {"id": "display_44", "class": "display", "raw": "a ≠ b", "spoken": "a is not equal to b", "block": "equation"}
 {"id": "display_45", "class": "display", "raw": "z = x × y", "spoken": "z equals x times y", "block": "equation"}
@@ -47,9 +47,9 @@
 {"id": "display_47", "class": "display", "raw": "u · v = 0", "spoken": "u dot v equals 0", "block": "equation"}
 {"id": "display_48", "class": "display", "raw": "f : X → Y", "spoken": "f from x to y", "block": "equation"}
 {"id": "display_49", "class": "display", "raw": "θ̂ = argmin_{θ} L(θ)", "spoken": "theta hat equals the arg min over theta of l of theta", "block": "equation"}
-{"id": "display_50", "class": "display", "raw": "E[X] = ∑_{x} x p(x)", "spoken": "the expected value of x equals the sum over x of x p of x", "block": "equation"}
-{"id": "display_51", "class": "display", "raw": "Var(X) = E[X²] − E[X]²", "spoken": "the variance of x equals the expected value of x squared minus the expected value of x squared", "block": "equation"}
-{"id": "display_52", "class": "display", "raw": "h_{t} = tanh(W h_{t−1} + U x_{t})", "spoken": "h sub t equals tanh of w h sub t minus 1 plus u x sub t", "block": "equation"}
+{"id": "display_50", "class": "display", "raw": "E[X] = ∑_{x} x p(x)", "spoken": "e of x equals the sum over x of x p of x", "block": "equation"}
+{"id": "display_51", "class": "display", "raw": "Var(X) = E[X²] − E[X]²", "spoken": "the variance of x equals e of x squared minus e of x, squared", "block": "equation"}
+{"id": "display_52", "class": "display", "raw": "h_{t} = tanh(W h_{t−1} + U x_{t})", "spoken": "h sub t equals hyperbolic tangent of w h sub t minus 1 plus u x sub t", "block": "equation"}
 {"id": "inline_01", "class": "inline", "raw": "where $x_{i}$ is the i-th sample.", "spoken": "where x sub i is the i-th sample.", "block": "body"}
 {"id": "inline_02", "class": "inline", "raw": "Let $n$ be the number of points.", "spoken": "let n be the number of points.", "block": "body"}
 {"id": "inline_03", "class": "inline", "raw": "The loss is $L = a + b$ for each batch.", "spoken": "the loss is l equals a plus b for each batch.", "block": "body"}
@@ -57,9 +57,9 @@
 {"id": "inline_05", "class": "inline", "raw": "Each weight $w_{j}$ is drawn from a normal distribution.", "spoken": "each weight w sub j is drawn from a normal distribution.", "block": "body"}
 {"id": "inline_06", "class": "inline", "raw": "The variance $σ²$ is unknown.", "spoken": "the variance sigma squared is unknown.", "block": "body"}
 {"id": "inline_07", "class": "inline", "raw": "For $k ≥ 1$ the bound holds.", "spoken": "for k is greater than or equal to 1 the bound holds.", "block": "body"}
-{"id": "inline_08", "class": "inline", "raw": "Take $x ∈ [0, 1]$ uniformly.", "spoken": "take x an element of the interval from 0 to 1 uniformly.", "block": "body"}
+{"id": "inline_08", "class": "inline", "raw": "Take $x ∈ [0, 1]$ uniformly.", "spoken": "take x in the interval from 0 to 1 uniformly.", "block": "body"}
 {"id": "inline_09", "class": "inline", "raw": "The ratio $a/b$ tends to one.", "spoken": "the ratio a over b tends to one.", "block": "body"}
-{"id": "inline_10", "class": "inline", "raw": "As $n → ∞$, the error vanishes.", "spoken": "as n goes to infinity, the error vanishes.", "block": "body"}
+{"id": "inline_10", "class": "inline", "raw": "As $n → ∞$, the error vanishes.", "spoken": "as n approaches infinity, the error vanishes.", "block": "body"}
 {"id": "inline_11", "class": "inline", "raw": "The function $f(x)$ is convex.", "spoken": "the function f of x is convex.", "block": "body"}
 {"id": "inline_12", "class": "inline", "raw": "Here $λ$ controls the penalty.", "spoken": "here lambda controls the penalty.", "block": "body"}
 {"id": "inline_13", "class": "inline", "raw": "We write $θ$ for the parameters.", "spoken": "we write theta for the parameters.", "block": "body"}
@@ -72,7 +72,7 @@
 {"id": "inline_20", "class": "inline", "raw": "The error is $± 0.5$ units.", "spoken": "the error is plus or minus 0.5 units.", "block": "body"}
 {"id": "inline_21", "class": "inline", "raw": "The sum $∑ x_{i}$ is finite.", "spoken": "the sum the sum of x sub i is finite.", "block": "body"}
 {"id": "inline_22", "class": "inline", "raw": "with $r = √2$ exactly.", "spoken": "with r equals the square root of 2 exactly.", "block": "body"}
-{"id": "inline_23", "class": "inline", "raw": "The kernel $k(x, y)$ is symmetric.", "spoken": "the kernel k of x comma y is symmetric.", "block": "body"}
+{"id": "inline_23", "class": "inline", "raw": "The kernel $k(x, y)$ is symmetric.", "spoken": "the kernel k of x, y is symmetric.", "block": "body"}
 {"id": "inline_24", "class": "inline", "raw": "Choose $δ > 0$ small.", "spoken": "choose delta is greater than 0 small.", "block": "body"}
 {"id": "inline_25", "class": "inline", "raw": "The density $p(z)$ integrates to one.", "spoken": "the density p of z integrates to one.", "block": "body"}
 {"id": "inline_26", "class": "inline", "raw": "For every $ε > 0$ there is a bound.", "spoken": "for every epsilon is greater than 0 there is a bound.", "block": "body"}
@@ -81,7 +81,7 @@
 {"id": "inline_29", "class": "inline", "raw": "The edge weight $w_{ij}$ is positive.", "spoken": "the edge weight w sub i j is positive.", "block": "body"}
 {"id": "inline_30", "class": "inline", "raw": "We need $¬p$ to hold.", "spoken": "we need not p to hold.", "block": "body"}
 {"id": "inline_31", "class": "inline", "raw": "and $∂L/∂w$ is computed by backpropagation.", "spoken": "and partial l over partial w is computed by backpropagation.", "block": "body"}
-{"id": "inline_32", "class": "inline", "raw": "Pick $t ∉ T$ at random.", "spoken": "pick t not an element of t at random.", "block": "body"}
+{"id": "inline_32", "class": "inline", "raw": "Pick $t ∉ T$ at random.", "spoken": "pick t not in t at random.", "block": "body"}
 {"id": "inline_33", "class": "inline", "raw": "Then $∀i$ the claim follows.", "spoken": "then for all i the claim follows.", "block": "body"}
 {"id": "inline_34", "class": "inline", "raw": "Thus $∃j$ with that property.", "spoken": "thus there exists j with that property.", "block": "body"}
 {"id": "inline_35", "class": "inline", "raw": "If $a ∧ b$ then stop.", "spoken": "if a and b then stop.", "block": "body"}
@@ -100,9 +100,9 @@
 {"id": "symbol_08", "class": "symbol", "raw": "a · b", "spoken": "a dot b", "block": "equation"}
 {"id": "symbol_09", "class": "symbol", "raw": "∂u", "spoken": "partial u", "block": "equation"}
 {"id": "symbol_10", "class": "symbol", "raw": "∇φ", "spoken": "del phi", "block": "equation"}
-{"id": "symbol_11", "class": "symbol", "raw": "x → ∞", "spoken": "x goes to infinity", "block": "equation"}
-{"id": "symbol_12", "class": "symbol", "raw": "a ∈ A", "spoken": "a is an element of a", "block": "equation"}
-{"id": "symbol_13", "class": "symbol", "raw": "b ∉ A", "spoken": "b is not an element of a", "block": "equation"}
+{"id": "symbol_11", "class": "symbol", "raw": "x → ∞", "spoken": "x approaches infinity", "block": "equation"}
+{"id": "symbol_12", "class": "symbol", "raw": "a ∈ A", "spoken": "a in a", "block": "equation"}
+{"id": "symbol_13", "class": "symbol", "raw": "b ∉ A", "spoken": "b not in a", "block": "equation"}
 {"id": "symbol_14", "class": "symbol", "raw": "A ⊂ B", "spoken": "a is a subset of b", "block": "equation"}
 {"id": "symbol_15", "class": "symbol", "raw": "∑ a", "spoken": "the sum of a", "block": "equation"}
 {"id": "symbol_16", "class": "symbol", "raw": "∏ b", "spoken": "the product of b", "block": "equation"}
@@ -128,17 +128,17 @@
 {"id": "symbol_36", "class": "symbol", "raw": "The tone is 4 kHz.", "spoken": "the tone is 4 kilohertz.", "block": "body"}
 {"id": "symbol_37", "class": "symbol", "raw": "The pressure reached 30 MPa.", "spoken": "the pressure reached 30 megapascals.", "block": "body"}
 {"id": "symbol_38", "class": "symbol", "raw": "Add 2 mol of salt.", "spoken": "add 2 moles of salt.", "block": "body"}
-{"id": "symbol_39", "class": "symbol", "raw": "Water is H2O.", "spoken": "water is h two o.", "block": "body"}
-{"id": "symbol_40", "class": "symbol", "raw": "Plants absorb CO2.", "spoken": "plants absorb c o two.", "block": "body"}
-{"id": "symbol_41", "class": "symbol", "raw": "Methane, CH4, is a gas.", "spoken": "methane, c h four, is a gas.", "block": "body"}
+{"id": "symbol_39", "class": "symbol", "raw": "Water is H2O.", "spoken": "water is h 2 o.", "block": "body"}
+{"id": "symbol_40", "class": "symbol", "raw": "Plants absorb CO2.", "spoken": "plants absorb c o 2.", "block": "body"}
+{"id": "symbol_41", "class": "symbol", "raw": "Methane, CH4, is a gas.", "spoken": "methane, c h 4, is a gas.", "block": "body"}
 {"id": "symbol_42", "class": "symbol", "raw": "The sample weighs 3 mg.", "spoken": "the sample weighs 3 milligrams.", "block": "body"}
 {"id": "symbol_43", "class": "symbol", "raw": "The wavelength is 500 nm.", "spoken": "the wavelength is 500 nanometers.", "block": "body"}
 {"id": "symbol_44", "class": "symbol", "raw": "The signal is 2 GHz.", "spoken": "the signal is 2 gigahertz.", "block": "body"}
 {"id": "symbol_45", "class": "symbol", "raw": "Apply 5 kN of force.", "spoken": "apply 5 kilonewtons of force.", "block": "body"}
 {"id": "symbol_46", "class": "symbol", "raw": "Dissolve NaCl in water.", "spoken": "dissolve n a c l in water.", "block": "body"}
-{"id": "reference_01", "class": "reference", "raw": "y = ax + b          (3)", "spoken": "equation 3, y equals a x plus b", "block": "equation"}
-{"id": "reference_02", "class": "reference", "raw": "f(x) = x²          (7)", "spoken": "equation 7, f of x equals x squared", "block": "equation"}
-{"id": "reference_03", "class": "reference", "raw": "L = a − b          (12)", "spoken": "equation 12, l equals a minus b", "block": "equation"}
+{"id": "reference_01", "class": "reference", "raw": "y = ax + b          (3)", "spoken": "equation 3: y equals a x plus b", "block": "equation"}
+{"id": "reference_02", "class": "reference", "raw": "f(x) = x²          (7)", "spoken": "equation 7: f of x equals x squared", "block": "equation"}
+{"id": "reference_03", "class": "reference", "raw": "L = a − b          (12)", "spoken": "equation 12: l equals a minus b", "block": "equation"}
 {"id": "reference_04", "class": "reference", "raw": "As shown in Eq. (3), the loss falls.", "spoken": "as shown in equation 3, the loss falls.", "block": "body"}
 {"id": "reference_05", "class": "reference", "raw": "Substituting into Eq. (7) gives the bound.", "spoken": "substituting into equation 7 gives the bound.", "block": "body"}
 {"id": "reference_06", "class": "reference", "raw": "We combine Eq. (2) and Eq. (4).", "spoken": "we combine equation 2 and equation 4.", "block": "body"}

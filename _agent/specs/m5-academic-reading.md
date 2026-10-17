@@ -304,15 +304,163 @@ when `parse` returns `None`) and lists the change in the commit message.
 
 ### 3c. Reading convention (fixed so spoken.txt writers and the reader agree)
 
-ClearSpeak-style plain English, lower case: `x_i` "x sub i"; `x^2` "x squared", `x^3` "x cubed",
-`x^n` "x to the n"; `a/b` and a stacked fraction with one-token parts "a over b", longer parts "the
-fraction a plus b over c, end fraction"; `√x` "the square root of x"; `∑_{i=1}^{n}` "the sum from i
-equals 1 to n of"; `∫_a^b f dx` "the integral from a to b of f d x"; `=` "equals", `≤` "is less than or
-equal to"; `[0, 1]` in maths "the interval from 0 to 1" (closed; `(0, 1]` "from 0, exclusive, to 1");
-a matrix "the matrix with rows: a, b; c, d"; `f(x)` with `f` a single italic letter followed by a
-group "f of x". Greek letters by name ("alpha", "sigma"). Numbers stay digits (the backend's
-`num2words` shim speaks them). The writers of `spoken.txt` and `math_speech.jsonl` use exactly this
-table; a disagreement is resolved in this section by the supervisor, not in either file.
+ClearSpeak-style plain English, lower case, one wording per symbol. The machine-readable copy of this
+table is `api/scripts/math_convention.json`; the phase-3 mathspeak symbol table loads that file, and
+`api/scripts/check_math_convention.py` checks both expected-text sources (`formula_*.spoken.txt`,
+`math_speech.jsonl`) against its banned wordings, raw-symbol leaks and lower case. Punctuation is
+prosody only (EVAL-10 strips it before scoring): a comma closes a group before a power or ends an
+argument list, and a comma is never spoken as "comma". Numbers stay digits (the backend's `num2words`
+shim speaks them), including chemical counts and equation numbers; a number written as a word in the
+source prose stays a word.
+
+**General rules**
+
+| Rule | Wording |
+| --- | --- |
+| Variables | read as letters, lower case: `E` "e", `D_{KL}` "d sub k l", `mc²` "m c squared" |
+| Juxtaposition | silent (`2ab` "2 a b"); "times" for `×`, and between or before parenthesized factors that are not function arguments (`2(k−1)` "2 times k minus 1") |
+| Grouping `( )` | silent; a comma closes a group before a power (`E[X]²` "e of x, squared") |
+| Relations | carry "is" in running maths (`k ≥ 1` "k is greater than or equal to 1", also inside prose: "for every t is greater than or equal to 1"); drop "is" inside a subscript condition of a large operator or an indexed family (`∑_{i>r}` "the sum over i greater than r of", `(X_t)_{t≥0}` "x sub t for t greater than or equal to 0") |
+| Unary minus | "minus" (`−x` "minus x"), never "negative" |
+| Display-line prefix (MATH-4) | a numbered display equation starts "equation N: " (`(3)` at the right margin, "equation 3: y equals a x plus b"); unnumbered displays have no prefix |
+| MATH-1 fallback | "equation N" (or "equation") then the symbols left to right by the names in this table |
+
+**Operators and relations (MATH-3)**
+
+| Symbol | Wording | Symbol | Wording |
+| --- | --- | --- | --- |
+| `+` | plus | `=` | equals |
+| `−` `-` | minus | `≠` | is not equal to |
+| `±` | plus or minus | `<` / `>` | is less than / is greater than |
+| `∓` | minus or plus | `≤` / `≥` | is less than or equal to / is greater than or equal to |
+| `×` | times | `≪` / `≫` | is much less than / is much greater than |
+| `÷` | divided by | `≈` `≃` | is approximately equal to |
+| `·` `⋅` | dot (product and placeholder argument: `p(·)` "p of dot") | `≡` | is equivalent to |
+| `∂` | partial (`∂f/∂x` "partial f over partial x") | `∝` | is proportional to |
+| `∇` | del | `:=` `≔` `≜` | is defined as |
+| `∞` | infinity | `∼` `~` | distributed as (no "is": it qualifies a noun phrase, `x ∼ N(0,1)` "x distributed as n of 0, 1") |
+| `!` | factorial | `⊥` | is perpendicular to |
+| `⊗n` power | to the tensor power n | `∥` (single, inside an argument list) | parallel (`D_KL(p ∥ q)` "d sub k l of p parallel q") |
+| `∘` | composed with | `→` | "approaches" in limits and "tends to" (`n → ∞` "n approaches infinity"); "to" between sets after a colon (`f : X → Y` "f from x to y") |
+| `↦` | maps to | `⇒` `⟹` | implies |
+| | | `⇔` `⟺` | if and only if |
+
+**Logic and sets**
+
+| Symbol | Wording | Symbol | Wording |
+| --- | --- | --- | --- |
+| `∀` | for all | `∈` | in (ClearSpeak SetMemberSymbol "in"; also as the main relation: `a ∈ A` "a in a") |
+| `∃` / `∄` | there exists / there does not exist | `∉` | not in |
+| `¬` | not | `∋` | contains |
+| `∧` / `∨` | and / or | `⊂` / `⊆` | is a subset of / is a subset of or equal to |
+| `∴` | therefore | `⊃` / `⊇` | is a superset of / is a superset of or equal to |
+| `∪` / `∩` | union / intersection | `∖` | minus |
+| `∅` | the empty set | `{a, b}` | the set a, b |
+| `{x : P}`, `{x \| P}` | the set of x such that p | `{x_i}_{i=1}^n` | the set of x sub i for i equals 1 to n |
+
+The bar `|` has three readings, chosen by its role: "given" in a conditional probability or
+expectation (`p(y | x)` "p of y given x", `E[D_t | F_{t−1}]` "e of d sub t given f sub t minus 1");
+"such that" in set-builder notation; "the absolute value of" when paired around an expression
+(`|x − y|`). A paired `‖·‖` is "the norm of"; a single `∥` is "parallel".
+
+**Greek letters**: by name, lower case: alpha, beta, gamma, delta, epsilon (also `ϵ`), zeta, eta,
+theta (also `ϑ`), iota, kappa, lambda, mu, nu, xi, omicron, pi, rho, sigma (also `ς`), tau, upsilon,
+phi (also `ϕ`), chi, psi, omega. Capitals that differ from Latin letters take "capital": capital gamma,
+capital delta, capital theta, capital lambda, capital xi, capital pi, capital sigma, capital upsilon,
+capital phi, capital psi, capital omega. Capitals that look Latin (`Α`, `Β`, ...) are read as the Latin
+letter.
+
+**Scripts and accents** (a subscript is read before a superscript or power: `‖f‖²_π` "the norm of f sub
+pi, squared")
+
+| Form | Wording | Form | Wording |
+| --- | --- | --- | --- |
+| `x_i` | x sub i | `x_{ij}` | x sub i j (variables letter by letter) |
+| `x_{emp}` | x sub emp (a word or abbreviation is read as a word) | `x_{t+1}` | x sub t plus 1 |
+| `x²` / `x³` | x squared / x cubed | `xⁿ`, `x^{2n}` | x to the n, x to the 2 n |
+| `x^{−1}` | x to the minus 1 | `x^{1/2}` | x to the 1 half |
+| `x^{(j)}` | x sup j (an index in parentheses is not a power) | `π^{sel}` | pi sup sel (a label superscript) |
+| `x^T` / `x^⊤` | x transpose | `x^*` | x star |
+| `x′` / `x″` | x prime / x double prime | `x̂` | x hat |
+| `x̄` | x bar | `x̃` | x tilde |
+| `ẋ` | x dot | `x⃗` | vector x |
+
+**Fractions and roots**
+
+| Form | Wording |
+| --- | --- |
+| `a/b` (slash, any parts) | a over b (`P(B\|A)P(A)/P(B)` "... p of a over p of b") |
+| stacked, one-token numerator and denominator | a over b (`1/M` "1 over m") |
+| stacked, longer parts | the fraction a plus b over c, end fraction (it starts at the numerator: `x = (−b ± …)/2a` "x equals the fraction minus b ... over 2 a, end fraction") |
+| numeric 1/2, 1/3, 2/3, 1/4 | 1 half, 1 third, 2 thirds, 1 fourth |
+| `√x` | the square root of x |
+| `ⁿ√x` | the n-th root of x |
+
+**Large operators with limits**
+
+| Form | Wording |
+| --- | --- |
+| `∑_{i=1}^{n}` / `∑_i` / `∑` | the sum from i equals 1 to n of / the sum over i of / the sum of |
+| `∏_{i=1}^{n}` | the product from i equals 1 to n of (same three shapes as the sum) |
+| `∫_a^b f dx` / `∫ f` | the integral from a to b of f d x / the integral of f |
+| `lim_{x→a}` | the limit as x approaches a of |
+| `max_i` / `min(a, b)` | the maximum over i of / the minimum of a and b |
+| `sup_f` / `inf_f` | the supremum over f of / the infimum over f of |
+| `argmin_θ` / `argmax_θ` | the arg min over theta of / the arg max over theta of |
+
+**Brackets and intervals** (in maths; ING-11 decides when a bracket is maths)
+
+| Form | Wording |
+| --- | --- |
+| `[0, 1]` | the interval from 0 to 1 |
+| `(0, 1]` / `[0, 1)` | the interval from 0, exclusive, to 1 / the interval from 0 to 1, exclusive |
+| `(0, 1)` after `∈` or a set symbol | the open interval from 0 to 1 |
+| `(a, b)` otherwise | a, b (a pair or point, read as a list) |
+| `⟨f, g⟩` | the inner product of f and g |
+| matrix | the matrix with rows: a, b; c, d |
+
+**Function notation**
+
+| Form | Wording |
+| --- | --- |
+| `f(x)`, `f` a single italic letter followed by a group | f of x (`k(x, y)` "k of x, y") |
+| `sin`, `cos`, `tan` | sine, cosine, tangent (`sin(x)` "sine of x", `cos θ` "cosine theta": "of" only before a parenthesized argument) |
+| `sinh`, `cosh`, `tanh` | hyperbolic sine, hyperbolic cosine, hyperbolic tangent |
+| `log` / `ln` / `exp` | log / natural log / exp |
+| `det`, `tr` | the determinant of, the trace of |
+| `Var`, `Cov` | the variance of, the covariance of |
+| `E`, `𝔼` | e (the letter: the reader cannot tell an expectation from a variable `E`), `E_p[·]` "e sub p of dot" |
+
+**Units, SI prefixes and chemistry (MATH-3)**: prefix word plus unit word, US spelling, plural unless
+the value is 1: `km` kilometers, `ms` milliseconds, `μm` micrometers, `kHz` kilohertz, `MPa` megapascals,
+`mol` moles, `mg` milligrams, `nm` nanometers, `GHz` gigahertz, `kN` kilonewtons. Prefixes pico, nano,
+micro, milli, centi, kilo, mega, giga, tera; units meters, grams, seconds, hertz, newtons, pascals,
+joules, watts, volts, amperes, ohms, moles, liters, kelvins, electronvolts, minutes, hours. `°C` stays
+with ING-6. Chemical formulas letter by letter with digit counts: `H2O` "h 2 o", `CO2` "c o 2", `CH4`
+"c h 4", `NaCl` "n a c l".
+
+**Equation numbers and references (MATH-4)**
+
+| Form | Wording |
+| --- | --- |
+| `(3)` at the right of a display | "equation 3: " before the expression |
+| `Eq. (3)`, `Equation (3)`, `Eq. 3` | equation 3 |
+| `Eqs. 3–5` | equations 3 to 5 |
+| `Eqs. (3) and (4)` | equations 3 and 4 |
+| `Theorem 2.1`, `Lemma 3`, `Definition`, `Proof`, `Corollary`, `Proposition` openers | the word, its number if any, then a comma (the pause): "theorem 2.1, every bounded sequence ..." |
+
+**Banned wordings** (the check script fails on them): "is an element of", "member of", "belongs to"
+(use "in"); "goes to", "tends to infinity" (use "approaches"); "comma"; "expected value of",
+"expectation of" (use "e of"); "sin", "cos", "tan", "tanh", "ln" as words; "superscript", "subscript";
+MathSpeak forms ("startfraction", "endfraction", "startroot", "baseline"); "nabla"; "to the power of",
+"raised to"; "metres", "litres"; spelled chemical counts ("h two o"); a display prefix "equation N,"
+instead of "equation N:".
+
+The writers of `spoken.txt` and `math_speech.jsonl` use exactly this table; a disagreement is resolved in
+this section (and `math_convention.json`) by the supervisor, not in either file.
+
+(2026-10-17: table completed in phase 1, task m5-p1-convention; the earlier one-paragraph convention is
+subsumed. Expected texts aligned, changes listed in `_agent/results/670_convention_changes.md`.)
 
 ### 3d. Code listings (ING-10)
 
