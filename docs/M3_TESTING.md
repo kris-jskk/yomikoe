@@ -136,8 +136,19 @@ Result on 2026-10-17, voice `af_heart` (`_agent/results/445_first_audio_kokoro.t
 | 1.0x | 1101, 543, 1411 | 1018 | 1411 | 3 of 3 | 21 |
 | 2.0x | 1216, 428, 605 | 750 | 1216 | 3 of 3 | 18 |
 
-The PRD latency target is first audio within 2 s of play. At 0.5x no cold sample met it in this
-run; whether clause-level chunking (D19) is built in M3 is the decision this table feeds.
+After the prefetch-order change (67119ab: prefetch starts once the target clip arrives), a second
+run (`_agent/results/452_first_audio_after.txt`):
+
+| Speed | Cold samples (ms) | Cold mean | Cold worst | Under 2 s |
+| --- | --- | --- | --- | --- |
+| 0.5x | 1968, 2009, 1672 | 1883 | 2009 | 2 of 3 |
+| 1.0x | 1057, 2430, 781 | 1423 | 2430 | 2 of 3 |
+
+The two runs measured different segments (n=3 each), so the comparison is indicative, not a
+controlled A/B. The request-order change is in `_agent/results/453_before_reqlog.txt`: with the old
+code the three GETs (target and two prefetch) start in the same millisecond; after, the target goes
+first. The PRD latency target is first audio within 2 s of play. D19 status: decision pending;
+supervisor recommendation recorded in the M3 guide.
 
 ## 7. The reader against your own server
 

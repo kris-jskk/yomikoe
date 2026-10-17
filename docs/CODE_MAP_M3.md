@@ -11,8 +11,8 @@ the code and the spec differ, this map says what the code does and lists the dif
 
 ## Scope and status
 
-**As of commit `1050245`** on branch `m3-reader` (the reader code was last changed in `11e4767`
-and `b373592`; `1050245` touches only `web/scripts/measure_first_audio.mjs`). Read on 2026-10-17.
+**As of commit `67119ab`** on branch `m3-reader` (prefetch starts after the target clip arrives,
+PLAY-5/D19; `web/src/player/usePlayer.ts` last changed there). Updated on 2026-10-17.
 
 ### What M3 adds
 
@@ -138,7 +138,11 @@ PlayerBar        usePlayer.play     reduce          engine.build / ensureWindow 
    disconnects every scheduled source (`clearSchedule`), then `ensureWindow(current.segmentId)`.
 4. **Fetch window.** `engine.ensureWindow(fromId)`: wants `[fromId, fromId + PREFETCH_DEPTH]`
    (`PREFETCH_DEPTH = 2`); aborts pending fetches outside it or with another voice/speed key; starts
-   `fetchAudio(ctx, id, voice, speed, signal)` for each missing id. `client.ts` → `fetchAudio` builds
+   `fetchAudio(ctx, id, voice, speed, signal)` for each missing id. Order (67119ab): on a cold play
+   only the target is fetched; the two-deep prefetch starts when the target's response resolves (or
+   when an already in-flight target resolves). If the target is already decoded, prefetch starts at
+   once. Reason: the server serves GETs in arrival order on one synthesis thread, so three GETs
+   issued together delay the target (`_agent/results/453_before_reqlog.txt`). `client.ts` → `fetchAudio` builds
    `/audio/{id}?voice=&speed=` with `speed.toFixed(2)` (`audioUrl`), reads `X-Timestamps`
    (`parseTimestamps`), `X-Duration-Ms` and `Content-Type`, decodes a copy of the bytes with
    `ctx.decodeAudioData`, and returns an `AudioClip` with `fetchMs` and `decodeMs`. The server
@@ -392,7 +396,7 @@ The commands with expected output are in `docs/M3_TESTING.md`.
 | Item | Where | Lands in |
 | --- | --- | --- |
 | D16 default format (WAV vs Ogg Opus): decode matrix passes both on Chromium, Playwright WebKit and Firefox (436–438, 422, 423); pending the user's check in real Safari | `api` settings | decision at M3 close |
-| D19 clause chunking at speeds < 1.0: first-audio table in `_agent/results/445_first_audio_kokoro.txt` (at 0.5x all three cold samples exceed 2 s); decision pending | `synthesis/service.py` or the client | decision at M3 close |
+| D19 clause chunking at speeds < 1.0: first-audio table in `_agent/results/445_first_audio_kokoro.txt` (before) and `452_first_audio_after.txt` (after 67119ab); decision pending | `synthesis/service.py` or the client | decision at M3 close |
 | Settings changes during `loading` are dropped (deviation 6) | `machine.ts` | M4 or a follow-up |
 | `sections` table never written; reader derives sections from heading segments (D25) | ING-8 | M4 |
 | FastAPI serving `web/dist` (no Vite in production, D21) | `api/hearnarro/app.py` | M4 |
