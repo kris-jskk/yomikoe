@@ -5,9 +5,9 @@ Truth: `<stem>.sentences.txt`, one reviewed sentence per line, derived from
 prose segments of `ingest()`, same filter as the golden test. Metric: boundary precision,
 recall and F1 over the aligned word stream (`tests/boundary_util.py`).
 
-Thresholds are not asserted yet: the supervisor sets them after this first measurement. The
-test asserts only that the truth files load and keep the expected word stream; it prints a
-per-fixture table and the mean (run with `-s`).
+Thresholds (D18): per fixture F1 >= 0.90 and recall >= 0.97, mean F1 >= 0.95. The truth files
+must also load and keep the expected word stream. The per-fixture table and mean are printed
+(run with `-s`).
 """
 
 import json
@@ -58,6 +58,10 @@ def _row(name: str) -> str:
     return f"{name:34} {n_truth:6} {n_act:6} {tp:5} {fp:5} {fn:5} {p:7.4f} {r:7.4f} {f:7.4f}"
 
 
+MIN_F1 = 0.90
+MIN_RECALL = 0.97
+MIN_MEAN_F1 = 0.95
+
 HEADER = f"{'fixture':34} {'truth':>6} {'parser':>6} {'tp':>5} {'fp':>5} {'fn':>5} {'P':>7} {'R':>7} {'F1':>7}"
 
 
@@ -70,16 +74,21 @@ def test_ing5_syn1_boundary_truth_keeps_expected_word_stream(name: str) -> None:
 
 
 @pytest.mark.parametrize("name", NAMES)
-def test_ing5_syn1_boundary_measurement(name: str) -> None:
+def test_ing5_syn1_boundary_thresholds(name: str) -> None:
+    tp, fp, fn, _, _ = _measure(name)
+    p, r, f = prf(tp, fp, fn)
     print("\n" + HEADER + "\n" + _row(name))
+    assert f >= MIN_F1, f"{name}: boundary F1 {f:.4f} < {MIN_F1} (P {p:.4f}, R {r:.4f})"
+    assert r >= MIN_RECALL, (
+        f"{name}: boundary recall {r:.4f} < {MIN_RECALL} (P {p:.4f}, F1 {f:.4f})"
+    )
 
 
-def test_ing5_syn1_boundary_measurement_table() -> None:
+def test_ing5_syn1_boundary_mean_f1_table() -> None:
     scores = [prf(*_measure(n)[:3]) for n in NAMES]
     lines = [HEADER] + [_row(n) for n in NAMES]
     mean = [sum(s[k] for s in scores) / len(scores) for k in range(3)]
     label = f"mean ({len(NAMES)} fixtures)"
     lines.append(f"{label:34} {'':30} " + " ".join(f"{v:7.4f}" for v in mean))
-    print(
-        "\nsentence-boundary P/R/F1, parser vs reviewed truth (not asserted)\n" + "\n".join(lines)
-    )
+    print("\nsentence-boundary P/R/F1, parser vs reviewed truth\n" + "\n".join(lines))
+    assert mean[2] >= MIN_MEAN_F1, f"mean boundary F1 {mean[2]:.4f} < {MIN_MEAN_F1}"
