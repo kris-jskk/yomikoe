@@ -287,6 +287,36 @@ def word_timestamps(text: str, timed: list[_Timed], duration_ms: int) -> list[Wo
     return out
 
 
+def model_vocab(revision: str = PINNED_REVISION) -> set[str]:
+    """Kokoro's phoneme vocabulary from the pinned ``config.json`` alone (no weights loaded)."""
+    import json
+
+    from huggingface_hub import hf_hub_download
+
+    path = hf_hub_download(MODEL_REPO, "config.json", revision=revision)
+    with open(path, encoding="utf-8") as f:
+        return set(json.load(f)["vocab"])
+
+
+def build_g2p(british: bool, vocab: set[str], predictor: Any | None = None) -> Any:
+    """The misaki G2P front-end the backend uses: num2words shim installed before misaki is
+    imported, ``lexicon_overrides`` in the gold lexicon, ``_OOVFallback`` for OOV words.
+    Loads no model weights, so the eval suites can phonemize through the same front-end."""
+    from hearnarro.synthesis import compat
+
+    compat.install()  # before misaki.en is imported (num2words shim)
+    from misaki import en
+
+    if predictor is None:
+        from hearnarro.synthesis.g2p_oov import NeuralG2P
+
+        predictor = NeuralG2P()
+    g2p = en.G2P(trf=False, british=british, fallback=None, unk="")
+    g2p.lexicon.golds.update(lexicon_overrides.OVERRIDES)  # before misaki's own entries
+    g2p.fallback = _OOVFallback(g2p.lexicon, predictor, vocab, british, cmu=cmudict.load())
+    return g2p
+
+
 class KokoroBackend:
     """Kokoro-82M, CPU. Construct once (loads model + spaCy, ~2 s); ``synthesize`` is
     serialised by a lock (one synthesis thread in the service)."""
@@ -327,12 +357,7 @@ class KokoroBackend:
 
     def _g2p_for(self, british: bool) -> Any:
         if british not in self._g2p:
-            g2p = self._en.G2P(trf=False, british=british, fallback=None, unk="")
-            g2p.lexicon.golds.update(lexicon_overrides.OVERRIDES)  # before misaki's own entries
-            g2p.fallback = _OOVFallback(
-                g2p.lexicon, self._predictor, self._vocab, british, cmu=cmudict.load()
-            )
-            self._g2p[british] = g2p
+            self._g2p[british] = build_g2p(british, self._vocab, self._predictor)
         return self._g2p[british]
 
     def _pack(self, voice_id: str) -> Any:

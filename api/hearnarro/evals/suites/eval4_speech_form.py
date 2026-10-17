@@ -22,18 +22,27 @@ functions in the order the app applies them:
    ``KokoroBackend._tokens`` / ``_pronounce_acronyms``. A spelled token is rendered as its
    letters separated by spaces ("P D F"), a spoken one is left as written.
 
-Not modelled at tier 0: misaki's lexicon (``in_lexicon`` is false, so rule 4 of ``decide``
-never fires and the heuristic decides) and misaki's own G2P number reading. Digits that reach
-the voice are therefore scored as digits; that is the gap the suite shows.
+The voice front-end (D15, SYN-4): the scored text then goes through the backend's own
+text-to-phoneme step, ``hearnarro.synthesis.kokoro_backend.build_g2p`` (misaki G2P with the
+num2words shim, ``lexicon_overrides`` in the gold lexicon and the ``_OOVFallback``; no model
+weights), and so does ``expected``. Digits the normalizer leaves are expanded by misaki, as the
+listener hears them. Not modelled: the backend's post-G2P acronym re-read on phonemes (the
+spell-out is applied as text in step 2 instead) and ``in_lexicon`` (false, so rule 4 of
+``decide`` never fires and the heuristic decides).
 
-Score per pair: ``exact`` (canonical forms equal: lower case, hyphens as spaces, punctuation
-other than in-word apostrophes removed) and ``partial`` = 1 - word edit distance / expected
-words, floored at 0. ``score`` = ``partial``.
+Score per pair: ``exact`` = the phoneme tokens of ``actual`` and ``expected`` are equal
+(in-word hyphens as spaces on both sides, whitespace collapsed, punctuation removed,
+punctuation-only tokens dropped; stress marks kept); ``partial`` =
+1 - phoneme-token edit distance / expected tokens, floored at 0; ``score`` = ``partial``. The
+word-level text comparison is kept as ``text_exact`` / ``text_partial`` (canonical forms: lower
+case, hyphens as spaces, punctuation other than in-word apostrophes removed). If misaki cannot
+be imported every pair is skipped with the reason instead of scored.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import re
 from functools import cache
 from pathlib import Path
@@ -134,28 +143,73 @@ def canonical(text: str) -> list[str]:
     return re.sub(r"[^\w\s']", " ", text).split()
 
 
+_PUNCT = set(";:,.!?¡¿—–-…\"«»“”()[]{}'’")
+
+
+@cache
+def _g2p() -> Any:
+    """The backend's US-English G2P front-end (no weights) with OOV warnings silenced."""
+    from hearnarro.synthesis import kokoro_backend
+
+    logging.getLogger(kokoro_backend.__name__).setLevel(logging.ERROR)
+    return kokoro_backend.build_g2p(False, kokoro_backend.model_vocab())
+
+
+def unavailable() -> str | None:
+    """Why the G2P front-end cannot be built here, or None."""
+    try:
+        _g2p()
+    except Exception as e:  # noqa: BLE001 - any import/download failure means skip
+        return f"voice front-end unavailable: {type(e).__name__}: {e}"
+    return None
+
+
+def phonemes(text: str) -> list[str]:
+    """Phoneme tokens of ``text`` through the backend's G2P, punctuation removed. In-word
+    hyphens become spaces first, on both sides, as in ``canonical``: misaki gives a hyphenated
+    compound ("eighty-four") one token with compound stress, while its own number reading
+    yields separate words, so the hyphen would count as a phoneme difference."""
+    _, tokens = _g2p()(re.sub(r"(?<=\w)-(?=\w)", " ", text))
+    out = []
+    for t in tokens:
+        for piece in (t.phonemes or "").split():
+            piece = "".join(c for c in piece if c not in _PUNCT)
+            if piece:
+                out.append(piece)
+    return out
+
+
 def dataset() -> list[dict[str, Any]]:
-    """One example per pair."""
-    return [dict(p, **{"class": p["category"], "skip": None}) for p in load_pairs()]
+    """One example per pair; all skipped with the reason if misaki is unavailable."""
+    reason = unavailable()
+    return [dict(p, **{"class": p["category"], "skip": reason}) for p in load_pairs()]
 
 
 def score(example: dict[str, Any]) -> dict[str, Any]:
-    """id, class, exact, partial (= score), actual."""
+    """id, class, exact, partial (= score), actual, actual_ph, expected_ph, text_exact,
+    text_partial."""
     actual = spoken(example["text"], example.get("block"))
     got, want = canonical(actual), canonical(example["expected"])
-    partial = max(0.0, 1 - seq_levenshtein(got, want) / max(1, len(want)))
+    text_partial = max(0.0, 1 - seq_levenshtein(got, want) / max(1, len(want)))
+    got_ph, want_ph = phonemes(actual), phonemes(example["expected"])
+    partial = max(0.0, 1 - seq_levenshtein(got_ph, want_ph) / max(1, len(want_ph)))
     return {
         "id": example["id"],
         "class": example["class"],
-        "exact": got == want,
+        "exact": got_ph == want_ph,
         "partial": partial,
         "score": partial,
         "actual": actual,
+        "actual_ph": " ".join(got_ph),
+        "expected_ph": " ".join(want_ph),
+        "text_exact": got == want,
+        "text_partial": text_partial,
     }
 
 
 def aggregate(scores: list[dict[str, Any]]) -> dict[str, Any]:
-    """Overall exact-match accuracy, accuracy per category, mean partial credit."""
+    """Phoneme exact-match accuracy overall and per category, mean partial credit, and the
+    word-level text accuracy and partial mean alongside."""
     if not scores:
         return {"accuracy": 0.0, "partial_mean": 0.0, "by_category": {}}
     cats: dict[str, list[bool]] = {}
@@ -165,4 +219,6 @@ def aggregate(scores: list[dict[str, Any]]) -> dict[str, Any]:
         "accuracy": sum(s["exact"] for s in scores) / len(scores),
         "partial_mean": sum(s["partial"] for s in scores) / len(scores),
         "by_category": {c: sum(v) / len(v) for c, v in sorted(cats.items())},
+        "text_accuracy": sum(s["text_exact"] for s in scores) / len(scores),
+        "text_partial_mean": sum(s["text_partial"] for s in scores) / len(scores),
     }

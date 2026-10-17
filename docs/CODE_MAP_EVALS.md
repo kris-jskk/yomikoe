@@ -32,8 +32,13 @@ E1 adds the two remaining tier-0 suites and a `direction` per suite:
   `spoken()` runs the app's own path: `merge_blocks` → `split_sentences` (which calls `normalize`
   and builds the ING-7 cues) → per segment `caps_fold_spans` and `decide` from
   `hearnarro.synthesis.acronyms`, in the order of `KokoroBackend._tokens`. Spelled acronyms are
-  rendered as letters ("P D F"). Exact match on canonical words plus partial credit
-  (1 − word edit distance / expected words).
+  rendered as letters ("P D F"). (E1b) Both `spoken()` and `expected` then go through the
+  backend's text front-end, `hearnarro.synthesis.kokoro_backend.build_g2p` (misaki G2P with the
+  num2words shim, `lexicon_overrides`, `_OOVFallback`; vocab from the pinned `config.json`, no
+  weights), the same factory `KokoroBackend._g2p_for` calls. `exact` = phoneme tokens equal,
+  `partial` = 1 − phoneme-token edit distance / expected tokens; the word-level comparison is kept
+  as `text_exact` / `text_partial` (aggregates `text_accuracy`, `text_partial_mean`). If misaki
+  cannot be imported every pair is skipped with the reason.
 
 Gate: 7 tests appended to `api/tests/test_eval_gate.py`; red `_agent/results/561_e1_gate_red.txt`
 (7 failed), green `_agent/results/562_e1_gate_green.txt` (12 passed). Related tests
@@ -43,7 +48,12 @@ Tier-0 record `evals/runs/2026-10-17_0a00123.json` (console `_agent/results/563_
 13.3 s wall for EVAL-1..4): EVAL-3 total mean rate 2.5847 per 1 000 words (duplicate_runs 1.68,
 midsentence_breaks 0.87); EVAL-4 accuracy 0.2748, partial mean 0.7099. Numbers, dates, times,
 money, units and phone/range pairs score 0 exact: digits reach the voice as digits and are read by
-misaki's G2P, which tier 0 does not model.
+misaki's G2P, which tier 0 did not model.
+
+(E1b) Phoneme scoring, record `evals/runs/2026-10-17_01ac9ab.json` (console
+`_agent/results/568_e1b_tier0_run.txt`): EVAL-4 accuracy 0.6192, partial mean 0.8922, text
+accuracy 0.2748. Cardinal 1.0; time 0.0 because misaki drops "10:30"-style clock times
+entirely (no phonemes), so the listener hears nothing for them.
 
 ### The gate
 
@@ -138,7 +148,7 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 | `suites/eval1_order.py` | EVAL-1: 20 fixtures (scanned skipped without tesseract); score = `word_score`; `char_mass_ok` per example | `ID`, `TITLE`, `TIER`, `dataset`, `score`, `aggregate` (mean, min, by_class) | via `_fixtures` | tested (gate) |
 | `suites/eval2_boundaries.py` | EVAL-2: 15 non-scanned fixtures; precision, recall, F1; score = F1 | `ID`, `TITLE`, `TIER`, `dataset`, `score`, `aggregate` (mean_f1, min_recall) | via `_fixtures` | tested (gate) |
 | `suites/eval3_clean.py` | EVAL-3: 15 text fixtures; per check count and rate per 1 000 words; score = `total_rate`; `DIRECTION = "lower"` | `ID`, `TITLE`, `TIER`, `DIRECTION`, `dataset`, `score`, `aggregate` (mean_rate per check, total_mean_rate) | `hearnarro.quality.check_pdf`; word count from `_fixtures.ingest_result` | tested (gate) |
-| `suites/eval4_speech_form.py` | EVAL-4: the dataset below through the app's text-to-voice path; exact and partial per pair | `ID`, `TITLE`, `TIER`, `DIRECTION`, `DATA`, `load_pairs`, `spoken(text, block)`, `canonical`, `dataset`, `score`, `aggregate` (accuracy, partial_mean, by_category) | `data/speech_form.jsonl`; calls `ingestion.merge`, `ingestion.segment`, `ingestion.acronyms`, `synthesis.acronyms`, `synthesis.lexicon_overrides` | tested (gate) |
+| `suites/eval4_speech_form.py` | EVAL-4: the dataset below through the app's text-to-voice path; exact and partial per pair | `ID`, `TITLE`, `TIER`, `DIRECTION`, `DATA`, `load_pairs`, `spoken(text, block)`, `canonical`, `phonemes`, `unavailable`, `dataset`, `score`, `aggregate` (accuracy, partial_mean, by_category, text_accuracy, text_partial_mean) | `data/speech_form.jsonl`; calls `ingestion.merge`, `ingestion.segment`, `ingestion.acronyms`, `synthesis.acronyms`, `synthesis.lexicon_overrides` | tested (gate) |
 | `data/speech_form.jsonl` | 302 pairs: `id`, `category`, `text`, `expected`, optional `note`, optional `block` (`heading`, `table`: rows by line, cells by ` \| `; `equation`) | n/a | n/a | tested (gate: shape, ≥ 15 per category) |
 | `data/listening_rubric.md` | EVAL-9 form | n/a | n/a | planned |
 
@@ -204,6 +214,12 @@ regressions: [{suite, id, reason, metrics: {field: {baseline, candidate, delta}}
    `evals/data/` is read as that path.
 10. (E1) The dataset is 302 pairs in 14 categories; table and equation pairs set `block` so they go
     through the ING-7 block path rather than plain normalization.
+11. (E1b) EVAL-4 compares phonemes, not text (brief evals-e1b-eval4-phonemes): in-word hyphens
+    become spaces on both sides before G2P, because misaki gives "eighty-four" one compound token
+    while its number reading gives two words; stress marks are kept, so stress-only differences
+    ("pYnt" vs "pˈYnt" in decimals) count as misses (stress-insensitive accuracy 0.6921,
+    `_agent/results/572_e1b_stress_check.txt`). The backend's post-G2P acronym re-read is still
+    applied as text ("P D F"), not on phonemes.
 
 ## How to run
 

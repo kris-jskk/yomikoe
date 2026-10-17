@@ -210,18 +210,48 @@ def test_eval4_spoken_uses_the_app_path() -> None:
     assert spoken("Name | Role\nAda | Analyst", block="table").startswith("Table 1, 2 rows.")
 
 
+def _eval4_skip_reason() -> str | None:
+    from hearnarro.evals.suites import eval4_speech_form
+
+    return eval4_speech_form.unavailable()
+
+
+def test_eval4_phonemes_through_backend_front_end() -> None:
+    """EVAL-4 scores what the listener hears: misaki G2P with the num2words shim (D15)
+    expands digits, so "12" and "twelve" give the same phonemes (EVAL-4, SYN-4)."""
+    reason = _eval4_skip_reason()
+    if reason:
+        pytest.skip(reason)
+    from hearnarro.evals.suites.eval4_speech_form import phonemes
+
+    assert phonemes("There were 12 people.") == phonemes("There were twelve people.")
+    assert not set("".join(phonemes("Yes, the F B I. Then!"))) & set(",.!")
+    assert phonemes("in 1984") == phonemes("in nineteen eighty-four")
+
+
 def test_eval4_examples_and_aggregate(all_run: dict[str, Any]) -> None:
     from hearnarro.evals.suites import eval4_speech_form
 
     suite = all_run["suites"]["EVAL-4"]
+    reason = _eval4_skip_reason()
+    if reason:
+        assert len(suite["skipped"]) == len(eval4_speech_form.load_pairs())
+        assert {s["reason"] for s in suite["skipped"]} == {reason}
+        pytest.skip(reason)
     examples = suite["examples"]
     assert len(examples) == len(eval4_speech_form.load_pairs())
+    fields = {"id", "class", "exact", "partial", "score", "actual", "actual_ph", "expected_ph"}
     for ex in examples:
-        assert {"id", "class", "exact", "partial", "score", "actual"} <= set(ex)
-        assert isinstance(ex["exact"], bool)
-        assert 0.0 <= ex["partial"] <= 1.0
+        assert fields | {"text_exact", "text_partial"} <= set(ex)
+        assert isinstance(ex["exact"], bool) and isinstance(ex["text_exact"], bool)
+        assert 0.0 <= ex["partial"] <= 1.0 and 0.0 <= ex["text_partial"] <= 1.0
+        assert ex["exact"] == (ex["actual_ph"] == ex["expected_ph"])
         assert not ex["exact"] or ex["partial"] == 1.0
+        assert not ex["text_exact"] or ex["text_partial"] == 1.0
     agg = suite["aggregate"]
-    assert agg["accuracy"] == pytest.approx(sum(e["exact"] for e in examples) / len(examples))
-    assert agg["partial_mean"] == pytest.approx(sum(e["partial"] for e in examples) / len(examples))
+    n = len(examples)
+    assert agg["accuracy"] == pytest.approx(sum(e["exact"] for e in examples) / n)
+    assert agg["partial_mean"] == pytest.approx(sum(e["partial"] for e in examples) / n)
+    assert agg["text_accuracy"] == pytest.approx(sum(e["text_exact"] for e in examples) / n)
+    assert agg["text_partial_mean"] == pytest.approx(sum(e["text_partial"] for e in examples) / n)
     assert set(agg["by_category"]) == {e["class"] for e in examples} >= EVAL4_CATEGORIES
