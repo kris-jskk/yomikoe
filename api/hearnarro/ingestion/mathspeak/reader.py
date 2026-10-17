@@ -52,6 +52,12 @@ def _flat(node: Node | None) -> str:
     return "".join(_flat(c) for c in node.children)
 
 
+def _opens_with_word(group: Node) -> bool:
+    inner = group.children[0] if group.children else None
+    first = inner.children[0] if inner is not None and inner.children else None
+    return first is not None and first.kind == "word"
+
+
 def _join(words: list[str]) -> str:
     out: list[str] = []
     for w in words:
@@ -95,7 +101,10 @@ class _Reader:
                 if (
                     it.kind in ("group", "abs")
                     and prev is not None
-                    and prev.kind in ("num", "group")
+                    and (
+                        prev.kind in ("num", "group")
+                        or (prev.kind == "var" and _opens_with_word(it))
+                    )
                 ):
                     words.append("times")  # 2(k - 1): a parenthesized factor, not an argument
                 words.extend(self.item(it, limit=limit))
@@ -105,18 +114,26 @@ class _Reader:
     def op(
         self, sym: str, rest: list[Node], colon_seen: bool, limit: bool, setbuilder: bool
     ) -> str:
+        if not sym:
+            return ""
         if sym in _ATTACH:
             return sym
         if sym == ".":
             return ""
         if sym == ":":
-            if setbuilder:
-                return "such that"
-            return "from" if any(n.kind == "op" and n.text == "→" for n in rest) else "such that"
+            ahead: list[Node] = []
+            for n in rest:  # up to the next condition mark
+                if n.kind == "op" and n.text in (":", "|"):
+                    break
+                ahead.append(n)
+            maps = any(n.kind == "op" and n.text == "→" for n in ahead)
+            return "from" if maps else "such that"
         if sym == "→":
             return "to" if colon_seen else "approaches"
         if sym == "|":
             return "such that" if setbuilder else "given"
+        if len(sym) > 1 and sym not in sy.SYMBOLS:
+            return _join([sy.name_of(c) or "" for c in sym if not c.isspace()])
         word = sy.name_of(sym) or ""
         if limit and sym in RELATIONS and word.startswith("is "):
             word = word[3:]
@@ -130,6 +147,8 @@ class _Reader:
             return [n.text]
         if k == "var":
             return [n.text.lower()]
+        if k == "name":
+            return [n.text]
         if k in ("greek", "dots"):
             return [sy.name_of(n.text) or ""]
         if k == "op":
@@ -141,6 +160,8 @@ class _Reader:
         if k == "sup":
             return self.sup(kids[0], kids[1], limit)
         if k == "sub":
+            if kids[0] is not None and kids[0].kind == "group" and kids[0].text in ("()", "{}"):
+                return self.family(kids[0], kids[1], None)
             return [*self.item(kids[0], limit=limit), "sub", *self.script(kids[1])]  # type: ignore[arg-type]
         if k == "prime":
             return [*self.item(kids[0]), "double prime" if n.text == "″" else "prime"]  # type: ignore[arg-type]
@@ -149,6 +170,8 @@ class _Reader:
             return ["vector", *base] if n.text == "vector" else [*base, n.text]
         if k == "frac":
             num, den = self.row(kids[0], limit=limit), self.row(kids[1], limit=limit)
+            if (_flat(kids[0]), _flat(kids[1])) in _NUMERIC_FRACTIONS:
+                return [_NUMERIC_FRACTIONS[(_flat(kids[0]), _flat(kids[1]))]]
             if all(
                 len(c.children) == 1 and c.children[0] and not c.children[0].children
                 for c in kids
@@ -201,13 +224,34 @@ class _Reader:
             return words
         return [sy.name_of(n.text) or ""]
 
+    def family(self, group: Node, lo: Node | None, hi: Node | None) -> list[str]:
+        """An indexed family, ``(X_t)_{t≥0}`` "x sub t for t greater than or equal to 0" and
+        ``{(x_i, y_i)}_{i=1}^n`` "the set of x sub i, y sub i for i equals 1 to n" (§3c)."""
+        inner = self.row(group.children[0])
+        words = ["the set of", *inner] if group.text == "{}" else inner
+        if lo is not None:
+            words += ["for", *self.row(lo, limit=True)]
+        if hi is not None:
+            words += ["to", *self.script(hi)]
+        return words
+
     def script(self, row: Node | None) -> list[str]:
+        if row is not None and any(c is not None and c.kind == "name" for c in row.children):
+            return self.row(row, limit=True)
         flat = _flat(row)
         if len(flat) >= 3 and flat.isascii() and flat.isalpha() and flat.islower():
             return [flat]  # x_{emp}: a word or abbreviation is read as a word
         return self.row(row, limit=True)
 
     def sup(self, base: Node | None, script: Node | None, limit: bool) -> list[str]:
+        if (
+            base is not None
+            and base.kind == "sub"
+            and base.children[0] is not None
+            and base.children[0].kind == "group"
+            and base.children[0].text in ("()", "{}")
+        ):
+            return self.family(base.children[0], base.children[1], script)
         words = self.item(base, limit=limit) if base is not None else []
         if base is not None and base.kind in ("group", "apply", "abs", "norm", "interval", "sub"):
             words.append(",")  # a comma closes a group (or a subscript) before a power
@@ -227,6 +271,8 @@ class _Reader:
             return [*words, "sup", *self.row(kids[0].children[0])]
         if len(flat) >= 3 and flat.isascii() and flat.isalpha() and flat.islower():
             return [*words, "sup", flat]
+        if any(c.kind == "name" for c in kids):
+            return [*words, "sup", *self.row(script, limit=True)]
         if kids and kids[0].kind == "op" and kids[0].text == "⊗":
             return [*words, "to the tensor power", *self.row(Node("row", list(kids[1:])))]
         return [*words, "to the", *self.row(script)]

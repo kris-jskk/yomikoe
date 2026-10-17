@@ -76,7 +76,9 @@ def test_math1_prose_profile_reads_brackets_as_a_list() -> None:
 def test_math1_fallback_names_every_symbol_and_is_never_empty() -> None:
     text, (span,) = markup_segment("a ☃ ≤ b          (4)", "equation")
     assert parse(span, text) is None
-    assert speak_segment(text, [span])[0] == "equation 4 a is less than or equal to b"
+    assert fallback(span, text) == "equation 4 a is less than or equal to b"
+    # the segment reads the partial parse: the prefix, the structured parts, ☃ has no name
+    assert speak_segment(text, [span])[0] == "equation 4: a is less than or equal to b"
     assert fallback(MathSpan(0, 1, True, []), "☃") == "equation"
     node = parse(markup_segment("x + 1", "equation")[1][0])
     assert node is not None and speak(node) == "x plus 1"

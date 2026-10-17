@@ -101,6 +101,8 @@ EXTRA = {
 
 def name_of(ch: str) -> str | None:
     """The §3c wording of one symbol, a Greek letter, a letter or a digit; None if unnamed."""
+    if len(ch) != 1 and ch not in SYMBOLS:
+        return None  # one character at a time (a word or an empty string has no name)
     if ch in SYMBOLS:
         return SYMBOLS[ch]
     if ch in GREEK:

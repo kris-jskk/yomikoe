@@ -2,7 +2,8 @@
 
 ``speak_segment`` is the pure core: it rewrites one segment's text into what the voice reads and
 the ``char_map`` back into the text. Maths spans are parsed (``structure.parse``) and spoken
-(``reader.speak``), or read by ``reader.fallback`` when they cannot be structured; prose between
+(``reader.speak``); a span ``parse`` cannot structure whole is parsed again with ``partial`` so
+its structured parts are still spoken, and ``reader.fallback`` reads the rest; prose between
 them gets the MATH-4 reference rewrites (``references``) and the MATH-3 unit and chemistry
 rewrites (``symbols.rewrite_units``), and the rest goes through stage 5's ``normalize`` unchanged.
 
@@ -28,7 +29,7 @@ from typing import Any
 
 from hearnarro.ingestion.mathspeak.reader import fallback, prefix, speak
 from hearnarro.ingestion.mathspeak.references import rewrite_references
-from hearnarro.ingestion.mathspeak.structure import MathSpan, Node, label_of, parse
+from hearnarro.ingestion.mathspeak.structure import WORDS, MathSpan, Node, label_of, parse
 from hearnarro.ingestion.mathspeak.symbols import name_of, rewrite_units
 from hearnarro.ingestion.normalize import normalize
 from hearnarro.ingestion.profile import PROSE_DEFAULT, DocumentProfile
@@ -36,6 +37,7 @@ from hearnarro.ingestion.profile import PROSE_DEFAULT, DocumentProfile
 __all__ = [
     "apply_mathspeak",
     "char_map_errors",
+    "coalesce_spans",
     "glyph_spans",
     "math_segments",
     "speak_segment",
@@ -64,7 +66,7 @@ def speak_span(
         if display and label is None:
             label = label_of(raw)
         stand_in = replace(span, start=start, end=end, label=label)
-        tree = parse(stand_in, raw)
+        tree = parse(stand_in, raw) or parse(stand_in, raw, partial=True)
     spoken = speak(tree, intervals=intervals).strip() if tree is not None else ""
     if not spoken:
         tree = None
@@ -163,6 +165,7 @@ def apply_mathspeak(
                 )
             )
         if getattr(block, "type", None) not in ("table", "code"):
+            local = coalesce_spans(seg.text, local)
             local.extend(glyph_spans(seg.text, local))
         if not local and not rewrite_references(seg.text) and not rewrite_units(seg.text):
             continue
@@ -171,6 +174,135 @@ def apply_mathspeak(
 
 
 _TOKEN = re.compile(r"\S+")
+_GAP_TOKEN = re.compile(r"[()\[\]{}|,;=+\-−·]*[A-Za-z0-9]?[()\[\]{}|,;=+\-−·]*")
+_BRACKETS = set("()[]{}|")
+_PAIRS = {"(": ")", "[": "]", "{": "}"}
+
+
+def _maths_gap(gap: str, limit: int = 8) -> bool:
+    """True when ``gap`` (text between two inline spans) is maths the font split missed: at most
+    ``limit`` characters of brackets, commas and operators, a lone letter or digit only when a
+    bracket is next to it ("p(", "x)"), never a prose word."""
+    if len(gap) > limit or "\n" in gap:
+        return False
+    for tok in gap.split():
+        if not _GAP_TOKEN.fullmatch(tok):
+            return False
+        if any(c.isalnum() for c in tok) and not (set(tok) & _BRACKETS):
+            return False
+    return True
+
+
+def _gap_run(template: Any, text: str) -> Any:
+    return replace(template, text=text, superscript=False, font="cmr10")
+
+
+def _template(runs: list[Any]) -> Any:
+    return max(runs, key=lambda r: r.size)
+
+
+def coalesce_spans(text: str, spans: Sequence[MathSpan]) -> list[MathSpan]:
+    """Inline maths spans of one segment joined where the text between them is maths the font
+    split missed (``_maths_gap``: ``p`` ``(`` ``y | x`` ``)`` is one span ``p(y | x)``), then
+    grown over an adjacent letter or Greek letter (``Π`` before a span ``′``), an opening
+    bracket with the function letter before it, and the closing brackets that balance the span,
+    so function application and set-builder read whole (MATH-1, MATH-2). Display spans and spans
+    without runs are left as they are. The runs of a joined span are the parts' runs with the gap
+    text as upright runs at the main size, so ``parse`` still sees the scripts."""
+    out: list[MathSpan] = []
+    for sp in sorted(spans, key=lambda x: x.start):
+        prev = out[-1] if out else None
+        if (
+            prev is not None
+            and not sp.display
+            and not prev.display
+            and prev.runs
+            and sp.runs
+            and prev.end <= sp.start
+            and _maths_gap(text[prev.end : sp.start])
+        ):
+            gap = text[prev.end : sp.start]
+            runs = (
+                [*prev.runs, _gap_run(_template(prev.runs), gap), *sp.runs]
+                if gap
+                else [
+                    *prev.runs,
+                    *sp.runs,
+                ]
+            )
+            out[-1] = replace(prev, end=sp.end, runs=runs)
+            continue
+        out.append(sp)
+    return [_grow(text, sp, out[i - 1].end if i else 0) for i, sp in enumerate(out)]
+
+
+def _grow(text: str, sp: MathSpan, floor: int) -> MathSpan:
+    if sp.display or not sp.runs:
+        return sp
+    s, e = sp.start, sp.end
+    while e > s and text[e - 1].isspace():
+        e -= 1
+    tmpl = _template(sp.runs)
+    first = next((r for r in sp.runs if r.text.strip()), tmpl)
+    if (
+        first.size < 0.85 * tmpl.size
+        and s >= 1
+        and text[s - 1].isalpha()
+        and (s < 2 or not text[s - 2].isalnum())
+        and s - 1 >= floor
+    ):
+        # the span starts with a script whose base letter the font split left in the prose (H1)
+        s -= 1
+        sp = replace(sp, start=s, runs=[_gap_run(tmpl, text[s]), *sp.runs])
+    word = re.search(r"(?<![A-Za-z])([A-Za-z]{2,6})$", text[floor:s])
+    if word and word.group(1) in WORDS and text[s : s + 1] in "({[":
+        # a function word the font split left in the prose: "min" + "{i ∈ I_t | …}"
+        s -= len(word.group(1))
+        sp = replace(sp, start=s, runs=[_gap_run(tmpl, word.group(1)), *sp.runs])
+    before = ""
+    # an opening bracket and the function letter before it: "p(" + "y | x"
+    if (
+        s >= 2
+        and text[s - 1] in "([{"
+        and text[s - 2].isalpha()
+        and (s < 3 or not text[s - 3].isalnum())
+    ):
+        before = text[s - 2 : s]
+    elif s >= 1 and text[s - 1] in "([{":
+        before = text[s - 1]
+    else:
+        k = s
+        while k > floor and k > s - 3 and (text[k - 1].isalpha() and not text[k - 1].isascii()):
+            k -= 1
+        before = text[k:s]
+    s -= len(before)
+    if s < floor:
+        return sp
+    after = ""
+    body = text[s:e]
+    depth = {o: body.count(o) - body.count(c) for o, c in _PAIRS.items()}
+    if any(v > 0 for v in depth.values()):
+        k = e
+        while k < len(text) and k < e + 12 and any(v > 0 for v in depth.values()):
+            ch = text[k]
+            for o, c in _PAIRS.items():
+                if ch == c:
+                    depth[o] -= 1
+                elif ch == o:
+                    depth[o] += 1
+            k += 1
+        if not any(v > 0 for v in depth.values()) and _maths_gap(text[e:k], 12):
+            after = text[e:k]
+    if not before and not after:
+        return sp
+    runs = list(sp.runs)
+    if before:
+        runs.insert(0, _gap_run(tmpl, before))
+    if after:
+        runs.append(_gap_run(tmpl, after))
+    return replace(sp, start=s, end=e + len(after), runs=runs)
+
+
 _EDGE_PUNCT = ".,;:!?"
 
 
