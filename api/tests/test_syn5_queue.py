@@ -101,6 +101,25 @@ async def test_syn5_seek_clears_queue_and_refills_from_new_position() -> None:
     assert at(30).id in synthesized
 
 
+async def test_syn5_quarter_speed_change_is_a_seek() -> None:
+    """1.25 -> 1.2 is a speed change (no one-decimal rounding collapses them): the 1.25
+    window is dropped and the queue refills at 1.2."""
+    spy = SpyBackend(delay_s=0.1)
+    service, _, _ = make_service(spy, lookahead=5)
+    try:
+        await service.prefetch(DOC, 0, VOICE, 1.25)  # queues orders 0..4 at 1.25
+        await wait_for(lambda: len(spy.calls) >= 1)
+        await service.get_audio(at(1).id, VOICE, 1.2)
+        await wait_for(lambda: service.queue_depth(DOC) == 0)
+    finally:
+        await service.shutdown()
+    speeds = [c[2] for c in spy.calls]
+    assert speeds[0] == 1.25, speeds  # synthesized at 1.25, not rounded to one decimal
+    assert set(speeds) <= {1.25, 1.2}, speeds
+    assert speeds.count(1.25) <= 2  # the first job plus at most the one in flight at the seek
+    assert speeds.count(1.2) >= 1
+
+
 async def test_syn5_voice_change_prefetch_uses_new_voice() -> None:
     service, spy, cache = make_service(lookahead=2)
     try:

@@ -1,6 +1,6 @@
 """Write-through audio cache (D7, SYN-6).
 
-Files: ``data_dir/audio/{document_id}/{segment_id}/{voice_id}_{speed:.1f}.{ext}``; rows in the
+Files: ``data_dir/audio/{document_id}/{segment_id}/{voice_id}_{speed:.2f}.{ext}``; rows in the
 ``audio_cache`` table (primary key segment_id, voice_id, speed, backend). ``put`` writes
 ``path + ".tmp"``, renames, then inserts the row with status ``ready``.
 
@@ -43,8 +43,10 @@ class AudioEntry:
 
 
 def speed_key(speed: float) -> float:
-    """Cache key for a speed: one decimal (the API accepts 0.1 steps only)."""
-    return round(float(speed), 1)
+    """Cache key for a speed: two decimals (the API accepts 0.05 steps, SYN-3). Rows written
+    before the 0.05-step change keep their stored one-decimal ``path`` (``..._2.0.wav``) and
+    still hit, because ``get`` reads the file from the row, not from ``file_path``."""
+    return round(float(speed), 2)
 
 
 def media_type_for(path: Path) -> str:
@@ -67,7 +69,7 @@ class AudioCache:
 
     def file_path(self, entry: AudioEntry) -> Path:
         ext = EXTENSIONS.get(entry.media_type, "bin")
-        name = f"{entry.voice_id}_{speed_key(entry.speed):.1f}.{ext}"
+        name = f"{entry.voice_id}_{speed_key(entry.speed):.2f}.{ext}"
         return self.data_dir / "audio" / str(entry.document_id) / str(entry.segment_id) / name
 
     async def _row(

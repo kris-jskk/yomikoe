@@ -243,8 +243,8 @@ class SynthesisService:
         ):
             dropped = self._clear_document(seg.document_id)
             log.info(
-                "seek: document %s order %s (voice %s, speed %.1f) outside [%s, %s] of "
-                "(voice %s, speed %.1f); queue cleared (%d dropped)",
+                "seek: document %s order %s (voice %s, speed %.2f) outside [%s, %s] of "
+                "(voice %s, speed %.2f); queue cleared (%d dropped)",
                 seg.document_id,
                 seg.order,
                 voice_id,

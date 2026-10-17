@@ -3,7 +3,7 @@
 GET: 200 with the encoded audio, ``Content-Type`` = the cached file's media type,
 ``X-Timestamps`` (JSON list of {word, start_ms, end_ms, char_start, char_end}, offsets into
 Segment.text) and ``X-Duration-Ms``; a cache miss blocks until synthesized. 404 unknown
-segment; 422 bad speed (0.5 <= speed <= 3.0 and speed*10 integral) or unknown voice; 502
+segment; 422 bad speed (0.5 <= speed <= 3.0 and speed*20 integral, i.e. 0.05 steps) or unknown voice; 502
 JSON {segment_id, reason} when synthesis fails.
 
 HEAD: 200 if a ready cache entry exists, 404 otherwise; never synthesizes.
@@ -18,7 +18,7 @@ import json
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 
-from hearnarro.synthesis.cache import AudioEntry
+from hearnarro.synthesis.cache import AudioEntry, speed_key
 from hearnarro.synthesis.service import SegmentNotFound, SegmentSynthesisFailed, SynthesisService
 
 router = APIRouter()
@@ -28,13 +28,13 @@ MAX_SPEED = 3.0
 
 
 def validate(request: Request, voice: str, speed: float) -> float:
-    """422 unless 0.5 <= speed <= 3.0 in 0.1 steps and ``voice`` belongs to the backend."""
-    tenths = speed * 10
-    if not (MIN_SPEED <= speed <= MAX_SPEED) or abs(tenths - round(tenths)) > 1e-6:
-        raise HTTPException(422, f"speed must be {MIN_SPEED}..{MAX_SPEED} in 0.1 steps")
+    """422 unless 0.5 <= speed <= 3.0 in 0.05 steps and ``voice`` belongs to the backend."""
+    steps = speed * 20  # number of 0.05 steps
+    if not (MIN_SPEED <= speed <= MAX_SPEED) or abs(steps - round(steps)) > 1e-6:
+        raise HTTPException(422, f"speed must be {MIN_SPEED}..{MAX_SPEED} in 0.05 steps")
     if voice not in {v.id for v in request.app.state.tts_backend.voices()}:
         raise HTTPException(422, f"unknown voice {voice!r}")
-    return round(speed, 1)
+    return speed_key(speed)
 
 
 def audio_headers(entry: AudioEntry) -> dict[str, str]:

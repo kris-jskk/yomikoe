@@ -85,6 +85,7 @@ grep -i -E '^(content-type|x-duration-ms)' h2.txt
 curl -s -o /dev/null -w '%{http_code}\n' -I "$B/audio/1?voice=$V&speed=1.0"      # 200: cached
 curl -s -o /dev/null -w 'second GET (cache hit): HTTP %{http_code} %{time_total} s\n' "$B/audio/1?voice=$V&speed=1.0"
 afinfo seg1_x1.0.wav | grep -E 'File type|Data format|estimated duration'
+curl -s -o seg1_x1.25.wav -w 'HTTP %{http_code}  %{size_download} bytes\n' "$B/audio/1?voice=$V&speed=1.25"   # 0.05 steps: 1.25x, 1.75x are valid
 afplay seg1_x1.0.wav; afplay seg1_x2.5.wav                                        # listen
 ```
 
@@ -104,7 +105,7 @@ Errors:
 
 ```bash
 curl -s -w ' %{http_code}\n' "$B/audio/1?voice=af_nope&speed=1.0"   # unknown voice 'af_nope' 422
-curl -s -w ' %{http_code}\n' "$B/audio/1?voice=$V&speed=0.45"       # speed must be 0.5..3.0 in 0.1 steps 422
+curl -s -w ' %{http_code}\n' "$B/audio/1?voice=$V&speed=0.45"       # speed must be 0.5..3.0 in 0.05 steps 422 (so are 3.05 and 1.23)
 curl -s -w ' %{http_code}\n' "$B/audio/999999?voice=$V&speed=1.0"   # 404
 ```
 
@@ -127,9 +128,10 @@ $HN_DATA/audio/<document_id>/<segment_id>/<voice>_<speed>.wav   (.ogg with Opus)
 find "$HN_DATA/audio" -type f | sort | head
 ```
 
-After the two requests above you see `audio/1/1/af_heart_1.0.wav`, `af_heart_2.0.wav` (the
-native-speed intermediate of the stretched path) and `af_heart_2.5.wav`, plus
-`audio/1/2/af_heart_1.0.wav` and further segments that the lookahead queue synthesized ahead.
+Speeds are written with two decimals. After the requests above you see
+`audio/1/1/af_heart_1.00.wav`, `af_heart_1.25.wav`, `af_heart_2.00.wav` (the native-speed
+intermediate of the stretched path) and `af_heart_2.50.wav`, plus `audio/1/2/af_heart_1.00.wav`
+and further segments that the lookahead queue synthesized ahead.
 Reset as in M1: stop the server and `rm -rf "$HN_DATA"`.
 
 ## 6. The smoke script's audio pass
@@ -142,7 +144,7 @@ With the server running:
 
 It runs the M1 gate first (uploads the 15 text fixtures, prints `RESULT: PASS`), then the audio
 pass: `GET /voices` (at least 6 voices, both genders), and for the first 3 segments with words
-of every ready document, `GET /audio` at 1.0x and 2.5x with the first voice. Each row shows a
+of every ready document, `GET /audio` at 1.0x, 1.25x and 2.5x with the first voice. Each row shows a
 `HEAD` before the GET (`pre`: 404 = synthesized for this request, 200 = the lookahead queue had
 it already), HTTP code, content type, `X-Duration-Ms`, word count, bytes, the time to the full
 response (`ttfa_ms`) and a `HEAD` after (must be 200). It checks the timestamps are sorted,

@@ -1,5 +1,5 @@
 """SYN-3 speed: native path up to the backend's max, synthesize-at-max + stretch above it
-(D6), ``scale_timestamps`` math, and the API's 0.5..3.0 in 0.1 steps validation."""
+(D6), ``scale_timestamps`` math, and the API's 0.5..3.0 in 0.05 steps validation."""
 
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ def native_duration_ms(text: str, speed: float) -> int:
     return FakeBackend().synthesize(text, VOICE, speed).duration_ms
 
 
-@pytest.mark.parametrize("speed", [0.5, 1.0, 1.5, 2.0])
+@pytest.mark.parametrize("speed", [0.5, 1.0, 1.25, 1.5, 1.75, 2.0])
 async def test_syn3_native_path_passes_speed_to_backend(speed: float) -> None:
     seg = fifty_fixture_sentences()[0]
     service, spy, _ = make_service()
@@ -99,7 +99,7 @@ async def test_syn3_native_path_passes_speed_to_backend(speed: float) -> None:
     assert entry.duration_ms == native_duration_ms(seg.normalized_text, speed)
 
 
-@pytest.mark.parametrize("speed", [2.1, 2.5, 3.0])
+@pytest.mark.parametrize("speed", [2.1, 2.25, 2.5, 2.75, 3.0])
 async def test_syn3_stretched_path_synthesizes_at_native_max_then_stretches(speed: float) -> None:
     seg = fifty_fixture_sentences()[0]
     service, spy, cache = make_service()
@@ -121,13 +121,17 @@ async def test_syn3_stretched_path_synthesizes_at_native_max_then_stretches(spee
     assert len(wav) < len(WavEncoder().encode(at_max.audio, SR))
 
 
-# --- API validation: 0.5 <= speed <= 3.0, speed * 10 integral -----------------------------
-
-VALID = [0.5, 0.7, 1.0, 1.3, 2.0, 2.1, 2.7, 3.0]
-INVALID = ["0.4", "3.1", "1.25", "0.55", "0", "-1", "10", "abc"]
+def test_syn3_stretch_ratio_for_2_25_is_exactly_1_125() -> None:
+    assert 2.25 / 2.0 == 1.125
 
 
-async def test_syn3_api_speed_validation_0_5_to_3_0_in_0_1_steps(tmp_path: Path) -> None:
+# --- API validation: 0.5 <= speed <= 3.0, speed * 20 integral -----------------------------
+
+VALID = [0.5, 0.55, 0.7, 1.0, 1.25, 1.3, 1.75, 2.0, 2.1, 2.25, 2.7, 2.95, 3.0]
+INVALID = ["0.45", "3.05", "0.4", "3.1", "1.23", "1.255", "1.1001", "0", "-1", "10", "abc"]
+
+
+async def test_syn3_api_speed_validation_0_5_to_3_0_in_0_05_steps(tmp_path: Path) -> None:
     from tests.test_api_audio import ready_document
 
     async with ready_document(tmp_path) as (client, segments):

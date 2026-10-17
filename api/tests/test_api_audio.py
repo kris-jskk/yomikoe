@@ -96,7 +96,7 @@ async def test_syn6_audio_cache_file_and_row_written(tmp_path: Path) -> None:
         resp = await client.get(f"/audio/{seg['id']}", params={"voice": VOICE, "speed": 1.5})
         assert resp.status_code == 200, resp.text
         doc_id = client.document_id  # type: ignore[attr-defined]
-    path = tmp_path / "audio" / str(doc_id) / str(seg["id"]) / f"{VOICE}_1.5.wav"
+    path = tmp_path / "audio" / str(doc_id) / str(seg["id"]) / f"{VOICE}_1.50.wav"
     assert path.read_bytes() == resp.content
     assert not list((tmp_path / "audio").rglob("*.tmp"))
     db = sqlite3.connect(tmp_path / "hearnarro.db")
@@ -113,6 +113,70 @@ async def test_syn6_audio_cache_file_and_row_written(tmp_path: Path) -> None:
     assert (voice, speed, backend, status) == (VOICE, 1.5, "fake", "ready")
     assert duration_ms == int(resp.headers["x-duration-ms"])
     assert json.loads(ts_json) == json.loads(resp.headers["x-timestamps"])
+
+
+async def test_syn3_syn6_quarter_speeds_two_decimal_cache_files_rows_and_hits(
+    tmp_path: Path,
+) -> None:
+    """1.25 is cached as ``_1.25.wav`` (row speed 1.25) and hits on HEAD; 2.25 writes the
+    native-max ``_2.00.wav`` plus the stretched ``_2.25.wav``."""
+    async with ready_document(tmp_path) as (client, segments):
+        seg = worded(segments)[1]
+        url = f"/audio/{seg['id']}"
+        resp = await client.get(url, params={"voice": VOICE, "speed": 1.25})
+        assert resp.status_code == 200, resp.text
+        head = await client.head(url, params={"voice": VOICE, "speed": 1.25})
+        assert head.status_code == 200
+        assert (await client.head(url, params={"voice": VOICE, "speed": 1.2})).status_code == 404
+        hit = await client.get(url, params={"voice": VOICE, "speed": 1.25})
+        assert hit.content == resp.content
+        stretched = await client.get(url, params={"voice": VOICE, "speed": 2.25})
+        assert stretched.status_code == 200, stretched.text
+        doc_id = client.document_id  # type: ignore[attr-defined]
+    folder = tmp_path / "audio" / str(doc_id) / str(seg["id"])
+    assert (folder / f"{VOICE}_1.25.wav").read_bytes() == resp.content
+    assert (folder / f"{VOICE}_2.25.wav").read_bytes() == stretched.content
+    assert (folder / f"{VOICE}_2.00.wav").is_file()
+    assert sorted(p.name for p in folder.iterdir()) == sorted(
+        f"{VOICE}_{s}.wav" for s in ("1.25", "2.00", "2.25")
+    )
+    db = sqlite3.connect(tmp_path / "hearnarro.db")
+    try:
+        rows = db.execute(
+            "SELECT speed, status, path FROM audio_cache WHERE segment_id = ? ORDER BY speed",
+            (seg["id"],),
+        ).fetchall()
+    finally:
+        db.close()
+    assert [(r[0], r[1]) for r in rows] == [(1.25, "ready"), (2.0, "ready"), (2.25, "ready")]
+    assert [Path(r[2]).name for r in rows] == [f"{VOICE}_{s}.wav" for s in ("1.25", "2.00", "2.25")]
+
+
+async def test_syn6_one_decimal_row_from_before_0_05_steps_still_hits(tmp_path: Path) -> None:
+    """A row written before two-decimal keys (path ``..._2.0.wav``) is still served: ``get``
+    opens the file named in the row, so nothing on disk needs migrating."""
+    async with ready_document(tmp_path) as (client, segments):
+        seg = worded(segments)[1]
+        url, params = f"/audio/{seg['id']}", {"voice": VOICE, "speed": 2.0}
+        first = await client.get(url, params=params)
+        assert first.status_code == 200, first.text
+        doc_id = client.document_id  # type: ignore[attr-defined]
+        folder = tmp_path / "audio" / str(doc_id) / str(seg["id"])
+        old = folder / f"{VOICE}_2.0.wav"
+        (folder / f"{VOICE}_2.00.wav").rename(old)
+        db = sqlite3.connect(tmp_path / "hearnarro.db")
+        try:
+            db.execute(
+                "UPDATE audio_cache SET path = ? WHERE segment_id = ? AND speed = 2.0",
+                (str(old.relative_to(tmp_path)), seg["id"]),
+            )
+            db.commit()
+        finally:
+            db.close()
+        assert (await client.head(url, params=params)).status_code == 200
+        again = await client.get(url, params=params)
+        assert again.content == first.content
+    assert not (folder / f"{VOICE}_2.00.wav").exists()  # served from the old name, no resynth
 
 
 async def test_syn6_head_never_synthesizes(tmp_path: Path) -> None:

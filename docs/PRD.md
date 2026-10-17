@@ -84,7 +84,7 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | --- | --- | --- |
 | SYN-1 | P0 | Synthesize one sentence segment at a time and return audio plus word-level timestamps |
 | SYN-2 | P0 | At least 6 distinct voices across both genders with a language tag; voice list exposed via API |
-| SYN-3 | P0 | Speed from 0.5x to 3.0x in 0.1 steps; applied in the model's duration control where supported, time-stretch fallback above the model's range |
+| SYN-3 | P0 | Speed from 0.5x to 3.0x in 0.05 steps (so 1.25x and 1.75x are valid); applied in the model's duration control where supported, time-stretch fallback above the model's range |
 | SYN-4 | P0 | Backend is an interface (`synthesize(text, voice, speed) -> audio, timestamps`); Kokoro is the first implementation |
 | SYN-5 | P0 | Lookahead queue: keep N segments ahead of playback synthesized; N configurable, default 5 |
 | SYN-6 | P1 | Cache synthesized audio keyed by (segment id, voice, speed) so re-listening is instant; the id, not a text hash, so a re-ingested document never reuses stale audio (D7) |

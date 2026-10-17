@@ -28,7 +28,7 @@ every PDF in DIR after the gate and prints pages / parse_ms / pg/s / segs / chec
 Audio pass (M2): ``--audio`` runs after the gate (and ``--user-docs``) over every ``ready``
 document the server holds (SYN-1, SYN-2, SYN-3, SYN-6). It checks ``GET /voices`` (>= 6
 voices, both genders), then for the first 3 segments with words of each document fetches
-``GET /audio`` at speeds 1.0 and 2.5 with the first voice and checks: HTTP 200, an audio
+``GET /audio`` at speeds 1.0, 1.25 and 2.5 with the first voice and checks: HTTP 200, an audio
 content type, ``X-Duration-Ms`` > 0, ``X-Timestamps`` sorted, non-overlapping and within the
 duration, char spans inside the segment text, and ``HEAD`` 200 afterwards. A ``HEAD`` before
 the GET shows whether the entry was already cached (lookahead, SYN-5), so TTFA reads as a
@@ -72,7 +72,7 @@ DEFAULT_CLASSES = "academic,report,tables"  # "scanned" needs OCR (Tesseract), d
 PER_PDF_MIN = 0.95
 MEAN_MIN = 0.97
 PAGE_LIMIT = 500  # the API's documented maximum
-AUDIO_SPEEDS = (1.0, 2.5)
+AUDIO_SPEEDS = (1.0, 1.25, 2.5)
 AUDIO_SEGMENTS = 3
 MIN_VOICES = 6
 AUDIO_TYPES = ("audio/wav", "audio/ogg", "audio/webm")
@@ -390,7 +390,7 @@ def run_audio(client: httpx.Client, timeout: float) -> int:
                     errs.append(f"HEAD after GET: {head}")
                 failures += bool(errs)
                 print(
-                    f"{name:34} {seg['id']:6d} {speed:5.1f} {pre:4d} {resp.status_code:4d} "
+                    f"{name:34} {seg['id']:6d} {speed:5.2f} {pre:4d} {resp.status_code:4d} "
                     f"{ctype[:10]:10} {dur:7d} {words:>5} {len(resp.content):8d} {ttfa:8.0f} "
                     f"{head:4d}  {'ok' if not errs else 'FAIL'}"
                 )

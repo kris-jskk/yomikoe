@@ -32,7 +32,7 @@ browser can play, with word timestamps the reader can highlight against:
 
 - **SYN-1** synthesize one sentence segment at a time, returning audio plus word timestamps.
 - **SYN-2** at least six voices across both genders with a language tag, listed by `GET /voices`.
-- **SYN-3** speed 0.5x to 3.0x in 0.1 steps: native model speed where supported, time-stretch above.
+- **SYN-3** speed 0.5x to 3.0x in 0.05 steps: native model speed where supported, time-stretch above.
 - **SYN-4** the backend is an interface (`TTSBackend`); Kokoro is the first implementation.
 - **SYN-5** a lookahead queue keeps N segments ahead synthesized (N configurable, default 5).
 - **SYN-6** synthesized audio is cached so re-listening is instant (P1).
@@ -171,7 +171,7 @@ has never been synthesized with this voice and speed.
     Crosses: PCM bytes → container bytes (`audio/wav`, or Ogg Opus `audio/ogg`, D16).
 13. **Write through the cache.** `service.py` → `await self.cache.put(entry, audio_bytes)` →
     `cache.py` → `AudioCache.put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry` [tested].
-    Designed order: write `data_dir/audio/{document_id}/{segment_id}/{voice_id}_{speed:.1f}.{ext}.tmp`,
+    Designed order: write `data_dir/audio/{document_id}/{segment_id}/{voice_id}_{speed:.2f}.{ext}.tmp`,
     rename to the final name (atomic on one filesystem), then insert the `audio_cache` row with
     `status='ready'`, `path`, `duration_ms`, `timestamps_json` (text offsets), `created_at`.
     Crosses: a file on disk, one row, and the returned `AudioEntry` with `path` filled.
@@ -713,8 +713,8 @@ CREATE TABLE audio_cache (
   audio/
     {document_id}/
       {segment_id}/
-        {voice_id}_{speed:.1f}.{ext}        e.g. fake_f1_1.0.wav, af_heart_2.5.webm
-        {voice_id}_{speed:.1f}.{ext}.tmp    only during a write; renamed, never served
+        {voice_id}_{speed:.2f}.{ext}        e.g. fake_f1_1.00.wav, af_heart_1.25.wav, af_heart_2.50.webm
+        {voice_id}_{speed:.2f}.{ext}.tmp    only during a write; renamed, never served
 ```
 
 One file per `(segment, voice, speed)`. The backend name is in the row key but not in the file
@@ -819,9 +819,13 @@ shut the executor down without waiting (`cancel_futures=True`). Code as describe
 
 ## Speed handling
 
-**Range and validation.** The API accepts 0.5 ≤ speed ≤ 3.0 in 0.1 steps (SYN-3); anything else
-is 422 at the route. The value is canonicalized to one decimal before it reaches the service, so
-cache keys compare equal.
+**Range and validation.** The API accepts 0.5 ≤ speed ≤ 3.0 in 0.05 steps (SYN-3;
+`routes/audio.py::validate` checks `speed * 20` is integral within 1e-6); anything else, e.g.
+1.23, 0.45 or 3.05, is 422 at the route. The value is canonicalized by `cache.speed_key` to two
+decimals before it reaches the service, so cache keys compare equal and 1.25 and 1.2 stay
+distinct (a change between them is a seek). File names use `{speed:.2f}` (`_1.25.wav`,
+`_2.00.wav`). Rows cached before this change keep their one-decimal `path` (`_2.0.wav`) and
+still hit, because `AudioCache.get` opens the file named in the row; nothing is migrated.
 
 **Native path.** `lo, hi = backend.speed_range()`; for `speed ≤ hi` the backend synthesizes at
 `speed` directly (Kokoro applies speed in its duration predictor, so prosody stays natural). The
@@ -845,8 +849,11 @@ close to `len/ratio`; `test_syn1_timestamp_invariants_stretched_50_sentences` (t
 2.5x and 3.0x (green, 297).
 
 **Which tests pin it.** `test_syn3_speed.py` (green, 297): native path passes the speed straight to the
-backend at 0.5/1.0/1.5/2.0; stretched path calls the backend at native max for 2.1/2.5/3.0;
-scale math; stretch length; ratio bounds; API validation 0.5 to 3.0 in 0.1 steps.
+backend at 0.5/1.0/1.25/1.5/1.75/2.0; stretched path calls the backend at native max for
+2.1/2.25/2.5/2.75/3.0 (2.25 / 2.0 = 1.125 exactly); scale math; stretch length; ratio bounds;
+API validation 0.5 to 3.0 in 0.05 steps. `test_api_audio.py::test_syn3_syn6_quarter_speeds_two_decimal_cache_files_rows_and_hits`
+pins `_1.25.wav` + row speed 1.25 + HEAD hit, and 2.25 writing `_2.00.wav` plus `_2.25.wav`;
+`test_syn5_queue.py::test_syn5_quarter_speed_change_is_a_seek` pins 1.25 → 1.2 as a seek.
 
 ## Dependencies and licences
 
