@@ -202,12 +202,15 @@ wins; a timestamp with no overlap is dropped). The active token is the one of th
 with `start_ms <= elapsedMs`; between words (after a timestamp's `end_ms`, before the next `start_ms`) the
 previous token stays highlighted.
 
-**Auto-scroll (amended 2026-10-17 after the index-click report):** an explicit navigation (Toc entry, word or
-sentence click, sentence/section skip buttons, Play from the saved position or after the end) always scrolls its
-target segment to the centre straight away, whatever the user scrolled just before. The automatic advance during
-playback scrolls only when no `wheel`/`touchmove` inside the reading column and no page-scroll key outside a form
-control was seen in the last 3 s (`shouldAutoScroll(reason, lastInputAt, now)` in `schedule.ts`).
-`prefers-reduced-motion` → `behavior:'auto'`.
+**Auto-scroll (amended 2026-10-17, follow mode, user request; replaces the cooldown):** an explicit navigation
+(Toc entry, word or sentence click, sentence/section skip, Play from idle/error or after the end, or the
+"Back to reading" button) always centres its target and turns follow mode on. The first `wheel`/`touchmove`
+inside the reading column, or a page-scroll key outside a form control, turns follow mode off; the automatic
+advance then never scrolls until the next navigation, while the highlight keeps moving. While follow mode is
+off, the PlayerBar shows `<button id="follow" aria-label="Back to reading">` with ↑ or ↓ when the highlighted
+segment is wholly above or below the viewport (no arrow when in view); clicking it centres the current segment
+at once and resumes following. Helpers `shouldAutoScroll(reason, following)` and `followHint(rect, vh)` in
+`schedule.ts`. `prefers-reduced-motion` → `behavior:'auto'`.
 
 **Default speed (user decision 2026-10-17):** `DEFAULT_SPEED = 1.25` in `machine.ts`, used when the document has
 no saved speed (the server stores NULL for "use the global default"; LIB-3 makes it a setting in M4).
