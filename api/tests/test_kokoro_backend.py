@@ -207,10 +207,12 @@ UBER_SENTENCE = "I took an Uber to the TED talk."
 @pytest.mark.model
 def test_syn4_kokoro_lexicon_override_uber(caplog: pytest.LogCaptureFixture) -> None:
     from hearnarro.synthesis.backend import SynthContext
+    from hearnarro.synthesis.lexicon_academic import flat
     from hearnarro.synthesis.lexicon_overrides import OVERRIDES
 
     b = _backend()
     assert all(c in b._vocab for ps in OVERRIDES.values() for c in ps)
+    assert all(c in b._vocab for ps in flat().values() for c in ps)  # TERM-1
     ctx = SynthContext(acronyms={"XYZ": "Some Other Thing"}, document_id=4242)
     with caplog.at_level(logging.INFO, logger="hearnarro.synthesis.kokoro_backend"):
         by_text = {t.text: t.phonemes for t in b._tokens(UBER_SENTENCE, False, ctx)}

@@ -41,7 +41,8 @@ class FakeBackend:
     def synthesize(
         self, text: str, voice_id: str, speed: float, context: SynthContext | None = None
     ) -> SynthResult:
-        """``context`` is accepted and ignored (the fake does not phonemize)."""
+        """``context`` is accepted and ignored (the fake does not phonemize, so neither the
+        acronyms nor the user respellings of ``context.lexicon``, TERM-2, change its output)."""
         if voice_id not in {v.id for v in _VOICES}:
             raise ValueError(f"unknown voice {voice_id!r} for backend 'fake'")
         lo, hi = self.speed_range()
