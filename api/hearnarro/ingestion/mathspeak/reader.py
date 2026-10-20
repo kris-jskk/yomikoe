@@ -226,6 +226,13 @@ class _Reader:
             return ["the norm of", *self.row(kids[0])]
         if k == "opnorm":
             return ["the operator norm of", *self.row(kids[0])]
+        if k == "colvec":  # spec §3c: "the column vector a, b" (m5 p3n)
+            words = ["the column vector"]
+            for r, row in enumerate(c for c in kids if c is not None):
+                if r:
+                    words.append(",")
+                words.extend(self.row(row))
+            return words
         if k == "matrix":
             words = ["the matrix with rows:"]
             for r, row in enumerate(c for c in kids if c is not None):

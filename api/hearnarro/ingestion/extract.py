@@ -208,6 +208,9 @@ def _line_from_layout(chars: LayoutLine) -> Line | None:
             k = (c.font, round(c.size, 2), True, raised(c))
         else:  # pdfminer reports a rotated glyph's advance as its size; use the line's
             k = (c.font, dominant, False, False)
+        if k == key and upright and boxes and _level_jump(boxes[-1], c.bbox, c.size):
+            flush()  # one font on two levels of a display (numerator, row): two spans (m5 p3n)
+            text, boxes = [], []
         if k != key:
             flush()
             key, text, boxes = k, [], []
@@ -224,6 +227,16 @@ def _line_from_layout(chars: LayoutLine) -> Line | None:
         bbox=_union([s.bbox for s in spans]),
         dir=(1.0, 0.0) if upright else (0.0, 1.0),
     )
+
+
+LEVEL_JUMP = 0.5  # a glyph whose top and bottom both move this many sizes is on another level
+
+
+def _level_jump(prev: BBox, box: BBox, size: float) -> bool:
+    """``box`` sits on another vertical level than ``prev`` (a display's numerator after its
+    main row): the span is split so structure.py sees each level's geometry (MATH-1, m5 p3n)."""
+    tol = LEVEL_JUMP * max(size, 1.0)
+    return abs(box.y0 - prev.y0) > tol and abs(box.y1 - prev.y1) > tol
 
 
 def page_from_layout(

@@ -87,6 +87,7 @@ class _Tok:
     inner2: list[_Tok] = field(default_factory=list)  # a frac token's denominator
     size: float = 0.0  # a script token's run size and centre, for a script of a script
     mid: float = 0.0
+    rows: list[list[list[_Tok]]] = field(default_factory=list)  # a stack token's rows of cells
 
 
 LIMOPS = {"lim", "max", "min", "sup", "inf", "argmin", "argmax"}
@@ -97,7 +98,12 @@ BIGOPS = {"∑": "sum", "∏": "prod", "∫": "int", "∮": "int"}
 _NUM = re.compile(r"\d+(?:\.\d+)?")
 _LABEL_TAIL = re.compile(r"\s*\(\s*(\d+(?:\.\d+)*)\s*\)\s*$")
 _LABEL_HEAD = re.compile(r"^\s*\(\s*(\d+(?:\.\d+)*)\s*\)\s+")  # left-numbered (amsmath leqno)
-_PREACCENTS = {"ˆ": "hat", "˜": "tilde", "¯": "bar"}  # spacing accents set before their base
+# spacing accents set before their base; unicode-math sets \\dot, \\ddot as ˙, ¨ (m5 p3n)
+_PREACCENTS = {"ˆ": "hat", "˜": "tilde", "¯": "bar", "˙": "dot", "¨": "double dot"}
+_VARIATION = re.compile("[\ufe00-\ufe0f]")  # a size variant of a delimiter: the delimiter
+# a tall delimiter set in an extension font as its own run, "[︂" (U+FE02 marks the size variant)
+_TALL_OPEN = re.compile("^\\s*[\\[(][\ufe00-\ufe0f]\\s*$")
+_TALL_CLOSE = re.compile("^\\s*[\\])][\ufe00-\ufe0f]\\s*$")
 _SAME = {
     "∆": "Δ", "µ": "μ", "⋆": "∗", "−→": "→", "−−→": "→", "←−": "←", "7→": "↦", ": =": ":=",
     "–": "−",  # an en dash between operands, as text fonts set minus
@@ -127,6 +133,7 @@ def _lex(text: str, words: bool = False) -> list[_Tok]:
     """Tokens of ``text``; ``words`` (an upright text font) reads letter runs as words."""
     for a, b in _SAME.items():
         text = text.replace(a, b)
+    text = _VARIATION.sub("", text)
     # Mathematical alphanumerics (𝑥, 𝑙𝑜𝑔, 𝐀; unicode-math fonts put them in the text layer) are
     # their plain letters and digits, so 𝑙𝑜𝑔 is the function word log (m5 p3k, MATH-1).
     text = "".join(
@@ -353,6 +360,11 @@ class _Parser:
             return Node(t.kind, [], t.text)
         if t.kind == "frac":
             return Node("frac", [self.sub_row(t.inner), self.sub_row(t.inner2)])
+        if t.kind == "stack":
+            # one column is a column vector, several columns a matrix (spec §3c, m5 p3n)
+            if all(len(row) == 1 for row in t.rows):
+                return Node("colvec", [self.sub_row(row[0]) for row in t.rows])
+            return Node("matrix", [Node("row", [self.sub_row(c) for c in row]) for row in t.rows])
         if t.kind == "preaccent":
             if self.peek() is None or self.peek().kind in ("close", "op"):  # type: ignore[union-attr]
                 return Node("op", [], "")
@@ -607,12 +619,23 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
     has_brace = any(_is_underbrace(r) for r in runs)
     if not full:
         return _pieces(runs, base)
-    main_y0 = full[0].bbox.y0
+    # the main row is the row of the first relation: a display may open with a fraction, whose
+    # numerator is the first run (dy/dt = ẏ, m5 p3n); a relation run set across two levels
+    # (":= 1" with the numerator 1) does not name the row
+    main = next(
+        (
+            r
+            for r in full
+            if any(c in _MAIN_RELATIONS for c in r.text) and r.bbox.y1 - r.bbox.y0 <= 1.3 * r.size
+        ),
+        full[0],
+    )
+    main_y0 = main.bbox.y0
     tol = 0.4 * base
     above = any(r.bbox.y0 < main_y0 - tol for r in full)
     if not above and not has_brace:
         return _pieces(runs, base)
-    main_mid = _mid(full[0])
+    main_mid = _mid(main)
     runs = _limits_after(runs, base)
     frac_x1 = 0.0  # right edge of the current fraction's full-size runs
     row: list[Piece] = []
@@ -621,6 +644,8 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
     den: list[Any] = []
     label: list[Any] = []
     mode = "main"  # main / frac / label
+    stack: list[Any] | None = None  # the runs inside a tall bracket pair
+    depth = 0
 
     def flush() -> None:
         nonlocal mode, chunk, num, den, label
@@ -636,6 +661,18 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
         chunk, num, den, label, mode = [], [], [], [], "main"
 
     for r in runs:
+        if stack is not None:
+            depth += 1 if _TALL_OPEN.match(r.text) else -1 if _TALL_CLOSE.match(r.text) else 0
+            if depth == 0:
+                row.append(_stack_tok(stack, base))
+                stack = None
+            else:
+                stack.append(r)
+            continue
+        if _TALL_OPEN.match(r.text):
+            flush()
+            stack, depth = [], 1
+            continue
         is_full = r.size >= 0.85 * base and "cmex" not in r.font.lower()
         if _is_underbrace(r):
             flush()
@@ -675,7 +712,59 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
                 flush()
             chunk.append(r)
     flush()
+    if stack:
+        row.extend(_flat_pieces(stack))  # an unclosed bracket: its runs in order
     return [row]
+
+
+_MAIN_RELATIONS = frozenset("=<>≤≥≈≡")
+
+
+def _stack_tok(runs: list[Any], outer: float) -> _Tok:
+    """A stack token for the runs inside a tall bracket pair (m5 p3n, spec §3c): lines by top,
+    each script on the line of the full-size run before it, cells split at a gap wider than the
+    body size. Script-size lines in centred pairs are fractions (TeX sets a fraction inside a
+    display matrix in text style, its numerator and denominator at script size)."""
+    runs = [r for r in runs if r.text.strip()]
+    if not runs:
+        return _Tok("stack", "", rows=[])
+    base = _base_size(runs)
+    lines: list[list[Any]] = []
+    tops: list[float] = []
+    cur = -1
+    for r in runs:
+        if r.size >= 0.85 * base or cur < 0:
+            k = next((i for i, t in enumerate(tops) if abs(r.bbox.y0 - t) <= 0.4 * base), -1)
+            if k < 0:
+                lines.append([])
+                tops.append(r.bbox.y0)
+                k = len(lines) - 1
+            cur = k
+        lines[cur].append(r)
+    lines = [ln for _, ln in sorted(zip(tops, lines, strict=True), key=lambda t: t[0])]
+
+    def toks(line: list[Any]) -> list[_Tok]:
+        return _row_tokens(_flat_pieces(line))
+
+    def centred(top: list[Any], low: list[Any]) -> bool:
+        mid = (min(r.bbox.x0 for r in low) + max(r.bbox.x1 for r in low)) / 2
+        return min(r.bbox.x0 for r in top) <= mid <= max(r.bbox.x1 for r in top)
+
+    pairs = [(lines[i], lines[i + 1]) for i in range(0, len(lines) - 1, 2)]
+    if base < 0.85 * outer and len(lines) % 2 == 0 and all(centred(a, b) for a, b in pairs):
+        return _Tok(
+            "stack", "", rows=[[[_Tok("frac", "", "", toks(a), toks(b))]] for a, b in pairs]
+        )
+    rows: list[list[list[_Tok]]] = []
+    for line in lines:
+        cells: list[list[Any]] = [[]]
+        for r in line:
+            prev = cells[-1][-1] if cells[-1] else None
+            if prev is not None and r.bbox.x0 - prev.bbox.x1 > base:
+                cells.append([])
+            cells[-1].append(r)
+        rows.append([toks(c) for c in cells])
+    return _Tok("stack", "", rows=rows)
 
 
 _RELATION_HEAD = re.compile(r"\s*(:=|=|≡|≈|≤|≥|<|>)\s*")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 
 from hearnarro.ingestion.classify import (
     BOILERPLATE_RE,
@@ -462,6 +463,12 @@ def _inline_spans(lines: list[Line], texts: list[str], heading: bool) -> list[Ma
             acc += len(s.text)
         for run in _math_runs(line):
             lo = starts[run[0]]
+            k = run[0] - 1
+            if k >= 0 and line.spans[k].text[-1:] in _SPACING_ACCENTS:
+                # unicode-math sets \dot{y} as "˙" ending the text run before "𝑦": the accent
+                # opens the maths span, read "y dot" (MATH-2, m5 p3n)
+                lo -= 1
+                run = [k, *run]
             last = line.spans[run[-1]].text
             hi = starts[run[-1]] + len(last)
             if not any(_is_math_font(line.spans[k].font) for k in run):
@@ -469,6 +476,8 @@ def _inline_spans(lines: list[Line], texts: list[str], heading: bool) -> list[Ma
             kept = [p for p in pos[lo:hi] if p >= 0]
             if kept:
                 runs = [line.spans[k] for k in run]
+                if runs[0].text[-1:] in _SPACING_ACCENTS and len(runs[0].text) > 1:
+                    runs[0] = replace(runs[0], text=runs[0].text[-1])
                 if not any(_is_math_font(r.font) for r in runs) and any(
                     r.text.strip() in _SPACING_ACCENTS for r in runs
                 ):
