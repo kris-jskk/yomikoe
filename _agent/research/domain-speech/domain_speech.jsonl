@@ -1,0 +1,278 @@
+{"id": "chemistry_01", "class": "formula", "raw": "Water (H2O) was added.", "spoken": "water (h 2 o) was added.", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_02", "class": "formula", "raw": "C6H12O6", "spoken": "c 6 h 12 o 6", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_03", "class": "formula", "raw": "NaCl dissolves in water.", "spoken": "n a c l dissolves in water.", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_04", "class": "formula", "raw": "Ca(OH)2", "spoken": "c a, o h, 2", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_05", "class": "formula", "raw": "CuSO4·5H2O", "spoken": "c u s o 4 dot 5 h 2 o", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_06", "class": "formula", "raw": "[Cu(NH3)4]2+", "spoken": "c u, n h 3, 4, 2 plus", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_07", "class": "charge", "raw": "Na+ and Cl− ions", "spoken": "n a plus and c l minus ions", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_08", "class": "charge", "raw": "The sulfate ion SO42− is tetrahedral.", "spoken": "the sulfate ion s o 4, 2 minus is tetrahedral.", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_09", "class": "charge", "raw": "Fe2+ is oxidized to Fe3+.", "spoken": "f e 2 plus is oxidized to f e 3 plus.", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_10", "class": "charge", "raw": "H3O+", "spoken": "h 3 o plus", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_11", "class": "oxidation_state", "raw": "iron(III) chloride", "spoken": "iron 3 chloride", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_12", "class": "oxidation_state", "raw": "Mn(VII) in permanganate", "spoken": "m n 7 in permanganate", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_13", "class": "isotope", "raw": "Radiocarbon dating uses 14C.", "spoken": "radiocarbon dating uses carbon 14.", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_14", "class": "isotope", "raw": "235U fission", "spoken": "uranium 235 fission", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_15", "class": "reaction", "raw": "2H2(g) + O2(g) → 2H2O(l)", "spoken": "2 h 2 gas plus o 2 gas reacts to form 2 h 2 o liquid", "block": "equation", "domain": "chemistry"}
+{"id": "chemistry_16", "class": "reaction", "raw": "N2 + 3H2 ⇌ 2NH3", "spoken": "n 2 plus 3 h 2 is in equilibrium with 2 n h 3", "block": "equation", "domain": "chemistry"}
+{"id": "chemistry_17", "class": "reaction", "raw": "AgNO3(aq) + NaCl(aq) → AgCl(s) + NaNO3(aq)", "spoken": "a g n o 3 aqueous plus n a c l aqueous reacts to form a g c l solid plus n a n o 3 aqueous", "block": "equation", "domain": "chemistry"}
+{"id": "chemistry_18", "class": "reaction", "raw": "CaCO3 —Δ→ CaO + CO2", "spoken": "c a c o 3 reacts to form, with heat, c a o plus c o 2", "block": "equation", "domain": "chemistry"}
+{"id": "chemistry_19", "class": "thermo", "raw": "ΔH° = −92 kJ/mol", "spoken": "capital delta h naught equals minus 92 kilojoules per mole", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_20", "class": "thermo", "raw": "ΔG = ΔH − TΔS", "spoken": "capital delta g equals capital delta h minus t capital delta s", "block": "equation", "domain": "chemistry"}
+{"id": "chemistry_21", "class": "thermo", "raw": "The Ksp of AgCl is 1.8 × 10−10.", "spoken": "the k s p of a g c l is 1.8 times 10 to the minus 10.", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_22", "class": "thermo", "raw": "acetic acid has a pKa of 4.76", "spoken": "acetic acid has a p k a of 4.76", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_23", "class": "units", "raw": "a 0.1 M NaOH solution", "spoken": "a 0.1 molar n a o h solution", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_24", "class": "units", "raw": "5 mM and 20 µM", "spoken": "5 millimolar and 20 micromolar", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_25", "class": "units", "raw": "1.0 mol dm−3", "spoken": "1.0 moles per cubic decimeter", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_26", "class": "units", "raw": "at pH 7.4", "spoken": "at p h 7.4", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_27", "class": "units", "raw": "1.2 equiv of base in 10% w/v", "spoken": "1.2 equivalents of base in 10 percent weight per volume", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_28", "class": "nomenclature", "raw": "2-methylpropan-2-ol", "spoken": "2 methylpropan 2 ol", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_29", "class": "nomenclature", "raw": "(R)-2-butanol and (E)-but-2-ene", "spoken": "r 2 butanol and e but 2 ene", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_30", "class": "nomenclature", "raw": "α-D-glucose and β-carotene", "spoken": "alpha d glucose and beta carotene", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_31", "class": "nomenclature", "raw": "the 5′-phosphate", "spoken": "the 5 prime phosphate", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_32", "class": "nomenclature", "raw": "1,2-dichloroethane", "spoken": "1, 2 dichloroethane", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_33", "class": "abbreviation", "raw": "LDA in THF, then NaBH4 in MeOH", "spoken": "l d a in t h f, then n a b h 4 in methanol", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_34", "class": "abbreviation", "raw": "the tBu ester and the OMe group", "spoken": "the tert butyl ester and the o methyl group", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_35", "class": "spectroscopy", "raw": "1H NMR (400 MHz, CDCl3) δ 7.26 (d, J = 8.0 Hz, 2H)", "spoken": "proton n m r (400 megahertz, c d c l 3) delta 7.26 (doublet, j equals 8.0 hertz, 2 h)", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_36", "class": "spectroscopy", "raw": "IR (neat) 1715 cm−1", "spoken": "i r (neat) 1715 per centimeter", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_37", "class": "spectroscopy", "raw": "HRMS m/z 180.0634 [M+H]+", "spoken": "h r m s m over z 180.0634 (m plus h, plus)", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_38", "class": "spectroscopy", "raw": "92% ee, λmax 254 nm", "spoken": "92 percent e e, lambda max 254 nanometers", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_39", "class": "electron_configuration", "raw": "1s2 2s2 2p6", "spoken": "1 s 2, 2 s 2, 2 p 6", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_40", "class": "electron_configuration", "raw": "an sp3 carbon and a π* orbital", "spoken": "an s p 3 carbon and a pi star orbital", "block": "paragraph", "domain": "chemistry"}
+{"id": "chemistry_41", "class": "rate_law", "raw": "rate = k[A]2[B]", "spoken": "rate equals k times the concentration of a, squared, times the concentration of b", "block": "equation", "domain": "chemistry"}
+{"id": "chemistry_42", "class": "rate_law", "raw": "Ksp = [Ag+][Cl−]", "spoken": "k s p equals the concentration of a g plus times the concentration of c l minus", "block": "equation", "domain": "chemistry"}
+{"id": "chemistry_43", "class": "rate_law", "raw": "pH = pKa + log([A−]/[HA])", "spoken": "p h equals p k a plus log the concentration of a minus over the concentration of h a", "block": "equation", "domain": "chemistry"}
+{"id": "chemistry_44", "class": "bond", "raw": "the C=O stretch", "spoken": "the c double bond o stretch", "block": "paragraph", "domain": "chemistry"}
+{"id": "physics_01", "class": "units", "raw": "The car accelerates at 9.8 m/s² for 3 s.", "spoken": "The car accelerates at 9.8 meters per second squared for 3 seconds.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_02", "class": "units", "raw": "a torque of 12 N·m", "spoken": "a torque of 12 newton meters", "block": "paragraph", "domain": "physics"}
+{"id": "physics_03", "class": "units", "raw": "The specific heat is 4.18 J/(mol·K).", "spoken": "The specific heat is 4.18 joules per mole kelvin.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_04", "class": "units", "raw": "σ = 5.67 × 10⁻⁸ W m⁻² K⁻⁴", "spoken": "sigma equals 5.67 times 10 to the minus 8 watts per square meter per kelvin to the 4", "block": "paragraph", "domain": "physics"}
+{"id": "physics_05", "class": "units", "raw": "R = 10 kΩ and C = 4.7 µF", "spoken": "r equals 10 kilohms and c equals 4.7 microfarads", "block": "paragraph", "domain": "physics"}
+{"id": "physics_06", "class": "units", "raw": "The carrier is at 2.4 GHz.", "spoken": "The carrier is at 2.4 gigahertz.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_07", "class": "units", "raw": "The photon carries 13.6 eV and the beam 7 MeV.", "spoken": "The photon carries 13.6 electronvolts and the beam 7 mega electronvolts.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_08", "class": "units", "raw": "g = 9.8 m s-2", "spoken": "g equals 9.8 meters per second squared", "block": "paragraph", "domain": "physics"}
+{"id": "physics_09", "class": "units", "raw": "a density of 1000 kg/m³", "spoken": "a density of 1000 kilograms per cubic meter", "block": "paragraph", "domain": "physics"}
+{"id": "physics_10", "class": "units", "raw": "The block has a mass of 1 kg.", "spoken": "The block has a mass of 1 kilogram.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_11", "class": "unit_vs_variable", "raw": "a mass m of 3 g", "spoken": "a mass m of 3 grams", "block": "paragraph", "domain": "physics"}
+{"id": "physics_12", "class": "unit_vs_variable", "raw": "V = 5 V", "spoken": "v equals 5 volts", "block": "paragraph", "domain": "physics"}
+{"id": "physics_13", "class": "unit_vs_variable", "raw": "10 A flows through the wire", "spoken": "10 amperes flows through the wire", "block": "paragraph", "domain": "physics"}
+{"id": "physics_14", "class": "scientific_notation", "raw": "c = 3.0 × 10^8 m/s", "spoken": "c equals 3.0 times 10 to the 8 meters per second", "block": "paragraph", "domain": "physics"}
+{"id": "physics_15", "class": "scientific_notation", "raw": "N_A = 6.022e23 mol⁻¹", "spoken": "n sub a equals 6.022 times 10 to the 23 per mole", "block": "paragraph", "domain": "physics"}
+{"id": "physics_16", "class": "scientific_notation", "raw": "e = 1.6 × 10-19 C", "spoken": "e equals 1.6 times 10 to the minus 19 coulombs", "block": "paragraph", "domain": "physics"}
+{"id": "physics_17", "class": "scientific_notation", "raw": "an energy of ~10⁻¹⁹ J", "spoken": "an energy of about 10 to the minus 19 joules", "block": "paragraph", "domain": "physics"}
+{"id": "physics_18", "class": "uncertainty", "raw": "We measured g = 9.81 ± 0.02 m/s².", "spoken": "We measured g equals 9.81 plus or minus 0.02 meters per second squared.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_19", "class": "uncertainty", "raw": "m = (123 ± 2) g", "spoken": "m equals 123 plus or minus 2 grams", "block": "paragraph", "domain": "physics"}
+{"id": "physics_20", "class": "uncertainty", "raw": "m = 1.2345(6) kg", "spoken": "m equals 1.2345 plus or minus 0.0006 kilograms", "block": "paragraph", "domain": "physics"}
+{"id": "physics_21", "class": "uncertainty", "raw": "Give the answer to 3 s.f.", "spoken": "Give the answer to 3 significant figures.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_22", "class": "uncertainty", "raw": "a range of 20–30 °C", "spoken": "a range of 20 to 30 degrees Celsius", "block": "paragraph", "domain": "physics"}
+{"id": "physics_23", "class": "equations_in_words", "raw": "F = ma", "spoken": "f equals m a", "block": "equation", "domain": "physics"}
+{"id": "physics_24", "class": "vectors", "raw": "The force acts along x̂.", "spoken": "The force acts along x hat.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_25", "class": "vectors", "raw": "ẍ = −ω²x", "spoken": "x double dot equals minus omega squared x", "block": "equation", "domain": "physics"}
+{"id": "physics_26", "class": "vectors", "raw": "τ = r × F", "spoken": "tau equals r cross f", "block": "equation", "domain": "physics"}
+{"id": "physics_27", "class": "vectors", "raw": "∇·E = ρ/ε₀", "spoken": "del dot e equals rho over epsilon sub 0", "block": "equation", "domain": "physics"}
+{"id": "physics_28", "class": "vectors", "raw": "∇×B = μ₀J", "spoken": "del cross b equals mu sub 0 j", "block": "equation", "domain": "physics"}
+{"id": "physics_29", "class": "vectors", "raw": "F_{ij} = ∂_i A_j − ∂_j A_i", "spoken": "f sub i j equals partial sub i a sub j minus partial sub j a sub i", "block": "equation", "domain": "physics"}
+{"id": "physics_30", "class": "vectors", "raw": "ds² = g_{μν} dx^μ dx^ν", "spoken": "d s squared equals g sub mu nu d x sup mu d x sup nu", "block": "equation", "domain": "physics"}
+{"id": "physics_31", "class": "quantum", "raw": "The state |ψ⟩ is normalized.", "spoken": "The state ket psi is normalized.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_32", "class": "quantum", "raw": "⟨φ|ψ⟩ = 0", "spoken": "bra phi ket psi equals 0", "block": "equation", "domain": "physics"}
+{"id": "physics_33", "class": "quantum", "raw": "E = ⟨ψ|Ĥ|ψ⟩", "spoken": "e equals bra psi h hat ket psi", "block": "equation", "domain": "physics"}
+{"id": "physics_34", "class": "quantum", "raw": "[x̂, p̂] = iħ", "spoken": "the commutator of x hat and p hat equals i h bar", "block": "equation", "domain": "physics"}
+{"id": "physics_35", "class": "quantum", "raw": "the operator A† is the adjoint of A", "spoken": "the operator a dagger is the adjoint of a", "block": "paragraph", "domain": "physics"}
+{"id": "physics_36", "class": "quantum", "raw": "the mean position is ⟨x⟩", "spoken": "the mean position is the expectation value of x", "block": "paragraph", "domain": "physics"}
+{"id": "physics_37", "class": "quantum", "raw": "an electron has spin ½ and state |↑⟩", "spoken": "an electron has spin 1 half and state ket up", "block": "paragraph", "domain": "physics"}
+{"id": "physics_38", "class": "nuclear", "raw": "²³⁸U → ²³⁴Th + ⁴He", "spoken": "uranium 238 yields thorium 234 plus helium 4", "block": "equation", "domain": "physics"}
+{"id": "physics_39", "class": "nuclear", "raw": "The isotope 235U is fissile.", "spoken": "The isotope uranium 235 is fissile.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_40", "class": "particle", "raw": "n → p + e⁻ + ν̄ₑ", "spoken": "n yields p plus e minus plus nu bar sub e", "block": "equation", "domain": "physics"}
+{"id": "physics_41", "class": "particle", "raw": "π⁰ → γγ", "spoken": "pi 0 yields gamma gamma", "block": "equation", "domain": "physics"}
+{"id": "physics_42", "class": "constants", "raw": "the thermal energy k_B T", "spoken": "the thermal energy k sub b t", "block": "paragraph", "domain": "physics"}
+{"id": "physics_43", "class": "constants", "raw": "E = hν and ħ = h/2π", "spoken": "e equals h nu and h bar equals h over 2 pi", "block": "paragraph", "domain": "physics"}
+{"id": "physics_44", "class": "constants", "raw": "The flow is laminar for Re = 2000.", "spoken": "The flow is laminar for reynolds number equals 2000.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_45", "class": "circuits", "raw": "R₁ = 10 kΩ at 50 Hz", "spoken": "r sub 1 equals 10 kilohms at 50 hertz", "block": "paragraph", "domain": "physics"}
+{"id": "physics_46", "class": "circuits", "raw": "a phase of ∠30°", "spoken": "a phase of angle 30 degrees", "block": "paragraph", "domain": "physics"}
+{"id": "physics_47", "class": "circuits", "raw": "Z = 3 + 4j Ω", "spoken": "z equals 3 plus 4 j ohms", "block": "paragraph", "domain": "physics"}
+{"id": "physics_48", "class": "circuits", "raw": "a gain of 3 dB at −3 dBm", "spoken": "a gain of 3 decibels at minus 3 d b m", "block": "paragraph", "domain": "physics"}
+{"id": "physics_49", "class": "temperature", "raw": "Water boils at 373.15 K.", "spoken": "Water boils at 373.15 kelvins.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_50", "class": "astronomy", "raw": "a star of 2 M☉ at 4.2 ly", "spoken": "a star of 2 solar masses at 4.2 light years", "block": "paragraph", "domain": "physics"}
+{"id": "physics_51", "class": "astronomy", "raw": "at latitude 51°30′N", "spoken": "at latitude 51 degrees 30 minutes north", "block": "paragraph", "domain": "physics"}
+{"id": "physics_52", "class": "astronomy", "raw": "a parallax of 0.75″ and a distance of 1.3 pc", "spoken": "a parallax of 0.75 arcseconds and a distance of 1.3 parsecs", "block": "paragraph", "domain": "physics"}
+{"id": "physics_53", "class": "astronomy", "raw": "The Earth orbits at 1 AU.", "spoken": "The Earth orbits at 1 astronomical unit.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_54", "class": "geoscience", "raw": "The impact occurred 66 Ma; the Earth is 4.5 Gyr old.", "spoken": "The impact occurred 66 million years ago; the Earth is 4.5 billion years old.", "block": "paragraph", "domain": "physics"}
+{"id": "physics_55", "class": "units", "raw": "a bond length of 1.5 Å", "spoken": "a bond length of 1.5 angstroms", "block": "paragraph", "domain": "physics"}
+{"id": "physics_56", "class": "units", "raw": "1013 mbar or about 15 psi", "spoken": "1013 millibars or about 15 p s i", "block": "paragraph", "domain": "physics"}
+{"id": "physics_57", "class": "units", "raw": "a full circle is 2π rad and a sphere 4π sr", "spoken": "a full circle is 2 pi radians and a sphere 4 pi steradians", "block": "paragraph", "domain": "physics"}
+{"id": "biology_01", "class": "gene", "raw": "Loss of TP53 in Trp53-/- mice compared with WT littermates.", "spoken": "loss of t p 53 in t r p 53 minus minus mice compared with wild type littermates", "block": "paragraph", "domain": "biology"}
+{"id": "biology_02", "class": "gene", "raw": "p53 accumulates after DNA damage.", "spoken": "p 53 accumulates after d n a damage", "block": "paragraph", "domain": "biology"}
+{"id": "biology_03", "class": "gene", "raw": "CDK4 and SOX2 are amplified.", "spoken": "c d k 4 and sox 2 are amplified", "block": "paragraph", "domain": "biology"}
+{"id": "biology_04", "class": "gene", "raw": "Brca1+/- females", "spoken": "brca 1 plus minus females", "block": "paragraph", "domain": "biology"}
+{"id": "biology_05", "class": "gene", "raw": "Pten fl/fl mice crossed with KO controls", "spoken": "pten flox flox mice crossed with knockout controls", "block": "paragraph", "domain": "biology"}
+{"id": "biology_06", "class": "taxon", "raw": "Cells were grown in E. coli K-12.", "spoken": "cells were grown in e coli k 12", "block": "paragraph", "domain": "biology"}
+{"id": "biology_07", "class": "taxon", "raw": "S. cerevisiae and Streptomyces spp.", "spoken": "s cerevisiae and streptomyces species", "block": "paragraph", "domain": "biology"}
+{"id": "biology_08", "class": "taxon", "raw": "C57BL/6J mice and HEK293T cells", "spoken": "c 57 b l 6 j mice and h e k 293 t cells", "block": "paragraph", "domain": "biology"}
+{"id": "biology_09", "class": "sequence", "raw": "The probe reads ACGTTGCA.", "spoken": "the probe reads a c g t t g c a", "block": "paragraph", "domain": "biology"}
+{"id": "biology_10", "class": "sequence", "raw": "read 5′→3′ with a 2.4 kb insert", "spoken": "read 5 prime to 3 prime with a 2.4 kilobases insert", "block": "paragraph", "domain": "biology"}
+{"id": "biology_11", "class": "sequence", "raw": "a 55 kDa protein of 480 aa", "spoken": "a 55 kilodaltons protein of 480 amino acids", "block": "paragraph", "domain": "biology"}
+{"id": "biology_12", "class": "sequence", "raw": "300 bp amplicon", "spoken": "300 base pairs amplicon", "block": "paragraph", "domain": "biology"}
+{"id": "biology_13", "class": "variant", "raw": "The variant c.524G>A (p.Arg175His) was found.", "spoken": "the variant c dot 524 g to a, p dot arg 175 his, was found", "block": "paragraph", "domain": "biology"}
+{"id": "biology_14", "class": "variant", "raw": "p.R175H", "spoken": "p dot r 175 h", "block": "paragraph", "domain": "biology"}
+{"id": "biology_15", "class": "variant", "raw": "KRAS G12D and CFTR ΔF508 carriers", "spoken": "kras g 12 d and c f t r delta f 508 carriers", "block": "paragraph", "domain": "biology"}
+{"id": "biology_16", "class": "variant", "raw": "rs7412 genotype", "spoken": "r s 7412 genotype", "block": "paragraph", "domain": "biology"}
+{"id": "biology_17", "class": "variant", "raw": "deletion at 17p13.1", "spoken": "deletion at 17 p 13.1", "block": "paragraph", "domain": "biology"}
+{"id": "biology_18", "class": "variant", "raw": "karyotype 47,XX,+21", "spoken": "karyotype 47, x x, plus 21", "block": "paragraph", "domain": "biology"}
+{"id": "biology_19", "class": "variant", "raw": "46,XY with a gain at Xq28", "spoken": "46, x y with a gain at x q 28", "block": "paragraph", "domain": "biology"}
+{"id": "biology_20", "class": "molecule", "raw": "β2-adrenergic receptor and TNF-α", "spoken": "beta 2 adrenergic receptor and t n f alpha", "block": "paragraph", "domain": "biology"}
+{"id": "biology_21", "class": "molecule", "raw": "IL-6 and IFN-γ release", "spoken": "i l 6 and i f n gamma release", "block": "paragraph", "domain": "biology"}
+{"id": "biology_22", "class": "molecule", "raw": "Na+/K+-ATPase activity", "spoken": "sodium potassium a t p ase activity", "block": "paragraph", "domain": "biology"}
+{"id": "biology_23", "class": "molecule", "raw": "trypsin (EC 3.4.21.4)", "spoken": "trypsin, e c 3 point 4 point 21 point 4", "block": "paragraph", "domain": "biology"}
+{"id": "biology_24", "class": "molecule", "raw": "metabolized by CYP3A4; HbA1c 6.5%", "spoken": "metabolized by cyp 3 a 4, h b a 1 c 6.5 percent", "block": "paragraph", "domain": "biology"}
+{"id": "biology_25", "class": "molecule", "raw": "Ca2+ influx raises cAMP", "spoken": "c a 2 plus influx raises cyclic a m p", "block": "paragraph", "domain": "biology"}
+{"id": "biology_26", "class": "lab_unit", "raw": "Add 10 µg/mL puromycin and 50 ng/µL DNA.", "spoken": "add 10 micrograms per milliliter puromycin and 50 nanograms per microliter d n a", "block": "paragraph", "domain": "biology"}
+{"id": "biology_27", "class": "lab_unit", "raw": "in 150 mM NaCl with 10 nM drug", "spoken": "in 150 millimolar n a c l with 10 nanomolar drug", "block": "paragraph", "domain": "biology"}
+{"id": "biology_28", "class": "lab_unit", "raw": "Seed 1 × 10^6 cells/mL.", "spoken": "seed 1 times 10 to the 6 cells per milliliter", "block": "paragraph", "domain": "biology"}
+{"id": "biology_29", "class": "lab_unit", "raw": "spin at 300 ×g for 5 min", "spoken": "spin at 300 times g for 5 minutes", "block": "paragraph", "domain": "biology"}
+{"id": "biology_30", "class": "lab_unit", "raw": "incubate at 37 °C in 5% CO2, pH 7.4", "spoken": "incubate at 37 degrees celsius in 5 percent c o 2, p h 7.4", "block": "paragraph", "domain": "biology"}
+{"id": "biology_31", "class": "lab_unit", "raw": "Measure OD600 o/n; antibody 1:1000, passage P3.", "spoken": "measure o d 600 overnight, antibody 1 to 1000, passage 3", "block": "paragraph", "domain": "biology"}
+{"id": "biology_32", "class": "clinical", "raw": "amoxicillin 500 mg PO t.i.d.", "spoken": "amoxicillin 500 milligrams by mouth three times a day", "block": "paragraph", "domain": "biology"}
+{"id": "biology_33", "class": "clinical", "raw": "paracetamol 1 g PO q6h PRN", "spoken": "paracetamol 1 gram by mouth every 6 hours as needed", "block": "paragraph", "domain": "biology"}
+{"id": "biology_34", "class": "clinical", "raw": "15 mg/kg IV b.i.d.", "spoken": "15 milligrams per kilogram i v twice a day", "block": "paragraph", "domain": "biology"}
+{"id": "biology_35", "class": "clinical", "raw": "BP 120/80 mmHg, HR 72 bpm", "spoken": "b p 120 over 80 millimeters of mercury, heart rate 72 beats per minute", "block": "paragraph", "domain": "biology"}
+{"id": "biology_36", "class": "clinical", "raw": "Pt with Hx of asthma; Dx: ICD-10 J45.9", "spoken": "patient with history of asthma, diagnosis, i c d 10 j 45.9", "block": "paragraph", "domain": "biology"}
+{"id": "biology_37", "class": "stats_report", "raw": "n = 24, p < 0.05", "spoken": "n equals 24, p is less than 0.05", "block": "paragraph", "domain": "biology"}
+{"id": "biology_38", "class": "stats_report", "raw": "OR 2.1 (95% CI 1.2–3.4), p = 0.003", "spoken": "odds ratio 2.1, 95 percent confidence interval 1.2 to 3.4, p equals 0.003", "block": "paragraph", "domain": "biology"}
+{"id": "biology_39", "class": "stats_report", "raw": "values are mean ± SD; ** p < 0.01", "spoken": "values are mean plus or minus s d, 2 stars p is less than 0.01", "block": "paragraph", "domain": "biology"}
+{"id": "biology_40", "class": "stats_report", "raw": "genes with log2FC > 1 and HR 0.74", "spoken": "genes with log 2 fold change is greater than 1 and hazard ratio 0.74", "block": "paragraph", "domain": "biology"}
+{"id": "biology_41", "class": "anatomy", "raw": "Purkinje cells and the Golgi apparatus", "spoken": "purkinje cells and the golgi apparatus", "block": "paragraph", "domain": "biology"}
+{"id": "biology_42", "class": "anatomy", "raw": "lesion of CN VII", "spoken": "lesion of cranial nerve 7", "block": "paragraph", "domain": "biology"}
+{"id": "biology_43", "class": "popgen", "raw": "p² + 2pq + q² = 1", "spoken": "p squared plus 2 p q plus q squared equals 1", "block": "equation", "domain": "biology"}
+{"id": "biology_44", "class": "popgen", "raw": "dN/dt = rN(1 − N/K)", "spoken": "d n over d t equals r n times 1 minus n over k", "block": "equation", "domain": "biology"}
+{"id": "biology_45", "class": "popgen", "raw": "Fst = 0.12, Ne = 500 and R0 = 2.5", "spoken": "f sub s t equals 0.12, n sub e equals 500 and r nought equals 2.5", "block": "paragraph", "domain": "biology"}
+{"id": "finance_01", "class": "currency", "raw": "Revenue rose to $4.2bn.", "spoken": "revenue rose to 4.2 billion dollars.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_02", "class": "currency", "raw": "The firm raised USD 4.2 billion.", "spoken": "the firm raised 4.2 billion u s dollars.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_03", "class": "currency", "raw": "A grant of €3.5m was approved.", "spoken": "a grant of 3.5 million euros was approved.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_04", "class": "currency", "raw": "Salaries start at £12k.", "spoken": "salaries start at 12 thousand pounds.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_05", "class": "currency", "raw": "Costs were ¥500mn and ₹2.5 crore.", "spoken": "costs were 500 million yen and 2.5 crore rupees.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_06", "class": "currency", "raw": "The deal is worth $5mm.", "spoken": "the deal is worth 5 million dollars.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_07", "class": "currency", "raw": "Net loss was (1,234).", "spoken": "net loss was minus 1,234.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_08", "class": "currency", "raw": "EPS was $(0.12) per share.", "spoken": "e p s was minus 12 cents per share.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_09", "class": "currency", "raw": "The stock closed at $4.20.", "spoken": "the stock closed at 4 dollars and 20 cents.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_10", "class": "currency", "raw": "A fee of CHF 3m applies.", "spoken": "a fee of 3 million swiss francs applies.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_11", "class": "percent_points", "raw": "Margins fell 1.5pp to 22.3%.", "spoken": "margins fell 1.5 percentage points to 22.3 percent.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_12", "class": "percent_points", "raw": "The Fed cut rates by 25bp.", "spoken": "the fed cut rates by 25 basis points.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_13", "class": "percent_points", "raw": "The spread widened 1bp.", "spoken": "the spread widened 1 basis point.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_14", "class": "percent_points", "raw": "It trades at 22x earnings.", "spoken": "it trades at 22 times earnings.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_15", "class": "percent_points", "raw": "Leverage is 3.5x EBITDA.", "spoken": "leverage is 3.5 times ebitda.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_16", "class": "percent_points", "raw": "A P/E of 18 and a D/E of 3:1.", "spoken": "a p e of 18 and a d e of 3 to 1.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_17", "class": "period", "raw": "Revenue in Q3 FY2024 was up 12% YoY.", "spoken": "revenue in q 3 fiscal 2024 was up 12 percent year on year.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_18", "class": "period", "raw": "1H25 sales rose 4% QoQ.", "spoken": "h 1 25 sales rose 4 percent quarter on quarter.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_19", "class": "period", "raw": "TTM EPS and YTD returns.", "spoken": "trailing 12 months e p s and year to date returns.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_20", "class": "period", "raw": "Settlement is T+2 against 3M USD LIBOR.", "spoken": "settlement is t plus 2 against 3-month u s dollar libor.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_21", "class": "abbrev", "raw": "The S&P 500 and the FTSE 100 gained.", "spoken": "the s and p 500 and the footsie 100 gained.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_22", "class": "abbrev", "raw": "Shares of AAPL and BRK.B rose.", "spoken": "shares of a a p l and b r k dot b rose.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_23", "class": "abbrev", "raw": "SG&A and M&A costs under GAAP and IFRS.", "spoken": "s g and a and m and a costs under gaap and i f r s.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_24", "class": "abbrev", "raw": "The SEC requires the NPV and IRR.", "spoken": "the s e c requires the n p v and i r r.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_25", "class": "econ", "raw": "Real GDP grew 2.1% y/y (s.a.).", "spoken": "real g d p grew 2.1 percent year on year, seasonally adjusted.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_26", "class": "econ", "raw": "CPI index (2015=100).", "spoken": "c p i index, 2015 equals 100.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_27", "class": "econ", "raw": "β = 1.2 and σ = 18% imply α of 0.5%.", "spoken": "beta equals 1.2 and sigma equals 18 percent imply alpha of 0.5 percent.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_28", "class": "econ", "raw": "ΔY_t = Y_t − Y_{t−1}", "spoken": "capital delta y sub t equals y sub t minus y sub t minus 1", "block": "equation", "domain": "finance"}
+{"id": "finance_29", "class": "regression", "raw": "Education 0.042*** (0.011)", "spoken": "education 0.042, 3 stars, standard error 0.011", "block": "table", "domain": "finance"}
+{"id": "finance_30", "class": "regression", "raw": "R² = 0.37, Adj. R² = 0.35, N = 1,204.", "spoken": "r squared equals 0.37, adjusted r squared equals 0.35, n equals 1,204.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_31", "class": "regression", "raw": "Firm FE Yes; Robust SE in parentheses; *** p < 0.01.", "spoken": "firm fixed effects, yes; robust standard errors in parentheses; 3 stars, p is less than 0.01.", "block": "table", "domain": "finance"}
+{"id": "finance_32", "class": "formula", "raw": "PV = CF/(1+r)^t", "spoken": "p v equals c f over 1 plus r, to the t", "block": "equation", "domain": "finance"}
+{"id": "finance_33", "class": "formula", "raw": "NPV = Σ_t CF_t/(1+r)^t", "spoken": "n p v equals the sum over t of c f sub t over 1 plus r, to the t", "block": "equation", "domain": "finance"}
+{"id": "finance_34", "class": "formula", "raw": "C = S N(d₁) − K e^{−rT} N(d₂)", "spoken": "c equals s n of d sub 1 minus k e to the minus r t n of d sub 2", "block": "equation", "domain": "finance"}
+{"id": "finance_35", "class": "formula", "raw": "the volatility term σ√T", "spoken": "the volatility term sigma the square root of t", "block": "paragraph", "domain": "finance"}
+{"id": "finance_36", "class": "table", "raw": "Sales ▲ 4%; margin ▼ 2%; growth n/m.", "spoken": "sales up 4 percent; margin down 2 percent; growth not meaningful.", "block": "table", "domain": "finance"}
+{"id": "finance_37", "class": "table", "raw": "(in $ millions, except per share)", "spoken": "in millions of dollars, except per share", "block": "table", "domain": "finance"}
+{"id": "finance_38", "class": "date", "raw": "EBITDA grew at a CAGR of 8% over 2019–24.", "spoken": "ebitda grew at a cagr of 8 percent over 2019 to 2024.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_39", "class": "date", "raw": "Cash as of 31 Dec 2024.", "spoken": "cash as of 31 december 2024.", "block": "paragraph", "domain": "finance"}
+{"id": "finance_40", "class": "date", "raw": "For the FY ending March 2025.", "spoken": "for the fiscal year ending march 2025.", "block": "paragraph", "domain": "finance"}
+{"id": "history_01", "class": "regnal", "raw": "Henry VIII broke with Rome.", "spoken": "henry the eighth broke with rome.", "block": "paragraph", "domain": "history"}
+{"id": "history_02", "class": "regnal", "raw": "Louis XIV's court", "spoken": "louis the fourteenth's court", "block": "paragraph", "domain": "history"}
+{"id": "history_03", "class": "regnal", "raw": "Pope John XXIII convened the council.", "spoken": "pope john the twenty-third convened the council.", "block": "paragraph", "domain": "history"}
+{"id": "history_04", "class": "regnal", "raw": "Elizabeth II", "spoken": "elizabeth the second", "block": "paragraph", "domain": "history"}
+{"id": "history_05", "class": "regnal", "raw": "Vol. III, ch. IV", "spoken": "volume three, chapter four", "block": "paragraph", "domain": "history"}
+{"id": "history_06", "class": "regnal", "raw": "after WWII", "spoken": "after world war two", "block": "paragraph", "domain": "history"}
+{"id": "history_07", "class": "date", "raw": "The battle (480 BC) preceded Actium (31 BCE).", "spoken": "the battle, 480 b c, preceded actium, 31 b c e.", "block": "paragraph", "domain": "history"}
+{"id": "history_08", "class": "date", "raw": "Charlemagne (r. 768–814)", "spoken": "charlemagne, reigned 768 to 814", "block": "paragraph", "domain": "history"}
+{"id": "history_09", "class": "date", "raw": "Bede (fl. 731)", "spoken": "bede, flourished 731", "block": "paragraph", "domain": "history"}
+{"id": "history_10", "class": "date", "raw": "c. 1500", "spoken": "circa 1500", "block": "paragraph", "domain": "history"}
+{"id": "history_11", "class": "date", "raw": "the war of 1914–18", "spoken": "the war of 1914 to 1918", "block": "paragraph", "domain": "history"}
+{"id": "history_12", "class": "date", "raw": "in the '20s and the 1960s", "spoken": "in the twenties and the 1960s", "block": "paragraph", "domain": "history"}
+{"id": "history_13", "class": "date", "raw": "the 18th c.", "spoken": "the 18th century", "block": "paragraph", "domain": "history"}
+{"id": "history_14", "class": "date", "raw": "AD 79", "spoken": "a d 79", "block": "paragraph", "domain": "history"}
+{"id": "history_15", "class": "citation", "raw": "Ibid., pp. 12–15.", "spoken": "ibid, pages 12 to 15.", "block": "paragraph", "domain": "history"}
+{"id": "history_16", "class": "citation", "raw": "cf. Smith, op. cit., n. 3", "spoken": "compare smith, in the work cited, note 3", "block": "paragraph", "domain": "history"}
+{"id": "history_17", "class": "citation", "raw": "BL Add. MS 4793, fol. 12r", "spoken": "b l additional manuscript 4793, folio 12 recto", "block": "paragraph", "domain": "history"}
+{"id": "history_18", "class": "citation", "raw": "pp. 40 ff.", "spoken": "pages 40 and following", "block": "paragraph", "domain": "history"}
+{"id": "history_19", "class": "citation", "raw": "s.v. \"virtus\"", "spoken": "under the word \"virtus\"", "block": "paragraph", "domain": "history"}
+{"id": "history_20", "class": "classical_ref", "raw": "Hom. Il. 1.1–5", "spoken": "homer, iliad, book 1, lines 1 to 5", "block": "paragraph", "domain": "history"}
+{"id": "history_21", "class": "classical_ref", "raw": "Hdt. 7.228", "spoken": "herodotus, book 7, chapter 228", "block": "paragraph", "domain": "history"}
+{"id": "history_22", "class": "classical_ref", "raw": "Plato Rep. 514a", "spoken": "plato, republic 514 a", "block": "paragraph", "domain": "history"}
+{"id": "history_23", "class": "classical_ref", "raw": "Aen. 6.851", "spoken": "aeneid, book 6, line 851", "block": "paragraph", "domain": "history"}
+{"id": "history_24", "class": "scripture_ref", "raw": "John 3:16", "spoken": "john, chapter 3, verse 16", "block": "paragraph", "domain": "history"}
+{"id": "history_25", "class": "scripture_ref", "raw": "1 Cor 13:4–7", "spoken": "first corinthians, chapter 13, verses 4 to 7", "block": "paragraph", "domain": "history"}
+{"id": "history_26", "class": "scripture_ref", "raw": "Q 2:255", "spoken": "quran, sura 2, verse 255", "block": "paragraph", "domain": "history"}
+{"id": "history_27", "class": "classical_ref", "raw": "Hamlet 3.1.56", "spoken": "hamlet, act 3, scene 1, line 56", "block": "paragraph", "domain": "history"}
+{"id": "history_28", "class": "legal", "raw": "Roe v. Wade, 410 U.S. 113 (1973)", "spoken": "roe versus wade, 410 u s 113, 1973", "block": "paragraph", "domain": "history"}
+{"id": "history_29", "class": "legal", "raw": "R v Smith", "spoken": "the crown against smith", "block": "paragraph", "domain": "history"}
+{"id": "history_30", "class": "legal", "raw": "42 U.S.C. § 1983", "spoken": "42 u s c section 1983", "block": "paragraph", "domain": "history"}
+{"id": "history_31", "class": "legal", "raw": "§§ 2–4 and ¶ 12", "spoken": "sections 2 to 4 and paragraph 12", "block": "paragraph", "domain": "history"}
+{"id": "history_32", "class": "legal", "raw": "Art. 3(2)", "spoken": "article 3, paragraph 2", "block": "paragraph", "domain": "history"}
+{"id": "history_33", "class": "legal", "raw": "[2019] UKSC 41", "spoken": "2019 u k s c 41", "block": "paragraph", "domain": "history"}
+{"id": "history_34", "class": "legal", "raw": "28 Hen. 8 c. 10", "spoken": "28 henry 8, chapter 10", "block": "paragraph", "domain": "history"}
+{"id": "history_35", "class": "money_measure", "raw": "He paid £3 4s 6d for 12 oz of silver.", "spoken": "he paid 3 pounds 4 shillings and 6 pence for 12 ounces of silver.", "block": "paragraph", "domain": "history"}
+{"id": "history_36", "class": "money_measure", "raw": "a fee of 10/-", "spoken": "a fee of 10 shillings", "block": "paragraph", "domain": "history"}
+{"id": "history_37", "class": "military", "raw": "the 3rd Bn landed at 0600", "spoken": "the 3rd battalion landed at oh six hundred hours", "block": "paragraph", "domain": "history"}
+{"id": "history_38", "class": "coordinates", "raw": "51°30′N 0°7′W", "spoken": "51 degrees 30 minutes north, 0 degrees 7 minutes west", "block": "paragraph", "domain": "history"}
+{"id": "history_39", "class": "editorial", "raw": "\"The kyng [sic] came [...] to London &c.\"", "spoken": "\"the kyng, sic, came to london et cetera.\"", "block": "paragraph", "domain": "history"}
+{"id": "history_40", "class": "editorial", "raw": "\"he must go\" [emphasis added]", "spoken": "\"he must go\", emphasis added", "block": "paragraph", "domain": "history"}
+{"id": "history_41", "class": "philosophy_lit", "raw": "KrV A51/B75", "spoken": "critique of pure reason, a 51, b 75", "block": "paragraph", "domain": "history"}
+{"id": "history_42", "class": "philosophy_lit", "raw": "Inf. V.100", "spoken": "inferno, canto 5, line 100", "block": "paragraph", "domain": "history"}
+{"id": "history_43", "class": "philosophy_lit", "raw": "PI §43", "spoken": "philosophical investigations, section 43", "block": "paragraph", "domain": "history"}
+{"id": "history_44", "class": "linguistics", "raw": "*the cats is", "spoken": "star the cats is", "block": "paragraph", "domain": "history"}
+{"id": "history_45", "class": "linguistics", "raw": "Latin *kʷ > p", "spoken": "latin star k w becomes p", "block": "paragraph", "domain": "history"}
+{"id": "cs_stats_01", "class": "asymptotic", "raw": "Merge sort runs in O(n log n) time.", "spoken": "merge sort runs in big o of n log n time.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_02", "class": "asymptotic", "raw": "The lower bound is Ω(n) and the tight bound is Θ(n²).", "spoken": "the lower bound is big omega of n and the tight bound is big theta of n squared.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_03", "class": "asymptotic", "raw": "The error term is o(1).", "spoken": "the error term is little o of 1.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_04", "class": "asymptotic", "raw": "T(n) = 2T(n/2) + O(n)", "spoken": "t of n equals 2 t of n over 2 plus big o of n", "block": "equation", "domain": "cs_stats"}
+{"id": "cs_stats_05", "class": "asymptotic", "raw": "SAT is NP-complete and TQBF is PSPACE-complete.", "spoken": "sat is n p complete and t q b f is p space complete.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_06", "class": "numeric_literal", "raw": "The mask is 0x1F, i.e. 0b11111.", "spoken": "the mask is hex 1 f, that is binary 1 1 1 1 1.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_07", "class": "numeric_literal", "raw": "We train with lr = 3e-4 and weight decay 1e-5.", "spoken": "we train with learning rate equals 3 e minus 4 and weight decay 1 e minus 5.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_08", "class": "numeric_literal", "raw": "The address space has 2^32 entries on a 32-bit machine.", "spoken": "the address space has 2 to the 32 entries on a 32 bit machine.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_09", "class": "numeric_literal", "raw": "The model has 175B parameters trained on 300B tokens.", "spoken": "the model has 175 billion parameters trained on 300 billion tokens.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_10", "class": "data_units", "raw": "Pages are 4 KiB and the disk holds 2 TB.", "spoken": "pages are 4 kibibytes and the disk holds 2 terabytes.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_11", "class": "data_units", "raw": "p99 latency is 12 ms at 10 Gbps.", "spoken": "p 99 latency is 12 milliseconds at 10 gigabits per second.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_12", "class": "data_units", "raw": "Throughput reached 500 MB/s with 3 µs per request.", "spoken": "throughput reached 500 megabytes per second with 3 microseconds per request.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_13", "class": "versions_addresses", "raw": "We used Python 3.11 and PyTorch v2.3.1.", "spoken": "we used python 3 point 11 and pytorch version 2 point 3 point 1.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_14", "class": "versions_addresses", "raw": "The server listens on 192.168.0.1:8080.", "spoken": "the server listens on 192 dot 168 dot 0 dot 1 port 8080.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_15", "class": "versions_addresses", "raw": "It returns HTTP 404 as defined in RFC 2616.", "spoken": "it returns h t t p 404 as defined in r f c 2616.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_16", "class": "versions_addresses", "raw": "Run /usr/bin/python with --verbose.", "spoken": "run slash usr slash bin slash python with dash dash verbose.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_17", "class": "pseudocode", "raw": "for i ← 1 to n do x ← x + A[i] end for", "spoken": "for i from 1 to n do x gets x plus a of i end for", "block": "code", "domain": "cs_stats"}
+{"id": "cs_stats_18", "class": "pseudocode", "raw": "m ← ⌊(lo + hi)/2⌋", "spoken": "m gets the floor of lo plus hi over 2", "block": "code", "domain": "cs_stats"}
+{"id": "cs_stats_19", "class": "logic_types", "raw": "Γ ⊢ e : τ", "spoken": "capital gamma proves e has type tau", "block": "equation", "domain": "cs_stats"}
+{"id": "cs_stats_20", "class": "logic_types", "raw": "The identity is λx. x and f : A → B.", "spoken": "the identity is lambda x dot x and f from a to b.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_21", "class": "grammar_automata", "raw": "S → aSb | ε", "spoken": "s is a s b or epsilon", "block": "equation", "domain": "cs_stats"}
+{"id": "cs_stats_22", "class": "grammar_automata", "raw": "δ(q₀, a) = q₁", "spoken": "delta of q sub 0, a equals q sub 1", "block": "equation", "domain": "cs_stats"}
+{"id": "cs_stats_23", "class": "ml_notation", "raw": "θ* = argmin_θ L(θ) + λ∥θ∥₂²", "spoken": "theta star equals the arg min over theta of l of theta plus lambda the norm of theta sub 2, squared", "block": "equation", "domain": "cs_stats"}
+{"id": "cs_stats_24", "class": "ml_notation", "raw": "ŷ = softmax(W⊤x + b)", "spoken": "y hat equals softmax of w transpose x plus b", "block": "equation", "domain": "cs_stats"}
+{"id": "cs_stats_25", "class": "ml_notation", "raw": "We update θ with ∇_θ L and gate with h ⊙ m.", "spoken": "we update theta with del sub theta l and gate with h elementwise times m.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_26", "class": "ml_notation", "raw": "The state is [h₁ ∥ h₂].", "spoken": "the state is h sub 1 concatenated with h sub 2.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_27", "class": "hyperparams_shapes", "raw": "Inputs have shape B × T × D and W ∈ ℝ^{d×k}.", "spoken": "inputs have shape b by t by d and w in r to the d by k.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_28", "class": "hyperparams_shapes", "raw": "We use top-k sampling and a k-NN classifier over n-gram features.", "spoken": "we use top k sampling and a k nearest neighbors classifier over n gram features.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_29", "class": "model_names", "raw": "ResNet-50 and BERT-base were pretrained on ImageNet-1k and BooksCorpus.", "spoken": "res net 50 and bert base were pretrained on image net 1 k and books corpus.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_30", "class": "code_in_prose", "raw": "Press Ctrl+C if x != 0 && y == 1.", "spoken": "press control c if x not equals 0 and y equals equals 1.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_31", "class": "code_in_prose", "raw": "The loop does i++ and x += 1, then a << 2.", "spoken": "the loop does i plus plus and x plus equals 1, then a shift left 2.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_32", "class": "test_reporting", "raw": "The effect was significant, t(23) = 2.14, p < .05.", "spoken": "the effect was significant, t with 23 degrees of freedom equals 2.14, p is less than point 0 5.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_33", "class": "test_reporting", "raw": "F(2, 45) = 3.9, p = .003", "spoken": "f with 2 and 45 degrees of freedom equals 3.9, p equals point 0 0 3", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_34", "class": "test_reporting", "raw": "χ²(1) = 4.2, p < 0.001", "spoken": "chi squared with 1 degree of freedom equals 4.2, p is less than 0.001", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_35", "class": "test_reporting", "raw": "The interaction was n.s. at α = .05 with power 1 − β = .80.", "spoken": "the interaction was not significant at alpha equals point 0 5 with power 1 minus beta equals point 8 0.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_36", "class": "descriptives_effects", "raw": "Scores were higher (M = 3.2, SD = 1.1).", "spoken": "scores were higher, mean equals 3.2, standard deviation equals 1.1.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_37", "class": "descriptives_effects", "raw": "r = .45, R² = .32, adj. R² = .29", "spoken": "r equals point 4 5, r squared equals point 3 2, adjusted r squared equals point 2 9", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_38", "class": "descriptives_effects", "raw": "ηp² = .15, Cohen's d = 0.8, 95% CI [1.2, 3.4]", "spoken": "partial eta squared equals point 1 5, cohen's d equals 0.8, 95 percent confidence interval from 1.2 to 3.4", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_39", "class": "descriptives_effects", "raw": "We used a 2 × 2 design; OR = 1.8.", "spoken": "we used a 2 by 2 design; odds ratio equals 1.8.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_40", "class": "distributions", "raw": "Let X ~ N(μ, σ²) be i.i.d. with MLE σ̂².", "spoken": "let x distributed as n of mu, sigma squared be i i d with m l e sigma hat squared.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_41", "class": "distributions", "raw": "Y ∼ Bin(n, p) and E[Y] = np.", "spoken": "y distributed as binomial of n, p and e of y equals n p.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_42", "class": "distributions", "raw": "x̄ estimates μ and s² estimates σ².", "spoken": "x bar estimates mu and s squared estimates sigma squared.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_43", "class": "distributions", "raw": "ℓ(θ) = log ℒ(θ)", "spoken": "l of theta equals log script l of theta", "block": "equation", "domain": "cs_stats"}
+{"id": "cs_stats_44", "class": "linear_algebra", "raw": "β̂ = (XᵀX)⁻¹Xᵀy", "spoken": "beta hat equals x transpose x, to the minus 1, x transpose y", "block": "equation", "domain": "cs_stats"}
+{"id": "cs_stats_45", "class": "linear_algebra", "raw": "We bound ‖A‖_F by tr(AᵀA) and use A† for the pseudo-inverse.", "spoken": "we bound the norm of a sub f by the trace of a transpose a and use a dagger for the pseudo inverse.", "block": "paragraph", "domain": "cs_stats"}
+{"id": "cs_stats_46", "class": "results_table", "raw": "ResNet-50 | 76.1 ± 0.2† | —", "spoken": "res net 50, 76.1 plus or minus 0.2, not reported", "block": "table", "domain": "cs_stats"}
+{"id": "cs_stats_47", "class": "results_table", "raw": "Acc. ↑", "spoken": "accuracy, higher is better", "block": "table", "domain": "cs_stats"}
