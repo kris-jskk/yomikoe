@@ -32,10 +32,13 @@ class WordTimestamp:
 @dataclass(frozen=True)
 class SynthContext:
     """Document context for pronunciation (SYN-4): acronym definitions found at ingestion
-    (``{"TED": "Transferable Erosion Deposit"}``, ING-6). ``document_id`` is for logging."""
+    (``{"TED": "Transferable Erosion Deposit"}``, ING-6) and the user's pronunciation
+    overrides (TERM-2): ``lexicon`` maps a lower-case word to a respelling, the global table
+    merged under the document's. ``document_id`` is for logging."""
 
     acronyms: dict[str, str] = field(default_factory=dict)
     document_id: int | None = None
+    lexicon: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
