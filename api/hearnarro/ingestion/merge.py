@@ -234,13 +234,15 @@ def _math_runs(line: Line) -> list[list[int]]:
     def mathy(s: Span) -> bool:
         return bool(s.text.strip()) and _is_math_font(s.font)
 
+    variables = _italic_variables(line)
+
     def script(s: Span) -> bool:
         return bool(s.text.strip()) and (s.superscript or s.size < SCRIPT_RATIO * top)
 
     runs: list[list[int]] = []
     cur: list[int] = []
     for k, s in enumerate(line.spans):
-        if mathy(s) or (cur and (script(s) or not s.text.strip())):
+        if mathy(s) or k in variables or (cur and (script(s) or not s.text.strip())):
             cur.append(k)
         else:
             if cur:
@@ -255,8 +257,52 @@ def _math_runs(line: Line) -> list[list[int]]:
     for run in runs:
         while run and not line.spans[run[-1]].text.strip():
             run.pop()
-        if any(mathy(line.spans[k]) for k in run):
+        if any(mathy(line.spans[k]) or k in variables for k in run):
             out.append(run)
+    return out
+
+
+# MATH-2 (m5 p3i): a variable set in the text face's italic (or a calligraphic slant) inside
+# upright prose ("the denominator is *N*", "the symbol *s*²", "let *F* be a class") is maths
+# though no maths font is used. Only a lone letter counts, with no italic span next to it (an
+# italic phrase is emphasis, not a variable), in a line that holds upright prose words.
+_SLANT_FONT_RE = re.compile(r"Italic|Oblique|Slant|Calligraphic", re.IGNORECASE)
+_PROSE_WORD_RE = re.compile(r"[A-Za-z]{3}")
+_SPACING_ACCENTS = frozenset("¯ˆ˜˙¨ˇ")
+
+
+def _variable_span(sp: MathSpan) -> bool:
+    """An inline span made by ``_italic_variables`` alone: no run in a maths font, and one
+    slanted letter (its scripts aside)."""
+    if not sp.runs or sp.display or any(_is_math_font(r.font) for r in sp.runs):
+        return False
+    base = [r for r in sp.runs if r.text.strip() and not r.superscript]
+    return len(base) == 1 and _slanted(base[0]) and len(base[0].text.strip().strip(_EDGE)) == 1
+
+
+def _slanted(s: Span) -> bool:
+    return s.italic or bool(_SLANT_FONT_RE.search(s.font))
+
+
+def _italic_variables(line: Line) -> set[int]:
+    """Indices of the spans of ``line`` that are a lone italic letter in upright prose."""
+    spans = line.spans
+    if not any(
+        not _slanted(s) and not _is_math_font(s.font) and _PROSE_WORD_RE.search(s.text)
+        for s in spans
+    ):
+        return set()
+    out: set[int] = set()
+    for k, s in enumerate(spans):
+        core = s.text.strip().strip(_EDGE)
+        if len(core) != 1 or not core.isalpha() or not _slanted(s) or _is_math_font(s.font):
+            continue
+        near = [spans[j] for j in (k - 1, k + 1) if 0 <= j < len(spans)]
+        if any(_slanted(n) and n.text.strip() and not n.superscript for n in near):
+            continue
+        out.add(k)
+        if k + 1 < len(spans) and spans[k + 1].text.strip() in _SPACING_ACCENTS:
+            out.add(k + 1)  # "x" then "¯" set as its own glyph: x bar
     return out
 
 
@@ -396,10 +442,18 @@ def _inline_spans(lines: list[Line], texts: list[str], heading: bool) -> list[Ma
             acc += len(s.text)
         for run in _math_runs(line):
             lo = starts[run[0]]
-            hi = starts[run[-1]] + len(line.spans[run[-1]].text)
+            last = line.spans[run[-1]].text
+            hi = starts[run[-1]] + len(last)
+            if not any(_is_math_font(line.spans[k].font) for k in run):
+                hi -= len(last) - len(last.rstrip())  # an italic variable ends at its letter
             kept = [p for p in pos[lo:hi] if p >= 0]
             if kept:
-                spans.append(MathSpan(kept[0], kept[-1] + 1, False, [line.spans[k] for k in run]))
+                runs = [line.spans[k] for k in run]
+                if not any(_is_math_font(r.font) for r in runs) and any(
+                    r.text.strip() in _SPACING_ACCENTS for r in runs
+                ):
+                    runs = []  # an accented italic variable is read from its text ("x¯")
+                spans.append(MathSpan(kept[0], kept[-1] + 1, False, runs))
     return spans
 
 
@@ -658,9 +712,17 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
         lb.text = lb.text.rstrip(SOFT_HYPHEN)  # a soft hyphen no later block joined onto
         lb.math_spans = _shift(lb.math_spans, 0, len(lb.text), 0)
         if lb.type in CONTENT_MATH_TYPES:
-            found = content_spans(lb.text, lb.math_spans)
+            # an italic variable inside text-font maths ("x – μ") yields to the content span
+            fonts = [sp for sp in lb.math_spans if not _variable_span(sp)]
+            found = content_spans(lb.text, fonts)
             if found:
-                lb.math_spans = sorted([*lb.math_spans, *found], key=lambda sp: sp.start)
+                kept = [
+                    sp
+                    for sp in lb.math_spans
+                    if not _variable_span(sp)
+                    or not any(f.start < sp.end and sp.start < f.end for f in found)
+                ]
+                lb.math_spans = sorted([*kept, *found], key=lambda sp: sp.start)
     return out
 
 
