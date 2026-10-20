@@ -384,6 +384,7 @@ pi, squared")
 | `x′` / `x″` | x prime / x double prime | `x̂` | x hat |
 | `x̄` | x bar | `x̃` | x tilde |
 | `ẋ` | x dot | `x⃗` | vector x |
+| `ẍ` | x double dot | | |
 
 **Fractions and roots**
 
@@ -418,6 +419,7 @@ pi, squared")
 | `(a, b)` otherwise | a, b (a pair or point, read as a list) |
 | `⟨f, g⟩` | the inner product of f and g |
 | matrix | the matrix with rows: a, b; c, d |
+| column vector (stacked rows in one pair of tall brackets) | the column vector a, b |
 
 **Function notation**
 

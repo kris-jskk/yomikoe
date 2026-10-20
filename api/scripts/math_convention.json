@@ -102,6 +102,7 @@
     "\\bar{x}": "x bar",
     "\\tilde{x}": "x tilde",
     "\\dot{x}": "x dot",
+    "\\ddot{x}": "x double dot",
     "\\vec{x}": "vector x",
     "x^{\\otimes n}": "x to the tensor power n"
   },
@@ -134,7 +135,8 @@
     "(a, b) after an element sign": "the open interval from a to b",
     "(a, b) otherwise": "a, b",
     "grouping ( )": "",
-    "matrix": "the matrix with rows: a, b; c, d"
+    "matrix": "the matrix with rows: a, b; c, d",
+    "column vector (stacked rows in one pair of tall brackets)": "the column vector a, b"
   },
   "functions": {
     "f(x) (single letter f)": "f of x",
