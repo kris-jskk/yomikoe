@@ -420,3 +420,4 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 - [ ] M6: page rendering for the board: pypdfium2 already renders pages at 300 dpi for OCR (ING-2) and can render the board; image cache size unverified. Added 2026-10-17
 - [ ] M6: should the board be rendered in the browser with pdf.js (Apache-2.0) instead, so the server ships only coordinates? Decide in the M6 spec (D38). Added 2026-10-17
 - [ ] M6: annotations are anchored to segment id plus offsets (D39), so a re-ingested document (new ids, D7) loses them unless they are re-anchored by text match; whether to re-anchor, and how, is open. Added 2026-10-17
+- [ ] Kindle (added 2026-10-19): Fire tablets as a browser target, `.azw3` personal documents and the DRM refusal are specified in `docs/PRD_KINDLE.md` (KDL-1 to KDL-9; Technical Design D41–D44, proposed, not confirmed)
