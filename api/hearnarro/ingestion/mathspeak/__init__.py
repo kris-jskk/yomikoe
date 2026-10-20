@@ -29,7 +29,14 @@ from typing import Any
 
 from hearnarro.ingestion.mathspeak.reader import fallback, prefix, speak
 from hearnarro.ingestion.mathspeak.references import rewrite_references
-from hearnarro.ingestion.mathspeak.structure import WORDS, MathSpan, Node, label_of, parse
+from hearnarro.ingestion.mathspeak.structure import (
+    LIMOPS,
+    WORDS,
+    MathSpan,
+    Node,
+    label_of,
+    parse,
+)
 from hearnarro.ingestion.mathspeak.symbols import name_of, rewrite_units
 from hearnarro.ingestion.normalize import normalize
 from hearnarro.ingestion.profile import PROSE_DEFAULT, DocumentProfile
@@ -190,6 +197,8 @@ _TOKEN = re.compile(r"\S+")
 _GAP_TOKEN = re.compile(r"[()\[\]{}|,;:=+\-−·]*[A-Za-z0-9]?[()\[\]{}|,;:=+\-−·]*")
 _BRACKETS = set("()[]{}|")
 _PAIRS = {"(": ")", "[": "]", "{": "}"}
+# a function word set in the text font with its bracket between two maths runs: " sin(" (m5 p3k)
+_FUNCTION_GAP = re.compile(r"([A-Za-z]{2,6})[(\[{]")
 
 
 def _maths_gap(gap: str, limit: int = 8) -> bool:
@@ -199,6 +208,8 @@ def _maths_gap(gap: str, limit: int = 8) -> bool:
     if len(gap) > limit or "\n" in gap:
         return False
     for tok in gap.split():
+        if (m := _FUNCTION_GAP.fullmatch(tok)) and m.group(1) in WORDS:
+            continue
         if not _GAP_TOKEN.fullmatch(tok):
             return False
         if any(c.isalnum() for c in tok) and not (set(tok) & _BRACKETS):
@@ -236,7 +247,7 @@ def coalesce_spans(text: str, spans: Sequence[MathSpan]) -> list[MathSpan]:
         ):
             gap = text[prev.end : sp.start]
             runs = (
-                [*prev.runs, _gap_run(_template(prev.runs), gap), *sp.runs]
+                [*prev.runs, _gap_run(_template([*prev.runs, *sp.runs]), gap), *sp.runs]
                 if gap
                 else [
                     *prev.runs,
@@ -270,6 +281,11 @@ def _grow(text: str, sp: MathSpan, floor: int) -> MathSpan:
     word = re.search(r"(?<![A-Za-z])([A-Za-z]{2,6})$", text[floor:s])
     if word and word.group(1) in WORDS and text[s : s + 1] in "({[":
         # a function word the font split left in the prose: "min" + "{i ∈ I_t | …}"
+        s -= len(word.group(1))
+        sp = replace(sp, start=s, runs=[_gap_run(tmpl, word.group(1)), *sp.runs])
+    elif word and word.group(1) in LIMOPS and first.size < 0.85 * tmpl.size:
+        # a limit operator set in the text font with its subscript in the span: "lim" + "x→0 …"
+        # (m5 p3k, MATH-1): the word joins at the main size so the script reads as its limit
         s -= len(word.group(1))
         sp = replace(sp, start=s, runs=[_gap_run(tmpl, word.group(1)), *sp.runs])
     before = ""

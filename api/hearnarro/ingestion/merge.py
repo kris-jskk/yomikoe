@@ -142,6 +142,26 @@ def split_items(lines: list[str]) -> list[str]:
     return [text for text in (merge_lines(item) for item in items) if text]
 
 
+def _item_lines(lines: list[str]) -> list[list[int]] | None:
+    """The line indices of each ``split_items`` item when every item is made of whole lines
+    (no line split before an inline glyph, no glyph-only line), else None: only then can an
+    item's inline maths runs be found on its own lines (``_inline_spans``)."""
+    groups: list[list[int]] = []
+    for k, line in enumerate(lines):
+        pieces = [p for p in INLINE_ITEM_RE.split(line) if p.strip()]
+        if not pieces:
+            continue
+        if len(pieces) != 1 or pieces[0] != line or line.strip() in _GLYPHS:
+            return None
+        if groups and not ITEM_RE.match(line):
+            groups[-1].append(k)
+        else:
+            groups.append([k])
+    if [merge_lines([lines[k] for k in g]) for g in groups] != split_items(lines):
+        return None
+    return groups
+
+
 # ING-7: cells of a table row are spans this many font sizes apart; closer spans are one cell.
 CELL_GAP = 1.0
 WORD_GAP = 0.15  # spans of one cell further apart than this (in font sizes) get a space
@@ -704,8 +724,16 @@ def merge_blocks(blocks: list[Block]) -> list[LogicalBlock]:
             listing.text = code_cue(listing.raw_text or "")
             continue
         if block.type == "list":
+            groups = _item_lines(lines)
             for item in split_items(lines):
-                out.append(_logical(len(out), block, item))
+                # MATH-2 (m5 p3k): an item made of whole lines keeps its maths-font runs
+                rows = groups.pop(0) if groups is not None else None
+                item_spans = (
+                    _inline_spans([kept[k] for k in rows], [lines[k] for k in rows], False)
+                    if rows is not None
+                    else []
+                )
+                out.append(_logical(len(out), block, item, spans=item_spans))
             continue
         out.append(_logical(len(out), block, text))
     for lb in out:
