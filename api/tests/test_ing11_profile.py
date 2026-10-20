@@ -99,8 +99,8 @@ def test_ing11_json_round_trip_and_prose_default_for_null() -> None:
     assert PROSE_DEFAULT.effective == "prose"
 
 
-TEXT = "Let x lie in [0, 1] as before [12]."
-SPAN = (TEXT.index("[0, 1]"), TEXT.index("[0, 1]") + len("[0, 1]"))  # a maths span (MATH-2)
+TEXT = "Let x lie in [1, 2] as before [12]."
+SPAN = (TEXT.index("[1, 2]"), TEXT.index("[1, 2]") + len("[1, 2]"))  # a maths span (MATH-2)
 
 
 def _with(cls: str) -> DocumentProfile:
@@ -110,20 +110,22 @@ def _with(cls: str) -> DocumentProfile:
 def test_ing11_bracket_rule_prose_drops_both() -> None:
     assert normalize(TEXT)[0] == "Let x lie in as before."  # today's rule, unchanged default
     assert normalize(TEXT, profile=_with("prose"), math_spans=[SPAN])[0] == normalize(TEXT)[0]
+    # ING-6: a group starting with 0 is never a citation (main 5b09a5f)
+    assert normalize("Let x lie in [0, 1] as before [12].")[0] == "Let x lie in [0, 1] as before."
 
 
 def test_ing11_bracket_rule_math_keeps_maths_span_drops_citation() -> None:
     out, cmap = normalize(TEXT, profile=_with("math"), math_spans=[SPAN])
-    assert out == "Let x lie in [0, 1] as before."
+    assert out == "Let x lie in [1, 2] as before."
     assert len(cmap) == len(out)
-    i = out.index("[0, 1]")
+    i = out.index("[1, 2]")
     assert cmap[i : i + 6] == list(range(SPAN[0], SPAN[1]))
 
 
 def test_ing11_bracket_rule_mixed_per_span() -> None:
     assert (
         normalize(TEXT, profile=_with("mixed"), math_spans=[SPAN])[0]
-        == "Let x lie in [0, 1] as before."
+        == "Let x lie in [1, 2] as before."
     )
     # no maths span: a citation-shaped group is dropped even in a math document
     assert normalize(TEXT, profile=_with("math"))[0] == "Let x lie in as before."
