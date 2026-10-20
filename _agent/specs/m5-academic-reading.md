@@ -707,6 +707,17 @@ not reported closed until its gate clause runs are saved and the guide says so (
 - Q7 SYN-8 pauses are client-side scheduling gaps in the web player (start-time offsets keyed by the segment's
   block type), not audio in the cache: the cache stays by (segment, voice, speed), and a preset can change
   pause lengths without re-synthesis. The synthesis service is untouched by SYN-8. Decided.
+- Q8 (2026-10-20, phase 4) EVAL-4 `term_*` scoring. The dataset writes expected pronunciations as hyphenated
+  respellings ("Koh-shee"); `phonemes()` turns in-word hyphens into spaces, so a correct one-word pronunciation
+  (one phoneme token) can never match the two or three expected tokens, and 37 lexicon entries moved only
+  `term_surname` (results 1003). Decision: for every `term_*` category the pair's `score` is the joined phoneme
+  similarity (character-level edit distance over the phoneme string with stress marks and spaces removed, 1 -
+  d / len(expected)); `partial` and `exact` stay in the record for comparison. Other categories are unchanged.
+  Dataset rule for `term_*` rows: `expected` is a correct pronunciation written so that misaki reads the
+  respelling as intended (results 1002 list the syllables it misreads: "uh", "ih", "skeh", "Pwan", "ther");
+  where misaki already says the word correctly the respelling matches it. Recorded in `docs/CODE_MAP_EVALS.md`
+  by the worker; a supervisor decision, open to the user's veto (the scorer change makes the `term_*` trend
+  line restart at the phase 4 record).
 - Phase 1 amendment: `mathspeak_score` lands in `scorers.py` in phase 1 (pure function), so EVAL-10 runs from
   phase 1 and the first run is the baseline (today's output is the ING-7 cue, so scores are low). The gate
   test is red on clause (b) scores and on clause (e) (`compute_profile` imported inside the test, absent
