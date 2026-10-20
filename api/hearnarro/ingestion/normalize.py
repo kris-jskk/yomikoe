@@ -25,6 +25,7 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 
+from hearnarro.ingestion.expansions import EXPANSIONS
 from hearnarro.ingestion.math_symbols import (
     CONTEXT_NAMES,
     GREEK,
@@ -154,9 +155,25 @@ _CITATION = (
     r"\[(?!0)\d+(?:\s*[,–-]\s*\d+)*\](?!\)))"
 )
 
+# An author-year parenthetical (TERM-3; spec §2a pattern, the one ``profile`` counts), or a
+# semicolon-separated list of them ("(Smith, 2019; Jones et al., 2020)"). Read or dropped by
+# ``DocumentProfile.author_year_citations``.
+_AY_ONE = r"(?:[A-Z][\w'’-]+(?: et al\.)?(?:,| and| &)?\s?)+,? \d{4}[a-z]?"
+_AUTHOR_YEAR = rf"(?P<authyear>\({_AY_ONE}(?:;\s?{_AY_ONE})*\))"
+# Academic abbreviations (TERM-4): a whole token from ``EXPANSIONS``, any case, not inside a
+# word or a dotted run ("cliff", "e.gov").
+_EXPANSION = (
+    r"(?P<expand>(?<![\w.])(?i:"
+    + "|".join(re.escape(k) for k in sorted(EXPANSIONS, key=len, reverse=True))
+    + r")(?![\w]|\.\w))"
+)
+_EXPANSION_KEYS = {k.lower(): v for k, v in EXPANSIONS.items()}
+
 
 _PATTERN = re.compile(
     rf"{_CITATION}"
+    rf"|{_AUTHOR_YEAR}"
+    rf"|{_EXPANSION}"
     r"|(?P<etal>\bet al\.)"
     r"|(?P<percent>\b\d+(?:\.\d+)?%)"
     rf"|(?P<url>(?:\bhttps?://{_SPACE_BEFORE_HOST}(?:www\.)?|\bwww\.{_SPACE_BEFORE_HOST})"
@@ -492,6 +509,38 @@ def normalize(
             if out and out[-1].isspace() and (not nxt or nxt.isspace() or nxt in _DROP_FOLLOWERS):
                 out.pop()
                 cmap.pop()
+        elif kind == "authyear" and _in_math(start, end, profile, math_spans):
+            suffix_start = start  # maths, not a citation: copied as written
+        elif kind == "authyear" and profile.author_year_citations == "skip":
+            nxt = text[end] if end < len(text) else ""
+            if out and out[-1].isspace() and (not nxt or nxt.isspace() or nxt in _DROP_FOLLOWERS):
+                out.pop()
+                cmap.pop()
+        elif kind == "authyear":
+            k = start + 1
+            while k < end - 1:
+                if token.startswith("et al.", k - start):
+                    emit("et al", k, 6)
+                    k += 6
+                    continue
+                ch = text[k]
+                if ch == "&":
+                    emit("and", k, 1)
+                elif ch == ";":
+                    out.append(",")
+                    cmap.append(k)
+                elif ch != ",":
+                    out.append(ch)
+                    cmap.append(k)
+                k += 1
+        elif kind == "expand":
+            words = _EXPANSION_KEYS[token.lower()]
+            before = "".join(out).rstrip()
+            if token[0].isupper() and (not before or before[-1] in ".!?"):
+                words = words[0].upper() + words[1:]
+            if token.endswith(".") and not text[end:].strip():
+                words += "."  # the abbreviation's dot also ends the text
+            emit(words, start, len(token))
         elif kind == "etal":
             emit("et al", start, len(token))
         elif kind == "percent":
