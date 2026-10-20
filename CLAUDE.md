@@ -12,7 +12,7 @@
 - Pin every Hugging Face model to a revision hash in config.
 - Python: 3.11+, `ruff` for lint/format, `pytest` for tests, type hints everywhere.
 - Frontend: React + TypeScript + Vite in `web/`. Audio playback is per-segment HTTP fetch + Web Audio API scheduled buffers (D5); never MSE, never per-segment `<audio>` tags. Player state is a typed `useReducer` machine in one file (D10).
-- Audio cache is Opus/WebM via an ffmpeg subprocess (D7). Schema changes go through Alembic migrations.
+- Audio cache is Ogg Opus in process via `opuscodec` (D7, D16), WAV with `HEARNARRO_AUDIO_FORMAT=wav`; no ffmpeg. Schema changes go through Alembic migrations.
 - Keep `docs/PRD.md` in sync with decisions. If a decision in code departs from the PRD, update the PRD in the same PR.
 
 ## Rule: the session supervises; fresh workers on the cheapest adequate model do the work
