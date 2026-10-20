@@ -100,6 +100,11 @@ class DbSegmentRepo:
         async with self.db.connect() as conn:
             return await db_repo.get_document_acronyms(conn, document_id)
 
+    async def document_lexicon(self, document_id: int) -> dict[str, str]:
+        """TERM-2: the user's overrides, global merged under the document's."""
+        async with self.db.connect() as conn:
+            return await db_repo.pronunciations_for(conn, document_id)
+
 
 def to_text_offsets(ts: list[WordTimestamp], seg: Segment) -> list[WordTimestamp]:
     """Backend offsets (into ``normalized_text``) -> ``text`` offsets through ``char_map``:
@@ -397,14 +402,27 @@ class SynthesisService:
         return first
 
     async def _context(self, document_id: int) -> SynthContext | None:
-        """The document's acronym definitions as a SynthContext (None when it has none)."""
+        """The document's acronym definitions (SYN-4) and pronunciation overrides (TERM-2) as a
+        SynthContext; None when it has neither."""
         if document_id not in self._contexts:
             lookup = getattr(self.repo, "document_acronyms", None)
             acronyms = await lookup(document_id) if lookup is not None else {}
+            lexicon_of = getattr(self.repo, "document_lexicon", None)
+            lexicon = await lexicon_of(document_id) if lexicon_of is not None else {}
             self._contexts[document_id] = (
-                SynthContext(acronyms=acronyms, document_id=document_id) if acronyms else None
+                SynthContext(acronyms=acronyms, document_id=document_id, lexicon=lexicon)
+                if acronyms or lexicon
+                else None
             )
         return self._contexts[document_id]
+
+    def invalidate_context(self, document_id: int | None) -> None:
+        """Forget the cached context of ``document_id``, or of every document when None (a
+        global override changed; TERM-2). The next synthesis reloads it from the database."""
+        if document_id is None:
+            self._contexts.clear()
+        else:
+            self._contexts.pop(document_id, None)
 
     def _synth(
         self, text: str, voice_id: str, speed: float, context: SynthContext | None

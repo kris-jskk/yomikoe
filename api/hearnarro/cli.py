@@ -163,6 +163,25 @@ def purge_audio(
         where.append("abs(speed - ?) < ?")
         params += [speed, SPEED_EPSILON]
     clause = " AND ".join(where)
+    return _purge_where(conn, data_dir, clause, params)
+
+
+def purge_segments(conn: sqlite3.Connection, segment_ids: Sequence[int], data_dir: Path) -> int:
+    """Delete every ``audio_cache`` row (any voice, speed, backend) of ``segment_ids`` and their
+    files; returns the number of rows removed (TERM-2: an override changed these segments)."""
+    ids = list(dict.fromkeys(segment_ids))
+    removed = 0
+    for i in range(0, len(ids), 500):  # stay under SQLite's bound-parameter limit
+        chunk = ids[i : i + 500]
+        marks = ",".join("?" * len(chunk))
+        removed += _purge_where(conn, data_dir, f"segment_id IN ({marks})", chunk)
+    return removed
+
+
+def _purge_where(
+    conn: sqlite3.Connection, data_dir: Path, clause: str, params: Sequence[object]
+) -> int:
+    """Delete the ``audio_cache`` rows matching ``clause``, then their files."""
     with conn:
         paths = [r[0] for r in conn.execute(f"SELECT path FROM audio_cache WHERE {clause}", params)]
         removed = conn.execute(f"DELETE FROM audio_cache WHERE {clause}", params).rowcount
