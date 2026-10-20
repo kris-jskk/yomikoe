@@ -11,7 +11,11 @@ consonant, ``ɪz`` after a sibilant, else ``z``. This file is the escape hatch, 
 lexicon tiers (misaki's gold/silver lexicon, then the CMU Pronouncing Dictionary) cover most
 words, and an entry belongs here only when every tier is missing or wrong for it ("Uber": misaki
 has none, cmudict and the g2p fallback say "YOO-ber"; ``_agent/results/367_uber_before.txt``,
-``368_coverage.md``). Per-document user corrections are an M4 item.
+``368_coverage.md``). Academic terms live in ``lexicon_academic`` (TERM-1), below this table.
+
+``lookup`` and ``apply`` take an optional ``extra`` table in the same format (word -> phonemes),
+consulted before ``OVERRIDES``: the Kokoro backend passes a document's user respellings
+(``SynthContext.lexicon``, TERM-2) there after converting each through its own G2P.
 
 The Kokoro backend writes these entries into misaki's gold lexicon (so misaki's own suffix and
 context rules see them and the fallback is not reached), then sets the phonemes of every token
@@ -20,7 +24,7 @@ that ``lookup`` matches, and logs each entry used once per document at INFO.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any
 
 OVERRIDES: dict[str, str] = {
@@ -37,23 +41,25 @@ def _plural(ps: str) -> str:
     return ps + ("ɪz" if last in _SIBILANT else "s" if last in _VOICELESS else "z")
 
 
-def lookup(token: str) -> tuple[str, str] | None:
-    """``(phonemes, entry)`` for a token matching an entry (module docstring), else None."""
+def lookup(token: str, extra: Mapping[str, str] | None = None) -> tuple[str, str] | None:
+    """``(phonemes, entry)`` for a token matching an entry of ``extra`` (first) or ``OVERRIDES``
+    (module docstring), else None."""
     w = token.lower()
-    if w in OVERRIDES:
-        return OVERRIDES[w], w
-    for suffix in ("'s", "’s", "s"):
-        base = w.removesuffix(suffix)
-        if base != w and base in OVERRIDES:
-            return _plural(OVERRIDES[base]), base
+    for table in (extra or {}, OVERRIDES):
+        if w in table:
+            return table[w], w
+        for suffix in ("'s", "’s", "s"):
+            base = w.removesuffix(suffix)
+            if base != w and base in table:
+                return _plural(table[base]), base
     return None
 
 
-def apply(tokens: Iterable[Any]) -> list[str]:
+def apply(tokens: Iterable[Any], extra: Mapping[str, str] | None = None) -> list[str]:
     """Set ``phonemes`` on every token whose ``text`` matches; return the entries used."""
     used: list[str] = []
     for t in tokens:
-        hit = lookup(t.text)
+        hit = lookup(t.text, extra)
         if hit:
             t.phonemes, entry = hit
             used.append(entry)

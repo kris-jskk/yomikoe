@@ -14,13 +14,17 @@
   camel-case piece misaki's lexicon, then cmudict, then the vendored g2p_en predictor, else
   letter spelling; one warning per OOV word per document naming the tier(s) used.
 
-Pronunciation tiers, in order: ``lexicon_overrides`` -> misaki gold/silver lexicon -> cmudict ->
+Pronunciation tiers, in order: the document's respellings (``SynthContext.lexicon``, TERM-2) ->
+``lexicon_overrides`` -> ``lexicon_academic`` (TERM-1) -> misaki gold/silver lexicon -> cmudict ->
 g2p_en neural fallback -> letters.
 
 Custom pronunciations (SYN-4): ``hearnarro.synthesis.lexicon_overrides`` entries are written
 into misaki's gold lexicon when a G2P is built, and after G2P every token they match (case-
 insensitive, possessive/plural suffixes) gets the override's phonemes, before the all-caps step;
-each entry used is logged once per document at INFO.
+each entry used is logged once per document at INFO. ``lexicon_academic.flat()`` is written
+into the gold lexicon before them (so an override wins a shared word). A document's user
+respellings are read by this G2P once per context (``respelling_phonemes``) and applied with the
+overrides, ahead of them.
 
 All-caps context (SYN-4): before G2P the segment goes through
 ``hearnarro.synthesis.acronyms.fold_caps``; in a heading or emphasized run ("ERIC'S NOTE") the
@@ -71,13 +75,13 @@ import copy
 import logging
 import re
 import threading
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
-from hearnarro.synthesis import cmudict, lexicon_overrides
+from hearnarro.synthesis import cmudict, lexicon_academic, lexicon_overrides
 from hearnarro.synthesis.acronyms import (
     RESPELL,
     SPELLED,
@@ -317,6 +321,32 @@ def model_vocab(revision: str = PINNED_REVISION) -> set[str]:
         return set(json.load(f)["vocab"])
 
 
+def _gold_entries(table: Mapping[str, str]) -> dict[str, str]:
+    """``table`` under its lower-case and its capitalised key: misaki does not lower-case a
+    proper noun of up to seven letters before the gold lookup ("Zhang", "Xu", "Poisson"), and
+    a capitalised gold entry of its own ("Fourier") would otherwise win over ours."""
+    out: dict[str, str] = {}
+    for word, ps in table.items():
+        out[word] = out[word[:1].upper() + word[1:]] = ps
+    return out
+
+
+def respelling_phonemes(g2p: Any, lexicon: Mapping[str, str]) -> dict[str, str]:
+    """A user lexicon (word -> respelling, TERM-2) as word (lower case) -> phonemes, each
+    respelling read by ``g2p``: its words' phonemes joined (hyphenated parts with nothing
+    between them, separate words with a space), punctuation dropped."""
+    out: dict[str, str] = {}
+    for word, respelling in lexicon.items():
+        _, tokens = g2p(respelling)
+        ps = ""
+        for t in tokens:
+            if t.phonemes and any(c.isalpha() for c in t.text):
+                ps += t.phonemes + (" " if t.whitespace else "")
+        if ps.strip():
+            out[word.lower()] = ps.strip()
+    return out
+
+
 def build_g2p(british: bool, vocab: set[str], predictor: Any | None = None) -> Any:
     """The misaki G2P front-end the backend uses: num2words shim installed before misaki is
     imported, ``lexicon_overrides`` in the gold lexicon, ``_OOVFallback`` for OOV words.
@@ -331,7 +361,9 @@ def build_g2p(british: bool, vocab: set[str], predictor: Any | None = None) -> A
 
         predictor = NeuralG2P()
     g2p = en.G2P(trf=False, british=british, fallback=None, unk="")
-    g2p.lexicon.golds.update(lexicon_overrides.OVERRIDES)  # before misaki's own entries
+    # before misaki's own entries; ACADEMIC first so OVERRIDES wins a shared word (TERM-1)
+    g2p.lexicon.golds.update(_gold_entries(lexicon_academic.flat()))
+    g2p.lexicon.golds.update(_gold_entries(lexicon_overrides.OVERRIDES))
     g2p.fallback = _OOVFallback(g2p.lexicon, predictor, vocab, british, cmu=cmudict.load())
     return g2p
 
@@ -369,6 +401,7 @@ class KokoroBackend:
         self._lock = threading.Lock()
         self._acronyms_logged: set[tuple[int | None, str, Decision]] = set()
         self._overrides_logged: set[tuple[int | None, str]] = set()
+        self._respelled: dict[tuple[bool, tuple[tuple[str, str], ...]], dict[str, str]] = {}
         self._g2p_for(british=False)  # load the US pipeline (spaCy) now, not on first request
 
     def _fetch(self, filename: str) -> str:
@@ -378,6 +411,16 @@ class KokoroBackend:
         if british not in self._g2p:
             self._g2p[british] = build_g2p(british, self._vocab, self._predictor)
         return self._g2p[british]
+
+    def _respellings(self, context: SynthContext | None, british: bool) -> dict[str, str]:
+        """The context's user respellings as phonemes (TERM-2), converted once per distinct
+        lexicon and accent."""
+        if not context or not context.lexicon:
+            return {}
+        key = (british, tuple(sorted(context.lexicon.items())))
+        if key not in self._respelled:
+            self._respelled[key] = respelling_phonemes(self._g2p_for(british), context.lexicon)
+        return self._respelled[key]
 
     def _pack(self, voice_id: str) -> Any:
         if voice_id not in self._packs:
@@ -442,6 +485,7 @@ class KokoroBackend:
         """misaki tokens for ``text`` with all-caps tokens re-read (module docstring) and only
         phoneme symbols the model knows, so char i of the chunk string <-> pred_dur[i + 1]."""
         g2p = self._g2p_for(british)
+        respelled = self._respellings(context, british)  # before the document id is set
         g2p.fallback.document_id = context.document_id if context else None
         definitions = context.acronyms if context else {}
         spans = caps_fold_spans(text, definitions)
@@ -459,11 +503,11 @@ class KokoroBackend:
             if any(a < pos and i < b for a, b in spans):
                 folded.add(id(t))
         doc = context.document_id if context else None
-        for entry in lexicon_overrides.apply(tokens):
+        for entry in lexicon_overrides.apply(tokens, respelled):
             if (doc, entry) not in self._overrides_logged:
                 self._overrides_logged.add((doc, entry))
                 log.info("pronunciation override document=%s entry=%r", doc, entry)
-        tokens = self._pronounce_acronyms(tokens, g2p, british, context, folded)
+        tokens = self._pronounce_acronyms(tokens, g2p, british, context, folded, respelled)
         for t in tokens:
             t.phonemes = "".join(c for c in (t.phonemes or "") if c in self._vocab)
         return tokens
@@ -475,6 +519,7 @@ class KokoroBackend:
         british: bool,
         context: SynthContext | None,
         folded: set[int] | None = None,
+        respelled: Mapping[str, str] | None = None,
     ) -> list[Any]:
         lex = g2p.lexicon
         look = g2p.fallback._look
@@ -510,7 +555,11 @@ class KokoroBackend:
                 word, suffix = sp
             elif camel := split_camel_acronym(t.text):
                 head, word, suffix = camel
-            if not word or lexicon_overrides.lookup(t.text) or lexicon_overrides.lookup(word):
+            if (
+                not word
+                or lexicon_overrides.lookup(t.text, respelled)
+                or lexicon_overrides.lookup(word, respelled)
+            ):
                 out.append(t)
                 continue
             if head:  # "OpenAI": the word part as its own token, then the capital run below
