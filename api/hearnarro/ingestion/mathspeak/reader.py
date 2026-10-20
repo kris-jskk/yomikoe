@@ -189,7 +189,10 @@ class _Reader:
                 return [*num, "over", *den]
             return ["the fraction", *num, "over", *den, ",", "end fraction"]
         if k == "sqrt":
-            return ["the square root of", *self.item(kids[0])]  # type: ignore[arg-type]
+            kid = kids[0]
+            if kid is not None and kid.kind == "group" and kid.text == "()" and kid.children[0]:
+                kid = kid.children[0]  # √(…): the brackets only delimit the radicand (m5-p3j)
+            return ["the square root of", *self.item(kid)]  # type: ignore[arg-type]
         if k in ("sum", "prod", "int"):
             name = sy.SYMBOLS[n.text]
             lo, hi = kids

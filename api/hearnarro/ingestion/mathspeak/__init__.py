@@ -493,8 +493,10 @@ def glyph_spans(text: str, spans: Sequence[MathSpan] = ()) -> list[MathSpan]:
         word = text[s:e]
         if _MACRON.match(word):
             toks.append((s, s + 2, "core"))  # x¯ in a text font: "x bar", the rest is prose
-        elif word in _ASCII_OPS or any(
-            not c.isascii() and name_of(_SAME_GLYPH.get(c, c)) for c in word
+        elif (
+            word in _ASCII_OPS
+            or "⁄" in word
+            or any(not c.isascii() and name_of(_SAME_GLYPH.get(c, c)) for c in word)
         ):
             toks.append((s, e, "core"))
         elif _LIGHT.fullmatch(word):

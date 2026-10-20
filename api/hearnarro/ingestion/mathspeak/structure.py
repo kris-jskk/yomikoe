@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from hearnarro.ingestion.mathspeak import symbols as sy
@@ -226,6 +226,8 @@ def _char_tok(ch: str) -> _Tok:
         return _Tok("bigop", ch)
     if ch == "√":
         return _Tok("sqrt", ch)
+    if ch == "⁄":
+        return _Tok("op", ch)  # U+2044 FRACTION SLASH: a drawn bar (Parser.item)
     if ch in "…⋯":
         return _Tok("dots", ch)
     if ch in sy.SYMBOLS or ch in sy.EXTRA or ch in ",;.:":
@@ -305,6 +307,10 @@ class _Parser:
             elif t.kind == "open" and _applies(node) and not self._product(node):
                 self.pos += 1
                 node = Node("apply", [node, self.group(t.text)])
+            elif t.kind == "op" and t.text == "⁄" and self.pos + 1 < len(self.toks):
+                self.pos += 1  # (num)⁄(den), a drawn fraction bar (extract.vector_maths)
+                den = self.item(None)
+                node = Node("frac", [_ungroup(node), _ungroup(den)])
             else:
                 break
         return node
@@ -417,6 +423,13 @@ class _Parser:
             elif t.kind == kind and depth == 0:
                 return True
         return False
+
+
+def _ungroup(node: Node) -> Node:
+    """A fraction part: ``(a + b)`` is the row ``a + b``; a single item is a one-item row."""
+    if node.kind == "group" and node.text == "()" and node.children[0] is not None:
+        return node.children[0]
+    return Node("row", [node])
 
 
 def _applies(node: Node) -> bool:
@@ -565,8 +578,8 @@ def _pieces(runs: list[Any], base: float, rows: bool = True) -> list[list[Piece]
         if not out or (rows and r.bbox.y0 > row_y0 + 0.5 * r.size):
             out.append([])
             row_y0 = r.bbox.y0
-        if "cmex" not in r.font.lower():
-            last_mid = _mid(r)
+        if "cmex" not in r.font.lower() or text in BIGOPS:
+            last_mid = _mid(r)  # a large operator's limits sit above or below its centre
         out[-1].append((text, "", r.font))
     return out
 
@@ -595,6 +608,8 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
     if not above and not has_brace:
         return _pieces(runs, base)
     main_mid = _mid(full[0])
+    runs = _limits_after(runs, base)
+    frac_x1 = 0.0  # right edge of the current fraction's full-size runs
     row: list[Piece] = []
     chunk: list[Any] = []
     num: list[Any] = []
@@ -628,15 +643,26 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
             else:
                 label.append(r)
             continue
+        if mode == "frac" and not is_full and den and r.bbox.x0 >= frac_x1 - 0.5:
+            flush()  # a script or large operator right of the bar is back on the main row
+            chunk.append(r)
+            continue
         if is_full and r.bbox.y0 < main_y0 - tol:
             if mode == "frac" and den:
                 flush()
+            rel = _RELATION_HEAD.match(r.text)
+            if rel and rel.end() < len(r.text.rstrip()):
+                # ":= 1" set as one run: the relation is on the main row, "1" is the numerator
+                chunk.append(replace(r, text=rel.group(0)))
+                r = replace(r, text=r.text[rel.end() :])
             if mode != "frac":
                 row.extend(_flat_pieces(chunk))
-                chunk, mode = [], "frac"
+                chunk, mode, frac_x1 = [], "frac", 0.0
             num.append(r)
+            frac_x1 = max(frac_x1, r.bbox.x1)
         elif mode == "frac" and is_full and r.bbox.y0 > main_y0 + tol:
             den.append(r)
+            frac_x1 = max(frac_x1, r.bbox.x1)
         elif mode == "frac" and not is_full:
             (num if _mid(r) < main_mid and not den else den).append(r)
         else:
@@ -645,6 +671,33 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
             chunk.append(r)
     flush()
     return [row]
+
+
+_RELATION_HEAD = re.compile(r"\s*(:=|=|≡|≈|≤|≥|<|>)\s*")
+
+
+def _limits_after(runs: list[Any], base: float) -> list[Any]:
+    """Runs with each stacked limit (a small run centred over or under a CMEX large operator)
+    moved to just after that operator, so it attaches as the operator's limit (``sum``)."""
+    ops = [r for r in runs if "cmex" in r.font.lower() and cmex_text(r.text, r.font) in BIGOPS]
+    if not ops:
+        return runs
+    out = [r for r in runs]
+    for op in ops:
+        lims = [
+            r
+            for r in runs
+            if r is not op
+            and r.size < 0.85 * base
+            and op.bbox.x0 - 1.0 <= (r.bbox.x0 + r.bbox.x1) / 2 <= op.bbox.x1 + 1.0
+            and (r.bbox.y1 <= _mid(op) or r.bbox.y0 >= _mid(op))
+        ]
+        if not lims:
+            continue
+        out = [r for r in out if not any(r is x for x in lims)]
+        at = next(i for i, r in enumerate(out) if r is op) + 1
+        out[at:at] = lims
+    return out
 
 
 def _row_tokens(pieces: list[Piece]) -> list[_Tok]:

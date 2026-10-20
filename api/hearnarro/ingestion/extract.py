@@ -1005,7 +1005,8 @@ def extract_pages(
         for number, pdf_page in enumerate(pdf.pages):
             coords = _Coords(pdf_page)
             fixes = _ligature_fixes(pdf_page, font_cache)
-            lines = group_lines(_layout_chars(pdf_page, coords, fixes))
+            chars = vector_maths(_layout_chars(pdf_page, coords, fixes), _strokes(pdf_page, coords))
+            lines = group_lines(chars)
             ruled = [
                 t
                 for t in rule_tables(_hrules(pdf_page, coords), float(pdf_page.height))
@@ -1043,3 +1044,259 @@ def extract_pages(
         backend = default_backend() if isinstance(ocr_backend, _Default) else ocr_backend
         pages, _ = apply_ocr(pdf_path, pages, backend)
     return pages
+
+
+# Vector-drawn maths in text fonts (MATH-1, ING-3; m5-p3j): a word processor sets a fraction bar
+# and a radical as drawn lines, not glyphs, and its numerator, denominator and radicand on three
+# baselines, so group_lines splits them. vector_maths rewrites each such construct, before line
+# grouping, as one linear run of synthetic glyphs on the bar's axis: "√(…)" for a radical (a
+# steep stroke ending where a horizontal overline starts) and "(num)⁄(den)" (U+2044) for a bar
+# with glyphs centred above and below it. Small raised or lowered glyphs inside become Unicode
+# scripts, and a Greek Σ opening a group is the summation sign ∑. A construct holding a TeX maths
+# font glyph is left alone (structure.py reads those from span geometry).
+VECTOR_BAR_MAX_HEIGHT = 1.0
+VECTOR_BAR_MIN_WIDTH = 3.0
+VECTOR_NUM_REACH = 1.7  # numerator script centres within this many sizes above the bar (1.0
+# for a full-size glyph, so the prose row above is not a numerator)
+VECTOR_STRADDLE = 0.35  # a glyph reaching this many sizes both sides of the bar is on the row
+VECTOR_DEN_REACH = 1.2  # denominator glyph centres within this many sizes below it
+VECTOR_CENTRE_TOL = 0.3  # numerator and denominator centred on the bar within this share of it
+VECTOR_SCRIPT_RATIO = 0.85
+VECTOR_ROOT_MIN_HEIGHT = 5.0  # the radical's rising stroke: 5 to 60 points tall and slanted
+VECTOR_ROOT_MAX_HEIGHT = 60.0
+VECTOR_ROOT_MIN_SLANT = 0.5
+VECTOR_UPRIGHT_SHARE = 0.5  # at most this share of a part's glyphs are upright ASCII letters
+VECTOR_MAX_GLYPHS = 80  # a larger "construct" is a frame around text, not maths
+_SUP_MAP = str.maketrans("0123456789+−-=()n", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁻⁼⁽⁾ⁿ")
+_SUB_MAP = str.maketrans("0123456789+−-=()", "₀₁₂₃₄₅₆₇₈₉₊₋₋₌₍₎")
+
+
+@dataclass
+class _Construct:
+    kind: str  # "frac" or "sqrt"
+    bar: BBox
+    parts: list[set[int]]  # glyph indices: [numerator, denominator] or [radicand]
+
+    @property
+    def members(self) -> set[int]:
+        return set().union(*self.parts)
+
+
+def _stroke_radicals(strokes: Sequence[BBox]) -> list[tuple[BBox, BBox]]:
+    """(overline, steep stroke) pairs: the stroke's top meets the overline's left end."""
+    bars = [s for s in strokes if s.height <= VECTOR_BAR_MAX_HEIGHT and s.width >= 3.0]
+    steep = [  # the radical's rising stroke is slanted; a box edge is vertical
+        s
+        for s in strokes
+        if VECTOR_ROOT_MIN_HEIGHT <= s.height <= VECTOR_ROOT_MAX_HEIGHT
+        and VECTOR_ROOT_MIN_SLANT <= s.width <= 0.5 * s.height
+    ]
+    out = []
+    for h in bars:
+        d = next((d for d in steep if abs(d.x1 - h.x0) <= 0.6 and abs(d.y0 - h.y0) <= 0.6), None)
+        if d is not None:
+            out.append((h, d))
+    return out
+
+
+def _constructs(chars: Sequence[LayoutChar], strokes: Sequence[BBox]) -> list[_Construct]:
+    glyphs = [i for i, c in enumerate(chars) if c.bbox is not None and c.text.strip()]
+    rads = _stroke_radicals(strokes)
+    over = {id(h) for h, _ in rads}
+    out: list[_Construct] = []
+    for h, d in rads:
+        inside = {
+            i
+            for i in glyphs
+            if h.x0 <= chars[i].bbox.x_mid <= h.x1 + 0.5  # type: ignore[union-attr]
+            and h.y0 <= chars[i].bbox.y_mid <= d.y1  # type: ignore[union-attr]
+        }
+        if inside and len(inside) <= VECTOR_MAX_GLYPHS and _mathy(chars, inside):
+            out.append(_Construct("sqrt", h, [inside]))
+    for b in strokes:
+        if id(b) in over or b.height > VECTOR_BAR_MAX_HEIGHT or b.width < VECTOR_BAR_MIN_WIDTH:
+            continue
+        y = (b.y0 + b.y1) / 2
+        near = [chars[i].size for i in glyphs if abs(chars[i].bbox.y_mid - y) <= 12.0]  # type: ignore[union-attr]
+        b_size = max(near, default=0.0)
+        num: set[int] = set()
+        den: set[int] = set()
+        for i in glyphs:
+            box = chars[i].bbox
+            assert box is not None
+            if not b.x0 - 0.5 <= box.x_mid <= b.x1 + 0.5:
+                continue
+            size = max(chars[i].size, 1.0)
+            if box.y0 < y - VECTOR_STRADDLE * size and box.y1 > y + VECTOR_STRADDLE * size:
+                continue  # a glyph across the bar is on the text row, not in the fraction
+            reach = VECTOR_NUM_REACH if chars[i].size < VECTOR_SCRIPT_RATIO * b_size else 1.0
+            if y - reach * size <= box.y_mid < y:
+                num.add(i)
+            elif y < box.y_mid <= y + VECTOR_DEN_REACH * size:
+                den.add(i)
+        if (
+            num
+            and den
+            and len(num | den) <= VECTOR_MAX_GLYPHS
+            and all(_mathy(chars, p) and _centred(chars, p, b) for p in (num, den))
+        ):
+            out.append(_Construct("frac", b, [num, den]))
+    return [k for k in out if not any(is_math_font(chars[i].font) for i in k.members)]
+
+
+def _mathy(chars: Sequence[LayoutChar], part: set[int]) -> bool:
+    """Most glyphs are maths: italic letters, digits or symbols. Upright text-font letters are
+    prose (a booktabs rule between a table's header and body rows is not a fraction bar)."""
+    upright = sum(
+        1
+        for i in part
+        if chars[i].text.isascii() and chars[i].text.isalpha() and not font_flags(chars[i].font)[1]
+    )
+    return upright <= VECTOR_UPRIGHT_SHARE * len(part)
+
+
+def _centred(chars: Sequence[LayoutChar], part: set[int], bar: BBox) -> bool:
+    boxes = [chars[i].bbox for i in part]
+    x0 = min(b.x0 for b in boxes if b is not None)
+    x1 = max(b.x1 for b in boxes if b is not None)
+    y0 = min(b.y0 for b in boxes if b is not None)
+    y1 = max(b.y1 for b in boxes if b is not None)
+    slack = 0.6 * max(chars[i].size for i in part)
+
+    def runs_on(c: LayoutChar) -> bool:
+        """A letter or digit on the part's row just past the bar: the row is text, not a
+        numerator or denominator (an underline, a rule under a line)."""
+        b = c.bbox
+        if b is None or not c.text[:1].isalnum() or bar.x0 - 0.5 <= b.x_mid <= bar.x1 + 0.5:
+            return False
+        across = min(b.y1, y1) - max(b.y0, y0)
+        return across > 0.5 * b.height and x0 - slack <= b.x_mid <= x1 + slack
+
+    return (
+        abs((x0 + x1) / 2 - bar.x_mid) <= VECTOR_CENTRE_TOL * bar.width
+        and x0 >= bar.x0 - slack
+        and x1 <= bar.x1 + slack
+        and not any(runs_on(c) for n, c in enumerate(chars) if n not in part)
+    )
+
+
+def _vector_text(chars: Sequence[LayoutChar], k: _Construct, ks: list[_Construct]) -> str:
+    if k.kind == "sqrt":
+        inner = [j for j in ks if j is not k and j.members <= k.members]
+        top = [j for j in inner if not any(j.members < o.members for o in inner)]
+        if len(top) == 1 and top[0].kind == "frac" and top[0].members == k.members:
+            return "√" + _vector_text(chars, top[0], ks)
+        return "√(" + _vector_seq(chars, k.parts[0], ks, k) + ")"
+    num, den = (_vector_seq(chars, p, ks, k) for p in k.parts)
+    return f"({num})⁄({den})"
+
+
+def _vector_seq(chars: Sequence[LayoutChar], part: set[int], ks: list[_Construct], own: Any) -> str:
+    inner = [j for j in ks if j is not own and j.members <= part and j.members != own.members]
+    inner = [j for j in inner if not any(j.members < o.members for o in inner)]
+    taken = set().union(*(j.members for j in inner)) if inner else set()
+    items: list[tuple[float, str | int]] = [
+        (min(chars[i].bbox.x0 for i in j.members), _vector_text(chars, j, ks))  # type: ignore[union-attr]
+        for j in inner
+    ]
+    items += [(chars[i].bbox.x0, i) for i in part - taken]  # type: ignore[union-attr]
+    items.sort(key=lambda t: t[0])
+    sizes = [chars[i].size for i in part]
+    dom = max(sizes)
+    out: list[str] = []
+    prev_mid: float | None = None
+    for n, (_, it) in enumerate(items):
+        if isinstance(it, str):
+            out.append(it)
+            continue
+        c = chars[it]
+        assert c.bbox is not None
+        text = c.text
+        if c.size < VECTOR_SCRIPT_RATIO * dom and prev_mid is not None:
+            table = _SUP_MAP if c.bbox.y_mid < prev_mid - 0.15 * dom else _SUB_MAP
+            mapped = text.translate(table)
+            text = mapped if mapped != text or not text.strip() else text
+        else:
+            prev_mid = c.bbox.y_mid
+        nxt = items[n + 1][1] if n + 1 < len(items) else None
+        if text == "Σ" and (
+            isinstance(nxt, str)
+            or (
+                nxt is not None
+                and chars[nxt].text[:1] in "("
+                or (nxt is not None and chars[nxt].text[:1].isalpha())
+            )
+        ):
+            text = "∑"
+        out.append(text)
+    return "".join(out)
+
+
+def vector_maths(chars: Sequence[LayoutChar], strokes: Sequence[BBox]) -> list[LayoutChar]:
+    """``chars`` with each vector-drawn fraction or radical rewritten as one linear run of
+    synthetic glyphs (see VECTOR_BAR_MAX_HEIGHT). Pure."""
+    ks = _constructs(chars, strokes)
+    top = [k for k in ks if not any(k.members < o.members for o in ks)]
+    seen: set[frozenset[int]] = set()
+    top = [k for k in top if not (frozenset(k.members) in seen or seen.add(frozenset(k.members)))]  # type: ignore[func-returns-value]
+    if not top:
+        return list(chars)
+    start: dict[int, _Construct] = {}
+    drop: set[int] = set()
+    for k in top:
+        if k.members & drop:
+            continue
+        start[min(k.members)] = k
+        drop |= k.members
+    out: list[LayoutChar] = []
+    for i, c in enumerate(chars):
+        if i in start:
+            out.extend(_synthetic(chars, start[i], _vector_text(chars, start[i], ks), ks))
+        elif i not in drop:
+            out.append(c)
+    return out
+
+
+def _synthetic(
+    chars: Sequence[LayoutChar], k: _Construct, text: str, ks: list[_Construct]
+) -> list[LayoutChar]:
+    members = [chars[i] for i in sorted(k.members)]
+    boxes = [c.bbox for c in members if c.bbox is not None]
+    dom = max(c.size for c in members)
+    first = next(c for c in members if c.size >= VECTOR_SCRIPT_RATIO * dom)
+    axis = k.bar
+    if k.kind == "sqrt":
+        fr = [j for j in ks if j.kind == "frac" and j.members <= k.members]
+        if fr:
+            axis = fr[0].bar
+        else:
+            full = [
+                c.bbox
+                for c in members
+                if c.bbox is not None and c.size >= VECTOR_SCRIPT_RATIO * dom
+            ]
+            mid = median(b.y_mid for b in full)
+            axis = BBox(axis.x0, mid, axis.x1, mid)
+    y0, y1 = axis.y0 - 0.45 * dom, axis.y0 + 0.55 * dom
+    x0 = min(b.x0 for b in boxes)
+    x1 = max(max(b.x1 for b in boxes), axis.x1)
+    step = (x1 - x0) / max(len(text), 1)
+    return [
+        LayoutChar(
+            text=ch,
+            bbox=BBox(x0 + n * step, y0, x0 + (n + 1) * step, y1),
+            font=first.font,
+            size=dom,
+            upright=True,
+            mcid=first.mcid,
+        )
+        for n, ch in enumerate(text)
+    ]
+
+
+def _strokes(page: Any, coords: _Coords) -> list[BBox]:
+    """Drawn line segments (not rects: TeX's fraction rules are rects, read from geometry)."""
+    try:
+        return [coords.obj(o) for o in page.lines]
+    except Exception:  # noqa: BLE001 - vector analysis is best effort
+        return []
