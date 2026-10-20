@@ -7,6 +7,10 @@ import type {
   DocumentPatch,
   DocumentSummary,
   GlobalSettings,
+  Pronunciation,
+  PronunciationDeleted,
+  PronunciationPut,
+  PronunciationSaved,
   Segment,
   SegmentsPage,
   UploadResult,
@@ -22,13 +26,38 @@ export const PAGE_LIMIT = 500
 export class ApiError extends Error {
   readonly status: number
   readonly url: string
+  /** The response body of a non-2xx reply ('' when none); `apiErrorDetail` reads the server's message. */
+  readonly body: string
 
-  constructor(status: number, url: string, message: string) {
+  constructor(status: number, url: string, message: string, body = '') {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.url = url
+    this.body = body
   }
+}
+
+/**
+ * The server's own message for a failed request: FastAPI's `detail` string (404), or the `msg` of each
+ * validation error without pydantic's "Value error, " prefix (422). Falls back to the error message.
+ */
+export function apiErrorDetail(err: unknown): string {
+  if (!(err instanceof ApiError)) return err instanceof Error ? err.message : String(err)
+  try {
+    const v = JSON.parse(err.body) as { detail?: unknown }
+    if (typeof v.detail === 'string') return v.detail
+    if (Array.isArray(v.detail)) {
+      const msgs = v.detail
+        .map((d: unknown) => (d && typeof d === 'object' && 'msg' in d ? String(d.msg) : ''))
+        .map((m) => m.replace(/^Value error, /, ''))
+        .filter((m) => m !== '')
+      if (msgs.length > 0) return msgs.join('; ')
+    }
+  } catch {
+    /* not JSON: fall through */
+  }
+  return err.message
 }
 
 /** Format a speed for the wire: two decimals (`1.25`, `1.00`). */
@@ -90,6 +119,7 @@ async function request<T>(
         res.status,
         url,
         `${res.status} ${res.statusText}${detail ? `: ${detail}` : ''}`,
+        detail,
       )
     }
     try {
@@ -175,6 +205,30 @@ export function uploadDocument(file: File): Promise<UploadResult> {
     method: 'POST',
     body: form,
   })
+}
+
+/** TERM-2: `GET /pronunciations?document_id=N`, or the global overrides for `null`. */
+export function listPronunciations(
+  documentId: number | null,
+  signal?: AbortSignal,
+): Promise<Pronunciation[]> {
+  const q = documentId === null ? '' : `?document_id=${documentId}`
+  return getJson<Pronunciation[]>(`/pronunciations${q}`, signal)
+}
+
+/** TERM-2: `PUT /pronunciations` (upsert); 422 for an empty word or a respelling without a letter. */
+export function putPronunciation(body: PronunciationPut): Promise<PronunciationSaved> {
+  return sendJson<PronunciationSaved>('PUT', '/pronunciations', body)
+}
+
+/** TERM-2: `DELETE /pronunciations/{id}`; the server purges the segments it had changed. */
+export function deletePronunciation(id: number): Promise<PronunciationDeleted> {
+  return request(
+    `/pronunciations/${id}`,
+    async (res) => (await res.json()) as PronunciationDeleted,
+    undefined,
+    { method: 'DELETE' },
+  )
 }
 
 export function getVoices(signal?: AbortSignal): Promise<Voice[]> {

@@ -138,3 +138,30 @@ export interface SegmentsPage {
   next_from: number | null
   segments: Segment[]
 }
+
+/** TERM-2: one row of `GET /pronunciations`; `document_id` null is a global override. */
+export interface Pronunciation {
+  id: number
+  document_id: number | null
+  /** Stored lower-cased by the server. */
+  word: string
+  respelling: string
+  created_at: string
+}
+
+/** `PUT /pronunciations` body: `document_id` null saves for all documents. */
+export interface PronunciationPut {
+  document_id: number | null
+  word: string
+  respelling: string
+}
+
+/** `PUT /pronunciations` response: the row plus how many segments' cached audio was purged. */
+export interface PronunciationSaved extends Pronunciation {
+  invalidated: number
+}
+
+/** `DELETE /pronunciations/{id}` response. */
+export interface PronunciationDeleted {
+  invalidated: number
+}

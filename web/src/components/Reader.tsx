@@ -2,10 +2,13 @@
 // whitespace token of `text` (offsets from `tokenize`, so X-Timestamps char offsets map onto them).
 // The highlight is applied by usePlayer's rAF loop through the refs registered here, never by React.
 // M4: a segment skipped by a PLAY-8 toggle gets the `skipped` class (rendered dimmed).
+// M5 TERM-2: a word selected inside one segment shows a "Pronounce as" button that opens PronounceDialog;
+// a save drops the clips of the segments holding the word, Listen plays the selected sentence.
 
-import { memo, useMemo, type MouseEvent } from 'react'
-import type { Section, Segment } from '../api/types'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+import type { PronunciationSaved, Section, Segment } from '../api/types'
 import { tokenize, type Token } from '../player/schedule'
+import { PronounceDialog, pickWord, segmentsWithWord } from './PronounceDialog'
 
 export interface ReaderProps {
   segments: Segment[]
@@ -16,6 +19,29 @@ export interface ReaderProps {
   onSeek: (segmentId: number, tokenIndex?: number) => void
   /** PLAY-8: ids skipped by the toggles. */
   skipped?: ReadonlySet<number>
+  /** TERM-2: the document a "this document" respelling is saved for; without it no button is shown. */
+  documentId?: number
+  /** TERM-2: after a save, the ids of the segments whose normalized_text holds the word. */
+  onPronounceSaved?: (segmentIds: number[], saved: PronunciationSaved) => void
+  /** TERM-2 Listen: play this segment through the player. */
+  onListen?: (segmentId: number) => void
+}
+
+type WordPick = { segmentId: number; word: string; top: number; left: number }
+
+/** The word selected inside a single `.seg` of `root`, with where to put the button; else null. */
+function readSelection(root: HTMLElement | null): WordPick | null {
+  const sel = typeof window === 'undefined' ? null : window.getSelection()
+  if (!root || !sel || sel.rangeCount === 0 || sel.isCollapsed) return null
+  const range = sel.getRangeAt(0)
+  const node = range.commonAncestorContainer
+  const el = node instanceof Element ? node : node.parentElement
+  const segEl = el?.closest<HTMLElement>('.seg')
+  if (!segEl || !root.contains(segEl)) return null
+  const word = pickWord(sel.toString())
+  if (word === null) return null
+  const r = range.getBoundingClientRect()
+  return { segmentId: Number(segEl.dataset.id), word, top: r.bottom + 4, left: r.left }
 }
 
 function SegmentView({
@@ -73,9 +99,38 @@ function ReaderImpl({
   registerReaderEl,
   onSeek,
   skipped,
+  documentId,
+  onPronounceSaved,
+  onListen,
 }: ReaderProps) {
   const byFirst = useMemo(() => new Map(sections.map((s) => [s.first_segment_id, s])), [sections])
+  const articleEl = useRef<HTMLElement | null>(null)
+  const setArticle = useCallback(
+    (el: HTMLElement | null) => {
+      articleEl.current = el
+      registerReaderEl?.(el)
+    },
+    [registerReaderEl],
+  )
+  const [pick, setPick] = useState<WordPick | null>(null)
+  const [dialog, setDialog] = useState<{ segmentId: number; word: string } | null>(null)
+  const pronounce = documentId !== undefined
+  useEffect(() => {
+    if (!pronounce) return
+    const onSel = () => setPick(readSelection(articleEl.current))
+    document.addEventListener('selectionchange', onSel)
+    return () => document.removeEventListener('selectionchange', onSel)
+  }, [pronounce])
+  const closeDialog = useCallback(() => setDialog(null), [])
+  const onSaved = useCallback(
+    (saved: PronunciationSaved) =>
+      onPronounceSaved?.(segmentsWithWord(segments, saved.word), saved),
+    [segments, onPronounceSaved],
+  )
   const onClick = (e: MouseEvent<HTMLElement>) => {
+    // a drag that selects text (to pick a word) is not a click to seek
+    const sel = window.getSelection()
+    if (pronounce && sel && !sel.isCollapsed) return
     const target = e.target as HTMLElement
     const segEl = target.closest<HTMLElement>('.seg')
     if (!segEl) return
@@ -85,17 +140,41 @@ function ReaderImpl({
     else onSeek(id)
   }
   return (
-    <article className="reader" ref={registerReaderEl} onClick={onClick}>
-      {segments.map((seg) => (
-        <SegmentView
-          key={seg.id}
-          seg={seg}
-          section={byFirst.get(seg.id)}
-          register={registerSegmentEl}
-          skipped={skipped?.has(seg.id) ?? false}
+    <>
+      <article className="reader" ref={setArticle} onClick={onClick}>
+        {segments.map((seg) => (
+          <SegmentView
+            key={seg.id}
+            seg={seg}
+            section={byFirst.get(seg.id)}
+            register={registerSegmentEl}
+            skipped={skipped?.has(seg.id) ?? false}
+          />
+        ))}
+      </article>
+      {pronounce && pick !== null && dialog === null && (
+        <button
+          type="button"
+          className="pronounce-btn"
+          style={{ position: 'fixed', top: pick.top, left: pick.left }}
+          // keep the selection while the button takes the click
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setDialog({ segmentId: pick.segmentId, word: pick.word })}
+        >
+          Pronounce as
+        </button>
+      )}
+      {pronounce && dialog !== null && (
+        <PronounceDialog
+          key={`${dialog.segmentId}:${dialog.word}`}
+          word={dialog.word}
+          documentId={documentId}
+          onSaved={onSaved}
+          onListen={() => onListen?.(dialog.segmentId)}
+          onClose={closeDialog}
         />
-      ))}
-    </article>
+      )}
+    </>
   )
 }
 

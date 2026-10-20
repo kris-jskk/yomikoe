@@ -104,6 +104,13 @@ export interface Player {
   lastClip: ClipStats | null
   /** Scroll a segment to the centre without playing (LIB-2 restore). */
   revealSegment: (segmentId: number) => void
+  /**
+   * TERM-2: a saved pronunciation purged these segments' audio on the server. Drop their prefetched and
+   * scheduled clips so the next play requests them again (`PlayerEngine.dropClips`).
+   */
+  dropClips: (segmentIds: readonly number[]) => void
+  /** TERM-2 "Listen": play this sentence from its start (PLAY from idle/error, SEEK otherwise). */
+  listen: (segmentId: number) => void
 }
 
 type SavedPosition = { segment_id: number; offset_ms: number }
@@ -356,6 +363,34 @@ export class PlayerEngine {
     this.ctx = null
     this.builtGen = -1
     if (ctx) void ctx.close()
+  }
+
+  /**
+   * TERM-2: forget the clips of `ids` (their server audio was purged). In-flight or decoded-but-unscheduled
+   * clips are aborted and removed. If a dropped clip was still to be heard (pending, or a scheduled entry
+   * not yet finished), the schedule is stale: while playing or loading, SEEK to the current position
+   * rebuilds it now; otherwise `builtKey` is cleared so the next play() sends PLAY (a rebuild) instead of
+   * RESUME, the same path as a voice change while paused. Either way the clips are fetched again.
+   */
+  dropClips(ids: Iterable<number>) {
+    const now = this.ctx?.currentTime ?? 0
+    let stale = false
+    for (const id of ids) {
+      const p = this.pending.get(id)
+      if (p) {
+        p.ctrl.abort()
+        this.pending.delete(id)
+        stale = true
+      }
+      const e = this.entries.get(id)
+      if (e && e.startAt + e.durationSec > now) stale = true
+    }
+    if (!stale) return
+    this.builtKey = ''
+    const s = this.state
+    if ((s.status === 'playing' || s.status === 'loading') && s.current !== null) {
+      this.dispatch({ type: 'SEEK', segmentId: s.current.segmentId, offsetMs: s.current.offsetMs })
+    }
   }
 
   private clearSchedule() {
@@ -798,6 +833,12 @@ export function usePlayer(opts: { title?: string } = {}): Player {
     [engine],
   )
 
+  const dropClips = useCallback(
+    (segmentIds: readonly number[]) => engine.dropClips(segmentIds),
+    [engine],
+  )
+  const listen = useCallback((segmentId: number) => seekTo(segmentId), [seekTo])
+
   // LIB-2: TICK_SAVE every 5 s (the reducer ignores it unless playing); a new pendingSave is PATCHed
   const [saver] = useState(() => new PositionSaver())
   useEffect(() => {
@@ -938,5 +979,7 @@ export function usePlayer(opts: { title?: string } = {}): Player {
     seekTo,
     lastClip,
     revealSegment,
+    dropClips,
+    listen,
   }
 }
