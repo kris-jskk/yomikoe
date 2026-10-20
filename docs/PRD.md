@@ -31,7 +31,7 @@ v1 ships a working reader for born-digital and scanned PDFs with at least 6 voic
 - Mobile native apps (web app must work on a phone browser, that is enough)
 - Summaries, chat-with-PDF, mind maps
 - Multi-user accounts, sharing, billing
-- Non-PDF formats (EPUB, DOCX, web pages); keep the ingestion interface open for them (revisited 2026-10-17: SRC-1 to SRC-4, M7)
+- Non-PDF formats (EPUB, DOCX, web pages); keep the ingestion interface open for them (revisited 2026-10-17: SRC-1 to SRC-4, M8; numbered M7 until 2026-10-19)
 
 **Success metrics**
 
@@ -43,7 +43,7 @@ v1 ships a working reader for born-digital and scanned PDFs with at least 6 voic
 | Highlight drift after 10 minutes of playback | < 1 word | Manual check on 5 documents |
 | Crash-free playback of a 300-page PDF | 100% | Soak test |
 
-Evals (EVAL-1 to EVAL-9, decided 2026-10-17, and EVAL-10 for M5; Technical Design D31–D34) produce the trend line for these metrics and for quality the gates do not measure: every run keeps its per-example scores in a committed record so two commits can be compared. The gate tests remain the floor and the only thing that blocks a merge.
+Evals (EVAL-1 to EVAL-9, decided 2026-10-17, EVAL-10 for M5 and EVAL-11 for M6, added 2026-10-19; Technical Design D31–D34, D50) produce the trend line for these metrics and for quality the gates do not measure: every run keeps its per-example scores in a committed record so two commits can be compared. The gate tests remain the floor and the only thing that blocks a merge.
 
 ## Users and use cases
 
@@ -159,9 +159,13 @@ Added 2026-10-17 (M5). Extends the pronunciation layer the Kokoro backend alread
 | TERM-4 | P1 | Academic abbreviations spoken by expansion: i.e., e.g., cf., w.r.t., resp., s.t., iff, w.l.o.g., viz., et seq., ibid., op. cit.; the expansion table is configurable |
 | TERM-5 | P2 | Code identifiers and file names in computer-science papers (snake_case, camelCase, dotted.paths) spoken as their words |
 
+**Domain notation (DOM)**
+
+Added 2026-10-19 (user decision: the narrator reads the notation of chemistry, physics, biology and medicine, finance and economics, history and law, computer science and statistics as a teacher would). DOM-1 to DOM-27 are specified in `docs/PRD_DOMAINS.md`, not repeated here; they extend MATH-3, TERM-1 and TERM-4 above and are scheduled as M6 Domain reading (Technical Design D45–D51, confirmed by the user 2026-10-19).
+
 **Sources (SRC)**
 
-Added 2026-10-17 (user direction: read the books and documents the user already has in other apps). Proposed for M7, after M6 Classroom view; not M5 scope (renumbered from M6 2026-10-17).
+Added 2026-10-17 (user direction: read the books and documents the user already has in other apps). Proposed for M8, after M7 Classroom view; not M5 scope (renumbered from M6 2026-10-17, and from M7 to M8 on 2026-10-19 when M6 Domain reading was placed).
 
 | ID | Pri | Requirement |
 | --- | --- | --- |
@@ -174,7 +178,7 @@ DRM boundary: purchased Kindle titles and purchased Apple Books titles are encry
 
 **Classroom view (VIEW)**
 
-Added 2026-10-17 (user direction: a student learns as in a real classroom, where the teacher, the narrator, teaches from printed notes, a textbook or the board, and the student sees exactly what is being taught). Proposed for M6, after M5 (Technical Design D38, confirmed by the user 2026-10-17).
+Added 2026-10-17 (user direction: a student learns as in a real classroom, where the teacher, the narrator, teaches from printed notes, a textbook or the board, and the student sees exactly what is being taught). Proposed for M7, after M6 Domain reading (renumbered from M6 2026-10-19; Technical Design D38, confirmed by the user 2026-10-17).
 
 | ID | Pri | Requirement |
 | --- | --- | --- |
@@ -188,7 +192,7 @@ The narrator reads and paces the author's own text. It does not explain, summari
 
 **Study tools (NOTE)**
 
-Added 2026-10-17 (user direction: in the classroom the student can pause, take notes and highlight; pause already exists, PLAY-1, D24). Proposed for M6 with VIEW (Technical Design D39, confirmed by the user 2026-10-17).
+Added 2026-10-17 (user direction: in the classroom the student can pause, take notes and highlight; pause already exists, PLAY-1, D24). Proposed for M7 with VIEW (renumbered from M6 2026-10-19; Technical Design D39, confirmed by the user 2026-10-17).
 
 | ID | Pri | Requirement |
 | --- | --- | --- |
@@ -216,6 +220,7 @@ Added 2026-10-17 (Technical Design D31–D34). An eval runs the system over a fi
 | EVAL-8 | OCR: how accurate is the scanned path? (ING-2) | 5 scanned fixtures | Character error rate vs expected text; mean, max | 1 |
 | EVAL-9 | Listening: does it sound good to a person? | 10 sentences × 2 voices | 1–5 rubric (naturalness, pronunciation errors counted, pacing) filled by a human; mean per voice, error count | 2 |
 | EVAL-10 | Spoken mathematics: is an equation read as a person would read it aloud? (MATH-1 to MATH-4) | The M5 fixture `*.spoken.txt` files plus `evals/data/math_speech.jsonl`, raw → spoken pairs (added 2026-10-17) | D14-style word-sequence score over the spoken text (lowercased, punctuation stripped); per-class aggregates: display, inline, symbol table, references | 0 |
+| EVAL-11 | Domain notation: is a unit, formula, amount, citation or statistic read as a teacher would read it aloud? (DOM-1 to DOM-26; DOM-27 is the suite itself) | `evals/data/domain_speech.jsonl`, raw → spoken pairs with `domain` and `class` across six domains (added 2026-10-19, D50; `docs/PRD_DOMAINS.md`) | The EVAL-10 scorer; aggregates per domain and per class, plus raw-symbol leaks | 0 |
 
 ## Architecture and stack
 
@@ -347,9 +352,13 @@ M1 Ingest + skeleton  -->  M2 Synthesis + stream  -->  M3 Reader UI  -->  M4 Lib
 Gate: 20 fixture PDFs      Gate: first audio in 2 s    Gate: highlight     Gate: 300-page soak
 parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passes; Docker up
 
--->  M5 Academic reading         -->  M6 Classroom view (proposed)    -->  M7 Sources and formats (proposed)
-     Gate: 10 formula pages,          Gate: board highlight on the         Gate: EPUB/DOCX re-exports within
-     spoken-maths score >= 0.90       word box for >= 95% of 200 words     0.02 of PDF EVAL-1; Apple Books EPUB opens
+-->  M5 Academic reading         -->  M6 Domain reading                 -->
+     Gate: 10 formula pages,          Gate: EVAL-11 >= 0.95 per domain,
+     spoken-maths score >= 0.90       90 probe strings >= 13/15 per domain
+
+-->  M7 Classroom view (proposed)    -->  M8 Sources and formats (proposed)
+     Gate: board highlight on the         Gate: EPUB/DOCX re-exports within
+     word box for >= 95% of 200 words     0.02 of PDF EVAL-1; Apple Books EPUB opens
 ```
 
 M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments. The score is word-level (D14): word-sequence edit distance over the ordered prose, ≥ 0.95 per PDF (scanned fixtures at a 0.85 floor, D35) and ≥ 0.97 mean; the sentence-level score is printed as a diagnostic only.
@@ -370,14 +379,17 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
    (c) EVAL-4 extended with MATH and TERM categories and no new failures against the M4 baseline;
    (d) a tier-1 listening sheet (EVAL-9) on 10 formula sentences across 2 voices with pronunciation errors counted;
    (e) the 20 fixture PDFs plus the 10 formula pages are classified (ING-11), and the expected class in a `profile` field of each fixture's expected file is matched for at least 28 of 30.
-6. M6 Classroom view (proposed 2026-10-17, after M5; user direction: the student sees exactly what the narrator is reading, as in a classroom). Scope: VIEW-1 to VIEW-4, NOTE-1 to NOTE-4 and the word-box storage change at ingestion (Technical Design D38, D39); VIEW-5 and NOTE-5 after M6. Gate:
+6. M6 Domain reading (decided 2026-10-19; user decision: the narrator reads domain notation, units, formulas, amounts, citations and statistics, as a teacher of that field would). Specified in `docs/PRD_DOMAINS.md`, where the user accepted all 29 recommended decisions on 2026-10-19. Scope: DOM-1 to DOM-27 and EVAL-11 (Technical Design D45–D51, confirmed 2026-10-19), in the phase order of `docs/PRD_DOMAINS.md` "Milestones" (phase 0: EVAL-11, its dataset and the profile `fields`, gate tests first). Starts after the M5 gate passes (`CLAUDE.md` milestone rule) and in a fresh session. Gate (`docs/PRD_DOMAINS.md`, "Gate test"):
+   (a) `api/tests/test_dom_gate.py::test_dom27_domain_speech_floor`: EVAL-11 over `evals/data/domain_speech.jsonl` scores ≥ 0.95 per landed domain and ≥ 0.90 per class with ≥ 3 pairs, with zero raw-symbol leaks;
+   (b) `test_dom_probe_strings`: the 90 probe strings of results 850–875 reach ≥ 13 of 15 correct per domain.
+7. M7 Classroom view (proposed 2026-10-17, after M5; renumbered from M6 2026-10-19, now after M6 Domain reading; user direction: the student sees exactly what the narrator is reading, as in a classroom). Scope: VIEW-1 to VIEW-4, NOTE-1 to NOTE-4 and the word-box storage change at ingestion (Technical Design D38, D39); VIEW-5 and NOTE-5 after M7. Gate:
    (a) on the 20 fixture PDFs, the board highlight for a sampled spoken word lands on that word's box for at least 95 % of 200 sampled words (the box comes from ingestion, the sampled position from the same timestamps the text view uses);
    (b) 10 minutes of playback keeps the board on the spoken segment's page with no page lag over one segment;
    (c) a Chromium-asserted e2e spec like M3's;
    (d) a highlight and a note made in the browser survive a reload and appear in the export (NOTE-4).
-7. M7 Sources and formats (proposed 2026-10-17, renumbered from M6 the same day, after M6; user direction: read the books and documents the user already has in Apple Books, Kindle, cloud drives and other apps). Scope: SRC-1 to SRC-3 and LIB changes for multi-format rows (file type shown in LIB-1); SRC-4 if cheap. DRM-protected titles are out of scope (see the DRM boundary under Sources). Gate: the 15 text fixtures re-exported as EPUB and DOCX parse to the same prose at an EVAL-1 score within 0.02 of the PDF score, and one DRM-free Apple Books EPUB opens from the library folder.
+8. M8 Sources and formats (proposed 2026-10-17, renumbered from M6 the same day and from M7 on 2026-10-19, after M7 Classroom view; user direction: read the books and documents the user already has in Apple Books, Kindle, cloud drives and other apps). Scope: SRC-1 to SRC-3 and LIB changes for multi-format rows (file type shown in LIB-1); SRC-4 if cheap. DRM-protected titles are out of scope (see the DRM boundary under Sources). Gate: the 15 text fixtures re-exported as EPUB and DOCX parse to the same prose at an EVAL-1 score within 0.02 of the PDF score, and one DRM-free Apple Books EPUB opens from the library folder.
 
-After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export (ING-9 more formats is now M7, SRC-1).
+After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export (ING-9 more formats is now M8, SRC-1).
 
 ## Open questions and risks
 
@@ -413,11 +425,11 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 - [ ] OCR of mathematics: Tesseract misreads inline and display maths on scanned_04/05; equation detection on OCR blocks or a maths-capable engine is MATH-6, after M5 (D35, `_agent/results/591_golden_scanned_after.txt`)
 - [ ] M5: which maths-to-speech approach, and under what licence? Survey done 2026-10-17 (`_agent/research/m5-math-speech-options.md`, licence evidence `_agent/results/607_math_speech_licences.md`), recommendation confirmed by the user 2026-10-17 (D37): own rule engine over pdfplumber glyphs first; MathCAT (MIT) or Speech Rule Engine (Apache-2.0, needs Node) as an optional MathML layer later; for scanned pages only the Pix2Text MFR weights (MIT on Hugging Face) or UniMERNet (Apache-2.0 code, weights licence unverified) are candidates; excluded: Nougat weights (CC-BY-NC), pix2tex weights (reported CC BY-NC-SA, unverified) and the pix2text package (AGPL-3.0 via doclayout-yolo)
 - [ ] M5: do equation crops (MATH-5) need word boxes stored? Block bboxes are stored in `blocks` rows (the bbox of the block's first source fragment, `docs/CODE_MAP_M1.md`); word boxes are not; added 2026-10-17
-- [ ] M7: iOS has no share target for web apps, so "open in HearNarro" from another iOS app needs a native shell or the Files picker (SRC-3); see the phone-browser question above on iOS background playback; added 2026-10-17
-- [ ] M7: is the Apple Books folder path (`~/Library/Containers/com.apple.BKAgentService/Data/Documents/iBooks/Books`) stable across macOS versions? Unverified; added 2026-10-17
-- [ ] M6: does "teaches" include explaining beyond the text? That would need a language model, is a non-goal today ("Summaries, chat-with-PDF"), and changes the offline and licensing story; user to decide. Added 2026-10-17
-- [ ] M6: word boxes at ingestion need a schema migration (per-word boxes per segment, or per span); storage cost unverified. Added 2026-10-17
-- [ ] M6: page rendering for the board: pypdfium2 already renders pages at 300 dpi for OCR (ING-2) and can render the board; image cache size unverified. Added 2026-10-17
-- [ ] M6: should the board be rendered in the browser with pdf.js (Apache-2.0) instead, so the server ships only coordinates? Decide in the M6 spec (D38). Added 2026-10-17
-- [ ] M6: annotations are anchored to segment id plus offsets (D39), so a re-ingested document (new ids, D7) loses them unless they are re-anchored by text match; whether to re-anchor, and how, is open. Added 2026-10-17
+- [ ] M8 (was M7): iOS has no share target for web apps, so "open in HearNarro" from another iOS app needs a native shell or the Files picker (SRC-3); see the phone-browser question above on iOS background playback; added 2026-10-17
+- [ ] M8 (was M7): is the Apple Books folder path (`~/Library/Containers/com.apple.BKAgentService/Data/Documents/iBooks/Books`) stable across macOS versions? Unverified; added 2026-10-17
+- [ ] M7 (was M6): does "teaches" include explaining beyond the text? That would need a language model, is a non-goal today ("Summaries, chat-with-PDF"), and changes the offline and licensing story; user to decide. Added 2026-10-17
+- [ ] M7 (was M6): word boxes at ingestion need a schema migration (per-word boxes per segment, or per span); storage cost unverified. Added 2026-10-17
+- [ ] M7 (was M6): page rendering for the board: pypdfium2 already renders pages at 300 dpi for OCR (ING-2) and can render the board; image cache size unverified. Added 2026-10-17
+- [ ] M7 (was M6): should the board be rendered in the browser with pdf.js (Apache-2.0) instead, so the server ships only coordinates? Decide in the M7 spec (D38). Added 2026-10-17
+- [ ] M7 (was M6): annotations are anchored to segment id plus offsets (D39), so a re-ingested document (new ids, D7) loses them unless they are re-anchored by text match; whether to re-anchor, and how, is open. Added 2026-10-17
 - [ ] Kindle (added 2026-10-19): Fire tablets as a browser target, `.azw3` personal documents and the DRM refusal are specified in `docs/PRD_KINDLE.md` (KDL-1 to KDL-9; Technical Design D41–D44, proposed, not confirmed). Deferred by the user 2026-10-19: future scope, not part of the current implementation

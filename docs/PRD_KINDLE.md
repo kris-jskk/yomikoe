@@ -1,6 +1,6 @@
 # PRD: HearNarro works with Kindle
 
-As of 2026-10-19 · Sowmya · Status: **future scope, deferred**. Not part of the current implementation (M5–M7 as planned in `docs/PRD.md`); nothing here is built, scheduled or tested until the user picks this PRD up. Companion to `docs/PRD.md`; the decisions it proposes are D41–D44 in `docs/TECHNICAL_DESIGN.md`, all marked "proposed 2026-10-19, not confirmed".
+As of 2026-10-19 · Sowmya · Status: **future scope, deferred**. Not part of the current implementation (M5–M8 as planned in `docs/PRD.md`; M6 Domain reading was placed 2026-10-19 and the former M6 and M7 became M7 and M8); nothing here is built, scheduled or tested until the user picks this PRD up. Companion to `docs/PRD.md`; the decisions it proposes are D41–D44 in `docs/TECHNICAL_DESIGN.md`, all marked "proposed 2026-10-19, not confirmed".
 
 Evidence for this document is under `_agent/results/`: parser licences `821_kindle_parser_licences.txt`, the subprocess precedent `822_d7_subprocess_precedent.txt`, the ingestion interface quoted from code `823_ingestion_interface.txt`, numbering `824_numbering.txt`. Device and Amazon-side facts that no run in this repo has checked are marked "supervisor brief, unverified".
 
@@ -13,7 +13,7 @@ Evidence for this document is under `_agent/results/`: parser licences `821_kind
 
 Purchased Kindle books are DRM-locked (`.kfx` on current apps) and stay out of scope, as the PRD's DRM boundary already says ("Sources (SRC)", `docs/PRD.md`). This PRD adds no exception to it.
 
-Why a separate PRD: the main PRD carries Kindle only as SRC-4 (notes and highlights, P2, M7). The user asked how HearNarro relates to Kindle as a whole; the answer touches a device target (D41), an ingestion boundary (D42), a parser choice with a licence problem (D43) and a schema column (D44), which is more than one row.
+Why a separate PRD: the main PRD carries Kindle only as SRC-4 (notes and highlights, P2, M8). The user asked how HearNarro relates to Kindle as a whole; the answer touches a device target (D41), an ingestion boundary (D42), a parser choice with a licence problem (D43) and a schema column (D44), which is more than one row.
 
 ## Goals, non-goals and success metrics
 
@@ -99,7 +99,7 @@ upload --sniff--> pdf   --> ingest() as today (stages 1-4 from glyphs)
 
 - `api/hearnarro/ingestion/kf8.py` (new): PalmDB header and record table, MOBI and EXTH headers, encryption check (KDL-4), PalmDOC LZ77 decompression, KF8 boundary, FDST/SKEL/FRAG index reassembly into XHTML parts. Written from the public format description (MobileRead wiki "MOBI" and "KF8" pages), stdlib only (`struct`). Clean-room rule: nobody writing it reads KindleUnpack or `mobi` source, both GPL-3.0 (`_agent/results/821_kindle_parser_licences.txt`). HUFF/CDIC compression is a known gap: if a personal document from Amazon uses it, it is either implemented from the same public description or refused with a clear message (open question).
 - `api/hearnarro/ingestion/html_blocks.py` (new, shared with SRC-1): XHTML to `LogicalBlock` (KDL-5) on the stdlib `html.parser`, so no new dependency; `lxml` (BSD-3-Clause) or `selectolax` (MIT) are permitted fallbacks if malformed markup demands it (821).
-- Interface gaps the build spec must close, found in the code (823): `compute_profile` and `apply_mathspeak` take `pages: list[Page]`, which a reflowable book does not have (pass an empty list, or one synthetic `Page` per XHTML part, so `LogicalBlock.page` and the scanned share stay well defined); `LogicalBlock.source` is `(page, block.index)` into stage 1's blocks and needs a meaning for HTML (part index, element index); the job layer calls `ingest(pdf_path, ...)` and `pdf_page_count(pdf_path)` (`api/hearnarro/storage/jobs.py`, quoted in 823); the M6 board (D38) renders PDF pages, so an `.azw3` has no board view and the reader falls back to the text view.
+- Interface gaps the build spec must close, found in the code (823): `compute_profile` and `apply_mathspeak` take `pages: list[Page]`, which a reflowable book does not have (pass an empty list, or one synthetic `Page` per XHTML part, so `LogicalBlock.page` and the scanned share stay well defined); `LogicalBlock.source` is `(page, block.index)` into stage 1's blocks and needs a meaning for HTML (part index, element index); the job layer calls `ingest(pdf_path, ...)` and `pdf_page_count(pdf_path)` (`api/hearnarro/storage/jobs.py`, quoted in 823); the M7 board (D38) renders PDF pages, so an `.azw3` has no board view and the reader falls back to the text view.
 - No change to synthesis, the `TTSBackend` interface, audio delivery (D5) or the player state machine (D10). The device side (KDL-1) changes no architecture.
 
 Licence position (821, 822): every working KF8 reader found is copyleft (KindleUnpack GPL-3.0, its fork `mobi` 0.4.1 GPL-3.0-only, `libmobi` LGPL-3.0, `pymobi` GPLv3, `mobi_header` GPL-3.0); the one MIT-classified MOBI reader, `mobi-python` 0.0.1, has no LICENSE file and no evident KF8 support; for EPUB `ebooklib` is AGPL-3.0 and excluded, while `epubfile` (BSD-3-Clause) and `epub-utils` (Apache-2.0, alpha) are permitted. Calibre is GPL-3.0 and not on PyPI (the PyPI package named `calibre` is an unrelated MIT probability-calibration library).
@@ -110,7 +110,7 @@ Licence position (821, 822): every working KF8 reader found is copyleft (KindleU
 
 | Column | Type | Values | Why |
 | --- | --- | --- | --- |
-| `documents.format` | TEXT NOT NULL DEFAULT 'pdf' | `pdf`, `azw3`, `epub` (later `docx`, `html`, `md`, `txt` for SRC-1) | Set from the content sniff at upload; the job layer dispatches on it; M7's "file type shown in LIB-1" reads it, so it is added once for both |
+| `documents.format` | TEXT NOT NULL DEFAULT 'pdf' | `pdf`, `azw3`, `epub` (later `docx`, `html`, `md`, `txt` for SRC-1) | Set from the content sniff at upload; the job layer dispatches on it; M8's "file type shown in LIB-1" reads it, so it is added once for both |
 | `documents.origin` | TEXT NULL | `kindle`, later `apple_books`, `icloud`, ... (SRC-2, SRC-3); NULL = plain upload | A Kindle PDF is indistinguishable from any PDF by content, so origin is an upload field the user sets (or the client sets from an `.azw3` sniff); drives the "from Kindle" badge (KDL-6) |
 
 **API.**
@@ -135,22 +135,22 @@ No other endpoint changes. Segments, audio and positions are addressed by `segme
 
 ## Milestones
 
-Placement is an open question (see below), not a commitment. Candidate: **inside M7 "Sources and formats"**, as its second phase, after SRC-1's EPUB adapter. M7 in `docs/PRD.md` already names Kindle in its user direction and carries SRC-4; KDL-3 and KDL-5 reuse SRC-1's HTML-to-block adapter, so building them earlier would mean building that adapter early. KDL-1 (Fire tablet check) has no code dependency and can be run as a manual check at any milestone close from M5 on; it is cheap and answers the device question early. The existing M5–M7 text in `docs/PRD.md` is not changed by this document; adopting the placement is a supervisor or user decision.
+Placement is an open question (see below), not a commitment. Candidate: **inside M8 "Sources and formats"**, as its second phase, after SRC-1's EPUB adapter. M8 in `docs/PRD.md` already names Kindle in its user direction and carries SRC-4; KDL-3 and KDL-5 reuse SRC-1's HTML-to-block adapter, so building them earlier would mean building that adapter early. KDL-1 (Fire tablet check) has no code dependency and can be run as a manual check at any milestone close from M5 on; it is cheap and answers the device question early. The existing M5–M8 text in `docs/PRD.md` is not changed by this document; adopting the placement is a supervisor or user decision.
 
 | Item | Where | Depends on |
 | --- | --- | --- |
 | KDL-1, KDL-2 | Manual check at the next milestone close (M5 or M6) | A Fire tablet on the dev network |
-| KDL-4, KDL-6, D44 migration | M7 phase 1, with SRC-1's upload sniff | M6 gate green |
-| KDL-3, KDL-5, KDL-7 | M7 phase 2 | SRC-1 HTML adapter |
-| KDL-8 (= SRC-4), KDL-9 | M7 if cheap, else after v1 | none |
+| KDL-4, KDL-6, D44 migration | M8 phase 1, with SRC-1's upload sniff | M7 gate green |
+| KDL-3, KDL-5, KDL-7 | M8 phase 2 | SRC-1 HTML adapter |
+| KDL-8 (= SRC-4), KDL-9 | M8 if cheap, else after v1 | none |
 
-**Gate test (specified, not written).** `api/tests/test_kdl_gate_azw3.py::test_kdl3_azw3_matches_pdf_golden`. Fixture: `api/tests/fixtures/kindle/<stem>.azw3`, a personal document the project owns, made by sending the existing fixture `api/tests/fixtures/pdfs/<stem>.pdf`'s source (or its EPUB re-export from M7's gate) through Send to Kindle and downloading it from Manage Your Content and Devices; at least two such fixtures, one single-column report and one with headings, lists and a table. Assertion: `ingest()` on the `.azw3` returns segments whose ordered prose (heading, body, list, caption, footnote, per D12) scores ≥ 0.95 on the D14 word-sequence edit distance against the PDF fixture's `<stem>.expected.jsonl`, and within 0.02 of the same document's PDF score; the block-type counts for heading and list match the PDF ingestion within ±1 per type; no segment comes from an image. A second test in the same file, `test_kdl4_drm_refused`, posts a synthetic PalmDB file with a non-zero encryption field and a minimal KFX-ZIP and asserts 415 `drm_protected` with no `documents` row created (the fixtures are synthetic headers, not real purchased books).
+**Gate test (specified, not written).** `api/tests/test_kdl_gate_azw3.py::test_kdl3_azw3_matches_pdf_golden`. Fixture: `api/tests/fixtures/kindle/<stem>.azw3`, a personal document the project owns, made by sending the existing fixture `api/tests/fixtures/pdfs/<stem>.pdf`'s source (or its EPUB re-export from M8's gate) through Send to Kindle and downloading it from Manage Your Content and Devices; at least two such fixtures, one single-column report and one with headings, lists and a table. Assertion: `ingest()` on the `.azw3` returns segments whose ordered prose (heading, body, list, caption, footnote, per D12) scores ≥ 0.95 on the D14 word-sequence edit distance against the PDF fixture's `<stem>.expected.jsonl`, and within 0.02 of the same document's PDF score; the block-type counts for heading and list match the PDF ingestion within ±1 per type; no segment comes from an image. A second test in the same file, `test_kdl4_drm_refused`, posts a synthetic PalmDB file with a non-zero encryption field and a minimal KFX-ZIP and asserts 415 `drm_protected` with no `documents` row created (the fixtures are synthetic headers, not real purchased books).
 
 ## Open questions and risks
 
 | Risk | Likelihood | Mitigation |
 | --- | --- | --- |
-| Amazon serves personal documents as something other than PDF or unencrypted `.azw3` (e.g. KFX, or encrypted AZW) | Medium | KDL-4 refuses clearly; the gate fixture creation is the first step of M7 phase 2 and settles it (supervisor brief, unverified) |
+| Amazon serves personal documents as something other than PDF or unencrypted `.azw3` (e.g. KFX, or encrypted AZW) | Medium | KDL-4 refuses clearly; the gate fixture creation is the first step of M8 phase 2 and settles it (supervisor brief, unverified) |
 | HUFF/CDIC-compressed text records in Amazon-converted files | Medium | Implement from the public description or refuse with a clear message; checked on the gate fixtures |
 | Clean-room discipline slips and GPL code is copied into `kf8.py` | Low | Brief says so explicitly; the reviewer checks against the public spec; licence suite cannot detect copied code, so this is a review item |
 | Silk suspends Web Audio in a background tab | Medium | Same mitigation as iOS (PRD open question); documented, no native shell |
@@ -162,7 +162,7 @@ Placement is an open question (see below), not a commitment. Candidate: **inside
 - [ ] Confirm or reject D42: DRM books excluded; only user-owned documents from Manage Your Content and Devices or sideloaded originals
 - [ ] Confirm or reject D43: clean-room stdlib KF8 reader (recommended) versus an optional user-installed Calibre subprocess versus not supporting `.azw3` at all (PDF download only)
 - [ ] Confirm or reject D44: migration adding `documents.format` and `documents.origin`
-- [ ] Milestone placement: M7 phase 2 as proposed, a milestone of its own after v1, or dropped
+- [ ] Milestone placement: M8 phase 2 as proposed, a milestone of its own after v1, or dropped
 - [ ] Whether a Fire tablet is available to run the KDL-1 and KDL-2 checks at all
 
 **Open questions**
@@ -172,4 +172,4 @@ Placement is an open question (see below), not a commitment. Candidate: **inside
 - [ ] D43: accept the in-house reader with the clean-room rule, or allow an optional user-installed Calibre subprocess? The recorded subprocess precedent is not ffmpeg any more: D7's ffmpeg subprocess was replaced by in-process `opuscodec` (D16) and "There is no ffmpeg anywhere"; the live subprocess precedent is Tesseract (D28), which is Apache-2.0, not copyleft (`_agent/results/822_d7_subprocess_precedent.txt`). `CLAUDE.md` line 15 still says "Opus/WebM via an ffmpeg subprocess (D7)", which no longer matches the Technical Design (822)
 - [ ] D44: should `origin` be inferred (an `.azw3` upload sets `kindle`) or only user-set? Proposed: inferred for `.azw3`, user-set for PDF
 - [ ] KDL-7: are MOBI6-only personal documents common enough to support, or refused?
-- [ ] Board view (M6, D38) for reflowable books: none in this PRD; a rendered-HTML board is a later question
+- [ ] Board view (M7, D38) for reflowable books: none in this PRD; a rendered-HTML board is a later question

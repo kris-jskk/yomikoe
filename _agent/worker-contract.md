@@ -21,7 +21,7 @@ On top of that, evidence works like this:
 
 - Every number, "this passes", "this builds", "the branch is behind" comes from a command you
   ran and saved. Save the output as `_agent/results/NN_slug.<ext>` (`.txt`, `.log`, `.json`,
-  `.md`). `NN` is two digits: run `ls _agent/results/` and take the next free number. There is
+  `.md`). `NN` is the next free number (three digits today, four from 1000): run `ls _agent/results/` and take it. There is
   no reservation script; if two files would collide, take the next number again.
 - A claim you could not back with a run is reported as **unverified**, in those words. Never
   round it up to confirmed.
