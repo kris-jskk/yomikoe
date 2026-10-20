@@ -1,6 +1,6 @@
 # PRD: HearNarro works with Kindle
 
-As of 2026-10-19 · Sowmya · Status: proposed, not confirmed. Companion to `docs/PRD.md`; the decisions it proposes are D41–D44 in `docs/TECHNICAL_DESIGN.md`, all marked "proposed 2026-10-19, not confirmed".
+As of 2026-10-19 · Sowmya · Status: **future scope, deferred**. Not part of the current implementation (M5–M7 as planned in `docs/PRD.md`); nothing here is built, scheduled or tested until the user picks this PRD up. Companion to `docs/PRD.md`; the decisions it proposes are D41–D44 in `docs/TECHNICAL_DESIGN.md`, all marked "proposed 2026-10-19, not confirmed".
 
 Evidence for this document is under `_agent/results/`: parser licences `821_kindle_parser_licences.txt`, the subprocess precedent `822_d7_subprocess_precedent.txt`, the ingestion interface quoted from code `823_ingestion_interface.txt`, numbering `824_numbering.txt`. Device and Amazon-side facts that no run in this repo has checked are marked "supervisor brief, unverified".
 
@@ -135,7 +135,7 @@ No other endpoint changes. Segments, audio and positions are addressed by `segme
 
 ## Milestones
 
-Placement (proposed): **inside M7 "Sources and formats"**, as its second phase, after SRC-1's EPUB adapter. M7 in `docs/PRD.md` already names Kindle in its user direction and carries SRC-4; KDL-3 and KDL-5 reuse SRC-1's HTML-to-block adapter, so building them earlier would mean building that adapter early. KDL-1 (Fire tablet check) has no code dependency and can be run as a manual check at any milestone close from M5 on; it is cheap and answers the device question early. The existing M5–M7 text in `docs/PRD.md` is not changed by this document; adopting the placement is a supervisor or user decision.
+Placement is an open question (see below), not a commitment. Candidate: **inside M7 "Sources and formats"**, as its second phase, after SRC-1's EPUB adapter. M7 in `docs/PRD.md` already names Kindle in its user direction and carries SRC-4; KDL-3 and KDL-5 reuse SRC-1's HTML-to-block adapter, so building them earlier would mean building that adapter early. KDL-1 (Fire tablet check) has no code dependency and can be run as a manual check at any milestone close from M5 on; it is cheap and answers the device question early. The existing M5–M7 text in `docs/PRD.md` is not changed by this document; adopting the placement is a supervisor or user decision.
 
 | Item | Where | Depends on |
 | --- | --- | --- |
@@ -155,6 +155,15 @@ Placement (proposed): **inside M7 "Sources and formats"**, as its second phase, 
 | Clean-room discipline slips and GPL code is copied into `kf8.py` | Low | Brief says so explicitly; the reviewer checks against the public spec; licence suite cannot detect copied code, so this is a review item |
 | Silk suspends Web Audio in a background tab | Medium | Same mitigation as iOS (PRD open question); documented, no native shell |
 | KF8 markup varies (Word-converted docs, inline styles, no semantic headings) | Medium | Heading detection falls back to font-size and bold style rules like stage 2; EVAL-1 `kindle` class tracks it |
+
+**Decisions to take when this PRD is picked up** (none taken as of 2026-10-19; the user deferred the whole PRD to a future implementation)
+
+- [ ] Confirm or reject D41: Fire tablets supported as a phone-class browser target; e-ink Kindles a non-goal
+- [ ] Confirm or reject D42: DRM books excluded; only user-owned documents from Manage Your Content and Devices or sideloaded originals
+- [ ] Confirm or reject D43: clean-room stdlib KF8 reader (recommended) versus an optional user-installed Calibre subprocess versus not supporting `.azw3` at all (PDF download only)
+- [ ] Confirm or reject D44: migration adding `documents.format` and `documents.origin`
+- [ ] Milestone placement: M7 phase 2 as proposed, a milestone of its own after v1, or dropped
+- [ ] Whether a Fire tablet is available to run the KDL-1 and KDL-2 checks at all
 
 **Open questions**
 
