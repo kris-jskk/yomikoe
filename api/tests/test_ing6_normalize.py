@@ -177,7 +177,7 @@ def test_ing6_email_spoken_with_at_and_dot() -> None:
 @pytest.mark.parametrize(
     "text",
     [
-        "Use e.g. a cat.",
+        "Use n.b. a cat.",  # "e.g." is expanded by TERM-4 (test_term4_abbreviations.py)
         "growth of 3.2 units",
         "See Fig.2 below.",
         "release v1.2.3 shipped",

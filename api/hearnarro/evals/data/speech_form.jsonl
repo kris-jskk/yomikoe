@@ -340,26 +340,26 @@
 {"id": "math_unit_18", "category": "math_unit", "text": "The sample spun at 20 μs per turn.", "expected": "The sample spun at twenty microseconds per turn."}
 {"id": "math_unit_19", "category": "math_unit", "text": "The rope holds 1 kN.", "expected": "The rope holds one kilonewton."}
 {"id": "math_unit_20", "category": "math_unit", "text": "The supply is 12 kV.", "expected": "The supply is twelve kilovolts."}
-{"id": "math_chem_01", "category": "math_chem", "text": "Water, H2O, covers the surface.", "expected": "Water, H two O, covers the surface."}
-{"id": "math_chem_02", "category": "math_chem", "text": "Levels of CO2 rose.", "expected": "Levels of C O two rose."}
-{"id": "math_chem_03", "category": "math_chem", "text": "Methane is CH4.", "expected": "Methane is C H four."}
-{"id": "math_chem_04", "category": "math_chem", "text": "Table salt is NaCl.", "expected": "Table salt is N a C l."}
-{"id": "math_chem_05", "category": "math_chem", "text": "Ozone, O3, absorbs ultraviolet light.", "expected": "Ozone, O three, absorbs ultraviolet light."}
-{"id": "math_chem_06", "category": "math_chem", "text": "Ammonia, NH3, is a base.", "expected": "Ammonia, N H three, is a base."}
-{"id": "math_chem_07", "category": "math_chem", "text": "Sulfuric acid is H2SO4.", "expected": "Sulfuric acid is H two S O four."}
-{"id": "math_chem_08", "category": "math_chem", "text": "Glucose is C6H12O6.", "expected": "Glucose is C six H twelve O six."}
-{"id": "math_chem_09", "category": "math_chem", "text": "Nitrogen gas, N2, is inert.", "expected": "Nitrogen gas, N two, is inert."}
-{"id": "math_chem_10", "category": "math_chem", "text": "Oxygen, O2, supports combustion.", "expected": "Oxygen, O two, supports combustion."}
-{"id": "math_chem_11", "category": "math_chem", "text": "Hydrogen peroxide is H2O2.", "expected": "Hydrogen peroxide is H two O two."}
-{"id": "math_chem_12", "category": "math_chem", "text": "Calcium carbonate is CaCO3.", "expected": "Calcium carbonate is C a C O three."}
-{"id": "math_chem_13", "category": "math_chem", "text": "Ethanol is C2H5OH.", "expected": "Ethanol is C two H five O H."}
-{"id": "math_chem_14", "category": "math_chem", "text": "Carbon monoxide, CO, is toxic.", "expected": "Carbon monoxide, C O, is toxic."}
-{"id": "math_chem_15", "category": "math_chem", "text": "Nitric acid is HNO3.", "expected": "Nitric acid is H N O three."}
-{"id": "math_chem_16", "category": "math_chem", "text": "Sodium hydroxide is NaOH.", "expected": "Sodium hydroxide is N a O H."}
-{"id": "math_chem_17", "category": "math_chem", "text": "Iron oxide, Fe2O3, is rust.", "expected": "Iron oxide, F e two O three, is rust."}
-{"id": "math_chem_18", "category": "math_chem", "text": "Hydrochloric acid is HCl.", "expected": "Hydrochloric acid is H C l."}
-{"id": "math_chem_19", "category": "math_chem", "text": "Propane is C3H8.", "expected": "Propane is C three H eight."}
-{"id": "math_chem_20", "category": "math_chem", "text": "Silicon dioxide, SiO2, is quartz.", "expected": "Silicon dioxide, S i O two, is quartz."}
+{"id": "math_chem_01", "category": "math_chem", "text": "Water, H2O, covers the surface.", "expected": "Water, h 2 o, covers the surface."}
+{"id": "math_chem_02", "category": "math_chem", "text": "Levels of CO2 rose.", "expected": "Levels of c o 2 rose."}
+{"id": "math_chem_03", "category": "math_chem", "text": "Methane is CH4.", "expected": "Methane is c h 4."}
+{"id": "math_chem_04", "category": "math_chem", "text": "Table salt is NaCl.", "expected": "Table salt is n a c l."}
+{"id": "math_chem_05", "category": "math_chem", "text": "Ozone, O3, absorbs ultraviolet light.", "expected": "Ozone, o 3, absorbs ultraviolet light."}
+{"id": "math_chem_06", "category": "math_chem", "text": "Ammonia, NH3, is a base.", "expected": "Ammonia, n h 3, is a base."}
+{"id": "math_chem_07", "category": "math_chem", "text": "Sulfuric acid is H2SO4.", "expected": "Sulfuric acid is h 2 s o 4."}
+{"id": "math_chem_08", "category": "math_chem", "text": "Glucose is C6H12O6.", "expected": "Glucose is c 6 h 12 o 6."}
+{"id": "math_chem_09", "category": "math_chem", "text": "Nitrogen gas, N2, is inert.", "expected": "Nitrogen gas, n 2, is inert."}
+{"id": "math_chem_10", "category": "math_chem", "text": "Oxygen, O2, supports combustion.", "expected": "Oxygen, o 2, supports combustion."}
+{"id": "math_chem_11", "category": "math_chem", "text": "Hydrogen peroxide is H2O2.", "expected": "Hydrogen peroxide is h 2 o 2."}
+{"id": "math_chem_12", "category": "math_chem", "text": "Calcium carbonate is CaCO3.", "expected": "Calcium carbonate is c a c o 3."}
+{"id": "math_chem_13", "category": "math_chem", "text": "Ethanol is C2H5OH.", "expected": "Ethanol is c 2 h 5 o h."}
+{"id": "math_chem_14", "category": "math_chem", "text": "Carbon monoxide, CO, is toxic.", "expected": "Carbon monoxide, c o, is toxic."}
+{"id": "math_chem_15", "category": "math_chem", "text": "Nitric acid is HNO3.", "expected": "Nitric acid is h n o 3."}
+{"id": "math_chem_16", "category": "math_chem", "text": "Sodium hydroxide is NaOH.", "expected": "Sodium hydroxide is n a o h."}
+{"id": "math_chem_17", "category": "math_chem", "text": "Iron oxide, Fe2O3, is rust.", "expected": "Iron oxide, f e 2 o 3, is rust."}
+{"id": "math_chem_18", "category": "math_chem", "text": "Hydrochloric acid is HCl.", "expected": "Hydrochloric acid is h c l."}
+{"id": "math_chem_19", "category": "math_chem", "text": "Propane is C3H8.", "expected": "Propane is c 3 h 8."}
+{"id": "math_chem_20", "category": "math_chem", "text": "Silicon dioxide, SiO2, is quartz.", "expected": "Silicon dioxide, s i o 2, is quartz."}
 {"id": "math_reference_01", "category": "math_reference", "text": "As shown in Eq. (3), the loss falls.", "expected": "As shown in equation three, the loss falls."}
 {"id": "math_reference_02", "category": "math_reference", "text": "Substitute into Eq. (7).", "expected": "Substitute into equation seven."}
 {"id": "math_reference_03", "category": "math_reference", "text": "Eqs. 3–5 define the model.", "expected": "Equations three to five define the model."}
