@@ -10,9 +10,10 @@ code and the spec differ, this map says what the code does and lists the differe
 
 ## Scope and status
 
-Updated 2026-10-17 on branch `m5-academic`, phase 2 (ING-11 document profile). Later phases
-(mathspeak MATH-1..4, code listings ING-10, lexicon TERM-1..4, player PLAY-10/11) add their flows
-and rows here when they land.
+Updated 2026-10-20 on branch `m5-academic`, phase 4 (vocabulary, TERM-1..4; built 2026-10-20,
+phase 4, merged tree `eac6c2c`, summary `_agent/results/1091_phase4_summary.md`). Phase 2 added
+flows a–c, phase 3 the mathspeak rows, phase 4 flows d–e and the TERM rows. The player additions
+(PLAY-10/11, SYN-8 pauses, MATH-5) add theirs in phase 5.
 
 ### Status words
 
@@ -65,6 +66,57 @@ and rows here when they land.
 3. The response is the summary plus `renormalized: {changed, removed}`; the badge shows
    "re-normalized N sentences" (`formatRenormalized`).
 
+### d. Pronunciation override (TERM-2; built 2026-10-20, phase 4)
+
+1. In the reader a word selection opens `PronounceDialog` (`pickWord` takes the selected word); the
+   user types a respelling and picks "this document" or "all documents". `submitPronunciation` calls
+   `client.putPronunciation` with `{document_id, word, respelling}` (`document_id: null` for global).
+2. `PUT /pronunciations` (`routes/pronunciations.py`): 422 for an empty word or a respelling with no
+   letter, 404 for an unknown document; `repo.put_pronunciation` upserts the row in `pronunciations`
+   (migration 0006; `word` stored lower case; a partial unique index covers the global rows, whose
+   `document_id` is NULL).
+3. `_after_change` runs `_invalidate` in a thread: `segments_with_word` finds every segment of the
+   document (or of all documents for a global change) whose `normalized_text` holds the word as a whole
+   token, case-insensitive; `cli.purge_segments` deletes those segments' `audio_cache` rows and files and
+   returns the count. SYN-6 keys are unchanged (still by segment id).
+4. `SynthesisService.invalidate_context(document_id | None)` drops the cached `SynthContext` (all of them
+   for a global change). The response is the row plus `invalidated`; `DELETE /pronunciations/{id}`
+   follows the same steps and returns `{invalidated}`.
+5. Web: `onPronounceSaved` calls `usePlayer.dropClips(segmentsWithWord(segments, word))`, which aborts
+   pending and scheduled clips of those segments and rebuilds through SEEK or PLAY, so the next play
+   refetches (D5, D10). Listen (after a save) is `usePlayer.listen` → `seekTo` → machine PLAY (idle or
+   error) or SEEK.
+6. Next synthesis: `_context` reloads acronyms and `DbSegmentRepo.document_lexicon`
+   (= `repo.pronunciations_for`, global merged under per-document) into `SynthContext.lexicon`;
+   `KokoroBackend` turns each respelling into phonemes once per (accent, lexicon) with
+   `respelling_phonemes(g2p, lexicon)` and applies them through `lexicon_overrides.apply(tokens,
+   extra=...)`. Precedence: user respelling > `lexicon_overrides.OVERRIDES` > `lexicon_academic`
+   (TERM-1) > the backend's gold lexicon.
+
+Evidence: route and purge tests 6 passed (`_agent/results/1021_term2_green.txt`), route bodies
+(`1026_routes.md`), web unit tests 12/12 (`1061_vitest_green.txt`), e2e in three engines
+(`1067_e2e_three_engines.txt`), control run with `dropClips` disabled failing the refetch assertion
+(`1060_red.txt`).
+
+### e. Citations and abbreviations in the normalizer (TERM-3, TERM-4; built 2026-10-20, phase 4)
+
+1. Stage 5 `normalize.normalize(text, profile=..., math_spans=...)` keeps its one-pass `_PATTERN`;
+   phase 4 adds two named groups, `authyear` and `expand`, emitted by the same `emit` mechanism.
+2. `authyear` (TERM-3): an author–year parenthetical such as "(Smith et al., 2019)" becomes
+   "Smith et al 2019" when `profile.author_year_citations == "read"` (the default) and is dropped when
+   `"skip"`; a semicolon list is read in turn and "&" becomes "and"; a group inside a maths span is
+   left to the maths rule; numeric clusters stay dropped (ING-6). The toggle is the document setting
+   `PATCH /documents/{id}` `profile.author_year_citations`, which re-normalizes (spec Q6).
+3. `expand` (TERM-4): a whole token from `ingestion/expansions.EXPANSIONS` (12 entries, spec §4c
+   wordings), any case, becomes its expansion, capitalised at a sentence start; `char_map` maps the
+   expansion back to the abbreviation's characters.
+4. Sentence splitting is separate: `abbreviations.LATIN` gains "w.r.t.", "s.t.", "w.l.o.g.", "op.",
+   "cit." so the splitter does not cut after them (they are non-terminal tokens, not expansions).
+
+Evidence: math_chem rows checked against the convention (`_agent/results/1042_math_chem_check.md`),
+EVAL-4 categories (`1045_eval4_categories.md`, `term_abbreviation` 0.00 → 0.90), suite
+(`1046_suite.txt`).
+
 ## Modules and files
 
 | File | Responsibility | Public (M5 additions) | Reads / writes | Status |
@@ -89,6 +141,21 @@ and rows here when they land.
 | `web/src/components/Library.tsx` | Profile column and `ProfileBadge` select | `Library` | `PATCH /documents/{id}` | implemented (build 683; no e2e run) |
 | `web/src/components/libraryFormat.ts` | `formatProfile`, `formatRenormalized` | helpers | — | tested (`library.test.ts`, 683) |
 | `api/tests/test_ing11_profile.py`, `api/tests/test_ing11_profile_api.py` (new) | Unit and API tests for the above | — | tmp data dirs | fixture |
+| `api/hearnarro/synthesis/lexicon_academic.py` (new, m5-p4a; built 2026-10-20, phase 4) | TERM-1 academic lexicon, data written by the project: domain → lower-case word → US phonemes, 38 entries at `eac6c2c` (math 6, stats 6, physics 3, chem 1, bio 2, cs 4, latin_greek 1, surname 15; 37 at m5-p4a, json/gui/anova added by m5-p4e) | `ACADEMIC`, `flat` | pure | tested (`1003_term_by_category.md`, counts `1105_lexicon_counts.txt`) |
+| `api/hearnarro/synthesis/lexicon_overrides.py` | SYN-4 hand overrides; `extra` carries a document's respelling phonemes (TERM-2), consulted before `OVERRIDES` | `OVERRIDES`, `lookup(token, extra=None)`, `apply(tokens, extra=None)` | pure | tested (`1006_suite.txt`) |
+| `api/hearnarro/synthesis/kokoro_backend.py` | `build_g2p` writes `lexicon_academic.flat()` then `OVERRIDES` into the gold lexicon, lower-case and capitalised keys (misaki keeps proper nouns of 7 letters or fewer capitalised); `respelling_phonemes` turns `SynthContext.lexicon` into phonemes once per (accent, lexicon) | `build_g2p`, `respelling_phonemes(g2p, lexicon)`, `KokoroBackend` | — | tested (`1006_suite.txt`, `1008_model_tests.txt`) |
+| `api/hearnarro/synthesis/service.py` | `_context` loads acronyms and the user lexicon (a document with overrides but no acronyms gets a context); `invalidate_context` drops one or all cached contexts; `DbSegmentRepo.document_lexicon` wraps `repo.pronunciations_for` | `SynthesisService._context`, `SynthesisService.invalidate_context(document_id \| None)`, `DbSegmentRepo.document_lexicon` | `pronunciations` (read) | tested (`1021_term2_green.txt`) |
+| `api/hearnarro/storage/migrations/versions/0006_pronunciations.py` (new, m5-p4b) | Table `pronunciations` (NULL `document_id` = global), partial unique index for the global scope | revision `0006` (down `0005`) | schema | tested (`1021_term2_green.txt`) |
+| `api/hearnarro/storage/repo.py` | TERM-2 rows: list, get, upsert, delete; `pronunciations_for` merges global under per-document | `list_pronunciations`, `get_pronunciation`, `put_pronunciation`, `delete_pronunciation`, `pronunciations_for` | `pronunciations` | tested (`1021_term2_green.txt`) |
+| `api/hearnarro/routes/pronunciations.py` (new, m5-p4b) | `GET`/`PUT`/`DELETE /pronunciations`; 422 empty word or respelling without a letter, 404 unknown document or id; purge of the affected segments and context drop on every change, count returned as `invalidated` | `list_pronunciations`, `put_pronunciation`, `delete_pronunciation`, `segments_with_word` | `pronunciations`, `segments`, `audio_cache` and audio files | tested (`1021_term2_green.txt`, bodies `1026_routes.md`) |
+| `api/hearnarro/cli.py` | `purge_segments` shares `_purge_where` with `purge_audio` | `purge_segments(conn, segment_ids, data_dir) -> int` | `audio_cache`, audio files | tested (`1021_term2_green.txt`) |
+| `api/hearnarro/ingestion/normalize.py` (m5-p4c) | Named groups `authyear` (TERM-3, by `profile.author_year_citations`) and `expand` (TERM-4) in the one-pass `_PATTERN` | `normalize` | — | tested (`1045_eval4_categories.md`, `1046_suite.txt`) |
+| `api/hearnarro/ingestion/expansions.py` (new, m5-p4c) | TERM-4 table, 12 entries; "configurable" in the PRD means this one table in M5 | `EXPANSIONS` | pure | tested (`1045_eval4_categories.md`) |
+| `api/hearnarro/ingestion/abbreviations.py` (m5-p4e) | `LATIN` gains w.r.t., s.t., w.l.o.g., op., cit. (non-terminal for the sentence splitter only) | `LATIN` | — | tested (`1089_suite.txt`) |
+| `api/hearnarro/evals/suites/eval4_speech_form.py` (m5-p4e) | Spec Q8: `score` = `joined` for every `term_*` category, `partial` elsewhere; `partial` and `exact` kept in the record | `joined_similarity`, `score`, `phonemes` | `evals/data/speech_form.jsonl` | tested (`1081_scorer_green.txt`, `1088_eval4_categories.md`, example `1104_koh_shee_example.txt`) |
+| `web/src/components/PronounceDialog.tsx` (new, m5-p4d) | TERM-2 dialog: word, respelling, this document / all documents, Save, Listen after a save, the server's 422 message shown | `PronounceDialog`, `submitPronunciation`, `pickWord`, `segmentsWithWord`, `PronounceScope` | `PUT /pronunciations` | tested (`1061_vitest_green.txt`, `1067_e2e_three_engines.txt`) |
+| `web/src/player/usePlayer.ts` (m5-p4d) | `dropClips` aborts pending and scheduled clips of the given segments and rebuilds through SEEK or PLAY; `listen` = `seekTo` (D5, D10) | `dropClips(segmentIds)`, `listen(segmentId)` | — | tested (`1067_e2e_three_engines.txt`, control `1060_red.txt`) |
+| `web/src/api/client.ts` (m5-p4d) | TERM-2 calls | `listPronunciations`, `putPronunciation`, `deletePronunciation` | `/pronunciations` | tested (`1061_vitest_green.txt`) |
 
 ## Spec deviations
 
@@ -108,3 +175,10 @@ and rows here when they land.
 **m5-p3n (2026-10-20):** `extract._line_from_layout` splits a same-font run where a glyph's top and bottom both move half a size (`_level_jump`), so a display's numerator and main row are separate spans. `mathspeak/structure.py`: the main row of a three-level display is the first full-size run holding a relation (a display may open with a fraction); `˙` and `¨` are pre-accents (dot, double dot); variation selectors are dropped; runs inside a tall bracket pair `[︂ … ]︂` become a `stack` token (`_stack_tok`: lines by top, cells by gap, script-size centred line pairs as fractions) parsed as `colvec` (one column) or `matrix`. `mathspeak/reader.py` reads `colvec` as "the column vector a, b" (§3c row added). `merge._inline_spans`: a spacing accent ending the text run before a maths run opens the maths span ("˙𝑧" is "z dot"). Tests: `api/tests/test_mathspeak_loop8.py` (tested).
 
 **m5-p3o (2026-10-20):** `mathspeak/reader.py`: a stacked fraction whose numerator and denominator are both Leibniz parts (`_leibniz_part`: d, ∂ or dⁿ followed by one symbol with optional scripts or accent) reads "d y over d t" with no wrapper (§3c "Leibniz derivative" row, also in `api/scripts/math_convention.json`). `mathspeak/__init__.py`: `_maths_gap` accepts a text-font sign with its number ("+2" between "¨𝑦" and "𝜁𝜔0"). Tests: `api/tests/test_mathspeak_loop9.py` (tested); two loop-8 assertions follow the new row.
+
+**Phase 4 (built 2026-10-20):** the spec's repo function `pronunciations_for` exists in `storage/repo.py`;
+the service reads it through `DbSegmentRepo.document_lexicon` (`synthesis/service.py`), the same adapter
+pattern as `document_acronyms`. A synthesis job already in flight when a `PUT` lands can still write a
+clip with the old lexicon (m5-p4b observation, untested). The narrative form "Smith et al. (2019)" is not
+matched by `authyear` (m5-p4c observation). No listening check of the lexicon entries or respellings was
+run; pronunciation judgments are from dictionary knowledge until tier 1 at close.
