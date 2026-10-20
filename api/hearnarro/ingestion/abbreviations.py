@@ -34,8 +34,15 @@ CITATIONS = frozenset(
     }
 )  # fmt: skip
 
-# Latin and comparison abbreviations.
-LATIN = frozenset({"e.g.", "i.e.", "cf.", "viz.", "vs.", "approx.", "resp.", "ca.", "ibid."})
+# Latin and comparison abbreviations, and the TERM-4 academic ones (EVAL-4 term_abbreviation_04:
+# the splitter cut after "w.r.t."). The splitter reads the last token, so "op. cit." needs "op."
+# and "cit."; "et seq." is covered by "seq." in CITATIONS.
+LATIN = frozenset(
+    {
+        "e.g.", "i.e.", "cf.", "viz.", "vs.", "approx.", "resp.", "ca.", "ibid.",
+        "w.r.t.", "s.t.", "w.l.o.g.", "op.", "cit.",
+    }
+)  # fmt: skip
 
 # Document references: figures, equations, sections and theorem-like labels.
 DOCUMENT_REFERENCES = frozenset(

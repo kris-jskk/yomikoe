@@ -35,7 +35,12 @@ Score per pair: ``exact`` = the phoneme tokens of ``actual`` and ``expected`` ar
 punctuation-only tokens dropped) after primary and secondary stress marks are stripped
 (``strip_stress``), so a stress-only difference is not a reading error; ``exact_stress`` keeps
 the stress-sensitive comparison. ``partial`` = 1 - phoneme-token edit distance (stress
-stripped) / expected tokens, floored at 0; ``score`` = ``partial``. The
+stripped) / expected tokens, floored at 0; ``joined`` = 1 - character edit distance over the
+phoneme string with stress marks and spaces removed / its expected length, floored at 0
+(``joined_similarity``). ``score`` = ``joined`` for every ``term_*`` category (spec
+m5-academic-reading §8 Q8: the dataset writes terms as hyphenated respellings, so a correct
+one-word pronunciation is one token against two or three and ``partial`` cannot reach 1) and
+``score`` = ``partial`` for every other category. The
 word-level text comparison is kept as ``text_exact`` / ``text_partial`` (canonical forms: lower
 case, hyphens as spaces, punctuation other than in-word apostrophes removed). If misaki cannot
 be imported every pair is skipped with the reason instead of scored.
@@ -189,6 +194,13 @@ def phonemes(text: str) -> list[str]:
     return out
 
 
+def joined_similarity(got: list[str], want: list[str]) -> float:
+    """1 - character edit distance / expected length over the phoneme tokens joined with no
+    spaces and stress marks stripped, floored at 0 (Q8)."""
+    a, b = strip_stress("".join(got)), strip_stress("".join(want))
+    return max(0.0, 1 - seq_levenshtein(list(a), list(b)) / max(1, len(b)))
+
+
 def dataset() -> list[dict[str, Any]]:
     """One example per pair; all skipped with the reason if misaki is unavailable."""
     reason = unavailable()
@@ -196,8 +208,8 @@ def dataset() -> list[dict[str, Any]]:
 
 
 def score(example: dict[str, Any]) -> dict[str, Any]:
-    """id, class, exact, exact_stress, partial (= score), actual, actual_ph, expected_ph, text_exact,
-    text_partial."""
+    """id, class, exact, exact_stress, partial, joined, score (joined for ``term_*``, else
+    partial), actual, actual_ph, expected_ph, text_exact, text_partial."""
     actual = spoken(example["text"], example.get("block"))
     got, want = canonical(actual), canonical(example["expected"])
     text_partial = max(0.0, 1 - seq_levenshtein(got, want) / max(1, len(want)))
@@ -205,13 +217,15 @@ def score(example: dict[str, Any]) -> dict[str, Any]:
     got_ns = [strip_stress(p) for p in got_ph]
     want_ns = [strip_stress(p) for p in want_ph]
     partial = max(0.0, 1 - seq_levenshtein(got_ns, want_ns) / max(1, len(want_ns)))
+    joined = joined_similarity(got_ph, want_ph)
     return {
         "id": example["id"],
         "class": example["class"],
         "exact": got_ns == want_ns,
         "exact_stress": got_ph == want_ph,
         "partial": partial,
-        "score": partial,
+        "joined": joined,
+        "score": joined if example["class"].startswith("term_") else partial,
         "actual": actual,
         "actual_ph": " ".join(got_ph),
         "expected_ph": " ".join(want_ph),

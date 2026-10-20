@@ -25,6 +25,6 @@ equation 14: d sub f of mu, nu is defined as the supremum over f in f of the abs
 the choice of f determines the geometry on the space of probability measures.
 equation 15: f sub t v is defined as the set of f from x to the interval from 0 to 1 such that f is measurable,
 equation 16: d sub f sub t v of mu, nu equals the supremum over a in b of x of the absolute value of mu of a minus nu of a equals the norm of mu minus nu sub t v.
-suppose that x, d is a bounded space, i.e., diam of x is less than infinity.
+suppose that x, d is a bounded space, that is, diam of x is less than infinity.
 fix x sub 0 in x and consider the anchored lipschitz class
 equation 17: f sub lip of d is defined as the set of f from x to r such that the absolute value of f of x minus f of y is less than or equal to d of x, y for all x, y in x, f of x sub 0 equals 0.

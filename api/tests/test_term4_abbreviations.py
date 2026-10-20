@@ -99,3 +99,23 @@ def test_term4_sentence_split_unchanged() -> None:
     from hearnarro.ingestion import abbreviations
 
     assert not hasattr(abbreviations, "EXPANSIONS")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Take the derivative w.r.t. x.",
+        "Pick a point s.t. x.",
+        "Assume w.l.o.g. x.",
+        "See the proof in Smith et seq. x.",
+        "See Smith, op. cit. x.",
+    ],
+)
+def test_term4_no_sentence_split_after_academic_abbreviation(text: str) -> None:
+    """EVAL-4 term_abbreviation_04: the splitter cut after "w.r.t." ("with respect to. x.")."""
+    from hearnarro.evals.suites.eval4_speech_form import _blocks
+    from hearnarro.ingestion.merge import merge_blocks
+    from hearnarro.ingestion.segment import split_sentences
+
+    (block,) = merge_blocks(_blocks(text, "body"))
+    assert len(split_sentences(block, document_id=0, order_start=0, id_start=0)) == 1
