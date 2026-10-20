@@ -15,9 +15,9 @@ the symbol sigma squared represents the population variance; the population stan
 the symbol s squared represents the sample variance; the sample standard deviation s is the square root of the sample variance.
 if the numbers come from a census of the entire population and not a sample, when we calculate the average of the squared deviations to find the variance, we divide by n, the number of items in the population.
 if the data are from a sample rather than a population, when we calculate the average of the squared deviations, we divide by n minus 1, one less than the number of items in the sample.
-s equals the square root of the fraction the sum of x minus x bar squared over n minus 1, end fraction or s equals the square root of the fraction the sum of f times x minus x bar squared over n minus 1, end fraction
+s equals the square root of the fraction the sum of x minus x bar, squared over n minus 1, end fraction or s equals the square root of the fraction the sum of f of x minus x bar, squared over n minus 1, end fraction
 for the sample standard deviation, the denominator is n minus 1, that is the sample size minus 1.
-sigma equals the square root of the fraction the sum of x minus mu squared over n, end fraction or sigma equals the square root of the fraction the sum of f times x minus mu squared over n, end fraction
+sigma equals the square root of the fraction the sum of x minus mu, squared over n, end fraction or sigma equals the square root of the fraction the sum of f of x minus mu, squared over n, end fraction
 for the population standard deviation, the denominator is n, the number of items in the population.
 in these formulas, f represents the frequency with which a value appears.
 for example, if a value appears once, f is one.

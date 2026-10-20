@@ -127,6 +127,11 @@ def _lex(text: str, words: bool = False) -> list[_Tok]:
     """Tokens of ``text``; ``words`` (an upright text font) reads letter runs as words."""
     for a, b in _SAME.items():
         text = text.replace(a, b)
+    # Mathematical alphanumerics (𝑥, 𝑙𝑜𝑔, 𝐀; unicode-math fonts put them in the text layer) are
+    # their plain letters and digits, so 𝑙𝑜𝑔 is the function word log (m5 p3k, MATH-1).
+    text = "".join(
+        unicodedata.normalize("NFKC", c) if 0x1D400 <= ord(c) <= 0x1D7FF else c for c in text
+    )
     # Decompose accented letters (x̂ -> x + hat) but not symbols (≠ and ∉ must stay whole).
     text = "".join(
         unicodedata.normalize("NFD", c) if unicodedata.category(c).startswith("L") else c

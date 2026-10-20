@@ -8,4 +8,5 @@ equation 3: p of y, z given x equals p of z given x p of y given x, z equals p o
 hence, the joint log-density of y and z can be obtained as
 equation 4: log p of y, z given x equals z log p of z equals 1 given x plus 1 minus z log of 1 minus p of z equals 1 given x, reliability network, plus z log p of y given x, z equals 1, learner network, plus 1 minus z log p sub rand of y, random-response component,
 ideally, according to equation 4, if the latent variable z is known, the learner network should be trained on instances with z equals 1, which should lead to it learn the distribution of the predictable component p of y given x, z equals 1.
+however, since z is not observable, as we will demonstrate in section 3.2, the empirical learner target used in training is actually the log likelihood of the clean component weighted by the posterior reliability
 equation 5: gamma of x, y is defined as p of z equals 1 given x, y equals the fraction p of z equals 1 given x p of y given x, z equals 1 over p of z equals 1 given x p of y given x, z equals 1 plus p sub rand of y times 1 minus p of z equals 1 given x, end fraction.
