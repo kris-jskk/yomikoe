@@ -36,7 +36,14 @@ g2p_en predictor on the lowercase form. Spelled: the token is replaced by one to
 (no spaces between them, so the phoneme string equals misaki's letter spelling), each with its
 own duration; the letters fold back into one WordTimestamp spanning the original token. A
 possessive/plural ("CEO's", "PDFs") is decided on its letters and the voiced suffix joins the
-last letter token ("O's", "Fs"). Each
+last letter token ("O's", "Fs"). A mixed-case token ending in 2+ capitals ("OpenAI", "xAI";
+``split_camel_acronym``) becomes a word-part token ("Open": lexicon, cmudict, g2p_en; primary
+stress made secondary) followed by the capital run decided as above ("A", "I's"); the pieces
+fold back into one WordTimestamp like spelled letters. A caps-context token whose folded word
+is in no lexicon tier gets the same treatment when ``split_caps_compound`` finds a lexicon prefix
+and a 2-3 capital tail that ``decide`` spells ("OPENAI" -> "OPEN" + "A", "I"; "NAVIER" is not split
+because "ER" would be spoken); an unfolded acronym candidate ("n J OPENAI") is tried the same way
+unless an override or the document's definitions name it. Each
 (document, token) decision is logged once at INFO.
 
 Word timestamps (contract for ``SynthResult.timestamps``):
@@ -73,12 +80,16 @@ import numpy as np
 from hearnarro.synthesis import cmudict, lexicon_overrides
 from hearnarro.synthesis.acronyms import (
     RESPELL,
+    SPELLED,
+    SPOKEN,
     Decision,
     caps_fold_spans,
     decide,
     fold_caps,
     is_acronym,
     spell_phonemes,
+    split_camel_acronym,
+    split_caps_compound,
     split_suffix,
     suffix_phonemes,
 )
@@ -120,6 +131,14 @@ _ARPA_VOWEL = {
     "AA": "ɑ", "AE": "æ", "AO": "ɔ", "AW": "W", "AY": "I", "EH": "ɛ", "EY": "A",
     "IH": "ɪ", "IY": "i", "OW": "O", "OY": "Y", "UH": "ʊ", "UW": "u",
 }  # fmt: skip
+
+
+# Square brackets are read as round ones before G2P (SYN-4, ING-6 intervals "[0, 1)"): spaCy
+# tags a "[" glued to a digit as XX, not -LRB-, so misaki's ``G2P.retokenize`` does not treat it
+# as punctuation and merges it with the digit into one word "[0" with no pronunciation (silent).
+# Same length, so token offsets still map back onto the original text. It also keeps prose from
+# being read as misaki's "[word](/phonemes/)" markup.
+_SQUARE_TO_ROUND = str.maketrans("[]", "()")
 
 
 def voice_from_id(voice_id: str) -> Voice:
@@ -427,11 +446,12 @@ class KokoroBackend:
         definitions = context.acronyms if context else {}
         spans = caps_fold_spans(text, definitions)
         folded_text = fold_caps(text, definitions) if spans else text
-        _, tokens = g2p(folded_text)
+        g2p_text = folded_text.translate(_SQUARE_TO_ROUND)
+        _, tokens = g2p(g2p_text)
         folded: set[int] = set()
         pos = 0
         for t in tokens:  # original text back on every token (timestamps match on it)
-            i = folded_text.find(t.text, pos) if t.text else -1
+            i = g2p_text.find(t.text, pos) if t.text else -1
             if i < 0:
                 continue
             pos = i + len(t.text)
@@ -462,18 +482,48 @@ class KokoroBackend:
         def in_lexicon(w: str) -> bool:
             return w.lower() in lex.golds or w.lower() in lex.silvers
 
+        def known(w: str) -> bool:  # any lexicon tier: misaki gold/silver, cmudict
+            return bool(look(w) or g2p.fallback._cmu(w))
+
         definitions = context.acronyms if context else {}
+
+        def compound(w: str) -> tuple[str, str] | None:  # "OPENAI" -> ("OPEN", "AI")
+            if w in SPOKEN or w in SPELLED or w in definitions:
+                return None
+            sp = split_caps_compound(w, known)
+            tail_spoken = (
+                sp and decide(sp[1], definitions=definitions, in_lexicon=in_lexicon).spoken
+            )
+            return None if not sp or tail_spoken else sp  # "NAVIER" -> "NAVI" + "ER": no
+
         out: list[Any] = []
         for i, t in enumerate(tokens):
-            word, suffix = (t.text, "") if is_acronym(t.text) else split_suffix(t.text) or ("", "")
-            if (
-                not word
-                or id(t) in (folded or ())
-                or lexicon_overrides.lookup(t.text)
-                or lexicon_overrides.lookup(word)
-            ):
+            head, word, suffix = "", "", ""
+            if (c := compound(t.text)) and (id(t) in (folded or ()) or is_acronym(t.text)):
+                head, word = c
+            elif id(t) in (folded or ()):
                 out.append(t)
                 continue
+            elif is_acronym(t.text):
+                word = t.text
+            elif sp := split_suffix(t.text):
+                word, suffix = sp
+            elif camel := split_camel_acronym(t.text):
+                head, word, suffix = camel
+            if not word or lexicon_overrides.lookup(t.text) or lexicon_overrides.lookup(word):
+                out.append(t)
+                continue
+            if head:  # "OpenAI": the word part as its own token, then the capital run below
+                head_ps = (
+                    look(head)
+                    or g2p.fallback._cmu(head)
+                    or arpabet_to_kokoro(self._predictor.predict(head.lower()), british)
+                )
+                ht = copy.copy(t)
+                ht.text, ht.phonemes, ht.whitespace = head, head_ps.replace("ˈ", "ˌ"), ""
+                out.append(ht)
+                t = copy.copy(t)
+                t.text, t.phonemes = word + suffix, None
             nxt = tokens[i + 1].text if i + 1 < len(tokens) and t.whitespace else None
             d = decide(
                 word,

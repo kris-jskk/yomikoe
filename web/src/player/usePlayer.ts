@@ -9,6 +9,7 @@ import { fetchAudio, patchDocument } from '../api/client'
 import type { AudioClip } from '../api/types'
 import { keyToAction, stepSpeed } from './keys'
 import {
+  MediaKeepAlive,
   clearMediaSession,
   setMediaHandlers,
   setMediaMetadata,
@@ -655,6 +656,8 @@ export function usePlayer(opts: { title?: string } = {}): Player {
     () =>
       new PlayerEngine(dispatch, setLastClip, (following, hint) => setFollow({ following, hint })),
   )
+  // PLAY-7: one silent looping <audio> keeps the OS media session across a pause (mediaSession.ts)
+  const [keepAlive] = useState(() => new MediaKeepAlive())
 
   useLayoutEffect(() => {
     engine.sync(state)
@@ -749,6 +752,7 @@ export function usePlayer(opts: { title?: string } = {}): Player {
     const s = engine.state
     const ctx = engine.ensureCtx() // inside the click: autoplay policy
     const at = performance.now()
+    if (s.status === 'paused' || s.status === 'idle' || s.status === 'error') keepAlive.start()
     if (s.status === 'paused') {
       if (engine.ended) {
         engine.markNavigate()
@@ -763,13 +767,14 @@ export function usePlayer(opts: { title?: string } = {}): Player {
       engine.markNavigate() // Play from the saved position scrolls to it
       dispatch({ type: 'PLAY', at })
     }
-  }, [engine])
+  }, [engine, keepAlive])
 
   const pause = useCallback(() => {
     if (engine.state.status !== 'playing') return
     void engine.ctx?.suspend()
+    keepAlive.stop()
     dispatch({ type: 'PAUSE' })
-  }, [engine])
+  }, [engine, keepAlive])
 
   const seekTo = useCallback(
     (segmentId: number, tokenIndex?: number) => {
@@ -778,12 +783,13 @@ export function usePlayer(opts: { title?: string } = {}): Player {
       engine.ensureCtx()
       engine.markNavigate()
       if (st === 'idle' || st === 'error') {
+        keepAlive.start() // a word click starts playback: same gesture path as play()
         dispatch({ type: 'PLAY', at: performance.now(), segmentId, offsetMs })
       } else {
         dispatch({ type: 'SEEK', segmentId, offsetMs })
       }
     },
-    [engine],
+    [engine, keepAlive],
   )
 
   const resumeFollowing = useCallback(() => engine.resumeFollowing(), [engine])
@@ -907,8 +913,17 @@ export function usePlayer(opts: { title?: string } = {}): Player {
     })
     return off
   }, [play, pauseAndSave, appDispatch])
-  useEffect(() => () => clearMediaSession(), [])
-  useEffect(() => setMediaPlaybackState(state.status), [state.status])
+  useEffect(
+    () => () => {
+      keepAlive.dispose()
+      clearMediaSession()
+    },
+    [keepAlive],
+  )
+  useEffect(() => {
+    setMediaPlaybackState(state.status)
+    keepAlive.sync(state.status)
+  }, [state.status, keepAlive])
 
   return {
     state,

@@ -207,12 +207,19 @@ def test_ing6_leading_bullet_glyph_is_silent(text: str) -> None:
 
 @pytest.mark.parametrize(
     "text",
-    ["1. First step", "a) Second", "(3) Third", "-based storage", "A → B", "*emphasis*", "— Wired"],
+    ["1. First step", "a) Second", "(3) Third", "-based storage", "*emphasis*", "— Wired"],
 )
 def test_ing6_numbered_markers_and_non_bullets_are_spoken(text: str) -> None:
     out, cmap = normalize(text)
     assert out == text
     assert cmap == list(range(len(text)))
+
+
+def test_ing6_mid_line_arrow_is_not_a_bullet() -> None:
+    # Was "A → B" unchanged; since the MATH-1 fallback the arrow is spoken by name.
+    out, cmap = normalize("A → B")
+    assert out == "A goes to B"
+    assert set(cmap[2:9]) == {2}
 
 
 # Roman numerals that label structure are read as numbers (PART II report, 2026-10-17).
@@ -722,3 +729,36 @@ def test_ing6_degrees_char_map_round_trip() -> None:
     sp = spaced.index(" °")
     assert all(sp <= i < sp + 3 for i in cmap[o : o + len(" degrees Celsius")])
     assert cmap[-1] == len(spaced) - 1
+
+
+def test_ing6_interval_after_operator_kept() -> None:
+    out = normalize("compactly supported in Kν × [0, 2], and")[0]
+    assert "[0, 2]" in out
+
+
+def test_ing6_numeric_citations_still_dropped() -> None:
+    out = normalize("as shown in [1, 2] and [3–5] and [12]")[0]
+    assert out == "as shown in and and"
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        # The brackets are kept; symbols inside are read by the MATH-1 fallback.
+        ("on R3 × [0, 1) and [0, ∞) and (0, 1]", "on R3 times [0, 1) and [0, infinity) and (0, 1]"),
+        ("the set [0, 2] here", "the set [0, 2] here"),
+        ("u ∈ [2, 3] here", "u in [2, 3] here"),
+        ("on [a, b] here", "on [a, b] here"),
+        ("on [−π, π] here", "on [−pi, pi] here"),
+    ],
+)
+def test_ing6_intervals_kept_as_written(text: str, expected: str) -> None:
+    assert normalize(text)[0] == expected
+
+
+def test_ing6_interval_after_equals_kept() -> None:
+    assert normalize("x = [1, 2] here")[0] == "x equals [1, 2] here"
+
+
+def test_ing6_citation_list_of_three_dropped() -> None:
+    assert normalize("prior work [1,2,7] disagrees")[0] == "prior work disagrees"

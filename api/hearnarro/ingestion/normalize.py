@@ -25,6 +25,13 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 
+from hearnarro.ingestion.math_symbols import (
+    CONTEXT_NAMES,
+    GREEK,
+    LETTER_NAMES,
+    SYMBOL_NAMES,
+    VARIATION_SELECTORS,
+)
 from hearnarro.ingestion.models import GLYPH_BULLET_RE
 from hearnarro.ingestion.profile import PROSE_DEFAULT, DocumentProfile
 
@@ -136,8 +143,20 @@ _DEGREES = (
 _DEGREE_UNITS = {"C": " Celsius", "F": " Fahrenheit", None: ""}
 
 
+# A numeric bracket "[12]", "[3, 4]", "[12–14]" is a citation and is dropped. It is a
+# mathematical interval instead, kept as written (ING-6; wording is MATH-2, M5), when it starts
+# with 0 ("[0, 2]"), is directly preceded (optionally one space) by a maths operator or "(",
+# or is followed by ")". Brackets holding a letter, a Greek letter or ∞, and half-open forms
+# ("[0, 1)", "(0, 1]") never match the citation shape, so they are kept too.
+_MATH_BEFORE = "×∈⊂⊆∪∩⊗=("
+_CITATION = (
+    rf"(?P<citation>(?<![{_MATH_BEFORE}]\s)(?<![{_MATH_BEFORE}])"
+    r"\[(?!0)\d+(?:\s*[,–-]\s*\d+)*\](?!\)))"
+)
+
+
 _PATTERN = re.compile(
-    r"(?P<citation>\[\d+(?:\s*[,–-]\s*\d+)*\])"
+    rf"{_CITATION}"
     r"|(?P<etal>\bet al\.)"
     r"|(?P<percent>\b\d+(?:\.\d+)?%)"
     rf"|(?P<url>(?:\bhttps?://{_SPACE_BEFORE_HOST}(?:www\.)?|\bwww\.{_SPACE_BEFORE_HOST})"
@@ -179,6 +198,146 @@ def number_words(n: int) -> str:
         return _ONES[n]
     tens, ones = divmod(n, 10)
     return _TENS[tens] + (f"-{_ONES[ones]}" if ones else "")
+
+
+# MATH-1 fallback (ING-6): symbols read by name (table in ``math_symbols``).
+_PAD_LEFT_AFTER = ")]}"
+_PAD_RIGHT_BEFORE = "([{"
+_ARROW_NEIGHBOURS = "-=<>"
+_MINUS_LEFT = ")]}|∞"
+_MINUS_RIGHT = "([{|∞√∑∫∂∇"
+_GREEK_WORD_MIN = 3
+# Something shaped like a markup tag or an angle-bracketed address ("<div>", "<h1>", "</p>",
+# "<name at host dot com>" after pass one): its "<" and ">" are never relations.
+_TAG = re.compile(r"</?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>\n]*)?>")
+# Function application (MATH-2 ClearSpeak "f of x"): a lone letter glued to "(" ("O(1)", "u(x, t)").
+_APPLY_BEFORE = "([{"
+_APPLY = re.compile(r"(?:^|[\s(\[{])[A-Za-z]\(")
+_OF = " of "
+
+
+def _applied(s: str, i: int) -> bool:
+    """Whether the letter (or Greek letter) at ``s[i]`` stands alone and is glued to a "(".
+
+    It must start the text or follow whitespace or an opening bracket (so the last letter of a
+    word, "word(s)", "log(x)", or of a glued term, "2x(y)", "uθ(x)", is never applied), and the
+    very next char must be "(" ("E (1)" is left as written).
+    """
+    if i + 1 >= len(s) or s[i + 1] != "(":
+        return False
+    return i == 0 or s[i - 1].isspace() or s[i - 1] in _APPLY_BEFORE
+
+
+def _is_greek(ch: str) -> bool:
+    return "\u0370" <= ch <= "\u03ff" or "\u1f00" <= ch <= "\u1fff"
+
+
+def _in_greek_word(s: str, i: int) -> bool:
+    """True when ``s[i]`` is part of a run of 3+ Greek characters (Greek prose, not maths)."""
+    a = i
+    while a > 0 and _is_greek(s[a - 1]):
+        a -= 1
+    b = i + 1
+    while b < len(s) and _is_greek(s[b]):
+        b += 1
+    return b - a >= _GREEK_WORD_MIN
+
+
+def _maths_position(s: str, i: int, tags: list[tuple[int, int]]) -> bool:
+    """Whether a context symbol ("<", ">", "·", "⋅", "−") at ``s[i]`` is in a maths position."""
+    ch = s[i]
+    if ch in "<>" and any(a <= i < b for a, b in tags):
+        return False
+    prev = s[i - 1] if i > 0 else ""
+    nxt = s[i + 1] if i + 1 < len(s) else ""
+    if ch in "<>":
+        if (prev and prev in _ARROW_NEIGHBOURS) or (nxt and nxt in _ARROW_NEIGHBOURS):
+            return False
+        if prev in (" ", "\t") and nxt in (" ", "\t"):
+            return i >= 2 and not s[i - 2].isspace() and i + 2 < len(s) and not s[i + 2].isspace()
+        return prev.isalnum() and nxt.isalnum() and (prev.isdigit() or nxt.isdigit())
+    if ch == "·":
+        return not (prev.isspace() and nxt.isspace())
+    if ch == "−":
+        a = i - 1
+        while a >= 0 and s[a] in " \t":
+            a -= 1
+        b = i + 1
+        while b < len(s) and s[b] in " \t":
+            b += 1
+        left = s[a] if a >= 0 else ""
+        right = s[b] if b < len(s) else ""
+        return (
+            bool(left and right)
+            and (left.isalnum() or left in _MINUS_LEFT)
+            and (right.isalnum() or right in _MINUS_RIGHT)
+        )
+    return True  # "⋅" is always a dot operator
+
+
+def _speak_symbols(s: str, cmap: list[int]) -> tuple[str, list[int]]:
+    """MATH-1 fallback over the pass-one output: symbols and Greek letters become their names.
+
+        Each name maps every output char (and any space added around it) onto the symbol's source
+        index, so the char map stays monotone and inside the token. A name is separated by a space
+        from a letter, digit or closing bracket before it and from a letter, digit or opening bracket
+        after it ("∈C∞" -> "in C infinity", "uθ" -> "u theta"); existing spaces are reused, so no
+        double space is created. Variation selectors are removed; blackboard bold becomes the plain
+        letter. "<", ">", "·", "−" are spoken only in a maths position (``_maths_position``: never
+    inside a tag-shaped "<...>", never next to "-", "=", "<", ">"; a "−" with an operand on each
+    side, spaces allowed, so "H = −∑ p" reads "H equals minus sum p"); a Greek
+        letter inside a run of three or more Greek characters (a Greek word) is left as written.
+
+        Function application (MATH-2 ClearSpeak "f of x"): a single Latin letter, or a Greek letter
+        this pass names, that starts the text or follows whitespace or an opening bracket and is
+        immediately followed by "(" gets " of " after it, mapped onto the letter; the parentheses
+        stay and are silent ("O(1)" -> "O of (1)", "E(X, η)" -> "E of (X, eta)"). Without this
+        misaki reads "O(1" as one word and keeps only the letter. A longer word ("log(x)",
+        "word(s)"), a digit ("2(a)"), a letter ending a term ("uθ(x)") and "E (1)" are untouched.
+    """
+    if not _APPLY.search(s) and not any(
+        c in SYMBOL_NAMES or c in CONTEXT_NAMES or c in LETTER_NAMES or c in VARIATION_SELECTORS
+        for c in s
+    ):
+        return s, cmap
+    out: list[str] = []
+    omap: list[int] = []
+    n = len(s)
+    tags = [m.span() for m in _TAG.finditer(s)] if "<" in s else []
+    for i, ch in enumerate(s):
+        if ch in VARIATION_SELECTORS:
+            continue
+        if ch in LETTER_NAMES:
+            out.append(LETTER_NAMES[ch])
+            omap.append(cmap[i])
+            continue
+        name = None
+        if ch in GREEK:
+            name = None if _in_greek_word(s, i) else GREEK[ch]
+        elif ch in SYMBOL_NAMES:
+            name = SYMBOL_NAMES[ch]
+        elif ch in CONTEXT_NAMES and _maths_position(s, i, tags):
+            name = CONTEXT_NAMES[ch]
+        if name is None:
+            out.append(ch)
+            omap.append(cmap[i])
+            if ch.isascii() and ch.isalpha() and _applied(s, i):
+                out.extend(_OF)
+                omap.extend([cmap[i]] * len(_OF))
+            continue
+        j = i + 1
+        while j < n and s[j] in VARIATION_SELECTORS:
+            j += 1
+        nxt = s[j] if j < n else ""
+        left = bool(out) and (out[-1].isalnum() or out[-1] in _PAD_LEFT_AFTER)
+        right = bool(nxt) and (nxt.isalnum() or nxt in _PAD_RIGHT_BEFORE)
+        if ch in GREEK and _applied(s, i):
+            words = (" " if left else "") + name + _OF
+        else:
+            words = (" " if left else "") + name + (" " if right else "")
+        out.extend(words)
+        omap.extend([cmap[i]] * len(words))
+    return "".join(out), omap
 
 
 def _in_math(
@@ -258,6 +417,15 @@ def normalize(
     its last dot so the sentence period completes it. An asterisk with spaces or tabs and a non-space on both
     sides on the same line becomes " times ", mapped onto the spaces and the asterisk; "**",
     "word*", "*word", "3*4" and a leading "* " bullet are untouched.
+
+    MATH-1 fallback (PRD MATH-1, "the symbols left to right by name"): after the pass above,
+    ``_speak_symbols`` reads mathematical symbols and Greek letters by name from the table in
+    ``hearnarro.ingestion.math_symbols`` ("ν > 0" -> "nu greater than 0", "∈R3" -> "in R3"),
+    every output char of a name mapped onto the symbol. Structure (sub/superscripts, fractions,
+    exponents, display equations) is not recovered here. Mathspeak (``hearnarro.ingestion.
+    mathspeak``) never feeds its spoken maths back into this function: it calls ``normalize`` only
+    on the prose between maths spans and splices the spoken maths in afterwards, so this pass
+    names stray symbols in prose and never rewrites a word mathspeak produced.
     """
     out: list[str] = []
     cmap: list[int] = []
@@ -447,4 +615,4 @@ def normalize(
     for i in range(pos, len(text)):
         out.append(text[i])
         cmap.append(i)
-    return "".join(out), cmap
+    return _speak_symbols("".join(out), cmap)
