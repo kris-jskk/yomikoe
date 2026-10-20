@@ -131,6 +131,43 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
           <h3>Evidence</h3><ul class="ev"><li>Consolidated gate, golden 34 passed, suite 1341 passed with only gate (b) failing, ruff clean, tier 0 with 0 regressions: <code>_agent/results/774</code>–<code>779</code>, record <code>evals/runs/2026-10-17_3ecb19a.json</code>.</li><li>Loop evidence: integration <code>710</code>–<code>718</code> (mean 0.38), detection <code>721</code>–<code>728</code>, reader <code>730</code>–<code>737</code>, display merge <code>740</code>–<code>751</code> (mean 0.73), reader 2 <code>752</code>–<code>758</code>, detection 2 <code>760</code>–<code>769</code>, expected-text alignment <code>770</code>–<code>773</code>.</li><li>Commits <code>608fe95</code>, <code>8c29043</code>, <code>92c1136</code>, <code>1941a3e</code>, <code>71531e0</code>, <code>68f546f</code>, <code>7c…</code> (display merge), <code>f0bc4d2</code>, <code>89e32cf</code>, <code>3ecb19a</code>, <code>e5b8c09</code>.</li><li>Process finding: two parallel workers ran a shared <code>git stash</code> in the same second and swapped edits; recovered from the stash commits, rule added to the worker contract (<code>a7e6b95</code>).</li></ul></div>
       </div>
       <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>phase 3 boundary</span><span>2026-10-19</span></div>
+        <div class="what"><b>Merge of main into m5-academic</b><span class="why-line">Main carried five post-M4 builds the study narrator depends on (the MATH-1 symbol fallback above all); merging inside phase 3 keeps the gate measured on the code that will ship, and the one conflict in <code>normalize.py</code> had to be resolved so MATH-1's two layers compose.</span>
+          <span class="ids">MATH-1 · ING-6 · ING-11 · D40 · SYN-4 · PLAY-7</span>
+          <ul><li>Merge commit <code>79e945a</code> (parents <code>f124a8a</code> and main <code>2009755</code>) brings in main's five post-M4 builds: SYN-4 acronym split, ING-6 interval fixes, the MATH-1 symbol fallback (<code>api/hearnarro/ingestion/math_symbols.py</code>, <code>_speak_symbols</code> second pass), function application <code>_APPLY</code>, PLAY-7 media-key keep-alive (<code>web/src/player/mediaSession.ts</code>).</li><li>Decision, normalizer order: m5's signature (<code>profile</code>, <code>math_spans</code>) and bracket rule are kept; main's <code>_speak_symbols</code> runs as the second pass at the end of <code>normalize()</code>. Mathspeak calls <code>normalize</code> only on the prose between maths spans and inserts the spoken maths afterwards, so the symbol pass never alters a mathspeak word. Why: structured mathspeak inside spans and symbol names as the fallback in prose then compose without double-speaking (MATH-1).</li><li>Decision, bracket rule (supervisor, 2026-10-19, from the user's M4 bug report that "[0, 2]" was deleted): a bracket group whose first number starts with 0 is an interval under every profile (ING-6, <code>5b09a5f</code>); the ING-11 profile gates only citation-shaped groups. Two ING-11 tests moved from "[0, 1]" to "[1, 2]"; PRD ING-11 and TD D40 carry the sentence (<code>b8f9d9f</code>); the PRD records the MATH-1 symbol fallback (<code>41777b3</code>).</li><li>Two expected eval movements explained: EVAL-4 <code>math_unit_03</code> "5 μm" and <code>math_unit_18</code> "20 μs" drop (0.83/0.88 to 0.67/0.75) because <code>_speak_symbols</code> reads μ as "mu" where misaki dropped it; both still miss "micrometers"/"microseconds". Against main, EVAL-4 <code>equation_cue_01..16</code> go 1 to 0 and EVAL-3 word counts rise on 8 equation-heavy documents, because mathspeak speaks the equations instead of the cue.</li><li>Housekeeping: four scratch worktrees of the previous session removed after their contents were verified landed; the host server on 8765 still runs main <code>2009755</code> from <code>~/hearnarro-m1/src</code> (restart from the repo is the user's action); the Docker container on 8766 is untouched.</li></ul>
+          <figure>
+            <svg viewBox="0 0 880 230" role="img" aria-label="A segment is cut at its maths spans; the prose pieces go through normalize, bracket rule first and the symbol pass second; the maths span goes through mathspeak; the spoken maths is inserted after normalization, so the symbol pass never sees a mathspeak word">
+              <defs><marker id="a9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+              <g fill="none" stroke="currentColor" stroke-width="1.2">
+                <rect x="20" y="30" width="200" height="150" rx="4"/>
+                <rect x="260" y="30" width="300" height="62" rx="4"/>
+                <rect x="260" y="118" width="300" height="62" rx="4" fill="var(--accent-soft)"/>
+                <rect x="600" y="30" width="260" height="150" rx="4"/>
+                <path d="M220 70H258M220 150H258M560 61H598M560 149H598" marker-end="url(#a9)"/>
+              </g>
+              <g font-size="11" fill="var(--muted)"><text x="20" y="20">1 segment cut at spans</text><text x="260" y="20">2 two paths</text><text x="600" y="20">3 joined after normalize</text></g>
+              <g font-size="11" fill="currentColor">
+                <text x="32" y="60" class="mono">prose: "Let μ be</text>
+                <text x="32" y="78" class="mono">in [0, 2] where"</text>
+                <text x="32" y="142" class="mono">span: x² + y²</text>
+                <text x="272" y="52">prose → normalize()</text>
+                <text x="272" y="70">a. bracket rule (ING-6, ING-11)</text>
+                <text x="272" y="86">b. _speak_symbols (MATH-1 fallback)</text>
+                <text x="272" y="140">span → mathspeak (MATH-1 structure)</text>
+                <text x="272" y="158">"x squared plus y squared"</text>
+                <text x="272" y="174" fill="var(--muted)">never passed to normalize</text>
+                <text x="612" y="56">"Let mu be in the interval</text>
+                <text x="612" y="74">from 0 to 2 where</text>
+                <text x="612" y="92">x squared plus y squared"</text>
+                <text x="612" y="130" fill="var(--muted)">symbol pass ran on prose only:</text>
+                <text x="612" y="146" fill="var(--muted)">no word is spoken twice</text>
+              </g>
+            </svg>
+            <figcaption>The symbol pass is the last step of <code>normalize</code>, and mathspeak hands <code>normalize</code> only the prose between spans, inserting spoken maths afterwards: symbol names fill in for prose glyphs and never touch a mathspeak word, so the two MATH-1 layers do not double-speak. Example words are illustrative, not a recorded output.</figcaption>
+          </figure>
+          <h3>Evidence</h3><ul class="ev"><li>Suite: 1626 passed, 43 skipped, 8 failed, all gate (b) (<code>_agent/results/813</code>); ruff clean (<code>812</code>); web build and 159 vitest (<code>808</code>).</li><li>Gate (b) per fixture unchanged by the merge except 03 0.860 to 0.867; mean 0.815 (<code>804</code>).</li><li>Tier 0: record <code>evals/runs/2026-10-20_f124a8a.json</code>; compare vs m5 <code>3ecb19a</code>: two EVAL-4 regressions, <code>math_unit_03</code> and <code>math_unit_18</code>, explained above (<code>806</code>); compare vs main <code>dc1d2af</code>: 24 expected movements (<code>807</code>); main-side duplicate record kept as <code>evals/runs/2026-10-17_1d6b296_main.json</code>.</li><li>Conflict resolution: merge commit body and <code>git show 79e945a --stat</code> (<code>809</code>); bracket-rule contradiction and test amendment (<code>810</code>, <code>811</code>, <code>813</code>).</li><li>Commits <code>79e945a</code> (merge), <code>41777b3</code> (PRD, MATH-1 fallback), <code>b8f9d9f</code> (test amendment, PRD ING-11 and TD D40 sync).</li></ul></div>
+      </div>
+      <div class="phase">
         <div class="who"><span class="pill plan">planned</span><span>phase 4</span></div>
         <div class="what"><b>Vocabulary</b><span class="why-line">A formula spoken in the right words still fails if "Euler" or "eigenvalue" is mispronounced; the lexicon and the overrides fix the words the voice gets wrong.</span>
           <span class="ids">TERM-1..4 · EVAL-4 · gate clause (c)</span>
@@ -451,7 +488,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
       <tr><td>D37</td><td>Structure comes from the stage-1 glyphs first (math fonts, superscript flag, baselines, stacked boxes, CMEX operators); an image-to-LaTeX model only later, behind a flag, if licence-clean.</td><td>confirmed 2026-10-17</td></tr>
       <tr><td>D38</td><td>The board (M6) is a server-rendered page image plus an overlay of word boxes stored at ingestion; a second renderer of the same player state.</td><td>confirmed 2026-10-17</td></tr>
       <tr><td>D39</td><td>Annotations (M6) live in one table, anchored by segment id plus character offsets; local only.</td><td>confirmed 2026-10-17</td></tr>
-      <tr><td>D40</td><td>A stage-6 document profile with class prose, mixed or math gates the speech rules; stored in <code>documents.profile_json</code>; passed as a parameter.</td><td>confirmed 2026-10-17</td></tr>
+      <tr><td>D40</td><td>A stage-6 document profile with class prose, mixed or math gates the speech rules; stored in <code>documents.profile_json</code>; passed as a parameter. Amended 2026-10-19: a bracket group whose first number starts with 0 is an interval under every profile (ING-6); the profile gates only citation-shaped groups.</td><td>confirmed 2026-10-17; amended 2026-10-19</td></tr>
     </table></div>
     <h3>Licence survey outcome (D37)</h3>
     <div class="note"><ul>
@@ -464,7 +501,8 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
 
   <section id="links">
     <h2><span class="k">10</span>Links and status</h2>
-    <p>As of 2026-10-17 (night): phases 0 to 2 are done; phase 3 Mathspeak is built, hooked in and four fix loops deep, with the gate (b) mean at 0.814 against 0.92 and three of ten pages passing. The user decides whether to loop again, replace the volatile fixture 09 and set the scanned floor from evidence, or lower the first-engine floor.</p>
+    <p>As of 2026-10-19: phases 0 to 2 are done; phase 3 Mathspeak is running. Main (<code>2009755</code>) is merged into <code>m5-academic</code> (<code>79e945a</code>), bringing the MATH-1 symbol fallback, which now runs as the second pass of <code>normalize</code> on prose only, and the ING-6 rule that a bracket group starting with 0 is an interval under every profile. After the merge the gate (b) mean is 0.815 against 0.92, three of ten pages passing, and the suite fails only gate (b). Loop 5 (detection and text-font stacks, results <code>820</code>–<code>829</code>) is running on branch <code>m5-p3i</code>. The user's decision is unchanged: loop again, replace the volatile fixture 09 and set the scanned floor from evidence, or lower the first-engine floor. The host server on 8765 still runs main <code>2009755</code> from <code>~/hearnarro-m1/src</code>; restarting it from the repo is the user's action.</p>
+    <p>Earlier, 2026-10-17 (night): phases 0 to 2 are done; phase 3 Mathspeak is built, hooked in and four fix loops deep, with the gate (b) mean at 0.814 against 0.92 and three of ten pages passing. The user decides whether to loop again, replace the volatile fixture 09 and set the scanned floor from evidence, or lower the first-engine floor.</p>
     <p>Earlier: phases 0 and 1 are done. The ten formula fixtures, EVAL-10, the reading convention and the red gate exist; the gate's spoken-maths scores sit between 0.00 and 0.03 because the pipeline still speaks the ING-7 cue. Phase 2 Document profile is next; phases 3–6 are planned. Spec: <code>_agent/specs/m5-academic-reading.md</code>.</p>
     <div class="note"><ul>
       <li>Previous milestone: <a href="m4-library-map.html">HearNarro M4 Library Map</a> (repo copy).</li>
