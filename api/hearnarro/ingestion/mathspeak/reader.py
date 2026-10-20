@@ -3,7 +3,7 @@
 ClearSpeak-style plain English, lower case: letters are read as letters, juxtaposition is silent,
 grouping brackets are silent, relations carry "is" except inside a subscript condition, scripts
 are "sub" / "squared" / "cubed" / "to the n" / "transpose" / "star" / "sup <label>", stacked
-fractions with one-token parts are "a over b" and longer ones "the fraction ... over ..., end
+fractions with one-token parts and Leibniz derivatives are "a over b" and longer ones "the fraction ... over ..., end
 fraction", large operators read their limits ("the sum from i equals 1 to n of"), intervals are
 "the interval from a to b" (with "exclusive" on an open end). Commas are prosody only.
 
@@ -50,6 +50,31 @@ def _flat(node: Node | None) -> str:
     if not node.children:
         return node.text
     return "".join(_flat(c) for c in node.children)
+
+
+_LEIBNIZ_SYMBOL = {"var", "greek", "sub", "sup", "accent", "prime"}
+
+
+def _is_d(node: Node | None) -> bool:
+    return node is not None and (
+        (node.kind == "var" and node.text == "d") or (node.kind == "op" and node.text == "∂")
+    )
+
+
+def _leibniz_part(row: Node | None) -> bool:
+    """``row`` is "d y", "d² y", "∂ y" or "d t²": a d (or ∂, optionally with a power) followed by
+    one symbol, which may carry scripts or an accent (spec §3c "Leibniz derivative", m5 p3o)."""
+    if row is None or len(row.children) != 2:
+        return False
+    d, sym = row.children
+    if d is not None and d.kind == "sup" and d.children:
+        d = d.children[0]
+    if not _is_d(d) or sym is None or sym.kind not in _LEIBNIZ_SYMBOL:
+        return False
+    base = sym
+    while base is not None and base.kind in ("sub", "sup", "accent", "prime") and base.children:
+        base = base.children[0]
+    return base is not None and base.kind in ("var", "greek") and not _is_d(base)
 
 
 def _opens_with_word(group: Node) -> bool:
@@ -187,6 +212,8 @@ class _Reader:
                 if c is not None
             ):
                 return [*num, "over", *den]
+            if _leibniz_part(kids[0]) and _leibniz_part(kids[1]):
+                return [*num, "over", *den]  # "d y over d t", no wrapper (spec §3c)
             return ["the fraction", *num, "over", *den, ",", "end fraction"]
         if k == "sqrt":
             kid = kids[0]

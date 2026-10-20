@@ -46,7 +46,7 @@ def test_display_opening_with_a_fraction_reads_it_math_3() -> None:
         _run("= ˙", 240.3, 310.1, RM),
         _run("𝑦", 250.8, 310.1),
     ]
-    assert _say(runs) == "the fraction d y over d t, end fraction equals y dot"
+    assert _say(runs) == "d y over d t equals y dot"  # Leibniz row, m5 p3o
 
 
 def test_one_column_stack_in_tall_brackets_is_a_column_vector_math_3() -> None:
@@ -79,8 +79,7 @@ def test_script_size_pairs_in_a_stack_are_fractions_math_3() -> None:
         _run("]︂", 267.0, 351.5, EX),
     ]
     assert _say(runs) == (
-        "w equals the column vector the fraction d z sub 0 over d t, end fraction,"
-        " the fraction d z sub 1 over d t, end fraction"
+        "w equals the column vector d z sub 0 over d t, d z sub 1 over d t"  # Leibniz row, m5 p3o
     )
 
 

@@ -199,6 +199,8 @@ _BRACKETS = set("()[]{}|")
 _PAIRS = {"(": ")", "[": "]", "{": "}"}
 # a function word set in the text font with its bracket between two maths runs: " sin(" (m5 p3k)
 _FUNCTION_GAP = re.compile(r"([A-Za-z]{2,6})[(\[{]")
+# a sign set in the text font with the number it applies to: "¨y" + "+2" + "ζω0˙y" (m5 p3o)
+_SIGNED_NUMBER_GAP = re.compile(r"[+−]\d+(?:\.\d+)?")
 
 
 def _maths_gap(gap: str, limit: int = 8) -> bool:
@@ -209,6 +211,8 @@ def _maths_gap(gap: str, limit: int = 8) -> bool:
         return False
     for tok in gap.split():
         if (m := _FUNCTION_GAP.fullmatch(tok)) and m.group(1) in WORDS:
+            continue
+        if _SIGNED_NUMBER_GAP.fullmatch(tok):
             continue
         if not _GAP_TOKEN.fullmatch(tok):
             return False
