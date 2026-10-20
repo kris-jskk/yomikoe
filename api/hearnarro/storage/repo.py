@@ -243,3 +243,87 @@ async def put_settings(conn: aiosqlite.Connection, values: dict[str, str | None]
 def now_iso_ms() -> str:
     """UTC ISO timestamp with milliseconds (``last_opened_at``: repeated opens stay ordered)."""
     return datetime.now(UTC).isoformat(timespec="milliseconds")
+
+
+# TERM-2: pronunciation overrides. ``document_id`` None is the global lexicon; ``word`` is
+# stored lower case and unique per scope.
+
+PRONUNCIATION_COLUMNS = "id, document_id, word, respelling, created_at"
+
+
+def _scope(document_id: int | None) -> tuple[str, tuple[Any, ...]]:
+    if document_id is None:
+        return "document_id IS NULL", ()
+    return "document_id = ?", (document_id,)
+
+
+async def list_pronunciations(
+    conn: aiosqlite.Connection, document_id: int | None
+) -> list[dict[str, Any]]:
+    """One scope's rows (the document's, or the global ones), ordered by word."""
+    where, params = _scope(document_id)
+    return await _all(
+        conn,
+        f"SELECT {PRONUNCIATION_COLUMNS} FROM pronunciations WHERE {where} ORDER BY word, id",
+        params,
+    )
+
+
+async def get_pronunciation(conn: aiosqlite.Connection, pronunciation_id: int) -> dict | None:
+    return await _one(
+        conn,
+        f"SELECT {PRONUNCIATION_COLUMNS} FROM pronunciations WHERE id = ?",
+        (pronunciation_id,),
+    )
+
+
+async def put_pronunciation(
+    conn: aiosqlite.Connection, document_id: int | None, word: str, respelling: str
+) -> dict[str, Any]:
+    """Insert or replace the respelling of ``word`` (lower-cased) in the scope; returns the row."""
+    word = word.strip().lower()
+    where, params = _scope(document_id)
+    existing = await _one(
+        conn, f"SELECT id FROM pronunciations WHERE {where} AND word = ?", (*params, word)
+    )
+    if existing is not None:
+        row_id = existing["id"]
+        await conn.execute(
+            "UPDATE pronunciations SET respelling = ?, created_at = ? WHERE id = ?",
+            (respelling, now_iso(), row_id),
+        )
+    else:
+        cur = await conn.execute(
+            "INSERT INTO pronunciations (document_id, word, respelling, created_at) "
+            "VALUES (?, ?, ?, ?)",
+            (document_id, word, respelling, now_iso()),
+        )
+        row_id = cur.lastrowid
+    await conn.commit()
+    row = await get_pronunciation(conn, row_id)
+    assert row is not None
+    return row
+
+
+async def delete_pronunciation(
+    conn: aiosqlite.Connection, pronunciation_id: int
+) -> dict[str, Any] | None:
+    """Delete one row; returns what was deleted, or None when the id is unknown."""
+    row = await get_pronunciation(conn, pronunciation_id)
+    if row is None:
+        return None
+    await conn.execute("DELETE FROM pronunciations WHERE id = ?", (pronunciation_id,))
+    await conn.commit()
+    return row
+
+
+async def pronunciations_for(conn: aiosqlite.Connection, document_id: int) -> dict[str, str]:
+    """The lexicon synthesis applies to ``document_id``: global rows merged under the
+    document's own (a per-document respelling wins)."""
+    rows = await _all(
+        conn,
+        "SELECT word, respelling FROM pronunciations "
+        "WHERE document_id IS NULL OR document_id = ? ORDER BY document_id IS NOT NULL, id",
+        (document_id,),
+    )
+    return {r["word"]: r["respelling"] for r in rows}
