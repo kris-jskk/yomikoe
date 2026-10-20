@@ -1,4 +1,6 @@
 # M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c; code listings are cued (ING-10), not listed here
-consider the function exp of minus 1 over .1 times x squared plus y squared.
-this function admits a minimum in 0, 0.
-starting from an initialization at 1, 1, try to get within 10 to the minus 8 of this minimum point.
+the position of a mass attached to a spring obeys the 2nd order ode y double dot plus 2 zeta omega sub 0 y dot plus omega sub 0 squared y equals 0 with natural frequency omega sub 0 equals the square root of k over m, damping ratio zeta equals c over 2 m omega sub 0, spring constant k, mass m, and damping coefficient c.
+d y over d t equals y dot, d y dot over d t equals y double dot equals minus 2 zeta omega sub 0 y dot plus omega sub 0 squared y
+if we define z equals the matrix with rows: z sub 0, z sub 1 where z sub 0 equals y and z sub 1 equals y dot, then the first order equation:
+d z over d t equals the matrix with rows: d z sub 0 over d t; d z sub 1 over d t, equals the matrix with rows: z sub 1; minus 2 zeta omega sub 0 z sub 1 plus omega sub 0 squared z sub 0
+and define the function that computes z dot equals f of t, z of t:
