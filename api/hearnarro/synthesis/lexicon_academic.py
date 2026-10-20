@@ -34,6 +34,7 @@ ACADEMIC: dict[str, dict[str, str]] = {
         "heteroskedasticity": "hˌɛtəɹOskˌɛdæstˈɪsəTi",  # term_stats_18: misaki hˌɛtəɹOsɛktəfˈɪsti
         "bonferroni": "bˌɑnfəɹˈOni",  # term_stats_04: misaki bOnfɹˈʌni
         "poisson": "pwˈɑsOn",  # term_stats_08: misaki pˈYzsən
+        "anova": "ɐnˈOvə",  # term_stats_19: misaki ˌAˌɛnˌOvˌiˈA (spelled); "uh-NOH-vuh"
     },
     "physics": {
         "schrödinger": "ʃɹˈOdɪŋəɹ",  # term_physics_04: misaki ʃɹdˈɪŋəɹ (no first vowel)
@@ -50,6 +51,10 @@ ACADEMIC: dict[str, dict[str, str]] = {
     "cs": {
         "regex": "ɹˈɛʤɛks",  # term_cs_08: misaki ɹˈɛɡɛks (hard g)
         "nginx": "ˈɛnʤɪnˌɛks",  # term_cs_18: misaki ˈɪŋk ("ink")
+        # All-caps tokens spoken as words (acronyms.SPOKEN) that misaki spells letter by letter;
+        # misaki looks an all-caps word up in lower case when the gold lexicon has it.
+        "json": "ʤˈAsᵊn",  # term_cs_17: misaki ʤˌAˌɛsˌOˈɛn ("J S O N"); = "Jason"
+        "gui": "ɡˈui",  # term_cs_15: spelled "G U I"; = "gooey"
     },
     "latin_greek": {
         "sui": "sˈui",  # term_latin_greek_06: misaki swˈA ("sway")

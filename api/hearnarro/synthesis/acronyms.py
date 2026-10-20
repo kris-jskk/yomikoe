@@ -67,7 +67,9 @@ SPOKEN: frozenset[str] = frozenset(
         "NASA", "NIST", "NATO", "UNESCO", "UNICEF", "OPEC", "FIFA", "IKEA", "NAFTA", "SWAT",
         "POTUS",
         # computing terms read as words
-        "JSON", "RAM", "ROM",
+        "JSON", "RAM", "ROM", "GUI", "FIFO", "LIFO",
+        # statistics terms read as words
+        "ANOVA",
         # words that started as acronyms
         "LASER", "SCUBA", "ASAP",
     }
