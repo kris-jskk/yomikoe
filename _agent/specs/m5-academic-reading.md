@@ -393,6 +393,7 @@ pi, squared")
 | `a/b` (slash, any parts) | a over b (`P(B\|A)P(A)/P(B)` "... p of a over p of b") |
 | stacked, one-token numerator and denominator | a over b (`1/M` "1 over m") |
 | stacked, longer parts | the fraction a plus b over c, end fraction (it starts at the numerator: `x = (−b ± …)/2a` "x equals the fraction minus b ... over 2 a, end fraction") |
+| Leibniz derivative (stacked or slashed; numerator d, ∂ or dⁿ followed by one symbol with optional scripts or accent; denominator the same shape) | d y over d t; d squared y over d t squared; partial y over partial t; no "the fraction ..., end fraction" wrapper (`dz₀/dt` "d z sub 0 over d t", `dẏ/dt` "d y dot over d t") |
 | numeric 1/2, 1/3, 2/3, 1/4 | 1 half, 1 third, 2 thirds, 1 fourth |
 | `√x` | the square root of x |
 | `ⁿ√x` | the n-th root of x |

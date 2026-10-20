@@ -110,6 +110,7 @@
     "a/b (slash, any parts)": "a over b",
     "stacked, one-token parts": "a over b",
     "stacked, longer parts": "the fraction a plus b over c, end fraction",
+    "Leibniz derivative (stacked or slashed; numerator d, \u2202 or d^n then one symbol with optional scripts or accent; denominator the same shape)": "d y over d t; d squared y over d t squared; partial y over partial t (no fraction wrapper)",
     "numeric 1/2, 1/3, 2/3, 1/4": "1 half, 1 third, 2 thirds, 1 fourth",
     "\\sqrt{x}": "the square root of x",
     "\\sqrt[n]{x}": "the n-th root of x"
