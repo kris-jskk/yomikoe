@@ -33,7 +33,10 @@ CUT_SOURCES = (
 MIN_TEXTBOOK = 2
 CODE_PAGES = 2
 SCORE_TEXT_LAYER = 0.90
-SCORE_SCANNED = 0.75
+# Gate (b) scanned floor (PRD milestone 5): the first engine's measured OCR-path score on
+# fixture 10, 0.543, rounded down to the nearest 0.05; MATH-6 raises it. Evidence:
+# _agent/results/910_fixture10_ocr_score.txt, 911-913.
+SCORE_SCANNED = 0.50
 SCORE_MEAN = 0.92
 PROFILE_CLASSES = ("prose", "mixed", "math")
 PROFILE_TOTAL = 30
