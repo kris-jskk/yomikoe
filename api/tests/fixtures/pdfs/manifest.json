@@ -252,7 +252,7 @@
     "pages": 1
   },
   {
-    "name": "formula_09_scipy_least_squares",
+    "name": "formula_09_scipy_ode_oscillator",
     "class": "formula",
     "two_column": false,
     "source": "https://github.com/scipy-lectures/scientific-python-lectures/releases/download/2024.1/ScientificPythonLectures.pdf",

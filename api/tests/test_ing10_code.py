@@ -88,7 +88,7 @@ def test_ing10_d14_guard_weighs_code_raw_text() -> None:
     [
         "formula_08_sympy_integration",
         # m5 p3d: the near-full-page ruled region is prose between rules (is_prose_region)
-        "formula_09_scipy_least_squares",
+        "formula_09_scipy_ode_oscillator",
     ],
 )
 def test_ing10_formula_fixtures_have_code_blocks(name: str) -> None:
