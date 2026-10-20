@@ -145,6 +145,9 @@ function DocView({ documentId }: { documentId: number }) {
           registerReaderEl={registerReaderEl}
           onSeek={onSeek}
           skipped={skipped}
+          documentId={documentId}
+          onPronounceSaved={player.dropClips}
+          onListen={player.listen}
         />
       </div>
       <PlayerBar player={player} voices={loaded.voices} onSkipChange={onSkipChange} />

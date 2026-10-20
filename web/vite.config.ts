@@ -12,6 +12,7 @@ export default defineConfig({
       '/audio': api,
       '/voices': api,
       '/settings': api,
+      '/pronunciations': api,
     },
   },
   test: {
