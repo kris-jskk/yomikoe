@@ -279,7 +279,7 @@ Two ways to run any of these, both behind the same `TTSBackend` interface: local
 
 ### Domains (D52, 2026-10-21)
 
-Four names, one brand domain. None is wired into the code yet: v1 runs locally via Docker Compose, and hosting and the landing page are future scope.
+Four names, one brand domain. None is wired into the code yet: v1 runs locally via Docker Compose. Hosting and the landing page are M9 Hosting, the final milestone (decided 2026-10-21).
 
 | Domain | Points at | Repo folder | Status | Notes |
 |---|---|---|---|---|
@@ -370,6 +370,10 @@ parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passe
 -->  M7 Classroom view (proposed)    -->  M8 Sources and formats (proposed)
      Gate: board highlight on the         Gate: EPUB/DOCX re-exports within
      word box for >= 95% of 200 words     0.02 of PDF EVAL-1; Apple Books EPUB opens
+
+-->  M9 Hosting (final milestone, decided 2026-10-21)
+     Gate: yomikoe.app, app. and api. subdomains live over HTTPS,
+     getyomikoe.com redirects; hosted first audio meets the M2 target
 ```
 
 M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments. The score is word-level (D14): word-sequence edit distance over the ordered prose, ≥ 0.95 per PDF (scanned fixtures at a 0.85 floor, D35) and ≥ 0.97 mean; the sentence-level score is printed as a diagnostic only.
@@ -401,6 +405,12 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
 8. M8 Sources and formats (proposed 2026-10-17, renumbered from M6 the same day and from M7 on 2026-10-19, after M7 Classroom view; user direction: read the books and documents the user already has in Apple Books, Kindle, cloud drives and other apps). Scope: SRC-1 to SRC-3 and LIB changes for multi-format rows (file type shown in LIB-1); SRC-4 if cheap. DRM-protected titles are out of scope (see the DRM boundary under Sources). Gate: the 15 text fixtures re-exported as EPUB and DOCX parse to the same prose at an EVAL-1 score within 0.02 of the PDF score, and one DRM-free Apple Books EPUB opens from the library folder.
 
 After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export (ING-9 more formats is now M8, SRC-1).
+
+9. M9 Hosting (decided 2026-10-21 as the final milestone; user decision: hosting is a milestone, not future scope). Scope: the four names in the "Domains" table (yomikoe.app landing page as a static site in `site/`, app.yomikoe.app serving `web/`, api.yomikoe.app serving `api/`, getyomikoe.com as a 301 redirect), TLS on every name, the Docker Compose image deployed to a host, backups of the library volume, and the landing page itself. Requirement IDs (`HOST-n`) and the hosting provider are to be specified when the milestone is planned. Gate (proposed, to confirm at planning):
+   (a) each of the four names resolves and serves over HTTPS, with getyomikoe.com answering 301 to yomikoe.app;
+   (b) a fixture PDF uploaded through app.yomikoe.app plays with first audio within the M2 target measured from the browser;
+   (c) the M4 300-page soak passes against the hosted API;
+   (d) a library volume restored from backup serves the same documents.
 
 ## Open questions and risks
 
