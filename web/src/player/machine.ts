@@ -2,7 +2,10 @@
 // Pure and totally defined: an event not listed for the current state returns the same object.
 // M4 (spec _agent/specs/m4-library-interfaces.md §2): SET_SKIP (PLAY-8), RESTORE_POSITION and TICK_SAVE
 // (LIB-2), settings while loading kept (LIB-3).
+// M5 (spec _agent/specs/m5-academic-reading.md §4d): block types, SKIP_EQUATION / REPEAT_EQUATION (PLAY-10)
+// and SET_BLOCK_SPEED (PLAY-11).
 
+import { DEFAULT_BLOCK_SPEED, clampBlockFactor, type BlockSpeed } from './blockSpeed'
 import { NO_SKIP, nextUnskipped, type SkipState } from './skip'
 
 export type PlayerStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error'
@@ -28,6 +31,10 @@ export interface PlayerContext {
   skippedIds: number[]
   /** LIB-2: the latest TICK_SAVE payload; a new object per tick, for the hook to PATCH. */
   pendingSave: { segment_id: number; offset_ms: number } | null
+  /** Block type per id, aligned with `orderedIds` (from LOAD); [] when not supplied (PLAY-10). */
+  types: string[]
+  /** PLAY-11 speed factors per block type; equation in [0.5, 1.0] on the 0.05 grid. */
+  blockSpeed: BlockSpeed
 }
 
 export type PlayerState = { status: PlayerStatus } & PlayerContext
@@ -41,6 +48,10 @@ export type PlayerEvent =
       voice: string
       speed: number
       position?: { segmentId: number; offsetMs: number }
+      /** Block type per id, aligned with `orderedIds` (PLAY-10); defaults to []. */
+      types?: string[]
+      /** PLAY-11 global factors; the current value is kept when omitted. */
+      blockSpeed?: BlockSpeed
     }
   | { type: 'PLAY'; at: number; segmentId?: number; offsetMs?: number }
   | { type: 'AUDIO_READY'; generation: number; at: number }
@@ -61,6 +72,9 @@ export type PlayerEvent =
   | { type: 'SET_SKIP'; skip: SkipState; skippedIds: number[] }
   | { type: 'RESTORE_POSITION'; segmentId: number; offsetMs: number }
   | { type: 'TICK_SAVE' }
+  | { type: 'SKIP_EQUATION' }
+  | { type: 'REPEAT_EQUATION' }
+  | { type: 'SET_BLOCK_SPEED'; equation: number }
 
 /** Global default speed for a document with no saved setting (LIB-3 global default is M4; user chose 1.25 on 2026-10-17). */
 export const DEFAULT_SPEED = 1.25
@@ -79,6 +93,8 @@ export const initialState: PlayerState = {
   skip: NO_SKIP,
   skippedIds: [],
   pendingSave: null,
+  types: [],
+  blockSpeed: DEFAULT_BLOCK_SPEED,
 }
 
 /** Index of `id` in `orderedIds`, or -1. */
@@ -130,6 +146,29 @@ function sectionTarget(ctx: PlayerContext, by: 1 | -1): number | null {
   return k > 0 ? starts[k - 1].id : null
 }
 
+const isEquation = (ctx: PlayerContext, i: number): boolean => ctx.types[i] === 'equation'
+
+/**
+ * PLAY-10 jump target for SKIP_EQUATION / REPEAT_EQUATION, or null for a no-op. SKIP: the first id
+ * after the run of consecutive equation segments holding the current one (the last id when the run
+ * ends the document, as SKIP past the end does); null when the current segment is not an equation.
+ * REPEAT: the first id of that run, or the current id when it is not an equation.
+ */
+function equationTarget(ctx: PlayerContext, kind: 'skip' | 'repeat'): number | null {
+  if (ctx.current === null) return null
+  const ids = ctx.orderedIds
+  const cur = indexOf(ids, ctx.current.segmentId)
+  if (cur < 0) return null
+  if (!isEquation(ctx, cur)) return kind === 'skip' ? null : ids[cur]
+  let j = cur
+  if (kind === 'skip') {
+    while (j < ids.length && isEquation(ctx, j)) j++
+    return ids[Math.min(j, ids.length - 1)]
+  }
+  while (j > 0 && isEquation(ctx, j - 1)) j--
+  return ids[j]
+}
+
 export function reduce(state: PlayerState, event: PlayerEvent): PlayerState {
   const st = state.status
   switch (event.type) {
@@ -155,6 +194,8 @@ export function reduce(state: PlayerState, event: PlayerEvent): PlayerState {
         skip: NO_SKIP,
         skippedIds: [],
         pendingSave: null,
+        types: event.types ?? [],
+        blockSpeed: event.blockSpeed ?? state.blockSpeed,
       }
     }
     case 'PLAY': {
@@ -189,6 +230,12 @@ export function reduce(state: PlayerState, event: PlayerEvent): PlayerState {
       const to = landing(state, { segmentId: event.segmentId, offsetMs: event.offsetMs ?? 0 })
       return to === null ? state : load(state, 'loading', to)
     }
+    case 'SKIP_EQUATION':
+    case 'REPEAT_EQUATION': {
+      // both jumps go through the SEEK path, so PLAY-8 skipped ids are honoured the same way
+      const target = equationTarget(state, event.type === 'SKIP_EQUATION' ? 'skip' : 'repeat')
+      return target === null ? state : reduce(state, { type: 'SEEK', segmentId: target })
+    }
     case 'SKIP': {
       if ((st !== 'playing' && st !== 'paused') || state.current === null) return state
       const ids = state.orderedIds
@@ -205,8 +252,15 @@ export function reduce(state: PlayerState, event: PlayerEvent): PlayerState {
       return id === null ? state : load(state, 'loading', { segmentId: id, offsetMs: 0 })
     }
     case 'SET_VOICE':
-    case 'SET_SPEED': {
-      const patch = event.type === 'SET_VOICE' ? { voice: event.voice } : { speed: event.speed }
+    case 'SET_SPEED':
+    case 'SET_BLOCK_SPEED': {
+      // PLAY-11: a factor change rebuilds the schedule exactly like a speed change
+      const patch: Partial<PlayerContext> =
+        event.type === 'SET_VOICE'
+          ? { voice: event.voice }
+          : event.type === 'SET_SPEED'
+            ? { speed: event.speed }
+            : { blockSpeed: { equation: clampBlockFactor(event.equation) } }
       if (st === 'playing') {
         const current = state.current ? { segmentId: state.current.segmentId, offsetMs: 0 } : null
         return { ...load(state, 'loading', current), ...patch }

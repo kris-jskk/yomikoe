@@ -93,18 +93,21 @@ export function findActiveWord(mapped: MappedTimestamp[], elapsedMs: number): nu
 }
 
 /**
- * Where the clip after `tail` starts (PLAY-5). Chained at `tail.startAt + tail.durationSec` while that
- * is still ahead of `now` and the schedule is not buffering (a zero-length tail chains at its own
- * startAt: gapless); otherwise freshly at `now + leadSec`, which is a gap.
+ * Where the clip after `tail` starts (PLAY-5). Chained at `tail.startAt + tail.durationSec + pauseSec`
+ * while that is still ahead of `now` and the schedule is not buffering (a zero-length tail with no
+ * pause chains at its own startAt: gapless); otherwise freshly at `now + leadSec`, which is a gap.
+ * `pauseSec` is the deliberate SYN-8 pause after the tail's block type (pauses.ts, Q7): it is reported
+ * as `gap: false`, so PLAY-5 gap accounting never counts a pause as a stall.
  */
 export function chainStart(
   tail: ScheduleEntryView,
   now: number,
   buffering: boolean,
   leadSec: number,
+  pauseSec = 0,
 ): { when: number; gap: boolean } {
-  const end = tail.startAt + tail.durationSec
-  if (!buffering && end > now) return { when: end, gap: false }
+  const at = tail.startAt + tail.durationSec + pauseSec
+  if (!buffering && at > now) return { when: at, gap: false }
   return { when: now + leadSec, gap: true }
 }
 
