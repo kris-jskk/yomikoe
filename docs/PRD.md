@@ -260,7 +260,7 @@ The browser never touches a model or the PDF; it asks the API for parsed segment
 | Storage | SQLite + local filesystem | Single-user v1; swap to Postgres + S3 when multi-user |
 | Job queue | In-process asyncio task queue | No Redis until there is more than one worker |
 | Frontend | React + TypeScript, Vite | Web Audio API scheduled buffers for gapless playback (decided 2026-10-15, see Technical Design D5), Media Session API |
-| Packaging | Docker Compose | One command, one service (`api`) that serves the API and the built web app (D30, confirmed by the user 2026-10-17; `docs/DOCKER.md`); library on a named volume; the bind-mount failure seen first on Colima was the fork race fixed by the spawn start method (D9 amendment, `_agent/results/596`); a bind mount is a documented option. Domains (D52, 2026-10-21): getyomikoe.com is the landing site, yomikoe.app is the hosted reader; neither is wired into v1, which is self-hosted |
+| Packaging | Docker Compose | One command, one service (`api`) that serves the API and the built web app (D30, confirmed by the user 2026-10-17; `docs/DOCKER.md`); library on a named volume; the bind-mount failure seen first on Colima was the fork race fixed by the spawn start method (D9 amendment, `_agent/results/596`); a bind mount is a documented option. Domains: see "Domains" below (D52) |
 | Tests | pytest, a fixture set of 20 PDFs | Reading-order and timestamp regressions are the main risk |
 
 **Hugging Face models**
@@ -276,6 +276,17 @@ Every model in v1 is downloaded from the Hugging Face Hub; nothing is trained in
 | Benchmark-only | `coqui/XTTS-v2`, `suno/bark` | Non-commercial / MIT | Quality reference, never shipped |
 
 Two ways to run any of these, both behind the same `TTSBackend` interface: locally via `huggingface_hub` downloads (v1 default, offline), or through a Hugging Face Inference Endpoint over HTTPS as a `RemoteBackend` (the cheapest way to audition a GPU model before self-hosting). In Docker Compose, `HF_HOME` points at a named volume so downloads survive rebuilds.
+
+### Domains (D52, 2026-10-21)
+
+Four names, one brand domain. None is wired into the code yet: v1 runs locally via Docker Compose, and hosting and the landing page are future scope.
+
+| Domain | Points at | Repo folder | Status | Notes |
+|---|---|---|---|---|
+| yomikoe.app | Landing page (static site) | `site/` (to be added) | Not built yet | Primary brand domain; the one printed everywhere. `.app` forces HTTPS. |
+| app.yomikoe.app | The reader (React app) | `web/` | Exists, runs locally only | Library, player, highlighting. Subdomain, free in DNS. |
+| api.yomikoe.app | FastAPI service | `api/` | Exists, runs locally only | Ingestion, synthesis, audio cache. Subdomain, free in DNS. |
+| getyomikoe.com | 301 redirect to yomikoe.app | none | DNS rule only | Defensive .com; never printed. Set the redirect at the registrar or Cloudflare. |
 
 ## Data model and API
 

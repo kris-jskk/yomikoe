@@ -56,8 +56,8 @@ ocr = [
 ]
 
 [project.urls]
-Homepage = "https://getyomikoe.com"  # landing site (D52)
-App = "https://yomikoe.app"  # hosted reader (D52)
+Homepage = "https://yomikoe.app"  # brand domain and landing page (D52)
+App = "https://app.yomikoe.app"  # the reader (D52)
 
 [project.scripts]
 yomikoe = "yomikoe.cli:main"
