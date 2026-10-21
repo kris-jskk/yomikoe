@@ -61,9 +61,7 @@ async def test_play11_two_field_put_keeps_default_factor(tmp_path: Path) -> None
     assert body[KEY] == 0.8
 
 
-@pytest.mark.parametrize(
-    ("factor", "status"), [(0.49, 422), (1.01, 422), (0.5, 200), (1.0, 200)]
-)
+@pytest.mark.parametrize(("factor", "status"), [(0.49, 422), (1.01, 422), (0.5, 200), (1.0, 200)])
 async def test_play11_equation_speed_factor_bounds(
     tmp_path: Path, factor: float, status: int
 ) -> None:

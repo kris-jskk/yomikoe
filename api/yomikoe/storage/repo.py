@@ -128,15 +128,30 @@ async def count_segments(conn: aiosqlite.Connection, document_id: int) -> int:
 async def list_segments(
     conn: aiosqlite.Connection, document_id: int, from_order: int, limit: int
 ) -> list[dict[str, Any]]:
-    """Range scan on the unique index segments(document_id, "order"); ``type`` is the block type."""
-    return await _all(
+    """Range scan on the unique index segments(document_id, "order"); ``type`` is the block type,
+    ``math`` the MATH-5 ranges decoded from ``math_json`` (``decode_math_ranges``)."""
+    rows = await _all(
         conn,
         'SELECT s.id, s."order", s.block_id, b.type, s.section_id, s.text, s.normalized_text, '
-        "s.char_start, s.char_end "
+        "s.char_start, s.char_end, s.math_json "
         "FROM segments s JOIN blocks b ON b.id = s.block_id "
         'WHERE s.document_id = ? AND s."order" >= ? ORDER BY s."order" LIMIT ?',
         (document_id, from_order, limit),
     )
+    for row in rows:
+        row["math"] = decode_math_ranges(row.pop("math_json"))
+    return rows
+
+
+def decode_math_ranges(math_json: str | None) -> list[dict[str, Any]]:
+    """MATH-5: ``[{start, end, display}]`` from ``segments.math_json`` (offsets into the
+    segment's ``text``; ``label`` and ``tree`` stay server side), ``[]`` when NULL."""
+    if not math_json:
+        return []
+    return [
+        {"start": int(e["start"]), "end": int(e["end"]), "display": bool(e.get("display"))}
+        for e in json.loads(math_json)
+    ]
 
 
 SEGMENT_COLUMNS = (
