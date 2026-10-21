@@ -4,9 +4,12 @@
 // M4: a segment skipped by a PLAY-8 toggle gets the `skipped` class (rendered dimmed).
 // M5 TERM-2: a word selected inside one segment shows a "Pronounce as" button that opens PronounceDialog;
 // a save drops the clips of the segments holding the word, Listen plays the selected sentence.
+// M5 MATH-5: tokens inside a maths range are not split: each range is one `.math` element (boxed when
+// displayed, or inside an equation segment) that the highlight treats as one unit; an equation segment
+// is highlighted whole while it plays (usePlayer `unitEl`).
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
-import type { PronunciationSaved, Section, Segment } from '../api/types'
+import type { MathRange, PronunciationSaved, Section, Segment } from '../api/types'
 import { tokenize, type Token } from '../player/schedule'
 import { PronounceDialog, pickWord, segmentsWithWord } from './PronounceDialog'
 
@@ -44,6 +47,46 @@ function readSelection(root: HTMLElement | null): WordPick | null {
   return { segmentId: Number(segEl.dataset.id), word, top: r.bottom + 4, left: r.left }
 }
 
+/** One rendered piece of a segment: a word span, or a maths range covering tokens from..to. */
+export type Piece =
+  | { kind: 'w'; i: number }
+  | { kind: 'math'; from: number; to: number; display: boolean; text: string }
+
+/**
+ * MATH-5: split a segment's tokens into word pieces and maths pieces. A token overlapping a range joins
+ * that range's piece (consecutive tokens of one range form one piece, its text the raw slice of `text`);
+ * every other token is its own word piece, so token indices stay aligned with `tokenize`.
+ */
+export function segmentPieces(
+  text: string,
+  tokens: readonly Token[],
+  math: readonly MathRange[] | undefined,
+): Piece[] {
+  const ranges = math ?? []
+  const pieces: Piece[] = []
+  let open: { r: number; from: number } | null = null
+  const close = (to: number) => {
+    if (open === null) return
+    const r = ranges[open.r]
+    pieces.push({
+      kind: 'math',
+      from: open.from,
+      to,
+      display: r.display,
+      text: text.slice(tokens[open.from].charStart, tokens[to].charEnd),
+    })
+    open = null
+  }
+  tokens.forEach((t, i) => {
+    const r = ranges.findIndex((m) => t.charStart < m.end && t.charEnd > m.start)
+    if (open !== null && open.r !== r) close(i - 1)
+    if (r < 0) pieces.push({ kind: 'w', i })
+    else if (open === null) open = { r, from: i }
+  })
+  close(tokens.length - 1)
+  return pieces
+}
+
 function SegmentView({
   seg,
   section,
@@ -56,13 +99,28 @@ function SegmentView({
   skipped: boolean
 }) {
   const tokens = useMemo(() => tokenize(seg.text), [seg.text])
+  const pieces = useMemo(
+    () => segmentPieces(seg.text, tokens, seg.math),
+    [seg.text, tokens, seg.math],
+  )
   const children: (string | React.JSX.Element)[] = []
-  tokens.forEach((t, i) => {
-    if (i > 0) children.push(' ')
+  pieces.forEach((p, k) => {
+    if (k > 0) children.push(' ')
     children.push(
-      <span key={i} className="w" data-i={i}>
-        {t.token}
-      </span>,
+      p.kind === 'w' ? (
+        <span key={k} className="w" data-i={p.i}>
+          {tokens[p.i].token}
+        </span>
+      ) : (
+        <span
+          key={k}
+          className={`math ${p.display ? 'math-display' : 'math-inline'}`}
+          data-from={p.from}
+          data-to={p.to}
+        >
+          {p.text}
+        </span>
+      ),
     )
   })
   const props = {
@@ -135,8 +193,12 @@ function ReaderImpl({
     const segEl = target.closest<HTMLElement>('.seg')
     if (!segEl) return
     const id = Number(segEl.dataset.id)
+    // MATH-5: an equation segment is one unit (seek to its start); a maths range seeks to its first token
+    if (segEl.classList.contains('seg-equation')) return onSeek(id)
     const w = target.closest<HTMLElement>('.w')
+    const m = target.closest<HTMLElement>('.math')
     if (w && segEl.contains(w)) onSeek(id, Number(w.dataset.i))
+    else if (m && segEl.contains(m)) onSeek(id, Number(m.dataset.from))
     else onSeek(id)
   }
   return (

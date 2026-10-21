@@ -3,6 +3,7 @@
  * Asserted on Chromium; WebKit and Firefox are reported, not asserted, in M3.
  */
 import type { Page } from '@playwright/test'
+import { PAUSE_MS, pauseAfterMs } from '../../src/player/pauses'
 import { expect, getSegments, test, type Api, type Segment } from './fixtures'
 
 // WebKit/Firefox run only when YOMIKOE_E2E_ALL_ENGINES=1 (reported, not asserted, in M3).
@@ -28,6 +29,8 @@ declare global {
  * normalized_text is round(24000 * 80 ms / speed) frames of silence at 24 kHz, words back to
  * back, clips back to back (an all-silent clip is not trimmed). So elapsed time from the first
  * clip's start maps to (segment order, word index into normalized_text).
+ * SYN-8 (spec Q7): each clip is followed by the pause of its block type (pauses.ts: heading, list,
+ * equation) before the next one starts; `wordAtTime` adds those gaps.
  */
 const SAMPLE_RATE = 24_000
 const wordSec = (speed: number) => Math.round((SAMPLE_RATE * 80) / 1000 / speed) / SAMPLE_RATE
@@ -42,6 +45,26 @@ function wordAt(segs: Segment[], globalWord: number): { seg: Segment; word: numb
     left -= n
   }
   return null
+}
+
+/**
+ * Global word index heard `t` seconds after the first clip's start, counting each segment's
+ * SYN-8 pause after it; during a pause the highlight stays on that segment's last word.
+ */
+function wordAtTime(segs: Segment[], t: number, ws: number): number {
+  let left = t
+  let before = 0
+  for (const seg of segs) {
+    const n = wordCount(seg)
+    const dur = n * ws
+    if (left < dur) return before + Math.floor(left / ws)
+    left -= dur
+    before += n
+    const pause = pauseAfterMs(seg.type) / 1000
+    if (left < pause) return Math.max(0, before - 1)
+    left -= pause
+  }
+  return before
 }
 
 /** Whitespace tokens of `text` (spec §6 tokenize) and the token holding char offset `c`. */
@@ -118,7 +141,7 @@ test('PLAY-1/PLAY-2/PLAY-5: highlighted word matches the FakeBackend clock at 3 
     probes.push({ t, elapsed: a.elapsed ?? NaN, order: a.order, i: a.i })
   }
   for (const p of probes) {
-    const g = Math.floor(p.elapsed / wordSec(speed))
+    const g = wordAtTime(segs, p.elapsed, wordSec(speed))
     const allowed: string[] = []
     for (const d of [-1, 0, 1]) {
       const at = wordAt(segs, g + d)
@@ -260,9 +283,20 @@ test('PLAY-5: with every clip cached, consecutive entries splice with zero gap',
     )
     .toBeGreaterThanOrEqual(6)
   const sorted = [...seen.values()].sort((a, b) => a.startAt - b.startAt)
-  const gaps = sorted
-    .slice(1)
-    .map((e, k) => e.startAt - (sorted[k].startAt + sorted[k].durationSec))
+  // SYN-8 (Q7): the expected gap is the pause after the preceding segment's block type; 0 for body
+  const typeOf = new Map((await getSegments(api)).map((s) => [s.id, s.type]))
+  const gaps = sorted.slice(1).map((e, k) => ({
+    from: typeOf.get(sorted[k].segmentId) ?? '',
+    to: typeOf.get(e.segmentId) ?? '',
+    gap: e.startAt - (sorted[k].startAt + sorted[k].durationSec),
+  }))
   expect(gaps.length).toBeGreaterThanOrEqual(5)
-  for (const g of gaps) expect(Math.abs(g)).toBeLessThan(1e-6)
+  for (const g of gaps) expect(Math.abs(g.gap - pauseAfterMs(g.from) / 1000)).toBeLessThan(1e-6)
+  // the splice guarantee (body -> body, zero gap) and the heading pause are both measured
+  const bodyBody = gaps.filter((g) => g.from === 'body' && g.to === 'body')
+  expect(bodyBody.length, 'a body -> body transition').toBeGreaterThan(0)
+  for (const g of bodyBody) expect(Math.abs(g.gap)).toBeLessThan(1e-6)
+  const headingBody = gaps.filter((g) => g.from === 'heading' && g.to === 'body')
+  expect(headingBody.length, 'a heading -> body transition').toBeGreaterThan(0)
+  for (const g of headingBody) expect(Math.abs(g.gap - PAUSE_MS.heading / 1000)).toBeLessThan(1e-6)
 })

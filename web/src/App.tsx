@@ -11,7 +11,7 @@ import { PlayerBar } from './components/PlayerBar'
 import { Reader, deriveSections } from './components/Reader'
 import { Toc } from './components/Toc'
 import { NO_SKIP, skippedIds, type SkipState } from './player/skip'
-import { usePlayer } from './player/usePlayer'
+import { buildLoadEvent, usePlayer } from './player/usePlayer'
 
 function subscribeHash(cb: () => void) {
   window.addEventListener('hashchange', cb)
@@ -74,14 +74,17 @@ function DocView({ documentId }: { documentId: number }) {
           globals?.default_voice_id && voiceIds.has(globals.default_voice_id)
             ? globals.default_voice_id
             : null
-        dispatch({
-          type: 'LOAD',
-          documentId,
-          orderedIds: segments.map((s) => s.id),
-          sectionStarts: sections.map((s) => s.first_segment_id),
-          voice: doc.settings?.voice_id ?? globalVoice ?? voices[0]?.id ?? '',
-          speed: doc.settings?.speed ?? globals?.default_speed ?? DEFAULT_SPEED,
-        })
+        // PLAY-10 block types and the PLAY-11 equation factor ride on LOAD (buildLoadEvent)
+        dispatch(
+          buildLoadEvent({
+            documentId,
+            segments,
+            sectionStarts: sections.map((s) => s.first_segment_id),
+            voice: doc.settings?.voice_id ?? globalVoice ?? voices[0]?.id ?? '',
+            speed: doc.settings?.speed ?? globals?.default_speed ?? DEFAULT_SPEED,
+            globals,
+          }),
+        )
         const skip = readSkip(documentId)
         if (skip.footnotes || skip.captions || skip.references) {
           dispatch({ type: 'SET_SKIP', skip, skippedIds: skippedIds(segments, skip) })

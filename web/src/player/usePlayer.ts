@@ -5,8 +5,9 @@
 // created once per hook, and the engine talks back to React only through `dispatch`.
 
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react'
-import { fetchAudio, patchDocument } from '../api/client'
-import type { AudioClip } from '../api/types'
+import { fetchAudio, getSettings, patchDocument, putSettings } from '../api/client'
+import type { AudioClip, GlobalSettings } from '../api/types'
+import { DEFAULT_BLOCK_SPEED, clampBlockFactor, segmentSpeed, type BlockSpeed } from './blockSpeed'
 import { keyToAction, stepSpeed } from './keys'
 import {
   MediaKeepAlive,
@@ -16,6 +17,7 @@ import {
   setMediaPlaybackState,
 } from './mediaSession'
 import { initialState, reduce, type PlayerEvent, type PlayerState } from './machine'
+import { pauseAfterMs } from './pauses'
 import {
   chainStart,
   findActiveWord,
@@ -159,7 +161,55 @@ export class PositionSaver {
   }
 }
 
-const settingsKey = (voice: string, speed: number) => `${voice}|${speed.toFixed(2)}`
+/** The schedule's settings key: a voice, speed or equation-factor change rebuilds it (PLAY-11). */
+export const settingsKey = (voice: string, speed: number, blockSpeed: BlockSpeed) =>
+  `${voice}|${speed.toFixed(2)}|${blockSpeed.equation.toFixed(2)}`
+
+const keyOf = (s: PlayerState) => settingsKey(s.voice, s.speed, s.blockSpeed)
+
+/** Block type of segment `id` from LOAD's `types` ('' when unknown). */
+function typeOf(s: PlayerState, id: number): string {
+  const i = s.orderedIds.indexOf(id)
+  return i >= 0 ? (s.types[i] ?? '') : ''
+}
+
+/** PLAY-11: the speed segment `id` is requested at (equations at speed x factor, all else at speed). */
+export function clipSpeed(s: PlayerState, id: number): number {
+  return segmentSpeed(typeOf(s, id), s.speed, s.blockSpeed)
+}
+
+/** SYN-8 (Q7): the start-time gap after segment `id`, seconds, from its block type. */
+export function pauseAfterSec(s: PlayerState, id: number): number {
+  return pauseAfterMs(typeOf(s, id)) / 1000
+}
+
+/**
+ * The LOAD event for a document (PLAY-10 types per id; PLAY-11 equation factor from GET /settings,
+ * clamped to the grid, default 0.8 when the server has none).
+ */
+export function buildLoadEvent(a: {
+  documentId: number
+  segments: readonly { id: number; type: string }[]
+  sectionStarts: number[]
+  voice: string
+  speed: number
+  globals: GlobalSettings | null
+}): PlayerEvent {
+  const f = a.globals?.equation_speed_factor
+  return {
+    type: 'LOAD',
+    documentId: a.documentId,
+    orderedIds: a.segments.map((s) => s.id),
+    sectionStarts: a.sectionStarts,
+    voice: a.voice,
+    speed: a.speed,
+    types: a.segments.map((s) => s.type),
+    blockSpeed:
+      typeof f === 'number' && Number.isFinite(f)
+        ? { equation: clampBlockFactor(f) }
+        : DEFAULT_BLOCK_SPEED,
+  }
+}
 
 function stopSource(source: AudioBufferSourceNode) {
   source.onended = null
@@ -169,6 +219,30 @@ function stopSource(source: AudioBufferSourceNode) {
     /* never started or already stopped */
   }
   source.disconnect()
+}
+
+/**
+ * MATH-5: the element highlighted for token `i` of `segEl`: none inside an equation segment (the whole
+ * `.seg` is the unit), the `.math` range holding the token, else its `.w` span.
+ */
+function unitEl(segEl: HTMLElement, i: number): HTMLElement | null {
+  if (segEl.classList.contains('seg-equation')) return null
+  const w = segEl.querySelector<HTMLElement>(`.w[data-i="${i}"]`)
+  if (w) return w
+  for (const m of segEl.querySelectorAll<HTMLElement>('.math')) {
+    if (Number(m.dataset.from) <= i && i <= Number(m.dataset.to)) return m
+  }
+  return null
+}
+
+/** PLAY-11: save the equation factor through PUT /settings, keeping the other global settings. */
+async function saveEquationFactor(factor: number): Promise<void> {
+  try {
+    const g = await getSettings()
+    await putSettings({ ...g, equation_speed_factor: factor })
+  } catch {
+    /* a failed save is not shown; the factor still applies for this visit */
+  }
 }
 
 /** Everything audio and DOM; not React state. */
@@ -404,7 +478,7 @@ export class PlayerEngine {
     if (s.current === null) return
     this.ensureCtx()
     this.builtGen = s.generation
-    this.builtKey = settingsKey(s.voice, s.speed)
+    this.builtKey = keyOf(s)
     this.buffering = false
     this.ended = false
     this.startedId = null
@@ -436,7 +510,7 @@ export class PlayerEngine {
         this.pending.delete(id)
       }
     }
-    const k = settingsKey(s.voice, s.speed)
+    const k = keyOf(s)
     const [target, ...rest] = span
     this.fetchClip(target, k)
     const head = this.pending.get(target)
@@ -448,7 +522,7 @@ export class PlayerEngine {
     // fetched alone and its prefetch starts once its response has arrived (success or failure).
     void head.done.then(() => {
       if (head.ctrl.signal.aborted) return
-      if (settingsKey(this.state.voice, this.state.speed) !== k) return
+      if (keyOf(this.state) !== k) return
       this.prefetch(rest, k)
     })
   }
@@ -467,7 +541,7 @@ export class PlayerEngine {
     have?.ctrl.abort()
     const p: Pending = { key: k, ctrl: new AbortController(), clip: null }
     this.pending.set(id, p)
-    p.done = fetchAudio(ctx, id, s.voice, s.speed, p.ctrl.signal).then(
+    p.done = fetchAudio(ctx, id, s.voice, clipSpeed(s, id), p.ctrl.signal).then(
       (clip) => {
         if (this.pending.get(id) !== p) return
         p.clip = clip
@@ -563,8 +637,15 @@ export class PlayerEngine {
       if (nextId === null) return
       const clip = this.pending.get(nextId)?.clip
       if (!clip) return
-      // PLAY-5: sample-accurate splice, or a gap when the server was behind
-      const { when, gap } = chainStart(tail, ctx.currentTime, this.buffering, START_LEAD_SEC)
+      // PLAY-5: sample-accurate splice, or a gap when the server was behind; SYN-8: plus the pause
+      // after the tail's block type (a start-time gap, Q7)
+      const { when, gap } = chainStart(
+        tail,
+        ctx.currentTime,
+        this.buffering,
+        START_LEAD_SEC,
+        pauseAfterSec(s, tail.segmentId),
+      )
       this.startClip(clip, when, 0)
       if (gap && this.buffering) {
         this.buffering = false
@@ -594,10 +675,7 @@ export class PlayerEngine {
       this.active.seg = segEl
       this.updateHint()
     }
-    const w =
-      segEl && tokenIndex !== null
-        ? segEl.querySelector<HTMLElement>(`.w[data-i="${tokenIndex}"]`)
-        : null
+    const w = segEl && tokenIndex !== null ? unitEl(segEl, tokenIndex) : null
     if (a.w !== w) {
       a.w?.classList.remove('active')
       w?.classList.add('active')
@@ -792,7 +870,7 @@ export function usePlayer(opts: { title?: string } = {}): Player {
       if (engine.ended) {
         engine.markNavigate()
         dispatch({ type: 'PLAY', at, segmentId: s.orderedIds[0], offsetMs: 0 })
-      } else if (settingsKey(s.voice, s.speed) !== engine.builtKey) {
+      } else if (keyOf(s) !== engine.builtKey) {
         dispatch({ type: 'PLAY', at }) // voice/speed changed while paused: applies on PLAY (§5)
       } else {
         void ctx.resume()
@@ -875,9 +953,24 @@ export function usePlayer(opts: { title?: string } = {}): Player {
     },
     [sendSettings],
   )
+  // PLAY-11: the equation factor is a global setting; PUT /settings with the other globals kept
+  const factorTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (factorTimer.current !== null) clearTimeout(factorTimer.current)
+    },
+    [],
+  )
   const appDispatch = useCallback(
     (e: PlayerEvent) => {
       userDispatch(e)
+      if (e.type === 'SET_BLOCK_SPEED') {
+        if (factorTimer.current !== null) clearTimeout(factorTimer.current)
+        factorTimer.current = setTimeout(() => {
+          factorTimer.current = null
+          void saveEquationFactor(clampBlockFactor(e.equation))
+        }, SETTINGS_DEBOUNCE_MS)
+      }
       if (e.type === 'SET_VOICE' || e.type === 'SET_SPEED') {
         if (settingsTimer.current !== null) clearTimeout(settingsTimer.current)
         settingsTimer.current = setTimeout(() => {
@@ -921,7 +1014,14 @@ export function usePlayer(opts: { title?: string } = {}): Player {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return
-      const a = keyToAction({ key: e.key, shiftKey: e.shiftKey, target: e.target })
+      const a = keyToAction({
+        key: e.key,
+        shiftKey: e.shiftKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        altKey: e.altKey,
+        target: e.target,
+      })
       if (a === null) return
       if (a.type === 'TOGGLE') {
         // a focused button or link already turns Space into its own click

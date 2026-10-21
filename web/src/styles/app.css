@@ -241,6 +241,35 @@ a {
   color: var(--text);
 }
 
+/* MATH-5: a maths range is one unit, never split into word spans; displayed equations (and every
+   range inside an equation segment) are boxed. An equation segment is highlighted whole. */
+.math {
+  border-radius: 3px;
+  font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.95em;
+}
+
+.math.math-inline {
+  border: 1px dotted currentColor;
+  padding: 0 0.15rem;
+}
+
+.math.math-display,
+.seg-equation .math {
+  display: inline-block;
+  border: 1px solid currentColor;
+  padding: 0.1rem 0.35rem;
+}
+
+.math.active {
+  background: var(--hl);
+  color: var(--text);
+}
+
+.seg.seg-equation.active {
+  background: var(--hl);
+}
+
 /* PlayerBar: sticky at the bottom of the viewport */
 .player-bar {
   position: fixed;
