@@ -146,12 +146,17 @@ async def test_lib3_global_settings_default_put_and_persist(tmp_path: Path) -> N
     async with client_for(tmp_path, **kwargs) as client:
         resp = await client.get("/settings")
         assert resp.status_code == 200, resp.text
-        assert resp.json() == {"default_voice_id": None, "default_speed": 1.25}
+        assert resp.json() == {
+            "default_voice_id": None,
+            "default_speed": 1.25,
+            "equation_speed_factor": 0.8,  # PLAY-11 (M5 phase 5)
+        }
         put = await client.put("/settings", json={"default_voice_id": VOICE, "default_speed": 1.5})
         assert put.status_code == 200, put.text
         assert (await client.get("/settings")).json() == {
             "default_voice_id": VOICE,
             "default_speed": 1.5,
+            "equation_speed_factor": 0.8,
         }
     async with client_for(tmp_path, **kwargs) as client:  # survives a restart
         assert (await client.get("/settings")).json()["default_speed"] == 1.5
