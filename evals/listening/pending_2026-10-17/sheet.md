@@ -1,13 +1,13 @@
-# HearNarro listening sheet (EVAL-9)
+# YomiKoe listening sheet (EVAL-9)
 
 - date: 2026-10-17
 - commit: 9db1d55
 - backend: kokoro
 - listener: 
 
-Rubric: api/hearnarro/evals/data/listening_rubric.md. Fill every naturalness, pacing
+Rubric: api/yomikoe/evals/data/listening_rubric.md. Fill every naturalness, pacing
 and pron_errors cell and your name above, then run
-`python -m hearnarro.evals listening ingest <this sheet>` from api/.
+`python -m yomikoe.evals listening ingest <this sheet>` from api/.
 
 | clip | sentence | naturalness | pacing | pron_errors | notes |
 |---|---|---|---|---|---|
