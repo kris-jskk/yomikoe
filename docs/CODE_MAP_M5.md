@@ -12,8 +12,8 @@ code and the spec differ, this map says what the code does and lists the differe
 
 Updated 2026-10-20 on branch `m5-academic`, phase 4 (vocabulary, TERM-1..4; built 2026-10-20,
 phase 4, merged tree `eac6c2c`, summary `_agent/results/1091_phase4_summary.md`). Phase 2 added
-flows a–c, phase 3 the mathspeak rows, phase 4 flows d–e and the TERM rows. The player additions
-(PLAY-10/11, SYN-8 pauses, MATH-5) add theirs in phase 5.
+flows a–c, phase 3 the mathspeak rows, phase 4 flows d–e and the TERM rows. Phase 5 (playback; built 2026-10-21 on `m5-p5a`, `m5-p5b`, `m5-p5c`, merges `4e8351e`, `bd8940d`, `399d27e`) adds
+flows f–g and the PLAY-10/11, SYN-8 and MATH-5 rows. Diffstat: `_agent/results/1162_phase5_diffstat.txt`.
 
 ### Status words
 
@@ -117,6 +117,48 @@ Evidence: math_chem rows checked against the convention (`_agent/results/1042_ma
 EVAL-4 categories (`1045_eval4_categories.md`, `term_abbreviation` 0.00 → 0.90), suite
 (`1046_suite.txt`).
 
+### f. Equation skip, repeat and speed (PLAY-10, PLAY-11; built 2026-10-21, phase 5)
+
+1. `GET /settings` returns `equation_speed_factor` (`routes/settings.py`: default 0.8, 422 outside 0.5 to 1.0);
+   `GET /documents/{id}/segments` returns each segment's `type` and `math` ranges (`repo.list_segments`).
+2. `App.tsx` dispatches `buildLoadEvent(...)` (`usePlayer.ts`): `types` per id and `blockSpeed.equation`
+   (the setting clamped to the 0.05 grid, 0.8 when absent) ride on `LOAD`, stored in the machine context.
+3. Keys `e` / `r` (`keys.ts`, no modifier) or the Skip equation / Repeat equation buttons (`PlayerBar.tsx`,
+   enabled while `onEquation(state)`) dispatch `SKIP_EQUATION` / `REPEAT_EQUATION`. `machine.ts`
+   `equationTarget` finds the run of consecutive equation segments holding the current one: skip goes to the
+   first id after it, repeat to its first id; both reduce through `SEEK`, so PLAY-8 skipped ids apply.
+4. The equation-speed select (`PlayerBar.tsx`, 11 steps) dispatches `SET_BLOCK_SPEED`; the reducer clamps with
+   `clampBlockFactor` and rebuilds like `SET_SPEED`. The schedule key is `settingsKey(voice, speed, blockSpeed)`.
+5. For each segment to fetch, `usePlayer` asks for `clipSpeed(s, id)` = `segmentSpeed(type, speed, factors)`
+   (`blockSpeed.ts`): equations at speed x factor on the 0.05 grid, other types at the document speed. The
+   cache is keyed by (segment, voice, speed) as before (D6).
+6. After the debounce, `saveEquationFactor` reads `GET /settings` and writes `PUT /settings` with the other
+   globals kept.
+
+Evidence: API `1116_red.txt`, `1117_green.txt`, `1121_lib_gate_after_play11.txt` (22 passed); player logic
+`1130_red.txt`, `1131_vitest.txt`, `1132_typecheck.txt`, `1133_lint.txt`; wiring and e2e `1150_vitest_red.txt`,
+`1152_vitest.txt`, `1157_e2e_three_engines.txt` (15 passed), `1160_play_three_engines.txt` (18 passed).
+
+### g. Pause gaps and the equation highlight (SYN-8, MATH-5; built 2026-10-21, phase 5)
+
+1. Pauses (spec Q7, D53): the engine appends a clip at `chainStart(tail, now, buffering, lead, pauseSec)`
+   (`schedule.ts`); `pauseSec = pauseAfterSec(s, tail.segmentId)` from `pauses.ts` `PAUSE_MS` by block type
+   (heading 600, list 250, equation 400 ms). The start is `tail.startAt + tail.durationSec + pauseSec` and is
+   reported `gap: false`, so PLAY-5 gap accounting does not count it. Nothing is synthesised or cached for a
+   pause.
+2. Ranges: `repo.list_segments` adds `math` via `decode_math_ranges(math_json)` (`[{start, end, display}]`, offsets
+   into `text`; label and tree stay server side).
+3. `Reader.tsx` `segmentPieces(text, tokens, math)` makes a word piece per token outside a range and one `math`
+   piece per range (tokens overlapping the range); a piece renders as `.math` (`math-display` boxed, or
+   `math-inline`), token indices stay aligned with `tokenize`.
+4. While a segment plays, `usePlayer` `unitEl(segEl, i)` returns null for a `.seg-equation` (the whole segment is
+   highlighted), the `.math` holding token `i`, or the token's `.w`. A click on an equation segment seeks to its
+   start; a click on a `.math` range seeks to its first token.
+
+Evidence: API `1118_suite.txt`, `1119_ruff.txt`, `1120_math_shape_example.txt`; e2e `1156_e2e_chromium.txt`,
+`1159_e2e_chromium_after.txt`, `1157_e2e_three_engines.txt`, `1160_play_three_engines.txt`; `play.spec.ts`
+accounts for the pauses (`1158_play_spec_baseline.txt`).
+
 ## Modules and files
 
 | File | Responsibility | Public (M5 additions) | Reads / writes | Status |
@@ -156,6 +198,20 @@ EVAL-4 categories (`1045_eval4_categories.md`, `term_abbreviation` 0.00 → 0.90
 | `web/src/components/PronounceDialog.tsx` (new, m5-p4d) | TERM-2 dialog: word, respelling, this document / all documents, Save, Listen after a save, the server's 422 message shown | `PronounceDialog`, `submitPronunciation`, `pickWord`, `segmentsWithWord`, `PronounceScope` | `PUT /pronunciations` | tested (`1061_vitest_green.txt`, `1067_e2e_three_engines.txt`) |
 | `web/src/player/usePlayer.ts` (m5-p4d) | `dropClips` aborts pending and scheduled clips of the given segments and rebuilds through SEEK or PLAY; `listen` = `seekTo` (D5, D10) | `dropClips(segmentIds)`, `listen(segmentId)` | — | tested (`1067_e2e_three_engines.txt`, control `1060_red.txt`) |
 | `web/src/api/client.ts` (m5-p4d) | TERM-2 calls | `listPronunciations`, `putPronunciation`, `deletePronunciation` | `/pronunciations` | tested (`1061_vitest_green.txt`) |
+| `api/yomikoe/routes/settings.py` (m5-p5a) | PLAY-11 global `equation_speed_factor` (default 0.8, 0.5 to 1.0, 422 outside) beside voice and speed | `GlobalSettings.equation_speed_factor`, `get_settings`, `put_settings` | `settings` table | tested (`1117_green.txt`, `1121_lib_gate_after_play11.txt`) |
+| `api/yomikoe/storage/repo.py` (m5-p5a) | `list_segments` adds `math` (MATH-5 ranges) | `list_segments`, `decode_math_ranges(math_json)` | `segments.math_json` | tested (`1117_green.txt`, example `1120_math_shape_example.txt`) |
+| `web/src/api/types.ts` (m5-p5a/c) | `MathRange`, `Segment.math?`, `GlobalSettings.equation_speed_factor?` | types | — | tested (`1132_typecheck.txt`, `1153_typecheck.txt`) |
+| `web/src/player/blockSpeed.ts` (new, m5-p5b) | PLAY-11 pure per-block speed | `BlockSpeed`, `DEFAULT_BLOCK_SPEED`, `clampBlockFactor`, `segmentSpeed` | — | tested (`1131_vitest.txt`, `1152_vitest.txt`) |
+| `web/src/player/pauses.ts` (new, m5-p5c) | SYN-8 pause table by block type (D53) | `PAUSE_MS`, `pauseAfterMs` | — | tested (`1152_vitest.txt`, `1160_play_three_engines.txt`) |
+| `web/src/player/schedule.ts` (m5-p5c) | `chainStart` gains `pauseSec` | `chainStart` | — | tested (`1152_vitest.txt`, `1160_play_three_engines.txt`) |
+| `web/src/player/keys.ts` (m5-p5b) | `e` / `r` keys, mapped only without Ctrl/Meta/Alt/Shift | `keyToAction`, `KeyInput` modifiers | — | tested (`1131_vitest.txt`) |
+| `web/src/player/machine.ts` (m5-p5b) | `types`, `blockSpeed` in context; `SKIP_EQUATION`, `REPEAT_EQUATION`, `SET_BLOCK_SPEED` | `reduce`, `PlayerEvent`, `equationTarget` (internal) | — | tested (`1131_vitest.txt`, `1152_vitest.txt`) |
+| `web/src/player/usePlayer.ts` (m5-p5b/c) | Load event builder, per-type speed, pause lookup, factor save, whole-segment highlight unit | `buildLoadEvent`, `clipSpeed`, `pauseAfterSec`, `settingsKey`, `unitEl` and `saveEquationFactor` (internal) | `GET`/`PUT /settings` | tested (`1152_vitest.txt`, `1157_e2e_three_engines.txt`) |
+| `web/src/App.tsx` (m5-p5c) | LOAD built through `buildLoadEvent` | — | — | tested (`1157_e2e_three_engines.txt`) |
+| `web/src/components/PlayerBar.tsx` (m5-p5c) | Repeat / Skip equation buttons, equation-speed select | `PlayerBar`, `onEquation`, `EQUATION_FACTORS` | — | tested (`1157_e2e_three_engines.txt`) |
+| `web/src/components/Reader.tsx` (m5-p5c) | MATH-5 `.math` pieces, click-to-seek on equations and ranges | `segmentPieces`, `Piece` | `Segment.math` | tested (`1152_vitest.txt`, `1157_e2e_three_engines.txt`) |
+| `web/src/styles/app.css` (m5-p5c) | `.math`, `.math-display` box, equation-speed select | — | — | implemented (`1155_build.txt`) |
+| `api/tests/test_play11_settings.py`, `test_math5_segments_math.py`; `web/tests/unit/blockSpeed.test.ts`, `machine.test.ts`, `playerWiring.test.ts`, `keys.test.ts`, `schedule.test.ts`; `web/tests/e2e/mathspeak.spec.ts`, `play.spec.ts` | Phase 5 tests | — | tmp data dirs, e2e fixture API | fixture |
 
 ## Spec deviations
 
@@ -182,3 +238,12 @@ pattern as `document_acronyms`. A synthesis job already in flight when a `PUT` l
 clip with the old lexicon (m5-p4b observation, untested). The narrative form "Smith et al. (2019)" is not
 matched by `authyear` (m5-p4c observation). No listening check of the lexicon entries or respellings was
 run; pronunciation judgments are from dictionary knowledge until tier 1 at close.
+
+**Phase 5 (built 2026-10-21):**
+- `api/yomikoe/synthesis/pauses.py`, which the spec's §4e names, was never built (Q7): the pause lives in the web
+  scheduler (`chainStart`, `web/src/player/pauses.ts`), nothing in the synthesis service or the audio cache.
+- The equation-speed select uses the full 11-step 0.05 grid (0.50 to 1.00), not a short list of presets.
+- `REPEAT_EQUATION` on a non-equation segment restarts the sentence (a SEEK to the current id), but the
+  Repeat equation button is enabled on equations only; the key `r` fires the event anywhere.
+- Carried, not fixed: the inline-range offset defect of `formula_01` segment 9 (`1120_math_shape_example.txt`);
+  its second range (50 to 63) slices `', Y ) ∈ X × Y'` where the maths starts at `(X`, so that range starts a few characters late.

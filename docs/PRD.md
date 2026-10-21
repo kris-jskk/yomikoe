@@ -105,7 +105,7 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | SYN-5 | P0 | Lookahead queue: keep N segments ahead of playback synthesized; N configurable, default 5 |
 | SYN-6 | P1 | Cache synthesized audio keyed by (segment id, voice, speed) so re-listening is instant; the id, not a text hash, so a re-ingested document never reuses stale audio (D7) |
 | SYN-7 | P1 | Second backend (GPU model such as Fish Speech or Qwen3-TTS) selectable per document |
-| SYN-8 | P1 (pause), P2 (pitch) | Content-aware delivery: pause length and pitch differ for headings, captions, body text. Raised 2026-10-17 (M5): pause length for headings, theorem-style openers and list items is P1; pitch stays P2 |
+| SYN-8 | P1 (pause), P2 (pitch) | Content-aware delivery: pause length and pitch differ for headings, captions, body text. Raised 2026-10-17 (M5): pause length for headings, theorem-style openers and list items is P1; pitch stays P2. Built in M5 as client-side pause gaps (D53), pitch still P2 |
 | SYN-9 | P2 | Voice cloning from a reference clip |
 
 **Playback (PLAY)**
@@ -121,8 +121,8 @@ Requirements are tagged P0 (v1 must have), P1 (v1 should have), P2 (later). IDs 
 | PLAY-7 | P1 | Media Session API so lock-screen controls work on phone browsers |
 | PLAY-8 | P1 | Skip-block toggles: mute footnotes, captions, references section |
 | PLAY-9 | P2 | Export whole document as MP3 or M4B with chapter markers |
-| PLAY-10 | P1 | Skip or repeat the current equation with one action (keyboard and button), independent of sentence skip (added 2026-10-17, M5) |
-| PLAY-11 | P1 | Per-block-type speed: equation segments play at a configurable fraction of the document speed (default 0.8×), captions and footnotes at the document speed (added 2026-10-17, M5) |
+| PLAY-10 | P1 | Skip or repeat the current equation with one action (keyboard and button), independent of sentence skip (added 2026-10-17, M5); built 2026-10-21 (M5 phase 5) |
+| PLAY-11 | P1 | Per-block-type speed: equation segments play at a configurable fraction of the document speed (default 0.8×), captions and footnotes at the document speed (added 2026-10-17, M5); built 2026-10-21 (M5 phase 5) |
 
 **Library (LIB)**
 
@@ -144,7 +144,7 @@ Added 2026-10-17 (M5, Technical Design D36–D37, confirmed by the user 2026-10-
 | MATH-2 | P0 | Inline mathematics inside a sentence (joined by stage 3, D12) is spoken in place with the same rules, so "where x_i is the i-th sample" reads as "where x sub i is the i-th sample" |
 | MATH-3 | P0 | A symbol-to-words table covers Greek letters, mathematical operators and relations (at least ≤ ≥ ≈ ≠ ± × ÷ · ∂ ∇ ∞ ∈ ∉ ⊂ ∑ ∏ ∫ √ → ⇒ ∀ ∃ ¬ ∧ ∨), units and SI prefixes (km, ms, μm, kHz, MPa, mol; °C already handled by ING-6), and chemical formulas (H2O, CO2, CH4 spoken letter by letter with numbers), so no symbol reaches the voice as an unknown word |
 | MATH-4 | P1 | Equation numbers and references: a display equation's "(3)" is spoken as "equation 3" before the equation; "Eq. (3)", "Eqs. 3–5" and "Equation (3)" in prose become "equation 3" and "equations 3 to 5"; "Theorem 2.1", "Lemma 3", "Definition", "Proof" and "Corollary" openers are spoken with a short pause after them |
-| MATH-5 | P1 | While an equation segment plays, the reader highlights the whole segment (sentence-level) and shows the equation as it appears on the page, shown and boxed on the board (VIEW-2; was "a rendered crop from the stored block bbox", changed 2026-10-17); word-level sync inside mathematics is not required |
+| MATH-5 | P1 | While an equation segment plays, the reader highlights the whole segment (sentence-level) and shows the equation as it appears on the page, shown and boxed on the board (VIEW-2; was "a rendered crop from the stored block bbox", changed 2026-10-17); word-level sync inside mathematics is not required. M5 ships the sentence-level highlight with maths ranges boxed in the reader text; the board crop is VIEW-2 (M7) |
 | MATH-6 | P2 | Scanned pages: mathematics recovered from the page image (equation image to structure) behind an interface like `OCRBackend` (D28); until then OCR'd equations use the MATH-1 fallback |
 
 **Technical vocabulary (TERM)**
