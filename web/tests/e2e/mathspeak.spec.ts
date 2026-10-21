@@ -123,7 +123,10 @@ test('MATH-5: an equation segment is highlighted whole; its maths ranges are uns
     .poll(async () => (await samples(page)).some((s) => s.id === eq.id), { timeout: 10_000 })
     .toBe(true)
   const onEq = (await samples(page)).filter((s) => s.id === eq.id)
-  expect(onEq.every((s) => s.words === 0), 'no word-level highlight inside the equation').toBe(true)
+  expect(
+    onEq.every((s) => s.words === 0),
+    'no word-level highlight inside the equation',
+  ).toBe(true)
   await expect(seg(page, eq.id)).toHaveClass(/active/)
 })
 

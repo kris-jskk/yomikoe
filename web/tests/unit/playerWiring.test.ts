@@ -7,12 +7,7 @@ import { EQUATION_FACTORS, onEquation } from '../../src/components/PlayerBar'
 import { segmentPieces } from '../../src/components/Reader'
 import { initialState, reduce, type PlayerState } from '../../src/player/machine'
 import { tokenize } from '../../src/player/schedule'
-import {
-  buildLoadEvent,
-  clipSpeed,
-  pauseAfterSec,
-  settingsKey,
-} from '../../src/player/usePlayer'
+import { buildLoadEvent, clipSpeed, pauseAfterSec, settingsKey } from '../../src/player/usePlayer'
 
 const segs = [
   { id: 10, type: 'heading' },
@@ -31,14 +26,24 @@ function loaded(factor?: number): PlayerState {
       sectionStarts: [10],
       voice: 'v',
       speed: 1.25,
-      globals: factor === undefined ? null : { default_voice_id: null, default_speed: 1.25, equation_speed_factor: factor },
+      globals:
+        factor === undefined
+          ? null
+          : { default_voice_id: null, default_speed: 1.25, equation_speed_factor: factor },
     }),
   )
 }
 
 describe('PLAY-10/PLAY-11 buildLoadEvent', () => {
   it('PLAY-10 LOAD carries the block type per id, aligned with orderedIds', () => {
-    const e = buildLoadEvent({ documentId: 1, segments: segs, sectionStarts: [10], voice: 'v', speed: 1.25, globals: null })
+    const e = buildLoadEvent({
+      documentId: 1,
+      segments: segs,
+      sectionStarts: [10],
+      voice: 'v',
+      speed: 1.25,
+      globals: null,
+    })
     expect(e.type).toBe('LOAD')
     if (e.type !== 'LOAD') return
     expect(e.orderedIds).toEqual([10, 11, 12, 13, 14])
