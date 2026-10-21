@@ -1,4 +1,4 @@
-# HearNarro — instructions for coding sessions
+# YomiKoe (formerly HearNarro) — instructions for coding sessions
 
 - Read `docs/PRD.md` (what) and `docs/TECHNICAL_DESIGN.md` (how) before any task. The PRD is the source of truth for scope, requirement IDs and milestone gates; the Technical Design is the source of truth for algorithms, schema, protocol and the decision log (D1–D11).
 - Requirement IDs (`ING-n`, `SYN-n`, `PLAY-n`, `LIB-n`) are canonical. Reference them in commit messages, test names and PR descriptions. Never rename or renumber them.
@@ -12,7 +12,7 @@
 - Pin every Hugging Face model to a revision hash in config.
 - Python: 3.11+, `ruff` for lint/format, `pytest` for tests, type hints everywhere.
 - Frontend: React + TypeScript + Vite in `web/`. Audio playback is per-segment HTTP fetch + Web Audio API scheduled buffers (D5); never MSE, never per-segment `<audio>` tags. Player state is a typed `useReducer` machine in one file (D10).
-- Audio cache is Ogg Opus in process via `opuscodec` (D7, D16), WAV with `HEARNARRO_AUDIO_FORMAT=wav`; no ffmpeg. Schema changes go through Alembic migrations.
+- Audio cache is Ogg Opus in process via `opuscodec` (D7, D16), WAV with `YOMIKOE_AUDIO_FORMAT=wav`; no ffmpeg. Schema changes go through Alembic migrations.
 - Keep `docs/PRD.md` in sync with decisions. If a decision in code departs from the PRD, update the PRD in the same PR.
 
 ## Rule: the session supervises; fresh workers on the cheapest adequate model do the work
@@ -79,10 +79,10 @@ do), `brief-template.md`, `report-template.md`, and `supervisor-log.md`.
 ## Rule: every stage is visualized; the architectural guide tracks the phases
 
 The published architectural guides are how the user follows the work, one per milestone:
-M1 "HearNarro M1 Ingest Map" https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n (closed; repo copy
-`docs/guide/m1-ingest-map.html`), M2 "HearNarro M2 Synthesis Map"
+M1 "YomiKoe M1 Ingest Map" https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n (closed; repo copy
+`docs/guide/m1-ingest-map.html`), M2 "YomiKoe M2 Synthesis Map"
 https://claude.ai/artifact/J7wJUWammFqBxc22s121Pr (source `m2-synthesis-map.html` in the session
-scratchpad; copy under `docs/guide/` when the milestone closes), M5 "HearNarro M5 Academic Map"
+scratchpad; copy under `docs/guide/` when the milestone closes), M5 "YomiKoe M5 Academic Map"
 https://claude.ai/artifact/WMNfhRLczt5VtYWf9Pkt9r (source `docs/guide/m5-academic-map.html` in the repo,
 published from there). Each new milestone starts a new guide.
 
@@ -105,12 +105,12 @@ published from there). Each new milestone starts a new guide.
 
 ## Rule: evals are the trend line; gates are the floor (D31–D34, 2026-10-17)
 
-- The eval layer lives in `api/hearnarro/evals/` (`docs/CODE_MAP_EVALS.md`); suites are `EVAL-1`..`EVAL-9`
+- The eval layer lives in `api/yomikoe/evals/` (`docs/CODE_MAP_EVALS.md`); suites are `EVAL-1`..`EVAL-9`
   (PRD "Evals"); run records are committed under `evals/runs/` and `evals/runs/latest.json` points at the
   newest. Records are data: never edit one by hand.
-- Before and after any change to `api/hearnarro/ingestion/`, `api/hearnarro/synthesis/` or the lexicon
-  and acronym tables, run `api/.venv/bin/python -m hearnarro.evals run all --tier 0` (about 15 s) and cite
-  the compare output (`python -m hearnarro.evals compare <baseline> <candidate>`) in the commit message or
+- Before and after any change to `api/yomikoe/ingestion/`, `api/yomikoe/synthesis/` or the lexicon
+  and acronym tables, run `api/.venv/bin/python -m yomikoe.evals run all --tier 0` (about 15 s) and cite
+  the compare output (`python -m yomikoe.evals compare <baseline> <candidate>`) in the commit message or
   PR description. A regression (D33: a per-example drop over 0.01, 10 % on a timing, 1 on a count, or a
   new failure) is not a test failure, but an unexplained one blocks the merge in review.
 - Tier 1 (`--tier 1`, real Kokoro plus faster-whisper, about 8 min) runs at every milestone close and once
