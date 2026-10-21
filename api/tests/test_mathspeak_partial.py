@@ -3,10 +3,10 @@ displays, set-builder and function wording on span geometry shaped like the text
 
 from __future__ import annotations
 
-from hearnarro.ingestion.mathspeak import coalesce_spans, speak_segment, speak_span
-from hearnarro.ingestion.mathspeak.reader import speak
-from hearnarro.ingestion.mathspeak.structure import MathSpan, parse
-from hearnarro.ingestion.models import BBox, Span
+from yomikoe.ingestion.mathspeak import coalesce_spans, speak_segment, speak_span
+from yomikoe.ingestion.mathspeak.reader import speak
+from yomikoe.ingestion.mathspeak.structure import MathSpan, parse
+from yomikoe.ingestion.models import BBox, Span
 
 
 def run(text: str, x: float, y: float, size: float = 10.0, font: str = "CMMI10") -> Span:
@@ -138,7 +138,7 @@ def test_math3_text_font_minus_macron_and_power() -> None:
     assert said([run("x – μ", 0, 0, font="Helvetica")], display=False) == "x minus mu"
     assert said([run("x¯", 0, 0, font="Helvetica")], display=False) == "x bar"
     assert said([run("y**2", 0, 0, font="Helvetica")], display=False) == "y squared"
-    from hearnarro.ingestion.mathspeak.symbols import name_of
+    from yomikoe.ingestion.mathspeak.symbols import name_of
 
     assert name_of("") is None and name_of("update") is None
     assert name_of(":=") == "is defined as"

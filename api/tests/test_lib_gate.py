@@ -26,10 +26,10 @@ from typing import Any
 
 import pytest
 
-from hearnarro.synthesis.encode import WavEncoder
 from tests.conftest import SpyBackend
 from tests.test_api_audio import ready_document, worded
 from tests.test_api_documents import TEXT_PDF, client_for, upload, wait_settled
+from yomikoe.synthesis.encode import WavEncoder
 
 VOICE = "fake_f2"
 
@@ -189,7 +189,7 @@ async def test_lib4_delete_removes_rows_pdf_and_audio_dir(tmp_path: Path) -> Non
         assert not pdf.exists()
         assert not audio_dir.exists()
 
-    db = sqlite3.connect(tmp_path / "hearnarro.db")
+    db = sqlite3.connect(tmp_path / "yomikoe.db")
     try:
         for table in ("blocks", "segments", "sections"):
             q = f"SELECT count(*) FROM {table} WHERE document_id = ?"
@@ -208,7 +208,7 @@ async def test_lib4_delete_unknown_document_returns_404(tmp_path: Path) -> None:
 async def test_lib4_delete_while_parsing_returns_409(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from hearnarro.storage import jobs
+    from yomikoe.storage import jobs
 
     release = threading.Event()
     real_ingest = jobs.ingest

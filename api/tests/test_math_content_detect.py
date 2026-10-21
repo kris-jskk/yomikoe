@@ -3,9 +3,9 @@ ING-3, ING-4; m5 phase 3d: formula_06..10 of gate (b))."""
 
 from __future__ import annotations
 
-from hearnarro.ingestion.extract import LayoutChar, is_prose_region, is_text_box
-from hearnarro.ingestion.merge import content_spans
-from hearnarro.ingestion.models import BBox
+from yomikoe.ingestion.extract import LayoutChar, is_prose_region, is_text_box
+from yomikoe.ingestion.merge import content_spans
+from yomikoe.ingestion.models import BBox
 
 
 def _spoken(text: str) -> list[str]:

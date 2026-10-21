@@ -4,9 +4,9 @@ with one display span and its label (``order.merge_display_pieces``, m5-p3f)."""
 
 from __future__ import annotations
 
-from hearnarro.ingestion.merge import merge_blocks
-from hearnarro.ingestion.models import BBox, Block, Line, Page, Span
-from hearnarro.ingestion.order import merge_display_pieces, order_page
+from yomikoe.ingestion.merge import merge_blocks
+from yomikoe.ingestion.models import BBox, Block, Line, Page, Span
+from yomikoe.ingestion.order import merge_display_pieces, order_page
 
 
 def _block(

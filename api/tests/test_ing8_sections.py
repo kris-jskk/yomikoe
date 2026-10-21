@@ -11,9 +11,9 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from hearnarro.synthesis.encode import WavEncoder
 from tests.conftest import SpyBackend
 from tests.test_api_documents import REPORT_PDF, client_for, upload, wait_settled
+from yomikoe.synthesis.encode import WavEncoder
 
 
 async def _ingest_report(data_dir: Path) -> tuple[int, dict]:
@@ -26,7 +26,7 @@ async def _ingest_report(data_dir: Path) -> tuple[int, dict]:
 
 async def test_ing8_sections_rows_from_heading_blocks(tmp_path: Path) -> None:
     doc_id, detail = await _ingest_report(tmp_path)
-    db = sqlite3.connect(tmp_path / "hearnarro.db")
+    db = sqlite3.connect(tmp_path / "yomikoe.db")
     try:
         headings = db.execute(
             'SELECT b.merged_text, MIN(s."order"), (SELECT id FROM segments WHERE '
@@ -58,7 +58,7 @@ async def test_ing8_sections_rows_from_heading_blocks(tmp_path: Path) -> None:
 
 async def test_ing8_segments_carry_section_id(tmp_path: Path) -> None:
     doc_id, _detail = await _ingest_report(tmp_path)
-    db = sqlite3.connect(tmp_path / "hearnarro.db")
+    db = sqlite3.connect(tmp_path / "yomikoe.db")
     try:
         starts = db.execute(
             'SELECT sec.id, seg."order" FROM sections sec JOIN segments seg '

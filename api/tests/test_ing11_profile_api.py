@@ -9,8 +9,9 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 
-from hearnarro.ingestion.profile import PROSE_DEFAULT
-from hearnarro.storage.db import (
+from tests.test_api_documents import client_for
+from yomikoe.ingestion.profile import PROSE_DEFAULT
+from yomikoe.storage.db import (
     MIGRATIONS_DIR,
     connect_sync,
     db_path,
@@ -18,7 +19,6 @@ from hearnarro.storage.db import (
     run_migrations,
     sync_url,
 )
-from tests.test_api_documents import client_for
 
 TEXT = "We read Chapter IV twice."
 STALE = "We read Chapter IV twice."  # renormalize rewrites it ("Chapter four")

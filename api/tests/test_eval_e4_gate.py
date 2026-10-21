@@ -19,8 +19,8 @@ FIXTURE_SHEET = Path(__file__).parent / "fixtures" / "listening" / "sample_sheet
 
 
 def test_eval9_prepare_fake_backend_writes_20_clips_and_sheet(tmp_path: Path) -> None:
-    from hearnarro.evals.__main__ import main
-    from hearnarro.evals.listening import parse_sheet
+    from yomikoe.evals.__main__ import main
+    from yomikoe.evals.listening import parse_sheet
 
     out = tmp_path / "pending"
     assert main(["listening", "prepare", "--out", str(out), "--backend", "fake"]) == 0
@@ -37,8 +37,8 @@ def test_eval9_prepare_fake_backend_writes_20_clips_and_sheet(tmp_path: Path) ->
 
 
 def test_eval9_ingest_sample_sheet_aggregates(tmp_path: Path) -> None:
-    from hearnarro.evals.listening import ingest
-    from hearnarro.evals.suites import eval9_listening as e9
+    from yomikoe.evals.listening import ingest
+    from yomikoe.evals.suites import eval9_listening as e9
 
     session, path = ingest(FIXTURE_SHEET, out_dir=tmp_path)
     assert path == tmp_path / "2026-10-17_fixture.json"
@@ -68,7 +68,7 @@ def test_eval9_ingest_sample_sheet_aggregates(tmp_path: Path) -> None:
 
 
 def test_eval9_no_sessions_is_skipped(tmp_path: Path) -> None:
-    from hearnarro.evals.suites import eval9_listening as e9
+    from yomikoe.evals.suites import eval9_listening as e9
 
     examples = e9.dataset(tmp_path)
     assert [ex["skip"] for ex in examples] == ["no listening sessions under evals/listening/"]
@@ -86,7 +86,7 @@ def test_eval9_no_sessions_is_skipped(tmp_path: Path) -> None:
     ],
 )
 def test_eval9_ingest_rejects_blank_or_out_of_range(tmp_path: Path, old: str, new: str) -> None:
-    from hearnarro.evals.listening import ingest
+    from yomikoe.evals.listening import ingest
 
     text = FIXTURE_SHEET.read_text(encoding="utf-8")
     assert old in text
@@ -103,7 +103,7 @@ def test_eval9_ingest_rejects_blank_or_out_of_range(tmp_path: Path, old: str, ne
 
 
 def test_eval8_cer_scorer() -> None:
-    from hearnarro.evals.scorers import char_error_rate
+    from yomikoe.evals.scorers import char_error_rate
 
     assert char_error_rate("abcdefghij", "abcdefghij") == 0.0
     assert char_error_rate("abcdefghiX", "abcdefghij") == pytest.approx(0.1)
@@ -114,9 +114,9 @@ def test_eval8_cer_scorer() -> None:
 
 def test_eval8_skips_without_tesseract(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Forces ``ocr_available()`` false, so it runs the same with or without tesseract."""
-    from hearnarro.evals.runner import run
-    from hearnarro.evals.suites import SUITES, select
-    from hearnarro.ingestion import extract
+    from yomikoe.evals.runner import run
+    from yomikoe.evals.suites import SUITES, select
+    from yomikoe.ingestion import extract
 
     monkeypatch.setattr(extract, "ocr_available", lambda: False)
     e8 = SUITES["EVAL-8"]

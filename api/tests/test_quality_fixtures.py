@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.quality import check_pdf
+from yomikoe.quality import check_pdf
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 TEXT_FIXTURES = [

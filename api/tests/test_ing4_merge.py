@@ -2,10 +2,10 @@
 
 import pytest
 
-from hearnarro.ingestion.merge import merge_blocks, merge_lines
-from hearnarro.ingestion.models import Block
-from hearnarro.ingestion.order import attach_inline
 from tests.conftest import make_block
+from yomikoe.ingestion.merge import merge_blocks, merge_lines
+from yomikoe.ingestion.models import Block
+from yomikoe.ingestion.order import attach_inline
 
 
 @pytest.mark.parametrize(
@@ -273,7 +273,7 @@ def _para(index: int, text: str, y0: float, type: str = "body") -> Block:
 @pytest.fixture
 def joins_on(monkeypatch: pytest.MonkeyPatch) -> None:
     """Short synthetic documents: lower the document-level gate (PARA_JOIN_MIN_COUNT)."""
-    monkeypatch.setattr("hearnarro.ingestion.merge.PARA_JOIN_MIN_COUNT", 1)
+    monkeypatch.setattr("yomikoe.ingestion.merge.PARA_JOIN_MIN_COUNT", 1)
 
 
 @pytest.mark.usefixtures("joins_on")

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hearnarro.ingestion.merge import _inline_spans, _italic_variables, _math_runs
-from hearnarro.ingestion.models import BBox, Line, Span
+from yomikoe.ingestion.merge import _inline_spans, _italic_variables, _math_runs
+from yomikoe.ingestion.models import BBox, Line, Span
 
 _BOX = BBox(0.0, 0.0, 10.0, 10.0)
 
@@ -51,8 +51,8 @@ def test_math2_variable_span_ends_at_its_letter_and_accent_drops_runs() -> None:
 
 
 def test_math2_variable_span_is_one_slanted_letter() -> None:
-    from hearnarro.ingestion.merge import _variable_span
-    from hearnarro.ingestion.models import MathSpan
+    from yomikoe.ingestion.merge import _variable_span
+    from yomikoe.ingestion.models import MathSpan
 
     x = Span("x", _BOX, ITALIC, 10.0, italic=True)
     sq = Span("2", _BOX, ROMAN, 7.0, superscript=True)

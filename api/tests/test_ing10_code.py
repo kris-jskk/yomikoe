@@ -11,13 +11,13 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.evals.scorers import PROSE_TYPES, excluded_actual_texts
-from hearnarro.ingestion.classify import _classify, _is_code
-from hearnarro.ingestion.merge import merge_blocks
-from hearnarro.ingestion.models import Page
-from hearnarro.ingestion.pipeline import ingest
-from hearnarro.ingestion.segment import split_sentences
 from tests.conftest import make_block, make_span
+from yomikoe.evals.scorers import PROSE_TYPES, excluded_actual_texts
+from yomikoe.ingestion.classify import _classify, _is_code
+from yomikoe.ingestion.merge import merge_blocks
+from yomikoe.ingestion.models import Page
+from yomikoe.ingestion.pipeline import ingest
+from yomikoe.ingestion.segment import split_sentences
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 CODE = [">>> def f(x):", "...     return x ** 2", ">>> f(3)", "9"]

@@ -6,18 +6,18 @@ from dataclasses import replace
 
 import pytest
 
-from hearnarro.ingestion.mathspeak import (
+from yomikoe.ingestion.mathspeak import (
     apply_mathspeak,
     char_map_errors,
     speak_segment,
     speak_span,
 )
-from hearnarro.ingestion.mathspeak.markup import markup_segment
-from hearnarro.ingestion.mathspeak.reader import fallback, speak
-from hearnarro.ingestion.mathspeak.references import rewrite_references
-from hearnarro.ingestion.mathspeak.structure import MathSpan, parse
-from hearnarro.ingestion.models import LogicalBlock, Segment
-from hearnarro.ingestion.profile import PROSE_DEFAULT
+from yomikoe.ingestion.mathspeak.markup import markup_segment
+from yomikoe.ingestion.mathspeak.reader import fallback, speak
+from yomikoe.ingestion.mathspeak.references import rewrite_references
+from yomikoe.ingestion.mathspeak.structure import MathSpan, parse
+from yomikoe.ingestion.models import LogicalBlock, Segment
+from yomikoe.ingestion.profile import PROSE_DEFAULT
 
 MATH = replace(PROSE_DEFAULT, override="math")
 

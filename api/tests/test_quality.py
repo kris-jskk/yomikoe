@@ -5,7 +5,7 @@ Each check runs on a synthetic list of ``QSeg`` (text, block type).
 
 from __future__ import annotations
 
-from hearnarro.quality import (
+from yomikoe.quality import (
     QSeg,
     check_chapter_number_segments,
     check_dangling_hyphens,

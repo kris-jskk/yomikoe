@@ -3,7 +3,7 @@
 Two forms of one contract:
 - FakeBackend form (always runs): through the API on a cold cache, ``GET /audio`` for a
   real segment at 0.5/1.0/2.0/3.0 answers 200 with audio and timestamps within 2000 ms.
-- Kokoro form (``@pytest.mark.model``, skipped unless ``HEARNARRO_TEST_MODEL=1``): TTFA
+- Kokoro form (``@pytest.mark.model``, skipped unless ``YOMIKOE_TEST_MODEL=1``): TTFA
   <= 2000 ms on a 150-character sentence at the same speeds, plus the backend smoke test.
 """
 
@@ -27,7 +27,7 @@ SENTENCE_150 = (
 )
 
 requires_model = pytest.mark.skipif(
-    os.environ.get("HEARNARRO_TEST_MODEL") != "1", reason="set HEARNARRO_TEST_MODEL=1"
+    os.environ.get("YOMIKOE_TEST_MODEL") != "1", reason="set YOMIKOE_TEST_MODEL=1"
 )
 
 
@@ -56,11 +56,11 @@ async def test_syn_gate_fake_ttfa_under_2s_all_speeds(tmp_path: Path) -> None:
 @pytest.mark.model
 @requires_model
 def test_syn4_kokoro_smoke_one_sentence() -> None:
-    from hearnarro.settings import load_settings
-    from hearnarro.synthesis.kokoro_backend import KokoroBackend
+    from yomikoe.settings import load_settings
+    from yomikoe.synthesis.kokoro_backend import KokoroBackend
 
     revision = load_settings().kokoro_revision
-    assert revision, "HEARNARRO_KOKORO_REVISION must be set for the model tests"
+    assert revision, "YOMIKOE_KOKORO_REVISION must be set for the model tests"
     backend = KokoroBackend(revision=revision)
     voice = backend.voices()[0].id
     result = backend.synthesize("Zero trust is a security model.", voice, 1.0)
@@ -71,13 +71,13 @@ def test_syn4_kokoro_smoke_one_sentence() -> None:
 @pytest.mark.model
 @requires_model
 async def test_syn_gate_kokoro_ttfa_under_2s_150_chars() -> None:
-    from hearnarro.ingestion.models import Segment
-    from hearnarro.ingestion.normalize import normalize
-    from hearnarro.settings import load_settings
-    from hearnarro.synthesis.kokoro_backend import KokoroBackend
+    from yomikoe.ingestion.models import Segment
+    from yomikoe.ingestion.normalize import normalize
+    from yomikoe.settings import load_settings
+    from yomikoe.synthesis.kokoro_backend import KokoroBackend
 
     revision = load_settings().kokoro_revision
-    assert revision, "HEARNARRO_KOKORO_REVISION must be set for the model tests"
+    assert revision, "YOMIKOE_KOKORO_REVISION must be set for the model tests"
     backend = KokoroBackend(revision=revision)
     voice = backend.voices()[0].id
     await asyncio.to_thread(backend.synthesize, "Warm up.", voice, 1.0)  # warm model

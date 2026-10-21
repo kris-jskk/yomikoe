@@ -11,8 +11,9 @@ import pytest
 from alembic import command
 from alembic.config import Config
 
-from hearnarro.storage import repo
-from hearnarro.storage.db import (
+from tests.test_api_documents import client_for
+from yomikoe.storage import repo
+from yomikoe.storage.db import (
     MIGRATIONS_DIR,
     connect_sync,
     db_path,
@@ -21,10 +22,9 @@ from hearnarro.storage.db import (
     run_migrations,
     sync_url,
 )
-from hearnarro.synthesis.backend import SynthContext, SynthResult
-from hearnarro.synthesis.encode import WavEncoder
-from hearnarro.synthesis.fake import FakeBackend
-from tests.test_api_documents import client_for
+from yomikoe.synthesis.backend import SynthContext, SynthResult
+from yomikoe.synthesis.encode import WavEncoder
+from yomikoe.synthesis.fake import FakeBackend
 
 # segment id -> (document id, normalized text)
 SEGMENTS = {
@@ -227,7 +227,7 @@ async def test_term2_change_purges_segments_with_the_word(tmp_path: Path) -> Non
 
 
 def test_term2_purge_segments_helper(tmp_path: Path) -> None:
-    from hearnarro.cli import purge_segments
+    from yomikoe.cli import purge_segments
 
     _seed(tmp_path)
     conn = connect_sync(db_path(tmp_path))

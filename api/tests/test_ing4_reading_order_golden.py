@@ -17,8 +17,6 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.ingestion.extract import ocr_available
-from hearnarro.ingestion.pipeline import ingest
 from tests.golden_util import (
     CHAR_MASS_TOLERANCE,
     char_mass_balanced,
@@ -28,6 +26,8 @@ from tests.golden_util import (
     seq_levenshtein,
     word_score,
 )
+from yomikoe.ingestion.extract import ocr_available
+from yomikoe.ingestion.pipeline import ingest
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 MANIFEST = FIXTURES / "manifest.json"

@@ -5,10 +5,10 @@ names and scientific notation inside prose."""
 
 from __future__ import annotations
 
-from hearnarro.ingestion.classify import _retype_text_displays
-from hearnarro.ingestion.merge import content_spans, merge_blocks
-from hearnarro.ingestion.models import BBox, Block, Line, Page, Span
-from hearnarro.ingestion.order import merge_display_pieces
+from yomikoe.ingestion.classify import _retype_text_displays
+from yomikoe.ingestion.merge import content_spans, merge_blocks
+from yomikoe.ingestion.models import BBox, Block, Line, Page, Span
+from yomikoe.ingestion.order import merge_display_pieces
 
 
 def _span(text: str, x0: float, y0: float, x1: float, y1: float, font: str = "CMMI10") -> Span:

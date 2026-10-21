@@ -3,9 +3,9 @@ trip, ``PROSE_DEFAULT`` for NULL, and the bracket rule per class through ``norma
 
 from __future__ import annotations
 
-from hearnarro.ingestion.models import LogicalBlock, Page
-from hearnarro.ingestion.normalize import normalize
-from hearnarro.ingestion.profile import (
+from yomikoe.ingestion.models import LogicalBlock, Page
+from yomikoe.ingestion.normalize import normalize
+from yomikoe.ingestion.profile import (
     PROSE_DEFAULT,
     DocumentProfile,
     citation_style,
@@ -132,7 +132,7 @@ def test_ing11_bracket_rule_mixed_per_span() -> None:
 
 
 def test_ing11_ingest_result_carries_profile() -> None:
-    from hearnarro.evals.suites import _fixtures
+    from yomikoe.evals.suites import _fixtures
 
     result = _fixtures.ingest_result("report_01_zero_trust")
     assert result.profile.cls == "prose"
@@ -161,7 +161,7 @@ def test_ing11_code_words_count_in_the_token_share() -> None:
 def test_ing11_content_spans_do_not_add_inline_mass() -> None:
     """A content span (no runs, ``merge.content_spans``) widens over operand words; only spans
     with geometry (maths-font runs) count, the token estimate is the floor."""
-    from hearnarro.ingestion.models import MathSpan
+    from yomikoe.ingestion.models import MathSpan
 
     text = PROSE + "so value = mean plus deviation here"
     start = text.index("value")

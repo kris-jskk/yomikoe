@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.settings import Settings, SettingsError, load_settings
+from yomikoe.settings import Settings, SettingsError, load_settings
 
 
 def test_syn4_settings_defaults_fake_with_warning_when_kokoro_missing(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    with caplog.at_level(logging.WARNING, logger="hearnarro.settings"):
+    with caplog.at_level(logging.WARNING, logger="yomikoe.settings"):
         s = load_settings({}, kokoro_installed=False)
     assert s == Settings(
         tts_backend="fake", kokoro_revision=None, lookahead=5, data_dir=Path("./data")
@@ -23,26 +23,26 @@ def test_syn4_settings_defaults_fake_with_warning_when_kokoro_missing(
 
 def test_syn4_settings_default_kokoro_only_when_installed_and_pinned() -> None:
     assert load_settings({}, kokoro_installed=True).tts_backend == "fake"
-    s = load_settings({"HEARNARRO_KOKORO_REVISION": "abc123"}, kokoro_installed=True)
+    s = load_settings({"YOMIKOE_KOKORO_REVISION": "abc123"}, kokoro_installed=True)
     assert (s.tts_backend, s.kokoro_revision) == ("kokoro", "abc123")
 
 
 def test_syn4_settings_explicit_backend() -> None:
-    assert load_settings({"HEARNARRO_TTS_BACKEND": "fake"}, kokoro_installed=True).tts_backend == (
+    assert load_settings({"YOMIKOE_TTS_BACKEND": "fake"}, kokoro_installed=True).tts_backend == (
         "fake"
     )
-    env = {"HEARNARRO_TTS_BACKEND": "kokoro", "HEARNARRO_KOKORO_REVISION": "deadbeef"}
+    env = {"YOMIKOE_TTS_BACKEND": "kokoro", "YOMIKOE_KOKORO_REVISION": "deadbeef"}
     assert load_settings(env, kokoro_installed=False).tts_backend == "kokoro"
 
 
 @pytest.mark.parametrize(
     "env",
     [
-        {"HEARNARRO_TTS_BACKEND": "kokoro"},  # revision required
-        {"HEARNARRO_TTS_BACKEND": "espeak"},
-        {"HEARNARRO_LOOKAHEAD": "five"},
-        {"HEARNARRO_LOOKAHEAD": "-1"},
-        {"HEARNARRO_AUDIO_FORMAT": "mp3"},
+        {"YOMIKOE_TTS_BACKEND": "kokoro"},  # revision required
+        {"YOMIKOE_TTS_BACKEND": "espeak"},
+        {"YOMIKOE_LOOKAHEAD": "five"},
+        {"YOMIKOE_LOOKAHEAD": "-1"},
+        {"YOMIKOE_AUDIO_FORMAT": "mp3"},
     ],
 )
 def test_syn4_settings_invalid_values_raise(env: dict[str, str]) -> None:
@@ -51,7 +51,7 @@ def test_syn4_settings_invalid_values_raise(env: dict[str, str]) -> None:
 
 
 def test_syn5_settings_lookahead_and_data_dir_from_env(tmp_path: Path) -> None:
-    env = {"HEARNARRO_LOOKAHEAD": "3", "HEARNARRO_DATA_DIR": str(tmp_path)}
+    env = {"YOMIKOE_LOOKAHEAD": "3", "YOMIKOE_DATA_DIR": str(tmp_path)}
     s = load_settings(env, kokoro_installed=False)
     assert s.lookahead == 3
     assert s.data_dir == tmp_path
@@ -59,5 +59,5 @@ def test_syn5_settings_lookahead_and_data_dir_from_env(tmp_path: Path) -> None:
 
 def test_syn1_settings_audio_format_opus_default_wav_opt_in() -> None:
     assert load_settings({}, kokoro_installed=False).audio_format == "opus"  # D16
-    env = {"HEARNARRO_AUDIO_FORMAT": "wav"}
+    env = {"YOMIKOE_AUDIO_FORMAT": "wav"}
     assert load_settings(env, kokoro_installed=False).audio_format == "wav"

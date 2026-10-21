@@ -1,8 +1,8 @@
-"""``hearnarro purge-audio``: delete matching ``audio_cache`` rows and their files, print the
+"""``yomikoe purge-audio``: delete matching ``audio_cache`` rows and their files, print the
 count (D19 A/B measurements; cost review 2, action 4).
 
 Contract: ``_agent/specs/m4-library-interfaces.md`` section 1:
-``hearnarro purge-audio --document-id N [--segment-id S] [--voice V] [--speed X]``.
+``yomikoe purge-audio --document-id N [--segment-id S] [--voice V] [--speed X]``.
 ``--data-dir`` is passed as for ``renormalize`` (``test_syn1_renormalize_cli.py``).
 """
 
@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.cli import main
-from hearnarro.storage.db import connect_sync, db_path, pack_char_map, run_migrations
+from yomikoe.cli import main
+from yomikoe.storage.db import connect_sync, db_path, pack_char_map, run_migrations
 
 # (voice, speed) cached for every segment of both documents
 VARIANTS = [("af_heart", 1.0), ("af_heart", 1.5), ("am_adam", 1.0)]

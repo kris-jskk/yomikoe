@@ -16,9 +16,9 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.ingestion.pipeline import ingest
 from tests.boundary_util import align_boundaries, boundaries, prf, sentence_words
 from tests.golden_util import prose_only, words
+from yomikoe.ingestion.pipeline import ingest
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 MANIFEST = FIXTURES / "manifest.json"

@@ -15,8 +15,8 @@ from itertools import pairwise
 
 import pytest
 
-from hearnarro.ingestion.math_symbols import GREEK, LETTER_NAMES, SYMBOL_NAMES
-from hearnarro.ingestion.normalize import normalize
+from yomikoe.ingestion.math_symbols import GREEK, LETTER_NAMES, SYMBOL_NAMES
+from yomikoe.ingestion.normalize import normalize
 
 
 def _check_map(text: str, out: str, cmap: list[int]) -> None:

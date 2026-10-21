@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from hearnarro.evals.suites import eval4_speech_form as e4
+from yomikoe.evals.suites import eval4_speech_form as e4
 
 
 def test_eval4_joined_similarity_ignores_spaces_and_stress() -> None:

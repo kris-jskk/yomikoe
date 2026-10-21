@@ -18,9 +18,9 @@ from typing import Any
 
 import pytest
 
-from hearnarro.evals.suites import _fixtures
-from hearnarro.evals.suites import eval10_mathspeak as eval10
-from hearnarro.ingestion.extract import ocr_available
+from yomikoe.evals.suites import _fixtures
+from yomikoe.evals.suites import eval10_mathspeak as eval10
+from yomikoe.ingestion.extract import ocr_available
 
 FORMULA_COUNT = 10
 CUT_SOURCES = (
@@ -135,7 +135,7 @@ def test_m5_gate_b_spoken_maths_mean() -> None:
 
 
 def test_m5_gate_e_profile_classes() -> None:
-    from hearnarro.ingestion.profile import compute_profile  # ING-11, phase 2
+    from yomikoe.ingestion.profile import compute_profile  # ING-11, phase 2
 
     entries = [e for e in _fixtures.manifest()]
     assert len(entries) == PROFILE_TOTAL, f"{len(entries)} manifest entries, need {PROFILE_TOTAL}"

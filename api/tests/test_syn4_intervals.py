@@ -1,7 +1,7 @@
 """SYN-4 / ING-6: square brackets glued to a digit ("[0, 1)", "[0, 2]") are read aloud. spaCy tags
 such a "[" as XX instead of -LRB-, so misaki's ``retokenize`` does not treat it as punctuation and
 merges it with the digit into one word "[0" that has no pronunciation (silence). The backend reads
-square brackets as round ones before G2P. Needs ``HEARNARRO_TEST_MODEL=1``."""
+square brackets as round ones before G2P. Needs ``YOMIKOE_TEST_MODEL=1``."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import pytest
 
 @functools.cache
 def _backend():
-    from hearnarro.synthesis.kokoro_backend import PINNED_REVISION, KokoroBackend
+    from yomikoe.synthesis.kokoro_backend import PINNED_REVISION, KokoroBackend
 
     return KokoroBackend(revision=PINNED_REVISION)
 
@@ -45,7 +45,7 @@ def test_syn4_interval_closed_digits_spoken() -> None:
 @pytest.mark.model
 def test_math1_fallback_case1_every_token_voiced() -> None:
     """MATH-1 fallback / ING-6: after normalization, no token of 637 row 242 is silent."""
-    from hearnarro.ingestion.normalize import normalize
+    from yomikoe.ingestion.normalize import normalize
 
     raw = (
         "For every ν > 0 there exist a force f ∈C∞ c (R3 × (0, ∞); R3), a compact set K ⊂R3, "

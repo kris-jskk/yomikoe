@@ -3,10 +3,10 @@ with a relation in the numerator run, and large-operator limits (MATH-1..3, ING-
 
 from __future__ import annotations
 
-from hearnarro.ingestion.extract import LayoutChar, group_lines, vector_maths
-from hearnarro.ingestion.mathspeak import reader, structure
-from hearnarro.ingestion.mathspeak.structure import MathSpan
-from hearnarro.ingestion.models import BBox, Span
+from yomikoe.ingestion.extract import LayoutChar, group_lines, vector_maths
+from yomikoe.ingestion.mathspeak import reader, structure
+from yomikoe.ingestion.mathspeak.structure import MathSpan
+from yomikoe.ingestion.models import BBox, Span
 
 IT, UP = "STIXGeneral-Italic", "STIXGeneral-Regular"
 

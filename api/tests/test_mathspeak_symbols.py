@@ -6,11 +6,11 @@ import re
 
 import pytest
 
-from hearnarro.evals.suites.eval10_mathspeak import load_pairs
-from hearnarro.ingestion.mathspeak import speak_segment
-from hearnarro.ingestion.mathspeak.markup import markup_segment
-from hearnarro.ingestion.mathspeak.structure import CLOSE
-from hearnarro.ingestion.mathspeak.symbols import (
+from yomikoe.evals.suites.eval10_mathspeak import load_pairs
+from yomikoe.ingestion.mathspeak import speak_segment
+from yomikoe.ingestion.mathspeak.markup import markup_segment
+from yomikoe.ingestion.mathspeak.structure import CLOSE
+from yomikoe.ingestion.mathspeak.symbols import (
     CONVENTION,
     GREEK,
     SI_PREFIXES,

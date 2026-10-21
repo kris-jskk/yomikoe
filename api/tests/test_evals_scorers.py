@@ -1,10 +1,10 @@
-"""Unit tests for ``hearnarro.evals.scorers.mathspeak_score`` (EVAL-10, MATH-1..4, M5 gate b)."""
+"""Unit tests for ``yomikoe.evals.scorers.mathspeak_score`` (EVAL-10, MATH-1..4, M5 gate b)."""
 
 from __future__ import annotations
 
 import pytest
 
-from hearnarro.evals.scorers import mathspeak_score
+from yomikoe.evals.scorers import mathspeak_score
 
 
 def test_eval10_mathspeak_score_identical_is_one() -> None:

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from hearnarro.ingestion.mathspeak.markup import markup_segment
-from hearnarro.ingestion.mathspeak.structure import MathSpan, Node, parse
-from hearnarro.ingestion.models import BBox, Span
+from yomikoe.ingestion.mathspeak.markup import markup_segment
+from yomikoe.ingestion.mathspeak.structure import MathSpan, Node, parse
+from yomikoe.ingestion.models import BBox, Span
 
 
 def tree(raw: str) -> Node | None:

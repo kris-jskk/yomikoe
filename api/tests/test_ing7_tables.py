@@ -7,10 +7,10 @@ them as excluded. An equation block yields one segment; since MATH-1 (spec m5 §
 the raw expression with one display MathSpan, and the "Equation N." cue is the reader's fallback.
 """
 
-from hearnarro.ingestion.merge import merge_blocks
-from hearnarro.ingestion.models import Block, LogicalBlock, Segment, Span
-from hearnarro.ingestion.segment import split_sentences
 from tests.conftest import make_block, make_span
+from yomikoe.ingestion.merge import merge_blocks
+from yomikoe.ingestion.models import Block, LogicalBlock, Segment, Span
+from yomikoe.ingestion.segment import split_sentences
 
 CELL_X = (72.0, 232.0, 392.0)
 CELL_W = 90.0

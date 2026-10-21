@@ -12,11 +12,11 @@ import itertools
 
 import pytest
 
-from hearnarro.ingestion.models import Segment
-from hearnarro.synthesis.backend import WordTimestamp
-from hearnarro.synthesis.cache import AudioEntry
-from hearnarro.synthesis.fake import FakeBackend
 from tests.conftest import fifty_fixture_sentences, make_service
+from yomikoe.ingestion.models import Segment
+from yomikoe.synthesis.backend import WordTimestamp
+from yomikoe.synthesis.cache import AudioEntry
+from yomikoe.synthesis.fake import FakeBackend
 
 VOICE = "fake_f1"
 
@@ -88,7 +88,7 @@ async def test_syn1_timestamps_translated_to_text_offsets_through_char_map() -> 
 
 
 def test_syn1_scaled_timestamps_keep_invariants() -> None:
-    from hearnarro.synthesis.stretch import scale_timestamps
+    from yomikoe.synthesis.stretch import scale_timestamps
 
     for seg in fifty_fixture_sentences():
         native = FakeBackend().synthesize(seg.normalized_text, VOICE, 2.0)

@@ -4,7 +4,7 @@ from itertools import pairwise
 
 import pytest
 
-from hearnarro.ingestion.normalize import normalize
+from yomikoe.ingestion.normalize import normalize
 
 VARIED = [
     "The cat sat on the mat.",

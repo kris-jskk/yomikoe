@@ -6,10 +6,10 @@ gate b)."""
 
 from __future__ import annotations
 
-from hearnarro.ingestion import mathspeak as ms
-from hearnarro.ingestion.mathspeak import reader, structure
-from hearnarro.ingestion.mathspeak.structure import MathSpan
-from hearnarro.ingestion.models import BBox, Span
+from yomikoe.ingestion import mathspeak as ms
+from yomikoe.ingestion.mathspeak import reader, structure
+from yomikoe.ingestion.mathspeak.structure import MathSpan
+from yomikoe.ingestion.models import BBox, Span
 
 MI, RM, RM7 = "LMMathItalic10-Regular", "LMRoman10-Regular", "LMRoman7-Regular"
 

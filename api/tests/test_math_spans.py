@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.ingestion.merge import merge_blocks, merge_lines, merge_lines_map
-from hearnarro.ingestion.models import LogicalBlock
-from hearnarro.ingestion.pipeline import IngestResult, ingest
 from tests.conftest import make_block, make_span
+from yomikoe.ingestion.merge import merge_blocks, merge_lines, merge_lines_map
+from yomikoe.ingestion.models import LogicalBlock
+from yomikoe.ingestion.pipeline import IngestResult, ingest
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 NAMES = sorted(e["name"] for e in json.loads((FIXTURES / "manifest.json").read_text()))

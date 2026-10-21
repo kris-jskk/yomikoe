@@ -7,13 +7,13 @@ import re
 
 import pytest
 
-from hearnarro.ingestion.mathspeak import (
+from yomikoe.ingestion.mathspeak import (
     char_map_errors,
     glyph_spans,
     join_spans,
     speak_segment,
 )
-from hearnarro.ingestion.mathspeak.markup import markup_segment
+from yomikoe.ingestion.mathspeak.markup import markup_segment
 
 
 def said(raw: str) -> str:

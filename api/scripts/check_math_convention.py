@@ -6,7 +6,7 @@ loads the same file, so the expected texts and the reader cannot drift apart.
 
 Sources checked:
 - every non-comment line of ``api/tests/fixtures/pdfs/formula_*.spoken.txt``
-- every ``spoken`` field of ``api/hearnarro/evals/data/math_speech.jsonl``
+- every ``spoken`` field of ``api/yomikoe/evals/data/math_speech.jsonl``
 
 Violations: a banned wording (``banned`` in the JSON), a raw maths symbol or Greek letter
 left in the spoken text, an upper-case letter (spoken text is lower case), or "capital"
@@ -26,7 +26,7 @@ HERE = Path(__file__).resolve().parent
 API = HERE.parent
 CONVENTION = HERE / "math_convention.json"
 FIXTURES = API / "tests" / "fixtures" / "pdfs"
-DATASET = API / "hearnarro" / "evals" / "data" / "math_speech.jsonl"
+DATASET = API / "yomikoe" / "evals" / "data" / "math_speech.jsonl"
 
 # ASCII characters that must never reach the voice as written maths ("-" and "/" are left
 # out: hyphenated words and "and/or" are prose).

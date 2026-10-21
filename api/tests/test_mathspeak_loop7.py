@@ -4,11 +4,11 @@ limit operator joins its subscript and the function word after it (MATH-1..3, MA
 
 from __future__ import annotations
 
-from hearnarro.ingestion import mathspeak as ms
-from hearnarro.ingestion.mathspeak import reader, structure
-from hearnarro.ingestion.mathspeak.structure import MathSpan
-from hearnarro.ingestion.merge import _item_lines
-from hearnarro.ingestion.models import BBox, Span
+from yomikoe.ingestion import mathspeak as ms
+from yomikoe.ingestion.mathspeak import reader, structure
+from yomikoe.ingestion.mathspeak.structure import MathSpan
+from yomikoe.ingestion.merge import _item_lines
+from yomikoe.ingestion.models import BBox, Span
 
 MI, MI7, SY7, RM7 = (
     "LMMathItalic10-Regular",

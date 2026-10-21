@@ -1,13 +1,13 @@
-"""``hearnarro renormalize``: rewrite a document's normalized_text/char_map and drop the
+"""``yomikoe renormalize``: rewrite a document's normalized_text/char_map and drop the
 audio cache of the segments that changed (SYN-1 char_map consistency; PART II report)."""
 
 from pathlib import Path
 
 import pytest
 
-from hearnarro.cli import main
-from hearnarro.ingestion.normalize import normalize
-from hearnarro.storage.db import connect_sync, db_path, pack_char_map, run_migrations
+from yomikoe.cli import main
+from yomikoe.ingestion.normalize import normalize
+from yomikoe.storage.db import connect_sync, db_path, pack_char_map, run_migrations
 
 ROWS = [  # (block type, text, stale normalized_text)
     ("heading", "PART II", "PART II"),
@@ -86,7 +86,7 @@ def test_syn1_renormalize_document(tmp_path: Path, capsys: pytest.CaptureFixture
     assert _cached(tmp_path) == {102, 200, 201, 202, 203}
     with connect_sync(db_path(tmp_path)) as conn:
         blob = conn.execute("SELECT char_map FROM segments WHERE id = 100").fetchone()[0]
-    from hearnarro.storage.db import unpack_char_map
+    from yomikoe.storage.db import unpack_char_map
 
     assert unpack_char_map(blob) == normalize("PART II", heading=True)[1]
     # Idempotent: a second run changes nothing.
@@ -107,10 +107,10 @@ def test_syn1_renormalize_all(tmp_path: Path, capsys: pytest.CaptureFixture[str]
 def test_ing11_renormalize_profile_and_math_json_reproduce_ingestion(tmp_path: Path) -> None:
     """ING-11, D40, MATH-1..4: renormalize re-speaks each segment from its stored ``math_json``
     under the stored profile, so a stale row comes back to exactly what ``ingest()`` wrote."""
-    from hearnarro.cli import renormalize_document
-    from hearnarro.evals.suites import _fixtures
-    from hearnarro.storage.db import unpack_char_map
-    from hearnarro.storage.jobs import _write_result
+    from yomikoe.cli import renormalize_document
+    from yomikoe.evals.suites import _fixtures
+    from yomikoe.storage.db import unpack_char_map
+    from yomikoe.storage.jobs import _write_result
 
     result = _fixtures.ingest_result("formula_01_pfn_bayes")
     run_migrations(tmp_path)

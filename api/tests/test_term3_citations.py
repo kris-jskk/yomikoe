@@ -5,8 +5,8 @@ from itertools import pairwise
 
 import pytest
 
-from hearnarro.ingestion.normalize import normalize
-from hearnarro.ingestion.profile import PROSE_DEFAULT, DocumentProfile
+from yomikoe.ingestion.normalize import normalize
+from yomikoe.ingestion.profile import PROSE_DEFAULT, DocumentProfile
 
 READ = replace(PROSE_DEFAULT, author_year_citations="read")
 SKIP = replace(PROSE_DEFAULT, author_year_citations="skip")

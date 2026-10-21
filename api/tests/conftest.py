@@ -15,10 +15,10 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.ingestion.models import BBox, Block, BlockType, Line, Page, Segment, Span
-from hearnarro.synthesis.backend import SynthResult, Voice
-from hearnarro.synthesis.cache import AudioEntry
-from hearnarro.synthesis.fake import FakeBackend
+from yomikoe.ingestion.models import BBox, Block, BlockType, Line, Page, Segment, Span
+from yomikoe.synthesis.backend import SynthResult, Voice
+from yomikoe.synthesis.cache import AudioEntry
+from yomikoe.synthesis.fake import FakeBackend
 
 
 def union(boxes: Sequence[BBox]) -> BBox:
@@ -119,10 +119,10 @@ SYNTH_FIXTURE_STEMS = ("report_01_zero_trust", "academic_01_seahelm_audio")
 
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
-        "markers", "model: needs a real TTS model; skipped unless HEARNARRO_TEST_MODEL=1"
+        "markers", "model: needs a real TTS model; skipped unless YOMIKOE_TEST_MODEL=1"
     )
     config.addinivalue_line(
-        "markers", "soak: 300-page soak gate (M4); skipped unless HEARNARRO_TEST_SOAK=1"
+        "markers", "soak: 300-page soak gate (M4); skipped unless YOMIKOE_TEST_SOAK=1"
     )
     config.addinivalue_line(
         "markers", "ocr: needs the tesseract binary (ING-2, D28); the test skips itself without it"
@@ -130,9 +130,9 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    """Skip every ``@pytest.mark.model`` test unless ``HEARNARRO_TEST_MODEL=1`` and every
-    ``@pytest.mark.soak`` test unless ``HEARNARRO_TEST_SOAK=1``."""
-    for marker, env in (("model", "HEARNARRO_TEST_MODEL"), ("soak", "HEARNARRO_TEST_SOAK")):
+    """Skip every ``@pytest.mark.model`` test unless ``YOMIKOE_TEST_MODEL=1`` and every
+    ``@pytest.mark.soak`` test unless ``YOMIKOE_TEST_SOAK=1``."""
+    for marker, env in (("model", "YOMIKOE_TEST_MODEL"), ("soak", "YOMIKOE_TEST_SOAK")):
         if os.environ.get(env) == "1":
             continue
         skip = pytest.mark.skip(reason=f"{marker} test: set {env}=1")
@@ -235,7 +235,7 @@ class MemorySegmentRepo:
 def synth_fixture_segments() -> tuple[Segment, ...]:
     """All segments of report_01 (document 1) and academic_01 (document 2), via ``ingest()``.
     Ids are ``document_id * 10_000 + order`` so they are unique and contiguous per document."""
-    from hearnarro.ingestion.pipeline import ingest
+    from yomikoe.ingestion.pipeline import ingest
 
     out: list[Segment] = []
     for doc_id, stem in enumerate(SYNTH_FIXTURE_STEMS, start=1):
@@ -263,8 +263,8 @@ def make_service(
 ):
     """SynthesisService over the fixture segments, an InMemoryCache and WavEncoder.
     Returns (service, backend, cache). The caller awaits ``service.shutdown()``."""
-    from hearnarro.synthesis.encode import WavEncoder
-    from hearnarro.synthesis.service import SynthesisService
+    from yomikoe.synthesis.encode import WavEncoder
+    from yomikoe.synthesis.service import SynthesisService
 
     backend = backend if backend is not None else SpyBackend()
     cache = cache if cache is not None else InMemoryCache()

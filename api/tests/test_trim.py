@@ -8,11 +8,11 @@ import itertools
 import numpy as np
 import pytest
 
-from hearnarro.settings import SettingsError, load_settings
-from hearnarro.synthesis.backend import SynthResult, WordTimestamp
-from hearnarro.synthesis.fake import FakeBackend
-from hearnarro.synthesis.trim import trim_silence
 from tests.conftest import fifty_fixture_sentences, make_service
+from yomikoe.settings import SettingsError, load_settings
+from yomikoe.synthesis.backend import SynthResult, WordTimestamp
+from yomikoe.synthesis.fake import FakeBackend
+from yomikoe.synthesis.trim import trim_silence
 
 SR = 24_000
 TH = 10 ** (-40 / 20)
@@ -169,10 +169,10 @@ async def test_syn1_service_trim_pads_from_constructor() -> None:
 def test_syn1_trim_settings_defaults_and_env() -> None:
     s = load_settings({}, kokoro_installed=False)
     assert (s.trim_lead_ms, s.trim_tail_ms) == (60, 150)
-    env = {"HEARNARRO_TRIM_LEAD_MS": "30", "HEARNARRO_TRIM_TAIL_MS": "250"}
+    env = {"YOMIKOE_TRIM_LEAD_MS": "30", "YOMIKOE_TRIM_TAIL_MS": "250"}
     s = load_settings(env, kokoro_installed=False)
     assert (s.trim_lead_ms, s.trim_tail_ms) == (30, 250)
     with pytest.raises(SettingsError):
-        load_settings({"HEARNARRO_TRIM_TAIL_MS": "-1"}, kokoro_installed=False)
+        load_settings({"YOMIKOE_TRIM_TAIL_MS": "-1"}, kokoro_installed=False)
     with pytest.raises(SettingsError):
-        load_settings({"HEARNARRO_TRIM_LEAD_MS": "x"}, kokoro_installed=False)
+        load_settings({"YOMIKOE_TRIM_LEAD_MS": "x"}, kokoro_installed=False)

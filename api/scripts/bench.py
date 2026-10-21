@@ -6,7 +6,7 @@ Usage (from api/): .venv/bin/python scripts/bench.py [--backend kokoro|fake] [--
 - Sentences: the first ``--n`` distinct body/list sentences of 80..200 characters taken
   round-robin from ``tests/fixtures/pdfs/*.expected.jsonl``, normalized like the service does.
 - Speeds 0.5/1.0/2.0/3.0. Speeds above the backend's native maximum are synthesized at the
-  maximum and time-stretched (``hearnarro.synthesis.stretch``), exactly the service path.
+  maximum and time-stretched (``yomikoe.synthesis.stretch``), exactly the service path.
 - Cold cache, warm model: no audio cache is involved; the model is loaded and warmed once.
   A segment is synthesized whole (no streaming), so TTFA = synthesis (+ stretch) wall time.
 - RTF = wall time / audio duration. Cold start (imports + model load) is measured once.
@@ -32,7 +32,7 @@ TTFA_LIMIT_MS = 2000  # PRD M2 gate
 
 
 def bench_sentences(n: int) -> list[str]:
-    from hearnarro.ingestion.normalize import normalize
+    from yomikoe.ingestion.normalize import normalize
 
     per_file = []
     for f in sorted(FIXTURES.glob("*.expected.jsonl")):
@@ -58,18 +58,18 @@ def bench_sentences(n: int) -> list[str]:
 
 def make_backend(name: str):
     if name == "fake":
-        from hearnarro.synthesis.fake import FakeBackend
+        from yomikoe.synthesis.fake import FakeBackend
 
         return FakeBackend()
-    from hearnarro.settings import DEFAULT_KOKORO_REVISION
-    from hearnarro.synthesis.kokoro_backend import KokoroBackend
+    from yomikoe.settings import DEFAULT_KOKORO_REVISION
+    from yomikoe.synthesis.kokoro_backend import KokoroBackend
 
     return KokoroBackend(revision=DEFAULT_KOKORO_REVISION)
 
 
 def run_one(backend, text: str, voice: str, speed: float) -> tuple[float, float]:
     """(wall_ms, audio_ms) for one segment at ``speed``, via stretch above the native max."""
-    from hearnarro.synthesis.stretch import stretch_pcm
+    from yomikoe.synthesis.stretch import stretch_pcm
 
     native = min(speed, backend.speed_range()[1])
     t0 = time.perf_counter()

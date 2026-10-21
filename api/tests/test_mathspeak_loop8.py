@@ -5,11 +5,11 @@ keeps the matrix row), and one font on two levels split into two spans (MATH-1..
 
 from __future__ import annotations
 
-from hearnarro.ingestion.extract import _level_jump
-from hearnarro.ingestion.mathspeak import reader, structure
-from hearnarro.ingestion.mathspeak.structure import MathSpan
-from hearnarro.ingestion.merge import _inline_spans
-from hearnarro.ingestion.models import BBox, Line, Span
+from yomikoe.ingestion.extract import _level_jump
+from yomikoe.ingestion.mathspeak import reader, structure
+from yomikoe.ingestion.mathspeak.structure import MathSpan
+from yomikoe.ingestion.merge import _inline_spans
+from yomikoe.ingestion.models import BBox, Line, Span
 
 MI, MI7, RM, RM5, EX = (
     "LMMathItalic10-Regular",

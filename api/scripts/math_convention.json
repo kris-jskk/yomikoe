@@ -1,5 +1,5 @@
 {
-  "_comment": "HearNarro spoken-maths reading convention (spec _agent/specs/m5-academic-reading.md section 3c; MATH-1..4). One wording per symbol. Loaded by api/scripts/check_math_convention.py and by the phase-3 mathspeak symbol table, so the expected texts and the reader never drift. Edit only together with spec 3c.",
+  "_comment": "YomiKoe spoken-maths reading convention (spec _agent/specs/m5-academic-reading.md section 3c; MATH-1..4). One wording per symbol. Loaded by api/scripts/check_math_convention.py and by the phase-3 mathspeak symbol table, so the expected texts and the reader never drift. Edit only together with spec 3c.",
   "version": 1,
   "operators": {
     "+": "plus",

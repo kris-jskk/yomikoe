@@ -6,8 +6,8 @@ import itertools
 
 import pytest
 
-from hearnarro.synthesis.backend import SynthResult, TTSBackend
-from hearnarro.synthesis.fake import SAMPLE_RATE, FakeBackend
+from yomikoe.synthesis.backend import SynthResult, TTSBackend
+from yomikoe.synthesis.fake import SAMPLE_RATE, FakeBackend
 
 TEXT = "Zero  trust is a\tsecurity model, not a product."
 

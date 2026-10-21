@@ -9,10 +9,10 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.synthesis.backend import WordTimestamp
-from hearnarro.synthesis.encode import WavEncoder
-from hearnarro.synthesis.fake import FakeBackend
 from tests.conftest import fifty_fixture_sentences, make_service
+from yomikoe.synthesis.backend import WordTimestamp
+from yomikoe.synthesis.encode import WavEncoder
+from yomikoe.synthesis.fake import FakeBackend
 
 SR = 24_000
 VOICE = "fake_m1"
@@ -29,7 +29,7 @@ def tone(seconds: float) -> bytes:
 
 
 def test_syn3_scale_timestamps_math() -> None:
-    from hearnarro.synthesis.stretch import scale_timestamps
+    from yomikoe.synthesis.stretch import scale_timestamps
 
     ts = [
         WordTimestamp("Zero", 0, 300, 0, 4),
@@ -47,7 +47,7 @@ def test_syn3_scale_timestamps_math() -> None:
 
 @pytest.mark.parametrize("ratio", [1.05, 1.1, 1.25, 1.333, 1.5])
 def test_syn3_scale_timestamps_within_one_ms_of_exact(ratio: float) -> None:
-    from hearnarro.synthesis.stretch import scale_timestamps
+    from yomikoe.synthesis.stretch import scale_timestamps
 
     ts = FakeBackend().synthesize(fifty_fixture_sentences()[3].normalized_text, VOICE, 2.0)
     out = scale_timestamps(ts.timestamps, ratio)
@@ -61,7 +61,7 @@ def test_syn3_scale_timestamps_within_one_ms_of_exact(ratio: float) -> None:
 
 @pytest.mark.parametrize("ratio", [1.05, 1.25, 1.5])
 def test_syn3_stretch_pcm_length_is_len_over_ratio(ratio: float) -> None:
-    from hearnarro.synthesis.stretch import stretch_pcm
+    from yomikoe.synthesis.stretch import stretch_pcm
 
     pcm = tone(2.0)
     out = stretch_pcm(pcm, SR, ratio)
@@ -72,7 +72,7 @@ def test_syn3_stretch_pcm_length_is_len_over_ratio(ratio: float) -> None:
 
 @pytest.mark.parametrize("ratio", [0.9, 1.0, 1.6, 3.0])
 def test_syn3_stretch_pcm_rejects_ratio_outside_1_to_1_5(ratio: float) -> None:
-    from hearnarro.synthesis.stretch import stretch_pcm
+    from yomikoe.synthesis.stretch import stretch_pcm
 
     with pytest.raises(ValueError):
         stretch_pcm(tone(0.5), SR, ratio)

@@ -1,0 +1,9 @@
+g2p_en neural grapheme-to-phoneme predictor
+Copyright Kyubyong Park & Jongseok Kim (https://github.com/Kyubyong/g2p), licensed under the
+Apache License 2.0 (LICENSE in this directory). checkpoint20.npz is copied unchanged from the
+g2p_en 2.1.0 wheel; the GRU inference code in __init__.py is adapted from g2p_en/g2p.py.
+
+Why vendored (YomiKoe, formerly HearNarro, 2026-10-16): the g2p_en distribution declares `distance` (GPL) and
+`nltk` (and downloads NLTK corpora at import time). Only the numpy predictor is needed for
+out-of-vocabulary words; the CMU dictionary, POS tagger and number expansion are not used
+(misaki's lexicon covers in-vocabulary words).

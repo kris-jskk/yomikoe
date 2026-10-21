@@ -4,7 +4,7 @@ from itertools import pairwise
 
 import pytest
 
-from hearnarro.ingestion.normalize import normalize
+from yomikoe.ingestion.normalize import normalize
 
 SPEC = {
     "i.e.": "that is",
@@ -23,7 +23,7 @@ SPEC = {
 
 
 def test_term4_table_matches_spec() -> None:
-    from hearnarro.ingestion.expansions import EXPANSIONS
+    from yomikoe.ingestion.expansions import EXPANSIONS
 
     assert EXPANSIONS == SPEC
 
@@ -96,7 +96,7 @@ def test_term4_only_whole_tokens(text: str) -> None:
 
 
 def test_term4_sentence_split_unchanged() -> None:
-    from hearnarro.ingestion import abbreviations
+    from yomikoe.ingestion import abbreviations
 
     assert not hasattr(abbreviations, "EXPANSIONS")
 
@@ -113,9 +113,9 @@ def test_term4_sentence_split_unchanged() -> None:
 )
 def test_term4_no_sentence_split_after_academic_abbreviation(text: str) -> None:
     """EVAL-4 term_abbreviation_04: the splitter cut after "w.r.t." ("with respect to. x.")."""
-    from hearnarro.evals.suites.eval4_speech_form import _blocks
-    from hearnarro.ingestion.merge import merge_blocks
-    from hearnarro.ingestion.segment import split_sentences
+    from yomikoe.evals.suites.eval4_speech_form import _blocks
+    from yomikoe.ingestion.merge import merge_blocks
+    from yomikoe.ingestion.segment import split_sentences
 
     (block,) = merge_blocks(_blocks(text, "body"))
     assert len(split_sentences(block, document_id=0, order_start=0, id_start=0)) == 1

@@ -13,9 +13,9 @@ from typing import Any
 
 import pytest
 
-from hearnarro.synthesis import lexicon_academic as la
-from hearnarro.synthesis import lexicon_overrides as lo
-from hearnarro.synthesis.backend import SynthContext
+from yomikoe.synthesis import lexicon_academic as la
+from yomikoe.synthesis import lexicon_overrides as lo
+from yomikoe.synthesis.backend import SynthContext
 
 DOMAINS = {"math", "stats", "physics", "chem", "bio", "cs", "latin_greek", "surname"}
 
@@ -28,7 +28,7 @@ class Tok:
 
 @cache
 def _vocab() -> set[str]:
-    from hearnarro.synthesis.kokoro_backend import model_vocab
+    from yomikoe.synthesis.kokoro_backend import model_vocab
 
     return model_vocab()
 
@@ -36,7 +36,7 @@ def _vocab() -> set[str]:
 def _g2p() -> Any:
     """The backend's G2P front-end without model weights (as EVAL-4 builds it), or skip."""
     try:
-        from hearnarro.synthesis import kokoro_backend
+        from yomikoe.synthesis import kokoro_backend
 
         logging.getLogger(kokoro_backend.__name__).setLevel(logging.ERROR)
         return kokoro_backend.build_g2p(False, _vocab())
@@ -105,7 +105,7 @@ def test_term2_lookup_extra_table_wins_with_suffixes() -> None:
 
 
 def test_term2_respellings_converted_through_the_backend_g2p() -> None:
-    from hearnarro.synthesis.kokoro_backend import respelling_phonemes
+    from yomikoe.synthesis.kokoro_backend import respelling_phonemes
 
     g2p = _g2p()
     table = respelling_phonemes(g2p, {"Kernel": "Koh-shee", "tuple": "too pull"})
@@ -116,7 +116,7 @@ def test_term2_respellings_converted_through_the_backend_g2p() -> None:
 
 
 def test_term2_fake_backend_ignores_lexicon() -> None:
-    from hearnarro.synthesis.fake import FakeBackend
+    from yomikoe.synthesis.fake import FakeBackend
 
     fake = FakeBackend()
     voice = fake.voices()[0].id
@@ -127,7 +127,7 @@ def test_term2_fake_backend_ignores_lexicon() -> None:
 
 @pytest.mark.model
 def test_term2_kokoro_respelling_reaches_model_phonemes() -> None:
-    from hearnarro.synthesis.kokoro_backend import PINNED_REVISION, KokoroBackend
+    from yomikoe.synthesis.kokoro_backend import PINNED_REVISION, KokoroBackend
 
     b = KokoroBackend(revision=PINNED_REVISION)
     text = "The kernel and Uber's kernels."

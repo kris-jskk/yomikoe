@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from hearnarro.evals.scorers import mathspeak_score
-from hearnarro.evals.suites.eval10_mathspeak import load_pairs
-from hearnarro.ingestion.mathspeak import char_map_errors, speak_segment
-from hearnarro.ingestion.mathspeak.markup import markup_segment
+from yomikoe.evals.scorers import mathspeak_score
+from yomikoe.evals.suites.eval10_mathspeak import load_pairs
+from yomikoe.ingestion.mathspeak import char_map_errors, speak_segment
+from yomikoe.ingestion.mathspeak.markup import markup_segment
 
 OVERALL_MIN = 0.85
 CLASS_MIN = 0.80

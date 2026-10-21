@@ -6,7 +6,7 @@ pixels under 128) goes to ``OCRBackend.recognize(page_image) -> list[OcrLine]``.
 the page stays empty and ``IngestResult.ocr_skipped_pages`` counts it. ``OcrLine.bbox`` is in
 PDF points, origin top-left (the ``BBox`` convention).
 
-``hearnarro.ingestion.ocr`` is imported inside each test (``_ocr()``) so that, while it does
+``yomikoe.ingestion.ocr`` is imported inside each test (``_ocr()``) so that, while it does
 not exist, every test fails on the missing module instead of the file failing to collect.
 
 The real-engine test is ``@pytest.mark.ocr`` and is skipped unless ``tesseract`` is on PATH.
@@ -21,9 +21,9 @@ from types import ModuleType
 import pytest
 from PIL import Image, ImageDraw
 
-from hearnarro.ingestion.extract import extract_pages
-from hearnarro.ingestion.models import BBox
-from hearnarro.ingestion.pipeline import ingest
+from yomikoe.ingestion.extract import extract_pages
+from yomikoe.ingestion.models import BBox
+from yomikoe.ingestion.pipeline import ingest
 
 PDFS = Path(__file__).parent / "fixtures" / "pdfs"
 UNIT = Path(__file__).parent / "fixtures" / "unit"
@@ -36,9 +36,9 @@ BOTTOM = "The last line of the recognized page is read at the end."
 
 
 def _ocr() -> ModuleType:
-    """hearnarro.ingestion.ocr: OCRBackend, FakeOCRBackend, TesseractBackend, OcrLine,
+    """yomikoe.ingestion.ocr: OCRBackend, FakeOCRBackend, TesseractBackend, OcrLine,
     ink_coverage, needs_ocr."""
-    return importlib.import_module("hearnarro.ingestion.ocr")
+    return importlib.import_module("yomikoe.ingestion.ocr")
 
 
 def _line(ocr: ModuleType, text: str, y: float):

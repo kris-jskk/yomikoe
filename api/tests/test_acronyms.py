@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from hearnarro.synthesis.acronyms import (
+from yomikoe.synthesis.acronyms import (
     COLLOCATIONS,
     RESPELL,
     SPELLED,
@@ -20,8 +20,8 @@ from hearnarro.synthesis.acronyms import (
     split_suffix,
     suffix_phonemes,
 )
-from hearnarro.synthesis.backend import SynthContext
-from hearnarro.synthesis.kokoro_backend import _Timed, word_timestamps
+from yomikoe.synthesis.backend import SynthContext
+from yomikoe.synthesis.kokoro_backend import _Timed, word_timestamps
 
 LEXICON = {"ted", "nasa", "nist", "the", "end", "it", "us"}
 
@@ -238,7 +238,7 @@ def test_syn4_term_acronym_overrides(word: str, spoken: bool) -> None:
     ],
 )
 def test_syn4_term_acronym_pairs_exact(pair_id: str) -> None:
-    from hearnarro.evals.suites import eval4_speech_form as e4
+    from yomikoe.evals.suites import eval4_speech_form as e4
 
     if e4.unavailable():
         pytest.skip("misaki unavailable")
