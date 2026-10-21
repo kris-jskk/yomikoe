@@ -25,6 +25,8 @@ export type Segment = {
   section_id: number | null
   text: string
   normalized_text: string
+  /** MATH-5: maths ranges, offsets into `text`. */
+  math?: { start: number; end: number; display: boolean }[]
 }
 
 export type DocumentSummary = {
@@ -78,8 +80,12 @@ async function sendJson(method: string, url: string, body: unknown): Promise<voi
   if (!r.ok) throw new Error(`${method} ${url} -> ${r.status}: ${await r.text()}`)
 }
 
-/** M4 server defaults (api/tests/test_lib_gate.py): no voice, speed 1.25. */
-export const DEFAULT_GLOBAL_SETTINGS = { default_voice_id: null, default_speed: 1.25 }
+/** Server defaults (api/tests/test_lib_gate.py, test_play11_settings.py): no voice, speed 1.25, factor 0.8. */
+export const DEFAULT_GLOBAL_SETTINGS = {
+  default_voice_id: null,
+  default_speed: 1.25,
+  equation_speed_factor: 0.8,
+}
 
 /**
  * Put the shared document and the global defaults back to a never-opened state (no position,
