@@ -1,4 +1,4 @@
-# HearNarro M4 code map: library, persistence, polish, OCR, soak, packaging
+# YomiKoe M4 code map: library, persistence, polish, OCR, soak, packaging
 
 This document explains how the M4 additions work end to end and what every file M4 added or changed
 does. It is written for an engineer joining the project who has read `docs/PRD.md` (what),
@@ -31,7 +31,7 @@ are not M4 library code and are not mapped here.
   space; U+FB00–U+FB06 ligatures decomposed in stage 1.
 - **ING-2** OCR fallback behind `OCRBackend` (D28); `documents.ocr_skipped_pages` (migration 0004).
 - **D21** FastAPI serves `web/dist` at `/`; **D30** one-service Docker image and Compose file.
-- **D19 tooling** `hearnarro purge-audio`; **ING-6 tooling** `api/scripts/sample_sentences.py`
+- **D19 tooling** `yomikoe purge-audio`; **ING-6 tooling** `api/scripts/sample_sentences.py`
   (number-form sampler; no normalizer rule landed in this range).
 - The 300-page soak gate (API and browser).
 
@@ -39,7 +39,7 @@ are not M4 library code and are not mapped here.
 
 PRD "300-page soak passes; Docker up" (spec §0):
 
-1. API soak, `api/tests/test_soak_300.py` with `HEARNARRO_TEST_SOAK=1`:
+1. API soak, `api/tests/test_soak_300.py` with `YOMIKOE_TEST_SOAK=1`:
    `_agent/results/525_soak_api.txt` (300 pages, 6030 segments, upload-to-ready 6.89 s, peak RSS
    119 MB self / 80 MB children, `/audio` first and last 200, delete clean; 1 passed). Skipped without
    the variable: `_agent/results/526_soak_skipped.txt`.
@@ -89,7 +89,7 @@ Firefox `545_e2e_firefox_all.txt` (20 passed, 1 skipped each).
 
 Each flow is a numbered list of steps; each step names **file → function**. `engine` and `state` mean
 what they mean in `docs/CODE_MAP_M3.md` (the `PlayerEngine` and the reducer state). Paths under
-`api/hearnarro/` are written from `hearnarro/`; paths under `web/src/` from `src/`.
+`api/yomikoe/` are written from `yomikoe/`; paths under `web/src/` from `src/`.
 
 ### a. Open the library: `#/` → `GET /documents` with progress (LIB-1)
 
@@ -106,7 +106,7 @@ browser        App / Library            client.ts          routes/documents.py  
    (`src/components/Library.tsx`; `Picker.tsx` is deleted).
 2. **Load.** `Library` → `refresh(signal)` → `src/api/client.ts` → `getDocuments`. Rows still
    `uploaded`/`parsing` are added to the `polling` list (flow b step 3).
-3. **Server.** `hearnarro/routes/documents.py` → `list_documents` → `hearnarro/storage/repo.py` →
+3. **Server.** `yomikoe/routes/documents.py` → `list_documents` → `yomikoe/storage/repo.py` →
    `list_document_summaries`: `SUMMARY_SELECT` adds two subqueries to `DOCUMENT_COLUMNS`,
    `segment_count` and `position_order` (the `order` of `position_segment_id`, only when it belongs to
    the same document). `_document_summary(doc)` builds the one summary shape used by `GET /documents`,
@@ -118,7 +118,7 @@ browser        App / Library            client.ts          routes/documents.py  
    floored, clamped); last opened through `formatLastOpened(iso, now)` ("just now", "N min ago", …,
    ISO date after a week, "never"); status shows `parsing pages_done/page_count` while parsing.
 5. **Defaults.** `Library` → `Defaults`: `getSettings` and `getVoices`; voice select and speed input
-   call `save`, which debounces `putSettings` by 500 ms. Server: `hearnarro/routes/settings.py` →
+   call `save`, which debounces `putSettings` by 500 ms. Server: `yomikoe/routes/settings.py` →
    `get_settings` / `put_settings` → `_read` over `repo.get_settings` / `repo.put_settings` (key/value
    table; `default_speed` 1.25 when unset, `GlobalSettings` validates [0.5, 3.0]; a null voice deletes
    the key). The defaults never touch a document's own settings (LIB-3).
@@ -152,7 +152,7 @@ DocView                          client.ts                         reducer (mach
    (only if it is in `/voices`) → first voice → `''`. speed = `doc.settings.speed` → global
    `default_speed` → `DEFAULT_SPEED` (1.25, `src/player/machine.ts`). Dispatched in `LOAD`, which no
    longer carries `position`.
-3. **Skip toggles (PLAY-8).** `readSkip(documentId)` reads `localStorage['hearnarro.skip.{id}']`
+3. **Skip toggles (PLAY-8).** `readSkip(documentId)` reads `localStorage['yomikoe.skip.{id}']`
    inside try/catch; if any toggle is on, `SET_SKIP{skip, skippedIds: skippedIds(segments, skip)}`
    (`src/player/skip.ts`).
 4. **Position (LIB-2).** If `doc.position.segment_id != null` and the id is in the segments:
@@ -235,7 +235,7 @@ mediaSession action --> setMediaHandlers: play -> play(); pause -> pauseAndSave(
 4. **Media Session.** `src/player/mediaSession.ts`: `setMediaHandlers({play, pause, previoustrack,
    nexttrack})` installs the four handlers (each in try/catch) and returns a cleanup;
    `setMediaPlaybackState(status)` mirrors the machine (`playing|loading` → `playing`, `paused` →
-   `paused`, else `none`); `setMediaMetadata(title)` sets title and artist "HearNarro";
+   `paused`, else `none`); `setMediaMetadata(title)` sets title and artist "YomiKoe";
    `clearMediaSession()` runs on unmount. Every call is a no-op where `navigator.mediaSession` is
    missing.
 
@@ -277,14 +277,14 @@ storage/jobs.run_ingestion -> pipeline.ingest(pdf, ocr_backend=DEFAULT_OCR)
 jobs._write_result -> UPDATE documents SET ..., ocr_skipped_pages = ?
 ```
 
-1. **Stage 1.** `hearnarro/ingestion/extract.py` → `page_from_layout` sets `Page.text_chars =
+1. **Stage 1.** `yomikoe/ingestion/extract.py` → `page_from_layout` sets `Page.text_chars =
    _char_count(page)` (non-space glyphs). `extract_pages` empties a page under `min_text_chars` (20)
    as before, but no longer calls the legacy `ocr_page` in the loop; with `ocr=True` it ends by
    resolving `ocr_backend` and running `apply_ocr` (lazy import from `ocr.py`).
-2. **Pipeline.** `hearnarro/ingestion/pipeline.py` → `ingest(…, ocr_backend=DEFAULT_OCR)`: resolves
+2. **Pipeline.** `yomikoe/ingestion/pipeline.py` → `ingest(…, ocr_backend=DEFAULT_OCR)`: resolves
    the sentinel with `default_backend()`, calls `extract_pages(ocr=False)` and then `apply_ocr` itself
    when `ocr` is true, so OCR runs once per ingest.
-3. **Decision.** `hearnarro/ingestion/ocr.py` → `apply_ocr`: `page_text_chars(page)`; pages at or
+3. **Decision.** `yomikoe/ingestion/ocr.py` → `apply_ocr`: `page_text_chars(page)`; pages at or
    above `MIN_TEXT_CHARS` are skipped without rendering; otherwise `render_page(pdf, n, INK_DPI=100,
    grayscale=True)` → `ink_coverage` (share of pixels under `INK_LEVEL=128`) → `needs_ocr(chars, ink)`
    (`ink > MIN_INK = 0.005`). A blank page is never sent.
@@ -311,17 +311,17 @@ jobs._write_result -> UPDATE documents SET ..., ocr_skipped_pages = ?
    (not `executemany`) so each gets its id.
 2. **Read.** `routes/documents.py` → `get_document` returns `repo.list_sections` (non-empty for new
    uploads). `src/components/Reader.tsx` → `deriveSections` prefers them; documents ingested before
-   this change keep empty `sections` and the client still derives them (D25). `hearnarro renormalize`
+   this change keep empty `sections` and the client still derives them (D25). `yomikoe renormalize`
    does not rebuild sections.
 
 ### k. Table and equation cues, page markers, ligatures (ING-7, ING-4, ING-5)
 
-1. **Page markers (ING-4).** `hearnarro/ingestion/classify.py` → `_classify`: a block matching
+1. **Page markers (ING-4).** `yomikoe/ingestion/classify.py` → `_classify`: a block matching
    `PAGE_MARKER_RE` (`[47]` or a bare 1–4 digit number, except a bare 19xx/20xx year) that overlaps no
    table is `noise`, checked after the table rule and before the heading rule.
 2. **Ligatures (ING-5).** `extract.py` → `_line_from_layout` translates each glyph through
    `LIGATURE_CHARS` (U+FB00–U+FB06 → ff, fi, fl, ffi, ffl, st, st); `_LIGATURE_UNI` gains FB05/FB06.
-3. **Heading hyphen (ING-4).** `hearnarro/ingestion/merge.py` → `merge_lines(lines, heading=True)`
+3. **Heading hyphen (ING-4).** `yomikoe/ingestion/merge.py` → `merge_lines(lines, heading=True)`
    keeps a line-final hyphen and joins with no space ("Multi-" + "Modal" → "Multi-Modal");
    `merge_blocks` passes `heading=block.type == 'heading'`.
 4. **Tables (ING-7).** `merge_blocks` → `_table_groups(blocks)` numbers tables through the document;
@@ -335,12 +335,12 @@ jobs._write_result -> UPDATE documents SET ..., ocr_skipped_pages = ?
 5. **Equations (ING-7).** `merge_blocks` → `equation_cue(lines)`: `Equation N.` when a line ends with
    a label like `(3)` (`EQUATION_LABEL_RE`), else `Equation.`; `raw_text` keeps the symbols. Inline
    equation fragments (stage 3 `inline`) still join their host sentence as before.
-6. **Segments.** `hearnarro/ingestion/segment.py` → `split_sentences`: for `table` and `equation`
+6. **Segments.** `yomikoe/ingestion/segment.py` → `split_sentences`: for `table` and `equation`
    blocks `_line_spans(text)` makes one segment per non-empty line instead of pySBD.
 
-### l. `hearnarro purge-audio` (D19 tooling)
+### l. `yomikoe purge-audio` (D19 tooling)
 
-1. **CLI.** `hearnarro/cli.py` → `main`: subcommand `purge-audio --document-id N [--data-dir D]
+1. **CLI.** `yomikoe/cli.py` → `main`: subcommand `purge-audio --document-id N [--data-dir D]
    [--segment-id S] [--voice V] [--speed X]` → `_purge_audio` → `resolve_data_dir`, `connect_sync`.
 2. **Delete.** `purge_audio(conn, data_dir, document_id, *, segment_id, voice, speed)`: one `WHERE`
    clause (segments of the document, plus optional `segment_id`, `voice_id`, `abs(speed - ?) <
@@ -349,9 +349,9 @@ jobs._write_result -> UPDATE documents SET ..., ocr_skipped_pages = ?
 
 ### m. Static serving (D21)
 
-1. **Resolve.** `hearnarro/settings.py` → `web_dist_dir(env)`: `$HEARNARRO_WEB_DIST`, else
+1. **Resolve.** `yomikoe/settings.py` → `web_dist_dir(env)`: `$YOMIKOE_WEB_DIST`, else
    `<repo>/web/dist` (`REPO_ROOT`); None when the directory does not exist.
-2. **Mount.** `hearnarro/app.py` → `create_app`: after the `documents`, `audio`, `voices` and
+2. **Mount.** `yomikoe/app.py` → `create_app`: after the `documents`, `audio`, `voices` and
    `settings` routers, `app.mount("/", StaticFiles(directory=dist, html=True), name="web")` when a dist
    exists, so API paths keep winning. Without it `/` is 404 and the API still serves. No SPA fallback
    is needed (hash routes).
@@ -364,24 +364,24 @@ jobs._write_result -> UPDATE documents SET ..., ocr_skipped_pages = ?
    `_agent`, `docs`, key files).
 2. **Stage `web`.** `node:24-slim`: `npm ci --ignore-scripts`, `npm run build` → `/src/web/dist`.
 3. **Stage `runtime`.** `python:3.11-slim`; `ARG KOKORO_REVISION` (the D15 pin); env
-   `HEARNARRO_DATA_DIR=/data`, `HEARNARRO_WEB_DIST=/app/web/dist`, `HEARNARRO_TTS_BACKEND=kokoro`,
+   `YOMIKOE_DATA_DIR=/data`, `YOMIKOE_WEB_DIST=/app/web/dist`, `YOMIKOE_TTS_BACKEND=kokoro`,
    `HF_HOME=/hf_home`; `pip install --extra-index-url …/whl/cpu -e ".[tts]"` (editable, CPU torch);
    copies `web/dist`; volumes `/data`, `/hf_home`; port 8765; `HEALTHCHECK` GETs `/documents`.
-4. **Run.** `CMD python -m hearnarro serve --data-dir /data --host 0.0.0.0 --port 8765`; Compose maps
-   `8765:8765`, binds `./data:/data`, names volume `hf_home`, sets `HEARNARRO_AUDIO_FORMAT=wav`,
+4. **Run.** `CMD python -m yomikoe serve --data-dir /data --host 0.0.0.0 --port 8765`; Compose maps
+   `8765:8765`, binds `./data:/data`, names volume `hf_home`, sets `YOMIKOE_AUDIO_FORMAT=wav`,
    `restart: unless-stopped`. The app then serves the API and, through flow m, the web app at `/`.
    Steps for the user: `docs/DOCKER.md`. Not run here (no runtime): **unverified**.
 
 ## Modules and files
 
-### `api/hearnarro/`
+### `api/yomikoe/`
 
 | File | Responsibility | Public (M4 additions) | Reads / writes | Status |
 | --- | --- | --- | --- | --- |
 | `routes/documents.py` | Summary shape for list/detail/PATCH; PATCH position/settings/opened; DELETE with files | `list_documents`, `get_document`, `patch_document`, `delete_document`, `DocumentPatch`, `PositionIn`, `DocSettingsIn`, `SPEED_MIN`, `SPEED_MAX`; internal `_document_summary`, `_summary_or_404` | `documents`, `segments`, `sections`; `pdfs/`, `audio/{id}/` | tested (503, 525) |
 | `routes/settings.py` (new) | Global defaults over the key/value table | `router`, `get_settings`, `put_settings`, `GlobalSettings`, `DEFAULT_SPEED` (1.25) | `settings` table | tested (503) |
 | `app.py` | Includes the settings router; mounts `web/dist` after the routers (D21) | `create_app` | dist directory | tested (`test_static_web.py`) |
-| `settings.py` | `HEARNARRO_WEB_DIST`, repo root, dist resolution | `web_dist_dir`, `WEB_DIST_ENV`, `REPO_ROOT` | env, filesystem | tested |
+| `settings.py` | `YOMIKOE_WEB_DIST`, repo root, dist resolution | `web_dist_dir`, `WEB_DIST_ENV`, `REPO_ROOT` | env, filesystem | tested |
 | `cli.py` | `purge-audio` subcommand | `purge_audio`, `main`; `SPEED_EPSILON` | `audio_cache`; files under the data dir | tested (`test_purge_cli.py`) |
 | `storage/repo.py` | Summary select, membership check, field update, cascade delete, settings get/put, ms timestamps | `SUMMARY_SELECT`, `list_document_summaries`, `get_document_summary`, `segment_belongs`, `update_document_fields`, `delete_document`, `get_settings`, `put_settings`, `now_iso_ms` | `documents`, `segments`, `sections`, `blocks`, `audio_cache`, `settings` | tested |
 | `storage/jobs.py` | Ingestion pool uses the spawn start method (D9 amendment; fork inherited the API's SQLite connection and broke writes in containers, `_agent/results/596`); logs the full traceback on job failure. Writes sections + `section_id` (ING-8) and `ocr_skipped_pages` (ING-2) | `run_ingestion`; internal `_write_result` | `sections`, `segments`, `blocks`, `documents` | tested (506, 538) |
@@ -420,7 +420,7 @@ jobs._write_result -> UPDATE documents SET ..., ocr_skipped_pages = ?
 
 | File | Responsibility | Public (M4 additions) | Reads / writes | Status |
 | --- | --- | --- | --- | --- |
-| `App.tsx` | Routes `#/` to `Library`; `DocView` loads globals, applies settings precedence, `SET_SKIP` from localStorage, `RESTORE_POSITION`, `opened`, reveal; skip toggles callback | `default App`; internal `DocView`, `readSkip`, `writeSkip` | client; `localStorage['hearnarro.skip.{id}']` | tested (e2e) |
+| `App.tsx` | Routes `#/` to `Library`; `DocView` loads globals, applies settings precedence, `SET_SKIP` from localStorage, `RESTORE_POSITION`, `opened`, reveal; skip toggles callback | `default App`; internal `DocView`, `readSkip`, `writeSkip` | client; `localStorage['yomikoe.skip.{id}']` | tested (e2e) |
 | `components/Library.tsx` (new; replaces `Picker.tsx`) | Documents table, upload + 2 s polling, delete with inline confirm, global defaults | `Library`, `POLL_MS`; internal `Row`, `Defaults` | `GET/POST/DELETE /documents`, `GET /documents/{id}`, `GET/PUT /settings`, `GET /voices` | tested (e2e `library.spec.ts`, `persist.spec.ts`) |
 | `components/libraryFormat.ts` (new) | Progress and last-opened text | `formatProgress`, `formatLastOpened` | none | tested (unit) |
 | `components/PlayerBar.tsx` | Three skip checkboxes | `PlayerBar`, `PlayerBarProps.onSkipChange` | `state.skip` | tested (e2e `skip.spec.ts`) |
@@ -478,7 +478,7 @@ consecutively; the source report and its own number are in brackets.
 3. An unset position is `{segment_id: null, offset_ms: 0}`, never `null`. [`m4-1-build-lib` 3]
 4. `last_opened_at` is written with millisecond precision (`repo.now_iso_ms`); `created_at` keeps
    seconds. [`m4-1-build-lib` 4]
-5. `purge-audio` needs `--data-dir` (or `$HEARNARRO_DATA_DIR`); `--speed` matches within 1e-6; it
+5. `purge-audio` needs `--data-dir` (or `$YOMIKOE_DATA_DIR`); `--speed` matches within 1e-6; it
    prints `audio cache entries removed: N`; empty audio directories stay on disk.
    [`m4-1-build-lib` 5]
 6. DELETE returns 409 only for status `parsing` (an `uploaded` row can be deleted).
@@ -546,7 +546,7 @@ consecutively; the source report and its own number are in brackets.
 **Soak and packaging (phase 4)**
 
 27. The Dockerfile uses `pip install -e ".[tts]"` instead of `pip install .[tts]`, because
-    `hearnarro/storage/migrations` has no `__init__.py` and a wheel install would probably drop
+    `yomikoe/storage/migrations` has no `__init__.py` and a wheel install would probably drop
     `env.py`/`versions/` (not tested); it also uses the CPU-only PyTorch index.
     [`m4-4-docker` OBSERVATIONS]
 28. The server binds `0.0.0.0:8765` through `CMD` flags (the CLI defaults are `127.0.0.1:8000`).

@@ -64,11 +64,11 @@ touches port 8765, so your own server can keep running. Stop anything else on 51
 
 ```bash
 npm run e2e -- --project=chromium                                    # the gate (D22)
-HEARNARRO_E2E_ALL_ENGINES=1 npm run e2e -- --project=webkit          # reported
-HEARNARRO_E2E_ALL_ENGINES=1 npm run e2e -- --project=firefox         # reported
+YOMIKOE_E2E_ALL_ENGINES=1 npm run e2e -- --project=webkit          # reported
+YOMIKOE_E2E_ALL_ENGINES=1 npm run e2e -- --project=firefox         # reported
 ```
 
-Without `HEARNARRO_E2E_ALL_ENGINES=1` the six `play.spec.ts` tests are skipped on WebKit and Firefox
+Without `YOMIKOE_E2E_ALL_ENGINES=1` the six `play.spec.ts` tests are skipped on WebKit and Firefox
 (only the three decode tests run there); the gate is asserted on Chromium only in M3 (D22).
 
 Expected: `9 passed` on each engine (three decode tests, the proxy harness test, and the five PLAY
@@ -128,16 +128,16 @@ the file; `--npm WEBDIR` is the flag in the script's usage line). Cold re-run:
 The script opens the reader in headless Chromium against your real server, and for each of 0.5x,
 1.0x and 2.0x picks three body segments of 100–200 characters whose clip is not cached
 (`HEAD /audio/{id}` → 404), sets the speed, clicks the segment's first word, and records the
-hook's `hearnarro:first-audio` log (Play request to first sample scheduled). A second play of one
+hook's `yomikoe:first-audio` log (Play request to first sample scheduled). A second play of one
 segment per speed gives the warm (cached) wait.
 
 `HN_DATA` is your data directory (the one your documents were uploaded into, for example
-`export HN_DATA=~/hearnarro-m1`); set it in terminal 1 first. If your Kokoro server is already up on
+`export HN_DATA=~/yomikoe-m1`); set it in terminal 1 first. If your Kokoro server is already up on
 8765, skip terminal 1.
 
 ```bash
 # terminal 1 (api/): Kokoro on 8765 with your documents
-HEARNARRO_TTS_BACKEND=kokoro .venv/bin/python -m hearnarro serve --data-dir "$HN_DATA" --port 8765
+YOMIKOE_TTS_BACKEND=kokoro .venv/bin/python -m yomikoe serve --data-dir "$HN_DATA" --port 8765
 # terminal 2 (web/): Vite on 5180
 source scripts/env.sh && npm run dev -- --port 5180
 # terminal 3 (repo root)
@@ -187,13 +187,13 @@ supervisor recommendation recorded in the M3 guide.
 
 ```bash
 # terminal 1 (api/): fake for exact timing, or kokoro for speech
-HEARNARRO_TTS_BACKEND=kokoro .venv/bin/python -m hearnarro serve --data-dir "$HN_DATA" --port 8765
+YOMIKOE_TTS_BACKEND=kokoro .venv/bin/python -m yomikoe serve --data-dir "$HN_DATA" --port 8765
 # terminal 2 (web/)
 source scripts/env.sh && npm run dev        # http://localhost:5173, proxies /documents /audio /voices to 8765 (D21)
 ```
 
 Stop the section 6 dev server on 5180 if you no longer need it.
-`HEARNARRO_API=http://127.0.0.1:<port> npm run dev` points the proxy at another server. The API has
+`YOMIKOE_API=http://127.0.0.1:<port> npm run dev` points the proxy at another server. The API has
 no CORS (D21); always open the Vite URL, never the API port, in the browser.
 
 1. Open `http://localhost:5173/`. The picker lists `GET /documents`; ready documents are links.
@@ -206,7 +206,7 @@ no CORS (D21); always open the Vite URL, never the API port, in the browser.
    sentence and section. Pause and Play resume exactly where they stopped (D24).
 5. Move the speed slider while playing: the current sentence restarts at the new speed and the
    readout shows e.g. `2.00x`. Change it while paused: nothing happens until Play (D23).
-6. **Safari (D16).** Restart the server with `HEARNARRO_AUDIO_FORMAT=opus` and a fresh data dir,
+6. **Safari (D16).** Restart the server with `YOMIKOE_AUDIO_FORMAT=opus` and a fresh data dir,
    open the reader in Safari, and play a few sentences; the stats line should read
    `format audio/ogg`. Report whether it plays and whether boundaries are clean.
 7. Listen across at least ten sentence boundaries for gaps or clicks (PLAY-5).
@@ -221,7 +221,7 @@ the same word. Steps 3, 6 and 7 need your eyes, Safari and your ears.
 ## 8. What good looks like
 
 - `npm test` 58 passed; typecheck, lint and build exit 0 (section 2).
-- `9 passed` on Chromium, and on WebKit and Firefox with `HEARNARRO_E2E_ALL_ENGINES=1` (section 3).
+- `9 passed` on Chromium, and on WebKit and Firefox with `YOMIKOE_E2E_ALL_ENGINES=1` (section 3).
 - Both formats decode on all three Playwright engines (section 4).
 - 0 licence violations (section 5).
 - By ear: no gaps or clicks between sentences; the highlight never visibly lags the voice.
@@ -238,8 +238,8 @@ the same word. Steps 3, 6 and 7 need your eyes, Safari and your ears.
 - Segments with no speakable text (print page markers such as `[47]`, about 230 of them in
   document 17) are kept by the parser; the server returns a header-only WAV and the reader plays
   them as zero-length clips, skipped silently with no gap. A failed prefetch of a later segment is
-  skipped with a `hearnarro:skip-segment` console warning. Dropping page markers in the parser is an
+  skipped with a `yomikoe:skip-segment` console warning. Dropping page markers in the parser is an
   M4 item (ING-4).
 - Documents ingested before a normalizer change keep their old `normalized_text`; run
-  `cd api && .venv/bin/python -m hearnarro renormalize --data-dir ~/hearnarro-m1 --document-id N`
+  `cd api && .venv/bin/python -m yomikoe renormalize --data-dir ~/yomikoe-m1 --document-id N`
   (or `--all`) to re-apply it; it drops the cached audio of the changed segments only.

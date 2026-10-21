@@ -1,4 +1,4 @@
-# PRD: HearNarro works with Kindle
+# PRD: YomiKoe works with Kindle
 
 As of 2026-10-19 · Sowmya · Status: **future scope, deferred**. Not part of the current implementation (M5–M8 as planned in `docs/PRD.md`; M6 Domain reading was placed 2026-10-19 and the former M6 and M7 became M7 and M8); nothing here is built, scheduled or tested until the user picks this PRD up. Companion to `docs/PRD.md`; the decisions it proposes are D41–D44 in `docs/TECHNICAL_DESIGN.md`, all marked "proposed 2026-10-19, not confirmed".
 
@@ -6,31 +6,31 @@ Evidence for this document is under `_agent/results/`: parser licences `821_kind
 
 ## Overview
 
-"HearNarro works with Kindle" means two things a Kindle owner asks for, and only two are buildable within the project's rules:
+"YomiKoe works with Kindle" means two things a Kindle owner asks for, and only two are buildable within the project's rules:
 
-1. **Listen on a Kindle device.** Fire tablets run Fire OS (Android) with the Silk browser, which is Chromium-based, so the existing web app (per-segment HTTP fetch plus Web Audio scheduled buffers, D5) is expected to run there unchanged (supervisor brief, unverified on a device). E-ink Kindles cannot play HearNarro's audio at all (see Non-goals).
+1. **Listen on a Kindle device.** Fire tablets run Fire OS (Android) with the Silk browser, which is Chromium-based, so the existing web app (per-segment HTTP fetch plus Web Audio scheduled buffers, D5) is expected to run there unchanged (supervisor brief, unverified on a device). E-ink Kindles cannot play YomiKoe's audio at all (see Non-goals).
 2. **Narrate what the user owns in their Kindle library.** The user's own documents (Send to Kindle, e-mailed, sideloaded) are downloadable unencrypted from amazon.com "Manage Your Content and Devices" > Content > Docs, as the original PDF or as `.azw3` (supervisor brief, unverified). A PDF already works today. An `.azw3` is KF8: a MOBI (PalmDB) container around EPUB-like HTML and CSS, so one HTML-to-block adapter can serve KF8 and EPUB (SRC-1) alike.
 
 Purchased Kindle books are DRM-locked (`.kfx` on current apps) and stay out of scope, as the PRD's DRM boundary already says ("Sources (SRC)", `docs/PRD.md`). This PRD adds no exception to it.
 
-Why a separate PRD: the main PRD carries Kindle only as SRC-4 (notes and highlights, P2, M8). The user asked how HearNarro relates to Kindle as a whole; the answer touches a device target (D41), an ingestion boundary (D42), a parser choice with a licence problem (D43) and a schema column (D44), which is more than one row.
+Why a separate PRD: the main PRD carries Kindle only as SRC-4 (notes and highlights, P2, M8). The user asked how YomiKoe relates to Kindle as a whole; the answer touches a device target (D41), an ingestion boundary (D42), a parser choice with a licence problem (D43) and a schema column (D44), which is more than one row.
 
 ## Goals, non-goals and success metrics
 
 **Goals**
 
-- A Fire tablet user opens HearNarro in Silk and gets the same playback, highlighting and resume as on a laptop browser (KDL-1).
-- A user downloads a personal document from Amazon as `.azw3` and HearNarro narrates it through the same block schema as a PDF (KDL-3, KDL-5).
+- A Fire tablet user opens YomiKoe in Silk and gets the same playback, highlighting and resume as on a laptop browser (KDL-1).
+- A user downloads a personal document from Amazon as `.azw3` and YomiKoe narrates it through the same block schema as a PDF (KDL-3, KDL-5).
 - A user who uploads a DRM-protected Kindle file gets a clear refusal that names why, never a broken parse (KDL-4).
 - The library shows that a document came from Kindle (KDL-6).
 
 **Non-goals**
 
-- **E-ink Kindles (Paperwhite, Oasis, Scribe, basic) as a playback target** (D41). Their "experimental browser" is an old WebKit with no usable Web Audio, Bluetooth audio is routed only through Audible and VoiceView, the MP3 player was removed, and Audible on Kindle plays only Audible content (supervisor brief, unverified). There is no supported path to get HearNarro's audio out of the device. Jailbreak paths (KUAL, KOReader) are hobbyist, void the support story, and KOReader is AGPL-3.0, which the licence rule excludes (`CLAUDE.md`, Licensing).
+- **E-ink Kindles (Paperwhite, Oasis, Scribe, basic) as a playback target** (D41). Their "experimental browser" is an old WebKit with no usable Web Audio, Bluetooth audio is routed only through Audible and VoiceView, the MP3 player was removed, and Audible on Kindle plays only Audible content (supervisor brief, unverified). There is no supported path to get YomiKoe's audio out of the device. Jailbreak paths (KUAL, KOReader) are hobbyist, void the support story, and KOReader is AGPL-3.0, which the licence rule excludes (`CLAUDE.md`, Licensing).
 - **DRM removal of any kind** (D42): no decryption, no key extraction, no reading of `.kfx` or encrypted `.azw`/`.azw3`. Legal and Amazon ToS exposure, and current `.kfx` tooling is unreliable (supervisor brief).
-- **Reading Kindle app caches.** The local caches (Mac `~/Library/Containers/com.amazon.Lassen/Data/Library/eBooks/`, Windows `%USERPROFILE%\Documents\My Kindle Content\`, Android `/sdcard/Android/data/com.amazon.kindle/files/`) are listed for reference only; HearNarro never scans them, because they mix purchased (encrypted) and personal files and give no stable contract (supervisor brief).
-- **Whispersync-style position sync** with Kindle devices or apps. Amazon has no public API for library contents or reading position, and scraping the Cloud Reader breaks the ToS (supervisor brief). HearNarro keeps its own position (LIB, D26).
-- **Signing in to Amazon** from HearNarro. The user downloads files themselves; HearNarro never holds Amazon credentials (PRD Privacy row).
+- **Reading Kindle app caches.** The local caches (Mac `~/Library/Containers/com.amazon.Lassen/Data/Library/eBooks/`, Windows `%USERPROFILE%\Documents\My Kindle Content\`, Android `/sdcard/Android/data/com.amazon.kindle/files/`) are listed for reference only; YomiKoe never scans them, because they mix purchased (encrypted) and personal files and give no stable contract (supervisor brief).
+- **Whispersync-style position sync** with Kindle devices or apps. Amazon has no public API for library contents or reading position, and scraping the Cloud Reader breaks the ToS (supervisor brief). YomiKoe keeps its own position (LIB, D26).
+- **Signing in to Amazon** from YomiKoe. The user downloads files themselves; YomiKoe never holds Amazon credentials (PRD Privacy row).
 - A native Fire OS app. Same reasoning as the PRD's "Mobile native apps" non-goal.
 
 **Success metrics**
@@ -46,16 +46,16 @@ Why a separate PRD: the main PRD carries Kindle only as SRC-4 (notes and highlig
 
 | Persona | Core need | What they do |
 | --- | --- | --- |
-| Student with a Fire tablet (primary for KDL-1) | Study on the cheap tablet they already carry | Open HearNarro in Silk on the home network, upload a PDF, listen with the highlight |
-| Academic who sends papers to Kindle (primary for KDL-2) | Their reading pile already lives in "Send to Kindle" | Download the docs from Manage Your Content and Devices, drop them into HearNarro |
+| Student with a Fire tablet (primary for KDL-1) | Study on the cheap tablet they already carry | Open YomiKoe in Silk on the home network, upload a PDF, listen with the highlight |
+| Academic who sends papers to Kindle (primary for KDL-2) | Their reading pile already lives in "Send to Kindle" | Download the docs from Manage Your Content and Devices, drop them into YomiKoe |
 | Kindle highlighter (P2, = SRC-4) | Hear their highlights back | Copy `documents/My Clippings.txt` over USB or export from read.amazon.com/notebook, upload it |
 | Owner of purchased Kindle books | Hear a bought book | Told plainly that DRM-protected books cannot be read (KDL-4); no workaround offered |
 
 **Core flows**
 
-1. On a Fire tablet, open the HearNarro URL in Silk, press play, lock the screen, keep listening (background playback is an open question, see below).
-2. On amazon.com, Content > Docs, "Download & transfer via USB" a document; upload the `.azw3` or `.pdf` to HearNarro; tick "from Kindle" (or HearNarro infers it, D44); press play.
-3. Upload a purchased book by mistake; see "This Kindle book is DRM-protected. HearNarro cannot read purchased Kindle books; personal documents you sent to Kindle can be downloaded unencrypted from Manage Your Content and Devices."
+1. On a Fire tablet, open the YomiKoe URL in Silk, press play, lock the screen, keep listening (background playback is an open question, see below).
+2. On amazon.com, Content > Docs, "Download & transfer via USB" a document; upload the `.azw3` or `.pdf` to YomiKoe; tick "from Kindle" (or YomiKoe infers it, D44); press play.
+3. Upload a purchased book by mistake; see "This Kindle book is DRM-protected. YomiKoe cannot read purchased Kindle books; personal documents you sent to Kindle can be downloaded unencrypted from Manage Your Content and Devices."
 
 ## Functional requirements
 
@@ -78,13 +78,13 @@ Requirement family `KDL-n` (Kindle), new on 2026-10-19; checked unused (`_agent/
 | KDL-6 | P1 | A PDF downloaded from Manage Your Content and Devices needs no new code: it ingests through the existing PDF path. Whether a document came from Kindle is recorded per D44 and shown in the library row (LIB-1) |
 | KDL-7 | P2 | Legacy MOBI6-only files (no KF8 section, older personal documents): read through the same PalmDB reader and the MOBI6 HTML, or refused with a clear "older Kindle format" message if MOBI6 markup proves too irregular; decided in the build spec |
 | KDL-8 | P2 | Highlights and notes import: `My Clippings.txt` (USB) and the read.amazon.com/notebook export, plain text, one document per book title. This is SRC-4 restated, not new scope; the SRC-4 row in `docs/PRD.md` stays the canonical one |
-| KDL-9 | P2 | A help page in the app: how to download personal documents from Manage Your Content and Devices, why purchased books cannot be read, and that HearNarro never asks for an Amazon login |
+| KDL-9 | P2 | A help page in the app: how to download personal documents from Manage Your Content and Devices, why purchased books cannot be read, and that YomiKoe never asks for an Amazon login |
 
 Not requirements, stated so they are not reopened: no DRM removal (D42), no Kindle cache scanning, no Amazon sign-in, no position sync, no e-ink target (D41).
 
 ## Architecture and stack
 
-The ingestion entry point today is `ingest(pdf_path, *, document_id, ocr, on_page, ocr_backend) -> IngestResult` in `api/hearnarro/ingestion/pipeline.py`, which runs `extract_pages` → `apply_ocr` → `classify_pages` → `order_document` → `merge_blocks` → `compute_profile(pages, blocks)` → `split_sentences(block, ..., profile=)` → `apply_mathspeak(segments, blocks, pages, profile)` (quoted in `_agent/results/823_ingestion_interface.txt`). There is no format-adapter interface yet: the function takes a PDF path, and `POST /documents` refuses anything without `%PDF-` in the first 1024 bytes (`api/hearnarro/routes/documents.py`, quoted in 823). The seam an adapter can use is the stage 4 output: a `list[LogicalBlock]` (`api/hearnarro/ingestion/models.py`: `id`, `page`, `type: BlockType`, `text`, `source: list[tuple[int, int]]`, `raw_text`, `math_spans`). Stages 5 onward (segment, normalize, profile, mathspeak) work on `LogicalBlock`s.
+The ingestion entry point today is `ingest(pdf_path, *, document_id, ocr, on_page, ocr_backend) -> IngestResult` in `api/yomikoe/ingestion/pipeline.py`, which runs `extract_pages` → `apply_ocr` → `classify_pages` → `order_document` → `merge_blocks` → `compute_profile(pages, blocks)` → `split_sentences(block, ..., profile=)` → `apply_mathspeak(segments, blocks, pages, profile)` (quoted in `_agent/results/823_ingestion_interface.txt`). There is no format-adapter interface yet: the function takes a PDF path, and `POST /documents` refuses anything without `%PDF-` in the first 1024 bytes (`api/yomikoe/routes/documents.py`, quoted in 823). The seam an adapter can use is the stage 4 output: a `list[LogicalBlock]` (`api/yomikoe/ingestion/models.py`: `id`, `page`, `type: BlockType`, `text`, `source: list[tuple[int, int]]`, `raw_text`, `math_spans`). Stages 5 onward (segment, normalize, profile, mathspeak) work on `LogicalBlock`s.
 
 Proposed shape (decided in the build spec, not here):
 
@@ -97,9 +97,9 @@ upload --sniff--> pdf   --> ingest() as today (stages 1-4 from glyphs)
                                        compute_profile -> split_sentences -> apply_mathspeak -> IngestResult
 ```
 
-- `api/hearnarro/ingestion/kf8.py` (new): PalmDB header and record table, MOBI and EXTH headers, encryption check (KDL-4), PalmDOC LZ77 decompression, KF8 boundary, FDST/SKEL/FRAG index reassembly into XHTML parts. Written from the public format description (MobileRead wiki "MOBI" and "KF8" pages), stdlib only (`struct`). Clean-room rule: nobody writing it reads KindleUnpack or `mobi` source, both GPL-3.0 (`_agent/results/821_kindle_parser_licences.txt`). HUFF/CDIC compression is a known gap: if a personal document from Amazon uses it, it is either implemented from the same public description or refused with a clear message (open question).
-- `api/hearnarro/ingestion/html_blocks.py` (new, shared with SRC-1): XHTML to `LogicalBlock` (KDL-5) on the stdlib `html.parser`, so no new dependency; `lxml` (BSD-3-Clause) or `selectolax` (MIT) are permitted fallbacks if malformed markup demands it (821).
-- Interface gaps the build spec must close, found in the code (823): `compute_profile` and `apply_mathspeak` take `pages: list[Page]`, which a reflowable book does not have (pass an empty list, or one synthetic `Page` per XHTML part, so `LogicalBlock.page` and the scanned share stay well defined); `LogicalBlock.source` is `(page, block.index)` into stage 1's blocks and needs a meaning for HTML (part index, element index); the job layer calls `ingest(pdf_path, ...)` and `pdf_page_count(pdf_path)` (`api/hearnarro/storage/jobs.py`, quoted in 823); the M7 board (D38) renders PDF pages, so an `.azw3` has no board view and the reader falls back to the text view.
+- `api/yomikoe/ingestion/kf8.py` (new): PalmDB header and record table, MOBI and EXTH headers, encryption check (KDL-4), PalmDOC LZ77 decompression, KF8 boundary, FDST/SKEL/FRAG index reassembly into XHTML parts. Written from the public format description (MobileRead wiki "MOBI" and "KF8" pages), stdlib only (`struct`). Clean-room rule: nobody writing it reads KindleUnpack or `mobi` source, both GPL-3.0 (`_agent/results/821_kindle_parser_licences.txt`). HUFF/CDIC compression is a known gap: if a personal document from Amazon uses it, it is either implemented from the same public description or refused with a clear message (open question).
+- `api/yomikoe/ingestion/html_blocks.py` (new, shared with SRC-1): XHTML to `LogicalBlock` (KDL-5) on the stdlib `html.parser`, so no new dependency; `lxml` (BSD-3-Clause) or `selectolax` (MIT) are permitted fallbacks if malformed markup demands it (821).
+- Interface gaps the build spec must close, found in the code (823): `compute_profile` and `apply_mathspeak` take `pages: list[Page]`, which a reflowable book does not have (pass an empty list, or one synthetic `Page` per XHTML part, so `LogicalBlock.page` and the scanned share stay well defined); `LogicalBlock.source` is `(page, block.index)` into stage 1's blocks and needs a meaning for HTML (part index, element index); the job layer calls `ingest(pdf_path, ...)` and `pdf_page_count(pdf_path)` (`api/yomikoe/storage/jobs.py`, quoted in 823); the M7 board (D38) renders PDF pages, so an `.azw3` has no board view and the reader falls back to the text view.
 - No change to synthesis, the `TTSBackend` interface, audio delivery (D5) or the player state machine (D10). The device side (KDL-1) changes no architecture.
 
 Licence position (821, 822): every working KF8 reader found is copyleft (KindleUnpack GPL-3.0, its fork `mobi` 0.4.1 GPL-3.0-only, `libmobi` LGPL-3.0, `pymobi` GPLv3, `mobi_header` GPL-3.0); the one MIT-classified MOBI reader, `mobi-python` 0.0.1, has no LICENSE file and no evident KF8 support; for EPUB `ebooklib` is AGPL-3.0 and excluded, while `epubfile` (BSD-3-Clause) and `epub-utils` (Apache-2.0, alpha) are permitted. Calibre is GPL-3.0 and not on PyPI (the PyPI package named `calibre` is an unrelated MIT probability-calibration library).
@@ -130,7 +130,7 @@ No other endpoint changes. Segments, audio and positions are addressed by `segme
 | Legal | No DRM circumvention; no Amazon login; no scraping of Amazon pages; no reading of Kindle app caches |
 | Privacy | Kindle files stay on the machine like PDFs (PRD Privacy row); fixtures are documents the project owns, never user data (`CLAUDE.md` evals rule) |
 | Throughput | A 300-page-equivalent `.azw3` parses in under the PDF target (60 s); no OCR path exists for it |
-| Evals | Every change to `api/hearnarro/ingestion/` runs tier-0 evals before and after (`CLAUDE.md` evals rule); the `.azw3` fixture joins EVAL-1 as a new class `kindle` |
+| Evals | Every change to `api/yomikoe/ingestion/` runs tier-0 evals before and after (`CLAUDE.md` evals rule); the `.azw3` fixture joins EVAL-1 as a new class `kindle` |
 | Device | KDL-1 tested on one physical Fire tablet; no device-specific code |
 
 ## Milestones
