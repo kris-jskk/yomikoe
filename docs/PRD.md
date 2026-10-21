@@ -260,7 +260,7 @@ The browser never touches a model or the PDF; it asks the API for parsed segment
 | Storage | SQLite + local filesystem | Single-user v1; swap to Postgres + S3 when multi-user |
 | Job queue | In-process asyncio task queue | No Redis until there is more than one worker |
 | Frontend | React + TypeScript, Vite | Web Audio API scheduled buffers for gapless playback (decided 2026-10-15, see Technical Design D5), Media Session API |
-| Packaging | Docker Compose | One command, one service (`api`) that serves the API and the built web app (D30, confirmed by the user 2026-10-17; `docs/DOCKER.md`); library on a named volume; the bind-mount failure seen first on Colima was the fork race fixed by the spawn start method (D9 amendment, `_agent/results/596`); a bind mount is a documented option |
+| Packaging | Docker Compose | One command, one service (`api`) that serves the API and the built web app (D30, confirmed by the user 2026-10-17; `docs/DOCKER.md`); library on a named volume; the bind-mount failure seen first on Colima was the fork race fixed by the spawn start method (D9 amendment, `_agent/results/596`); a bind mount is a documented option. Domains (D52, 2026-10-21): getyomikoe.com is the landing site, yomikoe.app is the hosted reader; neither is wired into v1, which is self-hosted |
 | Tests | pytest, a fixture set of 20 PDFs | Reading-order and timestamp regressions are the main risk |
 
 **Hugging Face models**

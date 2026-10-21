@@ -2,7 +2,7 @@
 
 A Speechify-style reader: drop in a PDF, pick a voice and a speed, and listen with the text highlighted as it plays. Self-hosted, backed by open TTS models, built so the synthesis engine can be swapped without touching the reader.
 
-The site is [getyomikoe.com](https://getyomikoe.com).
+Domains: [getyomikoe.com](https://getyomikoe.com) is the landing site; [yomikoe.app](https://yomikoe.app) is the hosted reader (decided 2026-10-21, D52). v1 is self-hosted and neither domain is wired into the code yet.
 
 The product spec lives in [docs/PRD.md](docs/PRD.md) and the technical design in [docs/TECHNICAL_DESIGN.md](docs/TECHNICAL_DESIGN.md). Requirement IDs there (`ING-`, `SYN-`, `PLAY-`, `LIB-`) are canonical and referenced in commits and tests.
 
