@@ -1,4 +1,4 @@
-// PLAY-6 keyboard map (spec _agent/specs/m4-library-interfaces.md §2, "Keyboard"). Pure: no DOM access
+// PLAY-6 keyboard map (spec _agent/specs/m4-library-interfaces.md §2, "Keyboard"); PLAY-10 e/r (m5 §4d). Pure: no DOM access
 // beyond reading the event target's tag name and contenteditable flag.
 
 export const SPEED_MIN = 0.5
@@ -10,11 +10,17 @@ export type KeyAction =
   | { type: 'SKIP'; by: 1 | -1 }
   | { type: 'SKIP_SECTION'; by: 1 | -1 }
   | { type: 'SPEED'; delta: number }
+  | { type: 'SKIP_EQUATION' }
+  | { type: 'REPEAT_EQUATION' }
 
 export interface KeyInput {
   key: string
   shiftKey: boolean
   target: EventTarget | null
+  /** Modifiers; e and r (PLAY-10) are mapped only without any. Optional so older callers still type-check. */
+  ctrlKey?: boolean
+  metaKey?: boolean
+  altKey?: boolean
 }
 
 const EDITABLE_TAGS = new Set(['INPUT', 'SELECT', 'TEXTAREA'])
@@ -25,6 +31,11 @@ function isEditable(target: EventTarget | null): boolean {
   const t = target as { tagName?: unknown; isContentEditable?: unknown }
   if (t.isContentEditable === true) return true
   return typeof t.tagName === 'string' && EDITABLE_TAGS.has(t.tagName.toUpperCase())
+}
+
+/** True when no modifier is held (so Ctrl/Cmd+R still reloads the page). */
+function noModifier(e: KeyInput): boolean {
+  return !e.shiftKey && e.ctrlKey !== true && e.metaKey !== true && e.altKey !== true
 }
 
 /** Map a keydown to a player action, or null when unmapped or typed into an editable field. */
@@ -42,6 +53,10 @@ export function keyToAction(e: KeyInput): KeyAction | null {
       return { type: 'SPEED', delta: SPEED_STEP }
     case '-':
       return { type: 'SPEED', delta: -SPEED_STEP }
+    case 'e':
+      return noModifier(e) ? { type: 'SKIP_EQUATION' } : null
+    case 'r':
+      return noModifier(e) ? { type: 'REPEAT_EQUATION' } : null
     default:
       return null
   }
