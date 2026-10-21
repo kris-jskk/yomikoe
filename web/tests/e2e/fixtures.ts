@@ -137,18 +137,18 @@ export const test = base.extend<{ audioRequests: RequestLog; patches: PatchLog }
   api: [
     // eslint-disable-next-line no-empty-pattern
     async ({}, provide) => {
-      const port = process.env.HEARNARRO_E2E_API_PORT
-      if (!port) throw new Error('HEARNARRO_E2E_API_PORT unset (set by playwright.config.ts)')
+      const port = process.env.YOMIKOE_E2E_API_PORT
+      if (!port) throw new Error('YOMIKOE_E2E_API_PORT unset (set by playwright.config.ts)')
       const apiBase = `http://127.0.0.1:${port}`
       const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hn-e2e-'))
       const logPath = path.join(dataDir, 'api.log')
       const log = fs.openSync(logPath, 'a')
       const proc = spawn(
         path.join(API_DIR, '.venv/bin/python'),
-        ['-m', 'hearnarro', 'serve', '--data-dir', dataDir, '--host', '127.0.0.1', '--port', port],
+        ['-m', 'yomikoe', 'serve', '--data-dir', dataDir, '--host', '127.0.0.1', '--port', port],
         {
           cwd: API_DIR,
-          env: { ...process.env, HEARNARRO_TTS_BACKEND: 'fake' },
+          env: { ...process.env, YOMIKOE_TTS_BACKEND: 'fake' },
           stdio: ['ignore', log, log],
         },
       )

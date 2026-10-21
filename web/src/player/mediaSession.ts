@@ -15,12 +15,12 @@ function session(): MediaSession | null {
   return navigator.mediaSession ?? null
 }
 
-/** Title = document title, artist "HearNarro". */
+/** Title = document title, artist "YomiKoe". */
 export function setMediaMetadata(title: string): void {
   const ms = session()
   if (!ms || typeof MediaMetadata === 'undefined') return
   try {
-    ms.metadata = new MediaMetadata({ title, artist: 'HearNarro' })
+    ms.metadata = new MediaMetadata({ title, artist: 'YomiKoe' })
   } catch {
     /* unsupported */
   }
@@ -117,7 +117,7 @@ export function silentWavDataUri(seconds = 6, rate = 8000): string {
 }
 
 /** Marker attribute; the e2e probe finds the element by it. */
-export const KEEPALIVE_ATTR = 'data-hearnarro-keepalive'
+export const KEEPALIVE_ATTR = 'data-yomikoe-keepalive'
 
 function makeSilentAudio(): KeepAliveMedia | null {
   if (typeof document === 'undefined' || !document.body) return null

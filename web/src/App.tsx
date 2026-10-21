@@ -29,7 +29,7 @@ interface Loaded {
 }
 
 /** PLAY-8 toggles persist per document in localStorage (a per-viewer convenience; may be unavailable). */
-const skipKey = (documentId: number) => `hearnarro.skip.${documentId}`
+const skipKey = (documentId: number) => `yomikoe.skip.${documentId}`
 
 function readSkip(documentId: number): SkipState {
   try {
@@ -162,7 +162,7 @@ export default function App() {
     <>
       <header className="app-header">
         <h1>
-          <a href="#/">HearNarro</a>
+          <a href="#/">YomiKoe</a>
         </h1>
       </header>
       <main>{m ? <DocView key={m[1]} documentId={Number(m[1])} /> : <Library />}</main>

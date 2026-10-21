@@ -1,4 +1,4 @@
-// Typed client for the HearNarro API (spec _agent/specs/m3-reader-interfaces.md §1, §4).
+// Typed client for the YomiKoe API (spec _agent/specs/m3-reader-interfaces.md §1, §4).
 // Paths are relative: in dev Vite proxies them to the API (D21).
 
 import type {

@@ -1,5 +1,5 @@
 /*
- * HearNarro reader styles (spec §7). Tokens on :root, redefined for dark mode.
+ * YomiKoe reader styles (spec §7). Tokens on :root, redefined for dark mode.
  * Highlight contrast (WCAG 2.x relative luminance, text colour on highlight), computed with
  * the WCAG formula; the run is saved in _agent/results/428b_contrast.txt:
  *   light: --text #1a1a1a on --hl #ffe58a = 13.95:1, on --hl-seg #fdf6dc = 16.07:1

@@ -3,7 +3,7 @@
 //
 // For each speed, picks three body segments of 100-200 characters whose clip is not cached yet
 // (HEAD /audio/{id} -> 404), opens the reader on a fresh page, sets the speed, clicks the
-// segment's first word (PLAY from idle, PLAY-3) and records the hook's `hearnarro:first-audio`
+// segment's first word (PLAY from idle, PLAY-3) and records the hook's `yomikoe:first-audio`
 // log. A second play of one segment per speed on a fresh page gives the warm (cached) wait.
 //
 // Usage: API on 8765, Vite on 5180, then
@@ -51,7 +51,7 @@ async function measure(browser, docId, seg, speed) {
   const page = await browser.newPage()
   let log = null
   page.on('console', async (msg) => {
-    if (msg.type() !== 'info' || !msg.text().startsWith('hearnarro:first-audio')) return
+    if (msg.type() !== 'info' || !msg.text().startsWith('yomikoe:first-audio')) return
     const args = msg.args()
     if (args.length > 1) log = await args[1].jsonValue()
   })

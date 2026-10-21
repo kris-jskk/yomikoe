@@ -43,7 +43,7 @@ export const PREFETCH_DEPTH = 2
 const START_LEAD_SEC = 0.05
 /** POSITION is dispatched at most this often (4 Hz). */
 const POSITION_MS = 250
-/** Entries kept for `window.__hearnarro.entries` per generation. */
+/** Entries kept for `window.__yomikoe.entries` per generation. */
 const LOG_CAP = 500
 /** LIB-2: TICK_SAVE period while playing. */
 export const SAVE_TICK_MS = 5_000
@@ -72,7 +72,7 @@ export interface ClipStats {
 }
 
 /** Test and measurement hooks read by the e2e gate (spec §6 "Instrumentation"). */
-export interface HearnarroHooks {
+export interface YomikoeHooks {
   firstStartAt: number | null
   now: () => number
   readonly entries: ScheduleEntryView[]
@@ -81,7 +81,7 @@ export interface HearnarroHooks {
 }
 
 /** `window` with the test hooks (the e2e spec declares the same field globally). */
-const hookWindow = () => window as unknown as { __hearnarro?: HearnarroHooks }
+const hookWindow = () => window as unknown as { __yomikoe?: YomikoeHooks }
 
 export interface Player {
   state: PlayerState
@@ -211,7 +211,7 @@ export class PlayerEngine {
   navPending = false
   private readerEl: HTMLElement | null = null
   private readonly onReaderInput = () => this.noteInput()
-  readonly hooks: HearnarroHooks
+  readonly hooks: YomikoeHooks
   private readonly dispatch: (e: PlayerEvent) => void
   private readonly onClip: (s: ClipStats) => void
   private readonly onFollow: (following: boolean, hint: FollowHint) => void
@@ -235,7 +235,7 @@ export class PlayerEngine {
         })),
     })
     Object.defineProperty(hooks, 'following', { enumerable: true, get: () => this.following })
-    this.hooks = hooks as HearnarroHooks
+    this.hooks = hooks as YomikoeHooks
   }
 
   /** Mirror of the reducer state, synced after every render (layout effect). */
@@ -485,7 +485,7 @@ export class PlayerEngine {
           return
         }
         // a failed prefetch: skip the segment and keep playing (PLAY-5)
-        console.warn('hearnarro:skip-segment', { segmentId: id, reason: message })
+        console.warn('yomikoe:skip-segment', { segmentId: id, reason: message })
         this.skipped.add(id)
         this.scheduleReady()
       },
@@ -548,7 +548,7 @@ export class PlayerEngine {
         const fa = s.firstAudio
         if (fa && fa.startedAt === null) {
           const toks = this.tokens.get(clip.segmentId) ?? []
-          console.info('hearnarro:first-audio', {
+          console.info('yomikoe:first-audio', {
             ms: Math.round(at - fa.requestedAt),
             speed: s.speed,
             voice: s.voice,
@@ -711,7 +711,7 @@ export function usePlayer(opts: { title?: string } = {}): Player {
   // Only document scrolls count: an inner scroller such as the Toc list never stops following.
   useEffect(() => {
     const w = hookWindow()
-    w.__hearnarro = engine.hooks
+    w.__yomikoe = engine.hooks
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return // a player shortcut (PLAY-6), not a page scroll
       const t = e.target instanceof HTMLElement ? e.target.tagName : null
@@ -735,7 +735,7 @@ export function usePlayer(opts: { title?: string } = {}): Player {
       window.removeEventListener('scrollend', onScrollEnd, { capture: true })
       engine.attachReader(null)
       engine.dispose()
-      if (w.__hearnarro === engine.hooks) delete w.__hearnarro
+      if (w.__yomikoe === engine.hooks) delete w.__yomikoe
     }
   }, [engine])
 

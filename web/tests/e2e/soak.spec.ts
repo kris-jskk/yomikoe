@@ -33,13 +33,13 @@ type Hn = {
 }
 declare global {
   interface Window {
-    __hearnarro?: Hn
+    __yomikoe?: Hn
   }
 }
 
 const FIRST_RENDER_LIMIT_MS = 5_000
 
-// FakeBackend timing (api/hearnarro/synthesis/fake.py; same rule as play.spec.ts).
+// FakeBackend timing (api/yomikoe/synthesis/fake.py; same rule as play.spec.ts).
 const SAMPLE_RATE = 24_000
 const wordSec = (speed: number) => Math.round((SAMPLE_RATE * 80) / 1000 / speed) / SAMPLE_RATE
 const wordCount = (s: Segment) => s.normalized_text.match(/\S+/g)?.length ?? 0
@@ -71,7 +71,7 @@ async function tokenForWord(api: Api, seg: Segment, word: number, voice: string,
 
 const activeSeg = (page: Page) =>
   page.evaluate(() => {
-    const h = window.__hearnarro
+    const h = window.__yomikoe
     const w = document.querySelector<HTMLElement>('.w.active')
     const seg = w?.closest<HTMLElement>('.seg')
     return {
@@ -165,7 +165,7 @@ test('soak: 300-page document renders under 5 s, highlights at 3 probes, skips t
     for (const t of [3, 8, 15]) {
       await page.waitForFunction(
         (t) => {
-          const h = window.__hearnarro
+          const h = window.__yomikoe
           return !!h && h.firstStartAt != null && h.now() - h.firstStartAt >= t
         },
         t,

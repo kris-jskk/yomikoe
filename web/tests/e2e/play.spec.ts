@@ -5,9 +5,9 @@
 import type { Page } from '@playwright/test'
 import { expect, getSegments, test, type Api, type Segment } from './fixtures'
 
-// WebKit/Firefox run only when HEARNARRO_E2E_ALL_ENGINES=1 (reported, not asserted, in M3).
+// WebKit/Firefox run only when YOMIKOE_E2E_ALL_ENGINES=1 (reported, not asserted, in M3).
 test.skip(
-  ({ browserName }) => browserName !== 'chromium' && !process.env.HEARNARRO_E2E_ALL_ENGINES,
+  ({ browserName }) => browserName !== 'chromium' && !process.env.YOMIKOE_E2E_ALL_ENGINES,
   'M3 gate is asserted on Chromium only',
 )
 test.describe.configure({ timeout: 90_000 })
@@ -19,12 +19,12 @@ type Hn = {
 }
 declare global {
   interface Window {
-    __hearnarro?: Hn
+    __yomikoe?: Hn
   }
 }
 
 /**
- * FakeBackend timing rule (api/hearnarro/synthesis/fake.py): every `\S+` word of a segment's
+ * FakeBackend timing rule (api/yomikoe/synthesis/fake.py): every `\S+` word of a segment's
  * normalized_text is round(24000 * 80 ms / speed) frames of silence at 24 kHz, words back to
  * back, clips back to back (an all-silent clip is not trimmed). So elapsed time from the first
  * clip's start maps to (segment order, word index into normalized_text).
@@ -63,7 +63,7 @@ async function tokenForWord(api: Api, seg: Segment, word: number, voice: string,
 
 async function active(page: Page) {
   return page.evaluate(() => {
-    const h = window.__hearnarro
+    const h = window.__yomikoe
     const w = document.querySelector<HTMLElement>('.w.active')
     const seg = w?.closest<HTMLElement>('.seg')
     return {
@@ -108,7 +108,7 @@ test('PLAY-1/PLAY-2/PLAY-5: highlighted word matches the FakeBackend clock at 3 
   for (const t of [3, 8, 15]) {
     await page.waitForFunction(
       (t) => {
-        const h = window.__hearnarro
+        const h = window.__yomikoe
         return !!h && h.firstStartAt != null && h.now() - h.firstStartAt >= t
       },
       t,
@@ -242,7 +242,7 @@ test('PLAY-5: with every clip cached, consecutive entries splice with zero gap',
 }) => {
   // First play populates the server cache (each GET also synthesizes the next five).
   await openAndPlay(page, api)
-  await page.waitForFunction(() => (window.__hearnarro?.entries.length ?? 0) >= 6, undefined, {
+  await page.waitForFunction(() => (window.__yomikoe?.entries.length ?? 0) >= 6, undefined, {
     timeout: 30_000,
   })
   // Second play of the same document: every clip is a cache hit.
@@ -252,7 +252,7 @@ test('PLAY-5: with every clip cached, consecutive entries splice with zero gap',
   await expect
     .poll(
       async () => {
-        const entries = await page.evaluate(() => window.__hearnarro?.entries ?? [])
+        const entries = await page.evaluate(() => window.__yomikoe?.entries ?? [])
         for (const e of entries) seen.set(e.segmentId, e)
         return seen.size
       },

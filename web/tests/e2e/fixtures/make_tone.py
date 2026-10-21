@@ -4,7 +4,7 @@ import math
 import struct
 from pathlib import Path
 
-from hearnarro.synthesis.encode import EncoderUnavailable, OpusEncoder, WavEncoder
+from yomikoe.synthesis.encode import EncoderUnavailable, OpusEncoder, WavEncoder
 
 out, sr = Path(__file__).resolve().parent, 24_000
 pcm = b"".join(
