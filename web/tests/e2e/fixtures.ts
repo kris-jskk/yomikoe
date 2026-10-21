@@ -9,6 +9,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test as base } from '@playwright/test'
+import { pauseAfterMs } from '../../src/player/pauses'
 
 /** Smallest fixture PDF (bytes) with at least 30 body segments: 111 body / 198 total. */
 export const FIXTURE_PDF = 'academic_01_seahelm_audio.pdf'
@@ -38,6 +39,48 @@ export type DocumentSummary = {
   position?: { segment_id: number | null; offset_ms: number } | null
   sections: { id: number; title: string; level: number; first_segment_id: number }[]
   settings: { voice_id: string | null; speed: number | null } | null
+}
+
+/**
+ * FakeBackend timing rule (api/yomikoe/synthesis/fake.py): every `\S+` word of a segment's
+ * normalized_text is round(24000 * 80 ms / speed) frames of silence at 24 kHz, words back to back.
+ * SYN-8 (spec Q7, D53): each clip is followed by the pause of its block type (src/player/pauses.ts)
+ * before the next one starts. Shared by play.spec.ts and soak.spec.ts.
+ */
+export const SAMPLE_RATE = 24_000
+export const wordSec = (speed: number) =>
+  Math.round((SAMPLE_RATE * 80) / 1000 / speed) / SAMPLE_RATE
+export const wordCount = (s: Segment) => s.normalized_text.match(/\S+/g)?.length ?? 0
+
+/** Global word index (reading order, from order 0) -> (segment, word index); null past end. */
+export function wordAt(segs: Segment[], globalWord: number): { seg: Segment; word: number } | null {
+  let left = globalWord
+  for (const seg of segs) {
+    const n = wordCount(seg)
+    if (left < n) return { seg, word: left }
+    left -= n
+  }
+  return null
+}
+
+/**
+ * Global word index heard `t` seconds after the first clip's start, counting each segment's
+ * SYN-8 pause after it; during a pause the highlight stays on that segment's last word.
+ */
+export function wordAtTime(segs: Segment[], t: number, ws: number): number {
+  let left = t
+  let before = 0
+  for (const seg of segs) {
+    const n = wordCount(seg)
+    const dur = n * ws
+    if (left < dur) return before + Math.floor(left / ws)
+    left -= dur
+    before += n
+    const pause = pauseAfterMs(seg.type) / 1000
+    if (left < pause) return Math.max(0, before - 1)
+    left -= pause
+  }
+  return before
 }
 
 export type RequestLog = { url: string; at: number }[]

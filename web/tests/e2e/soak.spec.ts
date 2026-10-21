@@ -18,6 +18,9 @@ import {
   getSegments,
   test,
   uploadPdfFile,
+  wordAt,
+  wordAtTime,
+  wordSec,
   type Api,
   type PatchLog,
   type Segment,
@@ -39,20 +42,7 @@ declare global {
 
 const FIRST_RENDER_LIMIT_MS = 5_000
 
-// FakeBackend timing (api/yomikoe/synthesis/fake.py; same rule as play.spec.ts).
-const SAMPLE_RATE = 24_000
-const wordSec = (speed: number) => Math.round((SAMPLE_RATE * 80) / 1000 / speed) / SAMPLE_RATE
-const wordCount = (s: Segment) => s.normalized_text.match(/\S+/g)?.length ?? 0
-
-function wordAt(segs: Segment[], globalWord: number): { seg: Segment; word: number } | null {
-  let left = globalWord
-  for (const seg of segs) {
-    const n = wordCount(seg)
-    if (left < n) return { seg, word: left }
-    left -= n
-  }
-  return null
-}
+// FakeBackend timing and SYN-8 pauses: wordSec, wordAt, wordAtTime in fixtures.ts (as play.spec.ts).
 
 function tokenIndexAt(text: string, c: number): number {
   const re = /\S+/g
@@ -176,7 +166,7 @@ test('soak: 300-page document renders under 5 s, highlights at 3 probes, skips t
     }
     const probeOk: boolean[] = []
     for (const p of probes) {
-      const g = Math.floor(p.elapsed / wordSec(speed))
+      const g = wordAtTime(segs, p.elapsed, wordSec(speed))
       const allowed: string[] = []
       for (const d of [-1, 0, 1]) {
         const at = wordAt(segs, g + d)

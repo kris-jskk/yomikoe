@@ -4,7 +4,16 @@
  */
 import type { Page } from '@playwright/test'
 import { PAUSE_MS, pauseAfterMs } from '../../src/player/pauses'
-import { expect, getSegments, test, type Api, type Segment } from './fixtures'
+import {
+  expect,
+  getSegments,
+  test,
+  wordAt,
+  wordAtTime,
+  wordSec,
+  type Api,
+  type Segment,
+} from './fixtures'
 
 // WebKit/Firefox run only when YOMIKOE_E2E_ALL_ENGINES=1 (reported, not asserted, in M3).
 test.skip(
@@ -32,41 +41,6 @@ declare global {
  * SYN-8 (spec Q7): each clip is followed by the pause of its block type (pauses.ts: heading, list,
  * equation) before the next one starts; `wordAtTime` adds those gaps.
  */
-const SAMPLE_RATE = 24_000
-const wordSec = (speed: number) => Math.round((SAMPLE_RATE * 80) / 1000 / speed) / SAMPLE_RATE
-const wordCount = (s: Segment) => s.normalized_text.match(/\S+/g)?.length ?? 0
-
-/** Global word index (reading order, from order 0) -> (segment, word index); null past end. */
-function wordAt(segs: Segment[], globalWord: number): { seg: Segment; word: number } | null {
-  let left = globalWord
-  for (const seg of segs) {
-    const n = wordCount(seg)
-    if (left < n) return { seg, word: left }
-    left -= n
-  }
-  return null
-}
-
-/**
- * Global word index heard `t` seconds after the first clip's start, counting each segment's
- * SYN-8 pause after it; during a pause the highlight stays on that segment's last word.
- */
-function wordAtTime(segs: Segment[], t: number, ws: number): number {
-  let left = t
-  let before = 0
-  for (const seg of segs) {
-    const n = wordCount(seg)
-    const dur = n * ws
-    if (left < dur) return before + Math.floor(left / ws)
-    left -= dur
-    before += n
-    const pause = pauseAfterMs(seg.type) / 1000
-    if (left < pause) return Math.max(0, before - 1)
-    left -= pause
-  }
-  return before
-}
-
 /** Whitespace tokens of `text` (spec §6 tokenize) and the token holding char offset `c`. */
 function tokenIndexAt(text: string, c: number): number {
   const re = /\S+/g
@@ -271,7 +245,7 @@ test('PLAY-5: with every clip cached, consecutive entries splice with zero gap',
   // Second play of the same document: every clip is a cache hit.
   await page.reload()
   await openAndPlay(page, api)
-  const seen = new Map<number, { startAt: number; durationSec: number }>()
+  const seen = new Map<number, { segmentId: number; startAt: number; durationSec: number }>()
   await expect
     .poll(
       async () => {
