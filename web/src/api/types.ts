@@ -8,6 +8,13 @@ export interface WordTimestamp {
   char_end: number
 }
 
+/** MATH-5: one maths range of a segment; `display` for a displayed (boxed) equation. */
+export interface MathRange {
+  start: number
+  end: number
+  display: boolean
+}
+
 export interface Segment {
   id: number
   order: number
@@ -18,6 +25,8 @@ export interface Segment {
   normalized_text: string
   char_start: number
   char_end: number
+  /** MATH-5: maths ranges, offsets into `text` (absent from servers before M5 phase 5). */
+  math?: MathRange[]
 }
 
 export interface Section {
@@ -121,6 +130,8 @@ export interface DocumentPatch {
 export interface GlobalSettings {
   default_voice_id: string | null
   default_speed: number
+  /** PLAY-11: equation clips play at speed x this factor (0.5-1.0, default 0.8); absent before M5. */
+  equation_speed_factor?: number
 }
 
 /** `POST /documents` response: 202 for a new upload, 200 for an already-known file. */
