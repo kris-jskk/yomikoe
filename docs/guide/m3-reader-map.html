@@ -1,4 +1,4 @@
-<title>HearNarro M3 Reader Map</title>
+<title>YomiKoe M3 Reader Map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -65,7 +65,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
 
 <main>
   <header>
-    <h1>HearNarro M3: the reader that keeps the page in step with the voice</h1>
+    <h1>YomiKoe M3: the reader that keeps the page in step with the voice</h1>
     <p class="lede">Milestone 3 builds the browser side: one HTTP fetch per sentence, Web Audio buffers scheduled back to back, and a highlight that asks the audio clock where it is on every frame. This page is the live status of that work, one diagram per mechanism, and the phase ledger with evidence.</p>
     <div class="stamp"><span class="dot"></span> Updated 2026-10-17 · M3 closed and merged into main · repo copy docs/guide/m3-reader-map.html · branch m3-reader · spec _agent/specs/m3-reader-interfaces.md</div>
     <nav class="toc">
@@ -309,7 +309,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
       <div class="phase">
         <div class="who"><span class="pill done">done</span><span>phase 3</span><span>Opus ×4, Sonnet ×3</span><span>commits b373592, 4d00971, 25c3fa3, 67119ab, 07092a7, 7a39e94</span></div>
         <div class="what"><b>Gate, matrix, measurement</b><span class="why-line">PLAY-1..5 asserted on Chromium; the two carried decisions (D16 format, D19 chunking) get their numbers here.</span>
-          <ul><li><b>Gate green on all three engines, 9 of 9 each</b> (436–438): word highlight matches the clock at 3, 8 and 15 s; click-to-seek lands within 500 ms; a speed change mid-sentence restarts that sentence at the new speed and the lookahead is re-requested at it; pause/resume and sentence and section skips; zero gap over cached boundaries. PLAY tests run on WebKit and Firefox with <code>HEARNARRO_E2E_ALL_ENGINES=1</code>; Chromium is the asserted engine (D22).</li><li>Licence check has an npm mode: 179 packages, production closure react, react-dom, scheduler (all MIT), 0 violations; the CC-BY-4.0 dev-only data allowance is recorded in the script (440).</li><li>First-audio measured in the real browser against Kokoro on documents 16–19, cold cache per row (445); the table below. The first run exposed a client defect: on a cold play the reader fetched the target and its two prefetch sentences at the same millisecond, and the single synthesis thread serves GETs in arrival order (453). Fixed: prefetch now starts when the target's response lands (67119ab); unit 58 and gate 9 green after it (449, 451).</li><li>Docs: <code>docs/CODE_MAP_M3.md</code> (ten flows traced file to function, every module with status, nine spec deviations listed), <code>docs/M3_TESTING.md</code>, PRD and design log carry D20–D25; no stale Kokoro ONNX mention remains (446, 447).</li></ul>
+          <ul><li><b>Gate green on all three engines, 9 of 9 each</b> (436–438): word highlight matches the clock at 3, 8 and 15 s; click-to-seek lands within 500 ms; a speed change mid-sentence restarts that sentence at the new speed and the lookahead is re-requested at it; pause/resume and sentence and section skips; zero gap over cached boundaries. PLAY tests run on WebKit and Firefox with <code>YOMIKOE_E2E_ALL_ENGINES=1</code>; Chromium is the asserted engine (D22).</li><li>Licence check has an npm mode: 179 packages, production closure react, react-dom, scheduler (all MIT), 0 violations; the CC-BY-4.0 dev-only data allowance is recorded in the script (440).</li><li>First-audio measured in the real browser against Kokoro on documents 16–19, cold cache per row (445); the table below. The first run exposed a client defect: on a cold play the reader fetched the target and its two prefetch sentences at the same millisecond, and the single synthesis thread serves GETs in arrival order (453). Fixed: prefetch now starts when the target's response lands (67119ab); unit 58 and gate 9 green after it (449, 451).</li><li>Docs: <code>docs/CODE_MAP_M3.md</code> (ten flows traced file to function, every module with status, nine spec deviations listed), <code>docs/M3_TESTING.md</code>, PRD and design log carry D20–D25; no stale Kokoro ONNX mention remains (446, 447).</li></ul>
           <h3>First audio in the browser, cold cache, Kokoro, 100–200 character sentences (445 before the prefetch fix, 452 after; different segments, three per speed, so indicative)</h3>
           <div class="tablewrap"><table class="rules">
             <tr><th>speed</th><th>before: three cold rows</th><th>before mean</th><th>after: three cold rows</th><th>after mean</th><th>warm (cached)</th><th>M2 API benchmark mean</th></tr>
@@ -363,7 +363,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
     <div class="note"><ul>
       <li>No Node, npm or Homebrew on this machine at the start of M3; Node now lives under <code>~/.local/node</code> and Playwright's browsers under <code>~/.local/ms-playwright</code>; nothing else outside the repo was touched. Every command in <code>web/</code> starts with <code>source web/scripts/env.sh</code>.</li>
       <li>The API has no position endpoint yet; the reader keeps position in memory until M4 (LIB-2).</li>
-      <li>The M2 guide stays the reference for synthesis and the audio protocol: <a href="https://claude.ai/artifact/J7wJUWammFqBxc22s121Pr">HearNarro M2 Synthesis Map</a>; M1 for ingestion: <a href="https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n">HearNarro M1 Ingest Map</a>.</li>
+      <li>The M2 guide stays the reference for synthesis and the audio protocol: <a href="https://claude.ai/artifact/J7wJUWammFqBxc22s121Pr">YomiKoe M2 Synthesis Map</a>; M1 for ingestion: <a href="https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n">YomiKoe M1 Ingest Map</a>.</li>
     </ul></div>
   </section>
 </main>

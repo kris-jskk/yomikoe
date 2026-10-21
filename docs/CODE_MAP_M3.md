@@ -1,4 +1,4 @@
-# HearNarro M3 code map: the reader (React, Web Audio, highlight)
+# YomiKoe M3 code map: the reader (React, Web Audio, highlight)
 
 This document explains how the M3 reader works end to end and what every file under `web/src`
 and `web/tests` does. It is written for an engineer joining the project who has read
@@ -37,7 +37,7 @@ served by the API with `FakeBackend`, presses play, checks the highlighted word 
 in 20 s, seeks by click and changes speed mid-play. Asserted on Chromium (D22):
 `_agent/results/436_e2e_chromium_gate.txt` (9 passed). WebKit and Firefox are reported:
 `_agent/results/437_e2e_webkit.txt` (9 passed) and `_agent/results/438_e2e_firefox.txt` (9 passed),
-both run with `HEARNARRO_E2E_ALL_ENGINES=1`. Unit tests: `_agent/results/432_unit_green.txt`
+both run with `YOMIKOE_E2E_ALL_ENGINES=1`. Unit tests: `_agent/results/432_unit_green.txt`
 (3 files, 58 tests passed). The same e2e suite was red before the UI existed:
 `_agent/results/421_e2e_red_chromium.txt` (5 failed, 4 passed).
 
@@ -89,7 +89,7 @@ browser            App/DocView            client.ts                 API (Vite pr
    `GET /documents` and links only `status == 'ready'` rows). The `key` remounts the view per document.
 2. **Player created.** `src/App.tsx` → `DocView` → `usePlayer()` (`src/player/usePlayer.ts`):
    `useReducer(reduce, initialState)`, a `PlayerEngine` in `useState`, a layout effect that mirrors
-   every new state into `engine.sync(state)`, and an effect that sets `window.__hearnarro =
+   every new state into `engine.sync(state)`, and an effect that sets `window.__yomikoe =
    engine.hooks` and listens on `window` for `keydown`, counting only scroll keys outside form
    controls (`schedule.ts` → `isScrollKey`). `Reader` registers `<article class="reader">` through
    `player.registerReaderEl` → `engine.attachReader(el)`, which puts the passive `wheel`/`touchmove`
@@ -160,13 +160,13 @@ PlayerBar        usePlayer.play     reduce          engine.build / ensureWindow 
    `normalized_text`) arrive this way. **Failed prefetch.** A rejected fetch dispatches `FETCH_FAILED`
    (→ `error`) only when `onFetchFailure(id, engine.targetId)` says the failed id is the segment the
    schedule is blocked on (the play/seek target, or the next clip while buffering); any other failure
-   logs `console.warn('hearnarro:skip-segment', {segmentId, reason})` and adds the id to `engine.skipped`.
+   logs `console.warn('yomikoe:skip-segment', {segmentId, reason})` and adds the id to `engine.skipped`.
 5. **Start.** On arrival `engine.scheduleReady()` (generation guarded): with an empty schedule it
    calls `startClip(clip, ctx.currentTime + 0.05, offsetSec)`: an `AudioBufferSourceNode`,
    `playbackRate = 1.0` (speed is in the audio, D5), `source.start(when, offset)`, entry
    `{segmentId, source, startAt = when - offset, durationSec = buffer.duration, generation, mapped}`
    where `mapped = mapTimestampsToTokens(tokens, clip.timestamps)`. It highlights the target word at
-   once, logs `console.info('hearnarro:first-audio', {ms, speed, voice, segmentId, textLength})`
+   once, logs `console.info('yomikoe:first-audio', {ms, speed, voice, segmentId, textLength})`
    and dispatches `AUDIO_READY{generation, at}`.
 6. **Playing.** `reduce` case `AUDIO_READY` (generation must match): `status = 'playing'`,
    `firstAudio.startedAt = at`. `PlayerBar` shows "first audio N.NN s" plus the last clip's fetch,
@@ -181,7 +181,7 @@ PlayerBar        usePlayer.play     reduce          engine.build / ensureWindow 
    `buffer.duration`, never `X-Duration-Ms`. The next id is `nextPlayable(orderedIds, tail, skipped)`,
    so a skipped segment is stepped over, and `ENDED` fires when no playable id is left.
    **Empty clip.** A zero-length clip gets an entry with `durationSec 0` and `source: null` (it stays in
-   `window.__hearnarro.entries`), so the next clip chains at the same `startAt` with no gap;
+   `window.__yomikoe.entries`), so the next clip chains at the same `startAt` with no gap;
    `startClip` then calls `ensureWindow(emptyId)`, because an entry of zero length is never under the
    clock and so never triggers step 2. Live check on document 17 orders 220–223:
    `_agent/results/463_live_doc17_order222.txt`.
@@ -199,7 +199,7 @@ PlayerBar        usePlayer.play     reduce          engine.build / ensureWindow 
    the chain advances when `requestAnimationFrame` is throttled.
 
 Evidence: the PLAY-5 e2e test reloads, plays the cached document and asserts `|gap| < 1e-6 s` over
-at least five consecutive entries of `window.__hearnarro.entries` (436–438).
+at least five consecutive entries of `window.__yomikoe.entries` (436–438).
 
 ### d. Seek by click (PLAY-3)
 
@@ -246,7 +246,7 @@ at least five consecutive entries of `window.__hearnarro.entries` (436–438).
    then never scrolls, however long playback runs, while the highlight keeps moving. Any explicit
    navigation (flow d step 4) or the `PlayerBar` pill `#follow` ("Back to reading ↑/↓", arrow from
    `schedule.ts` → `followHint(rect, innerHeight)`) → `engine.resumeFollowing()` centres the current
-   segment at once and sets `following = true`; `window.__hearnarro.following` exposes it.
+   segment at once and sets `following = true`; `window.__yomikoe.following` exposes it.
 6. **Position.** At most every 250 ms while `playing`: `POSITION{segmentId, offsetMs}` (the
    readout; M4 persistence will read it).
 
@@ -294,23 +294,23 @@ generation: builtGen}` → `error` (stale generations ignored). `PlayerBar` show
 ### j. The e2e harness start-up
 
 1. **Port.** `web/playwright.config.ts` (runner process) picks a free port once with a Node one-liner
-   and stores it in `HEARNARRO_E2E_API_PORT` (never 8765, the user's server). `workers: 1`.
+   and stores it in `YOMIKOE_E2E_API_PORT` (never 8765, the user's server). `workers: 1`.
 2. **Vite.** `webServer`: `npm run dev -- --port 5173 --strictPort --host 127.0.0.1` with
-   `HEARNARRO_API=http://127.0.0.1:<port>`; `web/vite.config.ts` proxies `/documents`, `/audio`,
+   `YOMIKOE_API=http://127.0.0.1:<port>`; `web/vite.config.ts` proxies `/documents`, `/audio`,
    `/voices` there (D21). The `[WebServer] ... ECONNREFUSED` lines in 436–438 are the decode tests
    loading `/` before the API fixture has started; they are harmless.
 3. **API fixture.** `web/tests/e2e/fixtures.ts` → worker-scoped fixture `api`: spawns
-   `api/.venv/bin/python -m hearnarro serve --data-dir <mkdtemp> --host 127.0.0.1 --port <port>` with
-   `HEARNARRO_TTS_BACKEND=fake`, polls `GET /documents` (30 s), uploads `FIXTURE_PDF`
+   `api/.venv/bin/python -m yomikoe serve --data-dir <mkdtemp> --host 127.0.0.1 --port <port>` with
+   `YOMIKOE_TTS_BACKEND=fake`, polls `GET /documents` (30 s), uploads `FIXTURE_PDF`
    (`academic_01_seahelm_audio.pdf`, 198 segments), polls `GET /documents/{id}` until `ready` (60 s),
    provides `{apiBase, documentId}`, and at teardown sends SIGTERM to its own PID (SIGKILL after 5 s)
    and deletes the data dir. The test-scoped `audioRequests` fixture logs every `/audio/` request.
 4. **Engines.** Projects `chromium` (launched with `--autoplay-policy=no-user-gesture-required`),
    `webkit`, `firefox`. `play.spec.ts` skips non-Chromium engines unless
-   `HEARNARRO_E2E_ALL_ENGINES=1` (D22); `decode.spec.ts` runs everywhere.
+   `YOMIKOE_E2E_ALL_ENGINES=1` (D22); `decode.spec.ts` runs everywhere.
 5. **Expected word.** `play.spec.ts` derives the expected position from the FakeBackend rule
    (`round(24000 × 80 ms / speed)` frames per `\S+` word of `normalized_text`, words and clips back to
-   back) and `window.__hearnarro.{firstStartAt, now()}`, maps the word to a DOM token through the
+   back) and `window.__yomikoe.{firstStartAt, now()}`, maps the word to a DOM token through the
    API's `X-Timestamps`, and compares with `.w.active` within ±1 word at 3 s, 8 s and 15 s.
 
 ## Modules and files
@@ -325,7 +325,7 @@ generation: builtGen}` → `error` (stale generations ignored). `PlayerBar` show
 | `api/client.ts` | The only module that builds URLs; 15 s timeout; `ApiError` | `TIMEOUT_MS`, `PAGE_LIMIT`, `ApiError`, `formatSpeed`, `audioUrl`, `segmentsUrl`, `getDocuments`, `getDocument`, `getAllSegments`, `getVoices`, `parseTimestamps`, `fetchAudio` | HTTP via `fetch`; `AudioContext.decodeAudioData` | tested (unit + e2e) |
 | `player/machine.ts` | Pure, totally defined reducer (D10): 5 states, 17 events, generation guard | `PlayerStatus`, `PlayerContext`, `PlayerState`, `PlayerEvent`, `initialState`, `indexOf`, `reduce` | none | tested (unit) |
 | `player/schedule.ts` | Pure timing helpers (D5, D8) | `Token`, `MappedTimestamp`, `ScheduleEntryView`, `tokenize`, `mapTimestampsToTokens`, `locate`, `findActiveWord`, `ScrollReason`, `shouldAutoScroll`, `FollowHint`, `followHint`, `isScrollKey` | none | tested (unit) |
-| `player/usePlayer.ts` | `PlayerEngine` (AudioContext, schedule map, pending fetches, rAF tick, highlight, auto-scroll, instrumentation) and the `usePlayer` hook (reducer + effects + callbacks) | `PREFETCH_DEPTH`, `ScheduleEntry`, `ClipStats`, `HearnarroHooks`, `Player`, `PlayerEngine`, `usePlayer` | `window.__hearnarro`; DOM classes `active`, `data-active`; `console.info('hearnarro:first-audio')`; `/audio` via client | tested (e2e) |
+| `player/usePlayer.ts` | `PlayerEngine` (AudioContext, schedule map, pending fetches, rAF tick, highlight, auto-scroll, instrumentation) and the `usePlayer` hook (reducer + effects + callbacks) | `PREFETCH_DEPTH`, `ScheduleEntry`, `ClipStats`, `YomikoeHooks`, `Player`, `PlayerEngine`, `usePlayer` | `window.__yomikoe`; DOM classes `active`, `data-active`; `console.info('yomikoe:first-audio')`; `/audio` via client | tested (e2e) |
 | `components/Picker.tsx` | Document list (M3 minimum, not LIB-1); ready rows link to `#/doc/{id}` | `Picker` | `GET /documents` | implemented (no e2e test renders the picker; the harness test calls `/documents/{id}` through the proxy) |
 | `components/Reader.tsx` | Segments as `.seg` with `.w` tokens; registers refs (segments and, via `registerReaderEl`, the reading column for the follow-mode listeners); one click handler for seek; section derivation (D25) | `Reader`, `ReaderProps`, `deriveSections` | DOM | tested (e2e) |
 | `components/PlayerBar.tsx` | Transport, "Back to reading" pill `#follow` (shown while not following), voice select, speed slider and readout, `role="status"` word with `data-status`, Retry/Dismiss, stats line | `PlayerBar`, `PlayerBarProps`, `snapSpeed` | reducer state, `lastClip` | tested (e2e) |
@@ -340,7 +340,7 @@ generation: builtGen}` → `error` (stale generations ignored). `PlayerBar` show
 | `unit/schedule.test.ts` | `tokenize` offsets, `mapTimestampsToTokens` on FakeBackend-shaped and spanning timestamps, `locate` with a gap, `findActiveWord` boundaries (16 `it`) | PLAY-2, PLAY-5 | green (432) |
 | `unit/client.test.ts` | Spec §1 paths, two-decimal speed in the audio URL, `getAllSegments` paging and sort, `fetchAudio` header parsing and decode-a-copy, `ApiError` on non-2xx, 15 s timeout, caller abort (7 `it`) | PLAY-4 | green (432) |
 | `e2e/fixtures.ts` | Worker-scoped API fixture (FakeBackend, temp data dir, upload, ready), `audioRequests` log, `getSegments`, `getDocument` | gate harness | fixture |
-| `e2e/play.spec.ts` | The gate: harness proxy check, PLAY-1/2/5 probes, PLAY-3 click, PLAY-4 speed, PLAY-1 transport and sections, PLAY-5 zero gap | PLAY-1..PLAY-5 | green (436; 437, 438 with `HEARNARRO_E2E_ALL_ENGINES=1`) |
+| `e2e/play.spec.ts` | The gate: harness proxy check, PLAY-1/2/5 probes, PLAY-3 click, PLAY-4 speed, PLAY-1 transport and sections, PLAY-5 zero gap | PLAY-1..PLAY-5 | green (436; 437, 438 with `YOMIKOE_E2E_ALL_ENGINES=1`) |
 | `e2e/decode.spec.ts` | D16 matrix: `decodeAudioData` on `tone.wav` and `tone.ogg`; headless `currentTime` advances. WAV on Chromium asserted, the rest reported | D16 | green (436–438; 422, 423) |
 | `e2e/fixtures/make_tone.py`, `tone.wav`, `tone.ogg` | 1 s 440 Hz tone made with the API's `WavEncoder` / `OpusEncoder` | D16 | fixture |
 | `e2e/probe_api.py` | Phase 1 probe: starts the API with FakeBackend, uploads the fixture, prints segment counts (`_agent/results/420_api_fixture_probe.txt`) | harness | script |
@@ -350,7 +350,7 @@ generation: builtGen}` → `error` (stale generations ignored). `PlayerBar` show
 | File | Responsibility | Status |
 | --- | --- | --- |
 | `package.json`, `package-lock.json` | Exact pinned versions; scripts `dev`, `build`, `typecheck`, `lint`, `format`, `test`, `e2e`. Production dependencies: react, react-dom (closure react, react-dom, scheduler; `_agent/results/440_licence_npm.txt`) | installed (`_agent/results/406_npm_install.txt`) |
-| `vite.config.ts` | Dev proxy for `/documents`, `/audio`, `/voices` to `HEARNARRO_API` (default `http://127.0.0.1:8765`, D21); vitest includes `tests/unit/**/*.test.ts` | tested |
+| `vite.config.ts` | Dev proxy for `/documents`, `/audio`, `/voices` to `YOMIKOE_API` (default `http://127.0.0.1:8765`, D21); vitest includes `tests/unit/**/*.test.ts` | tested |
 | `playwright.config.ts` | Free API port, Vite `webServer`, three engine projects, one worker | tested |
 | `tsconfig.json`, `eslint.config.js`, `.prettierrc`, `index.html` | Toolchain config | tested (typecheck 408, lint 409, build 411) |
 | `scripts/install_node.sh` | D20: Node `v24.22.0` darwin-arm64 tarball, SHA-256 checked against `SHASUMS256.txt`, into `~/.local/node`; refuses to overwrite | script |
@@ -373,7 +373,7 @@ segment id in `engine.pending`; a decoded clip waits here until `scheduleReady` 
 **`AudioClip`** (`types.ts`): `{segmentId, voice, speed, buffer, timestamps, durationMs, mediaType,
 fetchMs, decodeMs}`.
 
-**`window.__hearnarro`** (`HearnarroHooks`): `firstStartAt` (first entry's `startAt`), `now()`
+**`window.__yomikoe`** (`YomikoeHooks`): `firstStartAt` (first entry's `startAt`), `now()`
 (`ctx.currentTime`), `entries` (getter over `engine.sorted`). Read by the gate and the D19 script.
 
 **DOM contract:** `.seg[data-id][data-order]`, class `seg-{type}`, `.w[data-i]`, `.active` on the
@@ -408,7 +408,7 @@ What the code does where it departs from `_agent/specs/m3-reader-interfaces.md`:
 6. **`SET_VOICE` / `SET_SPEED` are dropped during `loading`.** Spec §5 lists only `playing` and
    `paused|idle`; the reducer returns the state unchanged in `loading` and `error`, so a slider
    move while a clip is loading (including while buffering) is lost and the control snaps back.
-7. **`window.__hearnarro` is set in every build.** Spec §8 says "dev/test builds only". Code sets it
+7. **`window.__yomikoe` is set in every build.** Spec §8 says "dev/test builds only". Code sets it
    unconditionally in the hook's effect (`usePlayer.ts`); it exposes only timing values.
 8. **The rAF loop also runs in `loading`.** Spec §6: "while `playing`". Code: `playing` or
    `loading`, so the highlight continues while buffering.
@@ -437,7 +437,7 @@ The commands with expected output are in `docs/M3_TESTING.md`.
 | D19 clause chunking at speeds < 1.0: first-audio table in `_agent/results/445_first_audio_kokoro.txt` (before) and `452_first_audio_after.txt` (after 67119ab); decision pending | `synthesis/service.py` or the client | decision at M3 close |
 | Settings changes during `loading` are dropped (deviation 6) | `machine.ts` | M4 or a follow-up |
 | `sections` table never written; reader derives sections from heading segments (D25) | ING-8 | M4 |
-| FastAPI serving `web/dist` (no Vite in production, D21) | `api/hearnarro/app.py` | M4 |
+| FastAPI serving `web/dist` (no Vite in production, D21) | `api/yomikoe/app.py` | M4 |
 | Position persistence (`PATCH`), remembered settings, keyboard, Media Session | LIB-2, LIB-3, PLAY-6, PLAY-7 | M4 |
 | Virtualised rendering and the 300-page soak | `Reader.tsx` | M4 |
 | iOS Safari background playback | PRD open question | manual check |

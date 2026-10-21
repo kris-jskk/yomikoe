@@ -47,7 +47,7 @@ Counts are the tally lines and per-line verdicts in each file (physics records 7
 | --- | --- | --- |
 | EVAL-11 domain speech, per domain | ≥ 0.95 mean word-sequence score per domain once that domain's phase lands; ≥ 0.90 for every class with ≥ 3 pairs | EVAL-11 record, same scorer as EVAL-10 (D14-style, lower-cased, punctuation stripped) |
 | Probe strings | ≥ 13 of 15 correct per domain after its phase (from 0–1 today) | Re-run of the six probe scripts, saved under `_agent/results/` |
-| No regressions | EVAL-1 to EVAL-10 tier 0 show no unexplained D33 regression | `python -m hearnarro.evals compare` |
+| No regressions | EVAL-1 to EVAL-10 tier 0 show no unexplained D33 regression | `python -m yomikoe.evals compare` |
 | Leak check | 0 raw symbols outside the allowed set in EVAL-11 output | The convention checker (`api/scripts/check_math_convention.py`) extended to EVAL-11 |
 
 ## Users and use cases
@@ -266,15 +266,15 @@ All rules hook into existing stages; nothing changes in synthesis, audio deliver
 
 | Hook (existing) | What the domain rules add | DOM rows |
 | --- | --- | --- |
-| ING-6 prose normalizer, `api/hearnarro/ingestion/normalize.py` | A domain pass: units grammar, scientific notation, ranges and uncertainty, numbers, currency and periods, regnal and era rules, citation and reference tables, HGVS and clinical shorthand, numeric literals, versions and paths, statistics reporting | DOM-1 to DOM-4, DOM-6, DOM-7, DOM-11 to DOM-20 |
-| MATH-3 symbol table, `_speak_symbols` with `api/hearnarro/ingestion/math_symbols.py` and `api/scripts/math_convention.json` | Role-keyed entries (D46): reaction arrows, bond words, cross, dagger, bra and ket, big O, gets, proves, elementwise times | DOM-8, DOM-9, DOM-19, DOM-20 |
+| ING-6 prose normalizer, `api/yomikoe/ingestion/normalize.py` | A domain pass: units grammar, scientific notation, ranges and uncertainty, numbers, currency and periods, regnal and era rules, citation and reference tables, HGVS and clinical shorthand, numeric literals, versions and paths, statistics reporting | DOM-1 to DOM-4, DOM-6, DOM-7, DOM-11 to DOM-20 |
+| MATH-3 symbol table, `_speak_symbols` with `api/yomikoe/ingestion/math_symbols.py` and `api/scripts/math_convention.json` | Role-keyed entries (D46): reaction arrows, bond words, cross, dagger, bra and ket, big O, gets, proves, elementwise times | DOM-8, DOM-9, DOM-19, DOM-20 |
 | Mathspeak (MATH-1, MATH-2) | Bracket-as-concentration and commutator under a field; orbital terms; upper tensor indices; dimensions "by" | DOM-8, DOM-9, DOM-20 |
 | ING-11 profile (`compute_profile`) | `fields` set (D45) and per-document settings (D51) | DOM-22, DOM-23 |
 | SYN-4 acronym table (`acronyms.decide()`, seen in `_agent/results/865_finance_probe_today.txt`) | Per-field spoken and spelled overrides | DOM-25 |
 | TERM-1 lexicon, TERM-4 expansion table | Six new lexicon categories; per-field abbreviation rows | DOM-24, DOM-25 |
 | Sentence splitting (stage 5) | Abbreviation dots are not sentence ends | DOM-26 |
 | ING-3 font runs and table blocks; ING-10 code listings | Superscript restoration; row-by-row tables; pseudocode block detection | DOM-5, DOM-20, DOM-21 |
-| Evals (`api/hearnarro/evals/`) | EVAL-11 suite over `domain_speech.jsonl` | DOM-27 |
+| Evals (`api/yomikoe/evals/`) | EVAL-11 suite over `domain_speech.jsonl` | DOM-27 |
 
 **Pipeline order inside normalization** (D49): (1) sentence-split protections for abbreviation dots; (2) whole-token tables (references, citations, tickers, gene symbols, `y/y`, `n/m`, HGVS) so that their `/`, `:`, `>` and `.` are claimed before any symbol rule; (3) number-anchored grammar (currency, units, scientific notation, uncertainty, ranges, ratios, data units, coordinates) so that `′`, `/` and `°` after a number are claimed before `_speak_symbols`; (4) field-gated rules (formulas, regnal numerals, clinical shorthand, statistics position); (5) today's `_speak_symbols` and mathspeak with role-keyed entries; (6) SYN-4 and the lexicon in the backend. History.md §6 and physics.md §2.11 both depend on step 3 preceding step 5 (today `51°30′N` comes out as "51 degrees30′N" with the prime leaked, `_agent/results/871_history_probe_roman_structural.txt` as quoted in `_agent/reports/domain-speech-history.md`).
 
@@ -283,7 +283,7 @@ All rules hook into existing stages; nothing changes in synthesis, audio deliver
 - **D45** ING-11 profile gains a multi-valued `fields` set beside the `prose`/`mixed`/`math` class, detected from token densities, user-overridable, re-normalizing without re-ingesting. Confirmed 2026-10-19.
 - **D46** "One wording per symbol per role": `math_convention.json` entries may carry role-keyed wordings selected by operand class or span type; banned wordings stay banned in every role. Confirmed 2026-10-19.
 - **D47** Units are parsed as expressions (prefix, unit, power, product, quotient), not token by token; "per" is the units reading of `/`, "over" the maths reading. Confirmed 2026-10-19.
-- **D48** Shared data tables in one place under `api/hearnarro/ingestion/` (element symbols and names, polyatomic ions, units and prefixes, currencies, per-field abbreviations, reference works), each a data file with its own unit tests; no table is duplicated per field. Confirmed 2026-10-19.
+- **D48** Shared data tables in one place under `api/yomikoe/ingestion/` (element symbols and names, polyatomic ions, units and prefixes, currencies, per-field abbreviations, reference works), each a data file with its own unit tests; no table is duplicated per field. Confirmed 2026-10-19.
 - **D49** The normalization order above. Confirmed 2026-10-19.
 - **D50** EVAL-11 with per-domain floors, tier 0, same scorer as EVAL-10. Confirmed 2026-10-19.
 - **D51** Per-document reading settings (`jurisdiction`, `read_quantity_names`, `read_tables`, `quote_marks`) stored with the document like the ING-11 override. Confirmed 2026-10-19.
@@ -310,7 +310,7 @@ All rules hook into existing stages; nothing changes in synthesis, audio deliver
 | Eval time | Tier 0 stays near today's 15 s: EVAL-11 runs the normalizer only, on about 280 pairs; target under 2 s added (proposed, unverified) |
 | Throughput | The domain pass adds under 10 % to normalization time on the 15 EVAL-1 fixtures (proposed, measured in the first phase) |
 | Determinism | The same text, profile and settings give the same spoken text; no network, no model |
-| Evals rule | Every change to `api/hearnarro/ingestion/` or the lexicon and acronym tables runs tier-0 before and after and cites the compare (`CLAUDE.md`) |
+| Evals rule | Every change to `api/yomikoe/ingestion/` or the lexicon and acronym tables runs tier-0 before and after and cites the compare (`CLAUDE.md`) |
 | Privacy | Pairs are written by the project; no user documents in datasets |
 
 ## Milestones

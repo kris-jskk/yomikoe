@@ -1,4 +1,4 @@
-# HearNarro M2 code map: synthesis, cache, queue and audio API
+# YomiKoe M2 code map: synthesis, cache, queue and audio API
 
 This document explains how the M2 synthesis code works end to end and what every M2 module and
 file does. It is written for an engineer joining the project who has read `docs/PRD.md` (what)
@@ -13,17 +13,17 @@ spec (`_agent/specs/m2-synthesis-interfaces.md`) and the Technical Design, and s
 
 **As of commit `9b68eb0`** on branch `m2-synthesis`, plus the working tree read at
 2026-10-16 21:27 PDT. At that moment most M2 files were untracked or modified and not yet
-committed (`api/hearnarro/app.py` and `api/tests/conftest.py` modified; everything under
-`api/hearnarro/synthesis/` except `backend.py`, both new routes, `settings.py` and four test
+committed (`api/yomikoe/app.py` and `api/tests/conftest.py` modified; everything under
+`api/yomikoe/synthesis/` except `backend.py`, both new routes, `settings.py` and four test
 files untracked). Statuses below describe the files as they were read, not as they were
 committed. The per-file inventory, with how each status was decided, is in
 `_agent/results/280_m2_code_inventory.txt`.
 
 **Update, phase 2 (service, cache, queue, stretch, audio API; commit "SYN-1 SYN-3 SYN-5 SYN-6: synthesis service ...").** `stretch.py`, `cache.py`, `service.py`, `routes/audio.py`, `routes/voices.py` and the `app.py` lifespan are now real code, tested on the FakeBackend: `_agent/results/297_syn_tests_green.txt` (58 passed, 2 failed, 2 `@model` skipped; the two failures are a test defect, see "Open items"), full suite `_agent/results/300_full_suite.txt`, manual run `_agent/results/302_manual_audio.txt`. Where the code differs from the designed walkthrough below, the step now says what the code does. `KokoroBackend` and `OpusEncoder` remain stubs here (another worker owns them).
 
-**Update, phase 3 (Kokoro backend; commit "SYN-2 SYN-4: Kokoro backend (D15, ...)").** `kokoro_backend.py` is real code: Kokoro-82M on PyTorch CPU at the pinned revision, its own pipeline over the vendored `KModel` (`hearnarro/synthesis/kokoro_model/`, Apache-2.0, 972 lines from `kokoro` 0.9.4, so the `kokoro` package is not a dependency) and base `misaki.en.G2P`, the `num2words` shim (`hearnarro/synthesis/compat/`), and an OOV fallback (misaki lexicon for camel-case pieces, else the vendored g2p_en predictor in `hearnarro/synthesis/g2p_oov/`, else letter spelling). Model tests: `_agent/results/311_model_tests.txt` (30 passed with `HEARNARRO_TEST_MODEL=1`, including the Kokoro gate: TTFA 1842/997/472/483 ms at 0.5/1.0/2.0/3.0 on the 150-character sentence). `scripts/bench.py` is real: `_agent/results/314_bench.txt`, `bench/2026-10-16.json`. OOV demo `_agent/results/315_oov.txt`; cold start 2.34 s `_agent/results/316_cold_start.txt`; licence check 0 violations `_agent/results/310_install_licences.txt`.
+**Update, phase 3 (Kokoro backend; commit "SYN-2 SYN-4: Kokoro backend (D15, ...)").** `kokoro_backend.py` is real code: Kokoro-82M on PyTorch CPU at the pinned revision, its own pipeline over the vendored `KModel` (`yomikoe/synthesis/kokoro_model/`, Apache-2.0, 972 lines from `kokoro` 0.9.4, so the `kokoro` package is not a dependency) and base `misaki.en.G2P`, the `num2words` shim (`yomikoe/synthesis/compat/`), and an OOV fallback (misaki lexicon for camel-case pieces, else the vendored g2p_en predictor in `yomikoe/synthesis/g2p_oov/`, else letter spelling). Model tests: `_agent/results/311_model_tests.txt` (30 passed with `YOMIKOE_TEST_MODEL=1`, including the Kokoro gate: TTFA 1842/997/472/483 ms at 0.5/1.0/2.0/3.0 on the 150-character sentence). `scripts/bench.py` is real: `_agent/results/314_bench.txt`, `bench/2026-10-16.json`. OOV demo `_agent/results/315_oov.txt`; cold start 2.34 s `_agent/results/316_cold_start.txt`; licence check 0 violations `_agent/results/310_install_licences.txt`.
 
-**Update, phase 4 (M2 close; commit "SYN-1..SYN-6: Opus encoder (D16), smoke audio pass, M2 testing doc ...").** `OpusEncoder` is real code: Ogg Opus through `opuscodec` 0.1.3 (Apache-2.0, `opus` extra), 48 kbps mono, 24 kHz input taken as is, QEXT off; `HEARNARRO_AUDIO_FORMAT=opus` serves `audio/ogg` with the same `X-Timestamps` as WAV (`_agent/results/333_opus_green.txt`). `scripts/m1_smoke.py --audio` adds an audio pass over the API (335 fake, 336 Kokoro). The hands-on procedure is `docs/M2_TESTING.md`. No module is a stub any more.
+**Update, phase 4 (M2 close; commit "SYN-1..SYN-6: Opus encoder (D16), smoke audio pass, M2 testing doc ...").** `OpusEncoder` is real code: Ogg Opus through `opuscodec` 0.1.3 (Apache-2.0, `opus` extra), 48 kbps mono, 24 kHz input taken as is, QEXT off; `YOMIKOE_AUDIO_FORMAT=opus` serves `audio/ogg` with the same `X-Timestamps` as WAV (`_agent/results/333_opus_green.txt`). `scripts/m1_smoke.py --audio` adds an audio pass over the API (335 fake, 336 Kokoro). The hands-on procedure is `docs/M2_TESTING.md`. No module is a stub any more.
 
 ### What M2 adds
 
@@ -74,7 +74,7 @@ at read time. Both are **to be measured in phase 3**.
 | `KokoroBackend` (`kokoro_backend.py`) | tested (`@model`, 311) |
 | `GET`/`HEAD /audio`, `GET /voices` (`routes/`) | tested |
 | App wiring (`app.py` lifespan, `build_backend`) | tested (through `test_api_audio.py`) |
-| `settings.py` | tested (incl. `HEARNARRO_TRIM_LEAD_MS` / `HEARNARRO_TRIM_TAIL_MS`, `trim_pads`) |
+| `settings.py` | tested (incl. `YOMIKOE_TRIM_LEAD_MS` / `YOMIKOE_TRIM_TAIL_MS`, `trim_pads`) |
 | `trim_silence` (`trim.py`) | tested (`test_trim.py`; `@model` `test_pause.py`) |
 | Test doubles in `conftest.py` | tested (committed) |
 | `boundary_util.py`, `test_syn_boundaries.py` | tested (D18 thresholds asserted) |
@@ -100,7 +100,7 @@ thread" is the single worker of `app.state.synth_executor`
 This is the path that decides time-to-first-audio. The browser has asked for a sentence that
 has never been synthesized with this voice and speed.
 
-1. **HTTP in.** uvicorn → FastAPI → `api/hearnarro/routes/audio.py` → `get_audio(segment_id: int, voice: str, speed: float, request: Request) -> Response`
+1. **HTTP in.** uvicorn → FastAPI → `api/yomikoe/routes/audio.py` → `get_audio(segment_id: int, voice: str, speed: float, request: Request) -> Response`
    [tested]. FastAPI parses the path and query; a missing `voice` or `speed`, or a non-numeric
    value, is rejected by FastAPI itself with 422 before the handler runs.
 2. **Validate speed.** `routes/audio.py` → `get_audio` [tested]. Rule from the spec: `0.5 ≤ speed ≤ 3.0`
@@ -112,13 +112,13 @@ has never been synthesized with this voice and speed.
    `request.app.state.tts_backend.voices()` ids, else 422. (`FakeBackend.synthesize` would also
    raise `ValueError` for an unknown voice, but the API rejects it before any work is queued.)
 4. **Hand to the service.** `routes/audio.py` → `svc.get_audio(segment_id, voice, speed)` in
-   `api/hearnarro/synthesis/service.py` → `SynthesisService.get_audio(self, segment_id: int, voice_id: str, speed: float) -> AudioEntry`
+   `api/yomikoe/synthesis/service.py` → `SynthesisService.get_audio(self, segment_id: int, voice_id: str, speed: float) -> AudioEntry`
    [tested]. Crosses: three plain values.
 5. **Load the segment.** `service.py` → `self.repo.get_segment(segment_id)` →
    `DbSegmentRepo.get_segment(self, segment_id: int) -> Segment | None` [tested]. Designed: one
    aiosqlite connection from `Engine.connect()` (`storage/db.py`), a `SELECT` on `segments` by
    primary key, `char_map` BLOB decoded with `unpack_char_map(blob: bytes) -> list[int]`
-   (`storage/db.py`). Crosses: a `segments` row → `hearnarro.ingestion.models.Segment`
+   (`storage/db.py`). Crosses: a `segments` row → `yomikoe.ingestion.models.Segment`
    (`id, document_id, block_id, order, section_id, text, normalized_text, char_start, char_end, char_map`).
    `None` → the route answers 404.
 6. **Cache lookup.** `service.py` → `self.cache.get(segment_id, voice_id, speed, self.backend.name)` →
@@ -148,7 +148,7 @@ has never been synthesized with this voice and speed.
     clamped to the new duration; an all-silent clip (the FakeBackend's) is returned unchanged.
     The pads come from the `SynthesisService(trim_lead_ms=, trim_tail_ms=)` arguments, else from
     `settings.py` → `trim_pads(env: Mapping[str, str] | None = None) -> tuple[int, int]`
-    (`HEARNARRO_TRIM_LEAD_MS`, default 60; `HEARNARRO_TRIM_TAIL_MS`, default 150; also on
+    (`YOMIKOE_TRIM_LEAD_MS`, default 60; `YOMIKOE_TRIM_TAIL_MS`, default 150; also on
     `Settings.trim_lead_ms` / `trim_tail_ms`). Evidence: `_agent/results/369_silence_table.md`, `372`, `374`, `377`.
 8. **Choose native or stretched.** `service.py` → `get_audio` [tested].
    `lo, hi = self.backend.speed_range()` (`FakeBackend`: `(0.5, 2.0)`). If `speed ≤ hi`, synthesize
@@ -178,7 +178,7 @@ has never been synthesized with this voice and speed.
 12. **Encode for the browser.** Same job on the synthesis thread (no ffmpeg anywhere, D16) → `encode.py` → `self.encoder.encode(pcm, sample_rate)` →
     `AudioEncoder.encode(self, pcm: bytes, sample_rate: int) -> bytes`.
     `default_encoder()` returns `WavEncoder` [tested] by default, or `OpusEncoder` [tested] with
-    `HEARNARRO_AUDIO_FORMAT=opus` when `opuscodec` is installed (else WAV with a warning).
+    `YOMIKOE_AUDIO_FORMAT=opus` when `opuscodec` is installed (else WAV with a warning).
     Crosses: PCM bytes → container bytes (`audio/wav`, or Ogg Opus `audio/ogg`, D16).
 13. **Write through the cache.** `service.py` → `await self.cache.put(entry, audio_bytes)` →
     `cache.py` → `AudioCache.put(self, entry: AudioEntry, audio_bytes: bytes) -> AudioEntry` [tested].
@@ -259,7 +259,7 @@ Browser            routes/audio.py        service.py              cache.py / SQL
 
 ### d. `GET /voices`
 
-1. `api/hearnarro/routes/voices.py` → `list_voices(request: Request) -> list[dict[str, Any]]` [tested].
+1. `api/yomikoe/routes/voices.py` → `list_voices(request: Request) -> list[dict[str, Any]]` [tested].
 2. Designed: `request.app.state.tts_backend.voices()` → `list[Voice]` → each serialized as
    `{id, name, backend, language, gender}` (the `Voice` dataclass fields). The PRD says "all
    voices across backends"; v1 registers one backend, so the list is that backend's.
@@ -326,7 +326,7 @@ Browser                     routes/audio.py         service.py (queue for doc D)
 
 ### g. App start-up and shutdown
 
-`api/hearnarro/app.py` → `create_app(data_dir: Path | None = None, *, max_upload_bytes: int = MAX_UPLOAD_BYTES, executor_factory: Callable[[], Executor] | None = None, tts_backend: TTSBackend | None = None, encoder: AudioEncoder | None = None, lookahead: int | None = None) -> FastAPI`
+`api/yomikoe/app.py` → `create_app(data_dir: Path | None = None, *, max_upload_bytes: int = MAX_UPLOAD_BYTES, executor_factory: Callable[[], Executor] | None = None, tts_backend: TTSBackend | None = None, encoder: AudioEncoder | None = None, lookahead: int | None = None) -> FastAPI`
 [tested]. `create_app` registers three routers (`documents`, `audio`,
 `voices`) and returns the app; all resources are made in the `lifespan` context manager.
 
@@ -409,16 +409,16 @@ this script in phase 3.
   the temp data dir. `test_api_audio.py` (tested) and the API part of `test_syn3_speed.py` (tested).
 
 **Model tests (opt-in).** `conftest.py` registers the marker
-`model: needs a real TTS model; skipped unless HEARNARRO_TEST_MODEL=1`. The Kokoro smoke test
+`model: needs a real TTS model; skipped unless YOMIKOE_TEST_MODEL=1`. The Kokoro smoke test
 (synthesize one sentence; audio > 0.3 s; timestamps non-empty) and the Kokoro gate test
 (TTFA ≤ 2000 ms at four speeds on a 150-character sentence) carry it. Both are tested (311,
-339); `conftest.py` skips them unless `HEARNARRO_TEST_MODEL=1`.
+339); `conftest.py` skips them unless `YOMIKOE_TEST_MODEL=1`.
 
 ## Modules and files
 
 Signatures are copied from the files as read, or from the spec where the file does not exist.
 
-### `api/hearnarro/synthesis/`
+### `api/yomikoe/synthesis/`
 
 | File | Responsibility | Public functions / classes | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -465,7 +465,7 @@ words back to back, so a 10-word sentence at 1.0x is exactly 800 ms. Timestamps 
 `start_ms = i * fpw * 1000 // 24_000`, `end_ms = (i + 1) * fpw * 1000 // 24_000`, and
 `char_start`/`char_end` are the regex match's span in `text`. It exists so every service,
 queue and API test runs in milliseconds without a model, and so a developer can run the whole
-server without Kokoro installed (`HEARNARRO_TTS_BACKEND=fake`).
+server without Kokoro installed (`YOMIKOE_TTS_BACKEND=fake`).
 
 It enforces the same contract a real backend must: an unknown `voice_id` raises `ValueError`,
 a speed outside `(0.5, 2.0)` raises `ValueError` (so a service bug that passes 2.5 to the backend
@@ -551,7 +551,7 @@ Failure: see flow (f). Tests: `test_syn1_timestamps.py`, `test_syn3_speed.py` (t
 
 The only file that may name a TTS model (`MODEL_REPO = "hexgrad/Kokoro-82M"`, Apache-2.0) [tested].
 `KokoroBackend(revision=PINNED_REVISION)`; `settings.DEFAULT_KOKORO_REVISION` holds the same D15
-hash and is used when `HEARNARRO_TTS_BACKEND=kokoro` names no revision and the `tts` extra is
+hash and is used when `YOMIKOE_TTS_BACKEND=kokoro` names no revision and the `tts` extra is
 installed. Construction (on the synthesis thread) registers the `num2words` shim, imports torch
 and `misaki.en`, fetches `config.json` and `kokoro-v1_0.pth` with `hf_hub_download(revision=...)`,
 builds the vendored `KModel` and the US `G2P` (spaCy `en_core_web_sm`); the GB `G2P` and each
@@ -585,7 +585,7 @@ G2P and then rewrites tokens; per word the first tier that has it wins:
    entry used is logged once per document at INFO. To add one: one line in that dict (the model
    test checks every symbol is in Kokoro's vocab).
 2. misaki gold/silver lexicon.
-3. CMU Pronouncing Dictionary (`hearnarro/synthesis/cmudict/`, vendored `cmudict.dict.gz` from
+3. CMU Pronouncing Dictionary (`yomikoe/synthesis/cmudict/`, vendored `cmudict.dict.gz` from
    cmusphinx at a pinned commit, BSD-style licence; the PyPI `cmudict` package is GPL-3.0+ and not
    used, result 367_cmudict_licence) through `arpabet_to_kokoro`; whole word first, then camel-case
    pieces. Coverage on 200 names: misaki 107, cmudict +53, fallback 40; g2p_en vs cmudict PER
@@ -615,7 +615,7 @@ suffix (`suffix_phonemes`: s / z / ᵻz by the last sound) joins the last letter
 "Fs"); the OOV fallback voices "'s" the same way ("Eric's" -> ...ks). One INFO line per (document, token, decision). Tests: `test_acronyms.py`,
 `test_lexicon_overrides.py`, `@model` `test_syn4_kokoro_acronyms_*`, `test_syn4_kokoro_document_definition_spells_ted`, `test_syn4_kokoro_lexicon_override_uber`.
 
-### `api/hearnarro/routes/`
+### `api/yomikoe/routes/`
 
 | File | Responsibility | Public functions | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -623,7 +623,7 @@ suffix (`suffix_phonemes`: s / z / ᵻz by the last sound) joins the last letter
 | `voices.py` | Voice list (SYN-2) | `router = APIRouter()`; `@router.get("/voices") async def list_voices(request: Request) -> list[dict[str, Any]]` | `app.state.tts_backend.voices()` (designed) | HTTP response | tested |
 | `documents.py` | M1 document endpoints | unchanged in M2 (the spec: `GET /documents/{id}` and the list gain nothing new) | `documents`, `sections`, `segments` | `documents`, PDF files | implemented (M1) |
 
-### `api/hearnarro/storage/` (as touched by M2)
+### `api/yomikoe/storage/` (as touched by M2)
 
 | File | M2 relevance | Public functions used by M2 | Status |
 | --- | --- | --- | --- |
@@ -632,17 +632,17 @@ suffix (`suffix_phonemes`: s / z / ᵻz by the last sound) joins the last letter
 | `jobs.py` | M1 ingestion worker in the process pool | none; M2 does not touch ingestion | implemented (M1, unchanged) |
 | `migrations/versions/0001_initial_schema.py` | Created `audio_cache` with the D7 DDL in M1 | n/a; M2 needs no migration unless the schema changes (then via Alembic, per CLAUDE.md) | implemented (M1) |
 
-### `api/hearnarro/settings.py` and `api/hearnarro/app.py`
+### `api/yomikoe/settings.py` and `api/yomikoe/app.py`
 
 | File | Responsibility | Public functions / classes | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
 | `settings.py` | Runtime configuration from env vars | `BACKEND_ENV`, `KOKORO_REVISION_ENV`, `LOOKAHEAD_ENV`, `DATA_DIR_ENV`, `DEFAULT_LOOKAHEAD = 5`, `BACKENDS = ("fake", "kokoro")`; `class SettingsError(ValueError)`; `class Settings` (frozen: `tts_backend: str`, `kokoro_revision: str \| None`, `lookahead: int`, `data_dir: Path`); `def kokoro_available() -> bool`; `def load_settings(env: Mapping[str, str] \| None = None, *, kokoro_installed: bool \| None = None) -> Settings` | `os.environ`; whether the `kokoro` package is importable | warning log when falling back to fake | tested |
 | `app.py` | App factory and lifespan | `def build_backend(settings: Settings) -> TTSBackend`; `def create_app(...) -> FastAPI` (signature in flow g) | settings | `app.state.*` | tested |
 
-`load_settings` rules: an explicit `HEARNARRO_TTS_BACKEND` wins and must be `fake` or `kokoro`
-(else `SettingsError`); `kokoro` then requires `HEARNARRO_KOKORO_REVISION` (else `SettingsError`).
+`load_settings` rules: an explicit `YOMIKOE_TTS_BACKEND` wins and must be `fake` or `kokoro`
+(else `SettingsError`); `kokoro` then requires `YOMIKOE_KOKORO_REVISION` (else `SettingsError`).
 Unset: `kokoro` only when the package is installed **and** a revision is pinned, otherwise `fake`
-with a warning naming why. `HEARNARRO_LOOKAHEAD` must be an integer ≥ 0. The `env` and
+with a warning naming why. `YOMIKOE_LOOKAHEAD` must be an integer ≥ 0. The `env` and
 `kokoro_installed` parameters exist so tests never depend on the real environment. Tested by
 `test_settings.py` (defaults, explicit choice, invalid values, lookahead and data dir).
 
@@ -764,8 +764,8 @@ CREATE TABLE audio_cache (
 ### Cache file layout
 
 ```
-<data_dir>/                         HEARNARRO_DATA_DIR or ./data
-  hearnarro.db                      SQLite (WAL)
+<data_dir>/                         YOMIKOE_DATA_DIR or ./data
+  yomikoe.db                      SQLite (WAL)
   pdfs/ ...                         M1 uploads
   audio/
     {document_id}/
@@ -784,7 +784,7 @@ Grouping by document makes LIB-4 (delete a document and its audio) one directory
 `GET /audio` returns:
 
 ```
-Content-Type: audio/wav            (audio/ogg with HEARNARRO_AUDIO_FORMAT=opus)
+Content-Type: audio/wav            (audio/ogg with YOMIKOE_AUDIO_FORMAT=opus)
 X-Duration-Ms: 2480
 X-Timestamps: [{"word":"Zero","start_ms":0,"end_ms":80,"char_start":0,"char_end":4}, ...]
 ```
@@ -800,12 +800,12 @@ FakeBackend's 80 ms per word.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `HEARNARRO_TTS_BACKEND` | `kokoro` if installed and pinned, else `fake` (with a warning) | `fake` or `kokoro` |
-| `HEARNARRO_KOKORO_REVISION` | none | Hugging Face revision hash; required when the backend is `kokoro` |
-| `HEARNARRO_LOOKAHEAD` | `5` | Segments kept ahead (SYN-5); integer ≥ 0 |
-| `HEARNARRO_DATA_DIR` | `./data` | Root for the database, PDFs and audio (shared with M1) |
-| `HEARNARRO_AUDIO_FORMAT` | `wav` (D16) | `opus` selects `OpusEncoder` (needs the `opus` extra) |
-| `HEARNARRO_TEST_MODEL` | unset | `1` enables `@pytest.mark.model` tests |
+| `YOMIKOE_TTS_BACKEND` | `kokoro` if installed and pinned, else `fake` (with a warning) | `fake` or `kokoro` |
+| `YOMIKOE_KOKORO_REVISION` | none | Hugging Face revision hash; required when the backend is `kokoro` |
+| `YOMIKOE_LOOKAHEAD` | `5` | Segments kept ahead (SYN-5); integer ≥ 0 |
+| `YOMIKOE_DATA_DIR` | `./data` | Root for the database, PDFs and audio (shared with M1) |
+| `YOMIKOE_AUDIO_FORMAT` | `wav` (D16) | `opus` selects `OpusEncoder` (needs the `opus` extra) |
+| `YOMIKOE_TEST_MODEL` | unset | `1` enables `@pytest.mark.model` tests |
 | `HF_HOME` | Hub default | Where model weights are cached |
 
 ### Where offsets change space
@@ -918,12 +918,12 @@ pins `_1.25.wav` + row speed 1.25 + HEAD hit, and 2.25 writing `_2.00.wav` plus 
 `misaki[en]`, so any normal install pulls `phonemizer-fork` (GPL), `espeakng-loader` and
 `num2words` (LGPL); pyproject cannot express "kokoro without its dependencies". The four model
 files (`model.py`, `istftnet.py`, `modules.py`, `custom_stft.py`; 972 lines with headers) are
-therefore vendored into `api/hearnarro/synthesis/kokoro_model/` with Kokoro's Apache-2.0 `LICENSE`
+therefore vendored into `api/yomikoe/synthesis/kokoro_model/` with Kokoro's Apache-2.0 `LICENSE`
 and a `NOTICE` listing the three changes (unused `attr` import dropped, so `attrs` is not needed;
 relative import; stdlib logging instead of loguru). `g2p_en` is not a dependency either: its
 distribution requires `distance` (GPL) and `nltk` (which downloads corpora at import), so only its
 numpy GRU predictor and `checkpoint20.npz` (3.3 MB, unchanged) are vendored in
-`api/hearnarro/synthesis/g2p_oov/` with `LICENSE` and `NOTICE`. The `tts` extra in
+`api/yomikoe/synthesis/g2p_oov/` with `LICENSE` and `NOTICE`. The `tts` extra in
 `api/pyproject.toml` is `torch`, `transformers`, `misaki==0.9.4` (no extras), `spacy>=3.8,<3.9`,
 `en_core_web_sm` pinned by wheel URL (3.8.0), and `inflect` (MIT, backs `compat/num2words.py`);
 `num2words` is removed from the base dependencies (`normalize.py` never used it), and
@@ -948,13 +948,13 @@ reading of package pages, no installs) and the Kokoro install spike
   `hf_hub_download(revision=...)`. Never install `misaki[en]`, `phonemizer`, `phonemizer-fork`,
   `espeakng-loader`, `espeak-ng` or `num2words`. The backend builds its own pipeline over `KModel`
   + `misaki.en.G2P` so `kokoro.pipeline` is never imported; a shim module
-  `hearnarro.synthesis.compat.num2words` (built in phase 3) is registered in
+  `yomikoe.synthesis.compat.num2words` (built in phase 3) is registered in
   `sys.modules` before misaki is imported; out-of-vocabulary words get a `g2p_en` (Apache-2.0)
   fallback with letter spelling last. Model and spaCy model load in the lifespan on the synthesis
   thread. The amendment also reports spike timings from results 273–279; this document has not
   opened those files and does not repeat the numbers.
 - **D16, container.** `WavEncoder` is the M2 default. `OpusEncoder` via `opuscodec` (Apache-2.0,
-  Ogg Opus) is optional behind `HEARNARRO_AUDIO_FORMAT=opus` and the `opus` extra (implemented, 333).
+  Ogg Opus) is optional behind `YOMIKOE_AUDIO_FORMAT=opus` and the `opus` extra (implemented, 333).
   No ffmpeg anywhere; Safari decode of Ogg Opus is checked in M3.
 - **D17, stretch.** WSOLA in-process, ratio ≤ 1.5; D6's ffmpeg `atempo` is replaced. The spike
   used `audiotsm` (MIT); the shipped `stretch.py` is an own numpy WSOLA, so `audiotsm` is not a
@@ -1062,7 +1062,7 @@ All commands from `api/` with the project venv (`.venv`, Python 3.11).
 ```bash
 cd api
 
-# All tests (FakeBackend only; @model tests skip unless HEARNARRO_TEST_MODEL=1)
+# All tests (FakeBackend only; @model tests skip unless YOMIKOE_TEST_MODEL=1)
 .venv/bin/python -m pytest
 
 # The M2 unit tests that pass today (32 passed at read time, result 281)
@@ -1082,14 +1082,14 @@ cd api
 Model smoke and gate (needs the `tts` extra; the revision defaults to the D15 pin):
 
 ```bash
-HEARNARRO_TEST_MODEL=1 HEARNARRO_KOKORO_REVISION=<hash> \
+YOMIKOE_TEST_MODEL=1 YOMIKOE_KOKORO_REVISION=<hash> \
     .venv/bin/python -m pytest -m model -s
 ```
 
 Benchmark (`HF_HOME` is where the 327 MB model is cached):
 
 ```bash
-HEARNARRO_TTS_BACKEND=kokoro HEARNARRO_KOKORO_REVISION=<hash> \
+YOMIKOE_TTS_BACKEND=kokoro YOMIKOE_KOKORO_REVISION=<hash> \
     .venv/bin/python scripts/bench.py        # prints a table, writes bench/<date>.json
 ```
 
@@ -1097,11 +1097,11 @@ Server:
 
 ```bash
 # With the fake backend (silent audio, exact timing; no model needed)
-HEARNARRO_TTS_BACKEND=fake .venv/bin/python -m hearnarro serve --data-dir ~/hearnarro-m2 --port 8765
+YOMIKOE_TTS_BACKEND=fake .venv/bin/python -m yomikoe serve --data-dir ~/yomikoe-m2 --port 8765
 
 # With Kokoro (tts extra installed; the revision defaults to the D15 pin)
-HEARNARRO_TTS_BACKEND=kokoro HEARNARRO_KOKORO_REVISION=<hash> HF_HOME=~/.cache/huggingface \
-    .venv/bin/python -m hearnarro serve --data-dir ~/hearnarro-m2 --port 8765
+YOMIKOE_TTS_BACKEND=kokoro YOMIKOE_KOKORO_REVISION=<hash> HF_HOME=~/.cache/huggingface \
+    .venv/bin/python -m yomikoe serve --data-dir ~/yomikoe-m2 --port 8765
 
 # Then (the full procedure with expected output is docs/M2_TESTING.md)
 .venv/bin/python scripts/m1_smoke.py --base-url http://127.0.0.1:8765 --audio
@@ -1110,7 +1110,7 @@ curl -sI "http://127.0.0.1:8765/audio/1?voice=fake_f1&speed=1.0"           # 404
 curl -s -D - -o seg1.wav "http://127.0.0.1:8765/audio/1?voice=fake_f1&speed=1.0"
 ```
 
-`serve` is M1's CLI (`hearnarro/cli.py`); it passes only `--data-dir`, so backend, revision and
+`serve` is M1's CLI (`yomikoe/cli.py`); it passes only `--data-dir`, so backend, revision and
 lookahead come from the environment through `load_settings()`.
 
 ## Open items
@@ -1125,7 +1125,7 @@ lookahead come from the environment through `load_settings()`.
 | `GET`/`HEAD /audio`, `GET /voices` | `routes/audio.py`, `routes/voices.py` | done, phase 2 |
 | `test_syn5_queue.py`, `test_api_audio.py`, `test_syn_gate.py` (FakeBackend part) | `api/tests/` | done (written before the code) |
 | `OpusEncoder` (`opuscodec`, Ogg; D16) | `encode.py` | done, phase 4 (333) |
-| `KokoroBackend`, the `@model` smoke and gate tests, the skip hook for `HEARNARRO_TEST_MODEL` | `kokoro_backend.py`, `conftest.py`, `test_syn_gate.py` | done, phase 3 (311) |
+| `KokoroBackend`, the `@model` smoke and gate tests, the skip hook for `YOMIKOE_TEST_MODEL` | `kokoro_backend.py`, `conftest.py`, `test_syn_gate.py` | done, phase 3 (311) |
 | Model load on the synthesis thread before `yield` in the lifespan | `app.py` | done, phase 2 (`build_backend` runs on `synth_executor`) |
 | 5 s cap on shutdown | `service.py`, `app.py` | done, phase 2 |
 | `scripts/bench.py`; first TTFA and RTF numbers | `api/scripts/` | done, phase 3 (314: at 0.5x 6 of 20 sentences of up to 200 chars exceed 2 s) |
@@ -1137,5 +1137,5 @@ lookahead come from the environment through `load_settings()`.
 | Header-size limit for `X-Timestamps` on long sentences (sidecar JSON is the PRD's alternative) | `routes/audio.py` | measure in phase 2 |
 | Deleting a document's audio files (rows cascade; files do not) | LIB-4 | M4 |
 | PRD SYN-6 says "keyed by (segment hash, voice, speed)"; the design and DDL key by `segment_id` and backend | `docs/PRD.md` | done, phase 4 (SYN-6 row reads "segment id") |
-| `hearnarro/synthesis/compat/num2words`, `HEARNARRO_AUDIO_FORMAT` in settings, `api/scripts/check_licences.py` (D15, D16, spec amendment) | `synthesis/compat/`, `settings.py`, `api/scripts/` | done, phase 3 |
+| `yomikoe/synthesis/compat/num2words`, `YOMIKOE_AUDIO_FORMAT` in settings, `api/scripts/check_licences.py` (D15, D16, spec amendment) | `synthesis/compat/`, `settings.py`, `api/scripts/` | done, phase 3 |
 | Technical Design D9 assumes an ONNX session; D15 uses `kokoro` + torch | `docs/TECHNICAL_DESIGN.md` | done (D9 reads "model session (PyTorch CPU, D15)") |

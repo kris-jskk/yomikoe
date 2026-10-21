@@ -1,4 +1,4 @@
-# HearNarro M1 code map: ingestion, storage, documents API and the gates
+# YomiKoe M1 code map: ingestion, storage, documents API and the gates
 
 This document explains how the M1 code works end to end and what every M1 module and file
 does. It is written for an engineer joining the project who has read `docs/PRD.md` (what) and
@@ -23,10 +23,10 @@ the scanned fixtures without Tesseract; the failure is the environment licence s
 
 Two files are being changed by another worker while this is written:
 
-- `api/hearnarro/ingestion/segment.py` (the sentence splitter) is modified in the working tree
+- `api/yomikoe/ingestion/segment.py` (the sentence splitter) is modified in the working tree
   (171 lines added, 13 removed against `fa7b257`). This document describes **the committed
   version** (pysbd only, 63 lines) and marks it "changing".
-- `api/hearnarro/ingestion/abbreviations.py` is untracked (not in `fa7b257`). It is the
+- `api/yomikoe/ingestion/abbreviations.py` is untracked (not in `fa7b257`). It is the
   abbreviation table for the new splitter. It is listed but not described.
 
 **Update after the read.** While this document was being written, the branch moved from
@@ -57,9 +57,9 @@ M1 turns a PDF into ordered sentence segments in SQLite and serves them over HTT
   I..XXXIX after a structural word (part, chapter, book, section, volume, vol., act, scene,
   appendix, war, phase, stage, step, level, tier) become cardinal words ("PART II" -> "Part two"),
   and in a heading segment (`normalize(text, heading=True)`) a numeral alone or leading "II. Title"
-  does too, except a bare "I". A dash between two plain 1..4-digit integers ("1–10", "pp. 10-12", "3 - 5") is spoken as a range, "1 to 10" (" to " mapped onto the dash), unless it is part of an identifier, decimal, time or a longer dash-joined number (ISBN, date). An equals sign between terms is spoken "equals" ("≠" as "does not equal"), spaced on both sides or unspaced between a number or single letter on each side ("x=5"), leaving "==", "=>", "<=", ">=", "!=" and "key=value" untouched. A rating, an integer 0..100 over exactly 10 or 100 ("2/10", "95/100"), is spoken "2 out of 10" and an asterisk spaced between terms ("Wealth * (Return on Investment)") is spoken "times", leaving "9/11", "1/2", "10/12/2020", "24/7", "**", "word*" and "* " bullets untouched. `hearnarro renormalize --data-dir D (--document-id N | --all)`
+  does too, except a bare "I". A dash between two plain 1..4-digit integers ("1–10", "pp. 10-12", "3 - 5") is spoken as a range, "1 to 10" (" to " mapped onto the dash), unless it is part of an identifier, decimal, time or a longer dash-joined number (ISBN, date). An equals sign between terms is spoken "equals" ("≠" as "does not equal"), spaced on both sides or unspaced between a number or single letter on each side ("x=5"), leaving "==", "=>", "<=", ">=", "!=" and "key=value" untouched. A rating, an integer 0..100 over exactly 10 or 100 ("2/10", "95/100"), is spoken "2 out of 10" and an asterisk spaced between terms ("Wealth * (Return on Investment)") is spoken "times", leaving "9/11", "1/2", "10/12/2020", "24/7", "**", "word*" and "* " bullets untouched. `yomikoe renormalize --data-dir D (--document-id N | --all)`
   re-applies the rules to stored segments and drops the audio cache rows of those that changed.
-- A document quality checklist (`hearnarro check`, 12 checks), a CLI, an HTTP smoke script.
+- A document quality checklist (`yomikoe check`, 12 checks), a CLI, an HTTP smoke script.
 - ING-7 (table rows as prose) and ING-8 are not M1 (PRD milestones); OCR quality is M4.
 
 ### The gate
@@ -141,7 +141,7 @@ client          FastAPI handler (event loop)        SQLite              process 
   |<-- {status: ready, pages_done, parse_ms, title, ...}  |                        |
 ```
 
-1. **HTTP in.** uvicorn → FastAPI → `hearnarro/routes/documents.py` →
+1. **HTTP in.** uvicorn → FastAPI → `yomikoe/routes/documents.py` →
    `async def upload_document(request: Request, file: UploadFile, conn: Conn) -> Any`. `Conn`
    is `Annotated[aiosqlite.Connection, Depends(get_conn)]`; `get_conn` opens one connection per
    request from `request.app.state.engine.connect()` (`storage/db.py` `Engine.connect`).
@@ -269,7 +269,7 @@ pipeline.ingest(pdf_path, *, document_id=0, ocr=True, on_page=None) -> IngestRes
                normalized_text, char_start, char_end, char_map)]
 ```
 
-1. **Stage 1, extract.** `hearnarro/ingestion/extract.py` →
+1. **Stage 1, extract.** `yomikoe/ingestion/extract.py` →
    `def extract_pages(pdf_path: str | Path, *, ocr: bool = True, min_text_chars: int = 20, on_page: Callable[[int, int], None] | None = None) -> list[Page]`.
    Per page: `_ligature_fixes` (per-font repair table, cached across pages) →
    `_layout_chars` (`LayoutChar` per glyph, top-left coordinates, descent fix, CID fix,
@@ -305,26 +305,26 @@ pipeline.ingest(pdf_path, *, document_id=0, ocr=True, on_page=None) -> IngestRes
    `pages` is kept because the worker needs raw block bboxes for the `blocks` rows and
    `check_pdf` needs per-page character counts.
 
-### d. `hearnarro dump` and `hearnarro check`
+### d. `yomikoe dump` and `yomikoe check`
 
-Entry points: `hearnarro` console script (`pyproject.toml` `[project.scripts]` →
-`hearnarro.cli:main`) or `python -m hearnarro` (`hearnarro/__main__.py` calls
+Entry points: `yomikoe` console script (`pyproject.toml` `[project.scripts]` →
+`yomikoe.cli:main`) or `python -m yomikoe` (`yomikoe/__main__.py` calls
 `sys.exit(main())`). `def main(argv: Sequence[str] | None = None) -> int` builds an argparse
 parser with three subcommands.
 
-- **dump** `hearnarro dump <pdf> [--jsonl] [--no-ocr]` →
+- **dump** `yomikoe dump <pdf> [--jsonl] [--no-ocr]` →
   `_dump(pdf: str, *, jsonl: bool, ocr: bool) -> int` → `ingest(pdf, ocr=ocr)` → one line per
   segment: `order<TAB>type<TAB>text`, or with `--jsonl` `{"order", "page", "type", "text"}`
   (the `.expected.jsonl` format, so a dump can be diffed against a fixture). `type` and `page`
   come from the segment's `LogicalBlock`. Exit 0. No database, no server.
-- **check** `hearnarro check <pdf> [--json] [--no-ocr]` →
+- **check** `yomikoe check <pdf> [--json] [--no-ocr]` →
   `_check(pdf: str, *, as_json: bool, ocr: bool) -> int` → `quality.check_pdf(pdf, ocr=ocr)`
   (ingest, map segments to `QSeg(text, type)`, title via `choose_title`, `max_page_chars` over
   text-layer pages) → `QualityReport.table()` or `json.dumps(report.to_dict())`. **Exit 1 when
   any thresholded check fails**, so it can gate a script.
-- **serve** `hearnarro serve [--data-dir DIR] [--host H] [--port N]` →
+- **serve** `yomikoe serve [--data-dir DIR] [--host H] [--port N]` →
   `uvicorn.run(create_app(Path(data_dir) if data_dir else None), host=host, port=port)`;
-  defaults `127.0.0.1:8000`, data dir `$HEARNARRO_DATA_DIR` or `./data`.
+  defaults `127.0.0.1:8000`, data dir `$YOMIKOE_DATA_DIR` or `./data`.
 
 ### e. The golden test's scoring path and the quality fixture test
 
@@ -356,7 +356,7 @@ fixture, and a count above the pinned number fails ("Golden and quality gates").
 
 ### f. The smoke script's loop
 
-`api/scripts/m1_smoke.py` drives a running `hearnarro serve` over HTTP with `httpx.Client`
+`api/scripts/m1_smoke.py` drives a running `yomikoe serve` over HTTP with `httpx.Client`
 (`--base-url`, default `http://127.0.0.1:8765`). It first `GET /documents`; unreachable → exit 2.
 It imports the scoring from `tests/golden_util.py` (`sys.path` gets `api/`), so the gate and
 the smoke share one definition.
@@ -382,7 +382,7 @@ the smoke share one definition.
 Signatures are copied from the files at `fa7b257`. Line counts are in
 `_agent/results/294_m1_code_inventory.txt`.
 
-### `api/hearnarro/ingestion/`
+### `api/yomikoe/ingestion/`
 
 | File | Responsibility | Public functions / classes | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -491,7 +491,7 @@ change the result (`test_ing1_ingest_passes_on_page_through_and_none_is_unchange
 single entry point used by the worker (`jobs.run_ingestion`), the CLI, the quality checklist
 and the golden test, which is what makes the golden score a statement about production output.
 
-### `api/hearnarro/quality.py`
+### `api/yomikoe/quality.py`
 
 | File | Responsibility | Public functions / classes | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -504,17 +504,17 @@ looks only at what the pipeline outputs (segment text plus block type), so the s
 on `ingest` output (`check_pdf`) and on API output (`m1_smoke.py`). Tested by
 `test_quality.py` (15 unit tests) and `test_quality_fixtures.py` (16: the count and 15 fixtures).
 
-### `api/hearnarro/cli.py`, `api/hearnarro/__main__.py`
+### `api/yomikoe/cli.py`, `api/yomikoe/__main__.py`
 
 | File | Responsibility | Public functions / classes | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
 | `cli.py` | `dump`, `check`, `serve` subcommands | `def main(argv: Sequence[str] \| None = None) -> int`; private `_dump(pdf: str, *, jsonl: bool, ocr: bool) -> int`, `_check(pdf: str, *, as_json: bool, ocr: bool) -> int`, `_serve(data_dir: str \| None, host: str, port: int) -> int` | PDF | stdout | implemented |
-| `__main__.py` | `python -m hearnarro` | runs `main()` | none | none | implemented |
+| `__main__.py` | `python -m yomikoe` | runs `main()` | none | none | implemented |
 
 The CLI has no test of its own; `check` is a thin wrapper over `check_pdf` (tested), `dump`
 over `ingest` (tested), `serve` over `create_app` (tested through the API tests).
 
-### `api/hearnarro/app.py` (M1 part)
+### `api/yomikoe/app.py` (M1 part)
 
 | File | Responsibility | Public functions / classes | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -530,7 +530,7 @@ are cancelled. The synthesis wiring in the same lifespan is M2 (`docs/CODE_MAP_M
 `app.state.data_dir` and `app.state.max_upload_bytes` are set outside the lifespan so the
 handler can read them.
 
-### `api/hearnarro/routes/documents.py`
+### `api/yomikoe/routes/documents.py`
 
 | File | Responsibility | Public functions / classes | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -538,15 +538,15 @@ handler can read them.
 
 Flows (a) and (b). `routes/audio.py` and `routes/voices.py` are M2.
 
-### `api/hearnarro/storage/`
+### `api/yomikoe/storage/`
 
 | File | Responsibility | Public functions / classes | Reads | Writes | Status |
 | --- | --- | --- | --- | --- | --- |
 | `__init__.py` | Package marker | none | none | none | implemented (empty) |
-| `db.py` | Data dir, engines, migrations, `char_map` codec (D7, D9) | `DATA_DIR_ENV = "HEARNARRO_DATA_DIR"`, `DEFAULT_DATA_DIR = Path("./data")`, `DB_FILENAME = "hearnarro.db"`, `BUSY_TIMEOUT_MS = 10_000`, `PRAGMAS`; `def resolve_data_dir(data_dir: Path \| str \| None) -> Path`; `def db_path(data_dir: Path) -> Path`; `def pdf_dir(data_dir: Path) -> Path`; `def sync_url(path: Path) -> str`; `class Engine` (`def __init__(self, path: Path) -> None`; `async def connect(self) -> AsyncIterator[aiosqlite.Connection]`, an async context manager); `def engine(data_dir: Path) -> Engine`; `def connect_sync(path: Path \| str) -> sqlite3.Connection`; `def run_migrations(data_dir: Path) -> None`; `def pack_char_map(char_map: list[int]) -> bytes`; `def unpack_char_map(blob: bytes) -> list[int]` | env, database | database file, schema | tested |
+| `db.py` | Data dir, engines, migrations, `char_map` codec (D7, D9) | `DATA_DIR_ENV = "YOMIKOE_DATA_DIR"`, `DEFAULT_DATA_DIR = Path("./data")`, `DB_FILENAME = "yomikoe.db"`, `BUSY_TIMEOUT_MS = 10_000`, `PRAGMAS`; `def resolve_data_dir(data_dir: Path \| str \| None) -> Path`; `def db_path(data_dir: Path) -> Path`; `def pdf_dir(data_dir: Path) -> Path`; `def sync_url(path: Path) -> str`; `class Engine` (`def __init__(self, path: Path) -> None`; `async def connect(self) -> AsyncIterator[aiosqlite.Connection]`, an async context manager); `def engine(data_dir: Path) -> Engine`; `def connect_sync(path: Path \| str) -> sqlite3.Connection`; `def run_migrations(data_dir: Path) -> None`; `def pack_char_map(char_map: list[int]) -> bytes`; `def unpack_char_map(blob: bytes) -> list[int]` | env, database | database file, schema | tested |
 | `repo.py` | Async queries over one connection | `DOCUMENT_COLUMNS`; `DuplicateDocument = sqlite3.IntegrityError`; `def now_iso() -> str`; `async def get_document(conn: aiosqlite.Connection, document_id: int) -> dict[str, Any] \| None`; `async def get_document_by_sha256(conn: aiosqlite.Connection, sha256: str) -> dict[str, Any] \| None`; `async def list_documents(conn: aiosqlite.Connection) -> list[dict[str, Any]]`; `async def insert_document(conn: aiosqlite.Connection, *, title: str, filename: str, sha256: str, status: str) -> int`; `async def set_status(conn: aiosqlite.Connection, document_id: int, status: str, fail_reason: str \| None = None) -> None`; `async def list_sections(conn: aiosqlite.Connection, document_id: int) -> list[dict[str, Any]]`; `async def count_segments(conn: aiosqlite.Connection, document_id: int) -> int`; `async def list_segments(conn: aiosqlite.Connection, document_id: int, from_order: int, limit: int) -> list[dict[str, Any]]` | `documents`, `sections`, `segments`, `blocks` | `documents` | tested |
 | `jobs.py` | The ingestion job in the worker process | `PROGRESS_EVERY = 10`; `class PageProgress` (`def __init__(self, write: Callable[[int], None], every: int = PROGRESS_EVERY) -> None`; `def __call__(self, done: int, total: int) -> None`); `def pdf_page_count(pdf_path: str \| Path) -> int`; `def pdf_title(pdf_path: str \| Path) -> str \| None`; `FILENAME_TITLE_RE`; `TITLE_HEADING_WORDS = (2, 12)`; `def choose_title(meta_title: str \| None, first_heading: str \| None, filename: str) -> str`; `def mark_failed(db_file: str \| Path, document_id: int, reason: str, parse_ms: int \| None = None) -> None`; `def run_ingestion(db_file: str, document_id: int, pdf_path: str) -> float` | PDF | `documents`, `blocks`, `segments` | tested |
-| `migrations/env.py` | Alembic environment | URL from the config (`run_migrations`) or `HEARNARRO_DATA_DIR`; raw DDL, no `target_metadata`, `render_as_batch=True` | config, env | none | tested (via `run_migrations`) |
+| `migrations/env.py` | Alembic environment | URL from the config (`run_migrations`) or `YOMIKOE_DATA_DIR`; raw DDL, no `target_metadata`, `render_as_batch=True` | config, env | none | tested (via `run_migrations`) |
 | `migrations/versions/0001_initial_schema.py` | The D7 DDL verbatim | `revision = "0001"`; `DDL` (6 tables + `segments_doc_order`); `upgrade`, `downgrade` | none | schema | tested; run by hand (225) |
 | `migrations/versions/0002_parse_progress.py` | `pages_done`, `parse_ms` on `documents` | `revision = "0002"`, `down_revision = "0001"`; `upgrade` (two `ALTER TABLE ... ADD COLUMN`), `downgrade` (batch drop) | none | schema | tested; run by hand (225) |
 
@@ -739,8 +739,8 @@ Unique index `segments_doc_order ON segments(document_id, "order")` serves the p
 ### Files under the data dir
 
 ```
-$HEARNARRO_DATA_DIR/            (default ./data; `serve --data-dir` overrides)
-  hearnarro.db                  SQLite, WAL (+ -wal, -shm)
+$YOMIKOE_DATA_DIR/            (default ./data; `serve --data-dir` overrides)
+  yomikoe.db                  SQLite, WAL (+ -wal, -shm)
   pdfs/{sha256}.pdf             the uploaded bytes, named by content
 ```
 
@@ -1118,7 +1118,7 @@ exact. Pinned by
 
 All-caps tokens are no longer rewritten here (until 2026-10-16 a `SPOKEN_ACRONYMS` allowlist
 spelled every other 2–5 letter token, so "TED" became "T E D"). The synthesis backend decides
-(`hearnarro/synthesis/acronyms.py`, CODE_MAP_M2). Documents ingested before the change still
+(`yomikoe/synthesis/acronyms.py`, CODE_MAP_M2). Documents ingested before the change still
 carry the spelled form in `normalized_text` until re-ingested. `ingestion/acronyms.py` collects
 definitions: `<words> (ACR)` or `ACR (<words>)` where the words spell ACR by initials (first word
 capitalized; minor words such as "of" may supply a letter or be skipped); first definition per
@@ -1251,7 +1251,7 @@ stated):
 | pypdfium2 5.14.0 | BSD-3-Clause, Apache-2.0 | page count and Info title (`jobs.py`), page rendering for OCR |
 | pysbd 0.3.4 | MIT | sentence splitting (stage 5, and stage 4's first-sentence move) |
 | fastapi 0.143.2 / starlette 1.8.0 | MIT / BSD-3-Clause | HTTP API |
-| uvicorn 0.54.0 | BSD-3-Clause | server (`hearnarro serve`) |
+| uvicorn 0.54.0 | BSD-3-Clause | server (`yomikoe serve`) |
 | python-multipart 0.0.32 | Apache-2.0 | `UploadFile` parsing |
 | pydantic 2.14.1 | MIT | FastAPI models |
 | aiosqlite 0.22.1 | MIT | API database access (one connection per request) |
@@ -1302,17 +1302,17 @@ cd api
 CLI:
 
 ```bash
-.venv/bin/python -m hearnarro dump tests/fixtures/pdfs/report_01_zero_trust.pdf | head
-.venv/bin/python -m hearnarro dump --jsonl some.pdf > some.jsonl     # same format as expected.jsonl
-.venv/bin/python -m hearnarro check some.pdf                          # exit 1 if a check fails
-.venv/bin/python -m hearnarro check --json --no-ocr some.pdf
+.venv/bin/python -m yomikoe dump tests/fixtures/pdfs/report_01_zero_trust.pdf | head
+.venv/bin/python -m yomikoe dump --jsonl some.pdf > some.jsonl     # same format as expected.jsonl
+.venv/bin/python -m yomikoe check some.pdf                          # exit 1 if a check fails
+.venv/bin/python -m yomikoe check --json --no-ocr some.pdf
 ```
 
 Server and smoke:
 
 ```bash
 # Terminal 1: a fresh data dir makes every fixture a 202 (throughput is measured)
-HEARNARRO_TTS_BACKEND=fake .venv/bin/python -m hearnarro serve --data-dir /tmp/hn-m1 --port 8765
+YOMIKOE_TTS_BACKEND=fake .venv/bin/python -m yomikoe serve --data-dir /tmp/hn-m1 --port 8765
 
 # Terminal 2
 .venv/bin/python scripts/m1_smoke.py --base-url http://127.0.0.1:8765
@@ -1324,9 +1324,9 @@ curl -s http://127.0.0.1:8765/documents/1
 curl -s "http://127.0.0.1:8765/documents/1/segments?from=0&limit=5"
 ```
 
-`HEARNARRO_TTS_BACKEND=fake` is needed since M2 because the same lifespan builds the synthesis
-service; M1 itself reads only `--data-dir` / `HEARNARRO_DATA_DIR`. Migrations run at start-up;
-by hand: `HEARNARRO_DATA_DIR=/tmp/hn-m1 .venv/bin/alembic -c alembic.ini upgrade head`
+`YOMIKOE_TTS_BACKEND=fake` is needed since M2 because the same lifespan builds the synthesis
+service; M1 itself reads only `--data-dir` / `YOMIKOE_DATA_DIR`. Migrations run at start-up;
+by hand: `YOMIKOE_DATA_DIR=/tmp/hn-m1 .venv/bin/alembic -c alembic.ini upgrade head`
 (result 225).
 
 ## Open items
