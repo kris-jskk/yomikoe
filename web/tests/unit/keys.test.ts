@@ -75,3 +75,24 @@ describe('PLAY-6 stepSpeed', () => {
     expect(s).toBeCloseTo(1.35, 10)
   })
 })
+
+describe('PLAY-10 equation keys', () => {
+  it('PLAY-10 e skips the equation and r repeats it', () => {
+    expect(keyToAction(key('e'))).toEqual({ type: 'SKIP_EQUATION' })
+    expect(keyToAction(key('r'))).toEqual({ type: 'REPEAT_EQUATION' })
+  })
+
+  it('PLAY-10 e and r with a modifier are unmapped', () => {
+    expect(keyToAction(key('E', true))).toBeNull()
+    expect(keyToAction(key('e', true))).toBeNull()
+    expect(keyToAction({ ...key('r'), metaKey: true })).toBeNull()
+    expect(keyToAction({ ...key('r'), ctrlKey: true })).toBeNull()
+    expect(keyToAction({ ...key('e'), altKey: true })).toBeNull()
+  })
+
+  it('PLAY-10 e and r are ignored in editable targets', () => {
+    expect(keyToAction(key('e', false, { tagName: 'INPUT' }))).toBeNull()
+    expect(keyToAction(key('r', false, { tagName: 'textarea' }))).toBeNull()
+    expect(keyToAction(key('r', false, { tagName: 'DIV', isContentEditable: true }))).toBeNull()
+  })
+})

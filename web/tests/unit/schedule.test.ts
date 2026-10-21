@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { WordTimestamp } from '../../src/api/types'
+import { PAUSE_MS, pauseAfterMs } from '../../src/player/pauses'
 import {
   chainStart,
   findActiveWord,
@@ -299,5 +300,44 @@ describe('PLAY-2 centreDistance: how far the target is from block:center', () =>
     expect(centreDistance({ top: 380, bottom: 420 }, vh)).toBe(0)
     expect(centreDistance({ top: 383, bottom: 423 }, vh)).toBe(3)
     expect(centreDistance({ top: -300, bottom: -260 }, vh)).toBe(680)
+  })
+})
+
+describe('SYN-8 client-side pause gaps (Q7)', () => {
+  it('SYN-8 PAUSE_MS: heading 600, list 250, equation 400, others 0', () => {
+    expect(PAUSE_MS).toEqual({ heading: 600, list: 250, equation: 400 })
+    expect(pauseAfterMs('heading')).toBe(600)
+    expect(pauseAfterMs('list')).toBe(250)
+    expect(pauseAfterMs('equation')).toBe(400)
+    expect(pauseAfterMs('paragraph')).toBe(0)
+    expect(pauseAfterMs('caption')).toBe(0)
+    expect(pauseAfterMs('')).toBe(0)
+  })
+
+  const tail: ScheduleEntryView = { segmentId: 301, startAt: 10, durationSec: 2 }
+
+  it('SYN-8 chains after a heading, list or equation at tail end + pause, not a gap', () => {
+    for (const type of ['heading', 'list', 'equation']) {
+      const pause = pauseAfterMs(type) / 1000
+      const r = chainStart(tail, 11, false, 0.05, pause)
+      expect(r.gap).toBe(false)
+      expect(r.when).toBeCloseTo(12 + pause, 10)
+    }
+  })
+
+  it('SYN-8 a pause of 0 chains exactly at the tail end (default unchanged)', () => {
+    expect(chainStart(tail, 11, false, 0.05, 0)).toEqual({ when: 12, gap: false })
+    expect(chainStart(tail, 11, false, 0.05)).toEqual({ when: 12, gap: false })
+  })
+
+  it('SYN-8 a clip arriving inside the pause still chains at tail end + pause (not a stall)', () => {
+    const r = chainStart(tail, 12.3, false, 0.05, 0.6)
+    expect(r.gap).toBe(false)
+    expect(r.when).toBeCloseTo(12.6, 10)
+  })
+
+  it('SYN-8 past the pause or while buffering it starts fresh (a gap), as before', () => {
+    expect(chainStart(tail, 12.7, false, 0.05, 0.6)).toEqual({ when: 12.75, gap: true })
+    expect(chainStart(tail, 11, true, 0.05, 0.4)).toEqual({ when: 11.05, gap: true })
   })
 })
