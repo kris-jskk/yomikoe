@@ -9,8 +9,13 @@ every row (naturalness and pacing ints 1..5, pron_errors int >= 0, listener name
 the session record ``<out_dir>/<date>_<listener>.json`` (rows + per-voice and overall
 aggregates), which the EVAL-9 suite reads.
 
+``--source formula`` renders ``data/listening_formula_10.jsonl`` (the reader's spoken output for the
+ten M5 formula fixtures, written by ``api/scripts/make_listening_formula.py``; MATH-1..4, M5 gate
+clause d) instead of the general sentences; the sheet header records ``source`` and ``ingest``
+copies it into the session json.
+
 CLI (registered in ``__main__``): ``python -m yomikoe.evals listening prepare --out DIR
-[--backend fake|kokoro]`` and ``python -m yomikoe.evals listening ingest SHEET.md [--out DIR]``.
+[--backend fake|kokoro] [--source general|formula]`` and ``python -m yomikoe.evals listening ingest SHEET.md [--out DIR]``.
 """
 
 from __future__ import annotations
@@ -30,9 +35,11 @@ N_SENTENCES = 10
 VOICES = e5.VOICES  # female, male
 # Repo-root evals/listening/ (api/yomikoe/evals/listening.py -> parents[3] is the repo root).
 LISTENING_DIR = Path(__file__).resolve().parents[3] / "evals" / "listening"
+FORMULA_FILE = Path(__file__).resolve().parent / "data" / "listening_formula_10.jsonl"
+SOURCES = ("general", "formula")
 RUBRIC = Path(__file__).resolve().parent / "data" / "listening_rubric.md"
 COLUMNS = ("clip", "sentence", "naturalness", "pacing", "pron_errors", "notes")
-HEADER_KEYS = ("date", "commit", "backend", "listener")
+HEADER_KEYS = ("date", "commit", "backend", "source", "listener")
 # The fake backend has no Kokoro voice ids; clips keep the real names (silence, for tests).
 _FAKE_VOICE = {"af_heart": "fake_f1", "am_michael": "fake_m1"}
 _PIPE = re.compile(r"(?<!\\)\|")
@@ -67,13 +74,23 @@ def _cell(text: str) -> str:
     return " ".join(text.split()).replace("|", "\\|")
 
 
-def prepare(out_dir: Path, backend: str = "kokoro") -> Path:
+def load_source(source: str) -> list[dict[str, Any]]:
+    """The first ``N_SENTENCES`` sentences ({id, text, ...}) of the named source."""
+    if source == "general":
+        return e5.load_sentences()[:N_SENTENCES]
+    if source == "formula":
+        lines = FORMULA_FILE.read_text(encoding="utf-8").splitlines()
+        return [json.loads(ln) for ln in lines if ln.strip()][:N_SENTENCES]
+    raise ValueError(f"unknown source {source!r}: {' or '.join(SOURCES)}")
+
+
+def prepare(out_dir: Path, backend: str = "kokoro", source: str = "general") -> Path:
     """Render the 20 clips into ``out_dir`` and write ``out_dir/sheet.md``; return its path."""
     from yomikoe.evals.runner import _short_sha
 
+    sentences = load_source(source)
     render = _render_fn(backend)
     out_dir.mkdir(parents=True, exist_ok=True)
-    sentences = e5.load_sentences()[:N_SENTENCES]
     rows = []
     for voice in VOICES:
         for s in sentences:
@@ -87,6 +104,7 @@ def prepare(out_dir: Path, backend: str = "kokoro") -> Path:
         f"- date: {datetime.now(UTC):%Y-%m-%d}",
         f"- commit: {_short_sha()}",
         f"- backend: {backend}",
+        f"- source: {source}",
         "- listener: ",
         "",
         "Rubric: api/yomikoe/evals/data/listening_rubric.md. Fill every naturalness, pacing",
@@ -181,7 +199,8 @@ def ingest(sheet: Path, out_dir: Path = LISTENING_DIR) -> tuple[dict[str, Any], 
         by_voice.setdefault(row["voice"], []).append(row)
     session = {
         "session_id": f"{header['date']}_{re.sub(r'[^A-Za-z0-9_-]+', '-', listener)}",
-        **{k: header.get(k, "") for k in HEADER_KEYS},
+        **{k: header.get(k, "") for k in HEADER_KEYS if k != "source"},
+        "source": header.get("source") or "general",
         "sheet": sheet.name,
         "rows": rows,
         "aggregates": {
@@ -202,6 +221,7 @@ def register(sub: Any) -> None:
     p_prep = verbs.add_parser("prepare", help="render the clips and write a blank sheet")
     p_prep.add_argument("--out", required=True, help="directory for the clips and sheet.md")
     p_prep.add_argument("--backend", choices=("fake", "kokoro"), default="kokoro")
+    p_prep.add_argument("--source", choices=SOURCES, default="general")
     p_ing = verbs.add_parser("ingest", help="validate a filled sheet and record the session")
     p_ing.add_argument("sheet", help="the filled sheet.md")
     p_ing.add_argument("--out", default=None, help="sessions directory (evals/listening/)")
@@ -210,7 +230,7 @@ def register(sub: Any) -> None:
 def run_verb(args: argparse.Namespace) -> int:
     """Execute a parsed ``listening`` verb."""
     if args.verb == "prepare":
-        sheet = prepare(Path(args.out), backend=args.backend)
+        sheet = prepare(Path(args.out), backend=args.backend, source=args.source)
         print(f"sheet: {sheet}\nclips: {len(list(sheet.parent.glob('*.wav')))}")
         return 0
     _, path = ingest(Path(args.sheet), Path(args.out) if args.out else LISTENING_DIR)
