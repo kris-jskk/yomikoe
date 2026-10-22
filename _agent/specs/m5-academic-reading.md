@@ -722,3 +722,14 @@ not reported closed until its gate clause runs are saved and the guide says so (
   phase 1 and the first run is the baseline (today's output is the ING-7 cue, so scores are low). The gate
   test is red on clause (b) scores and on clause (e) (`compute_profile` imported inside the test, absent
   until phase 2); it is not red on a collection error.
+- Q9 (2026-10-21, phase 5, the user's decision from a real clip of the Markov kernel paper, equation (4) "MMD_φ(µ, ν) =
+  ∫ φ(x) µ(dx) − ∫ φ(x) ν(dx)"): three convention questions put to the user, answered the same day.
+  (a) `=` stays "equals" (not "is equal to"); no sweep. (b) The last separator of an argument list is spoken
+  "and": `f(x, y)` "f of x and y", `g(x, y, z)` "g of x, y and z"; a comma that closes a group before a power
+  (§3c Grouping) is unchanged; fixture lines and dataset rows with multi-argument calls are swept under the
+  checker in the brief that builds it (m5-p5h). (c) "sub" stays on every subscript ("m m d sub phi", "x sub i").
+  Also decided as plain defects, no question needed (m5-p5g): a two-letter English connective in an upright
+  text font inside a maths span is the word ("or", not "o r"); a measure applied to a differential, `µ(dx)`,
+  reads "with respect to mu". Residues seen in the same paper, carried for a later loop: equation (5)
+  `sup_{x∈X}` read as a fraction and "sup" lost; equation (6) the relation `≲` dropped; equation (8) a
+  subscript chain read "sub l sub 2 sub sub h sub".
