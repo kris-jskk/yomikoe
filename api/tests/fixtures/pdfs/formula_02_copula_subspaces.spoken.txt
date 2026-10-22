@@ -16,7 +16,7 @@ the oracle bound uses half the trace of c over the discarded subspace.
 let p sub r, to the c is defined as v sub r, to the c v sub r, to the c transpose project onto the top-r eigenspace of c.
 equation 3.5: c sub 1 equals 1 half the sum over i greater than r of lambda sub i of c, rank, plus 1 half the trace of p sub r, to the c c minus the trace of p hat sub r c, capital delta sub subopt is greater than or equal to 0,
 where the rank term is fixed by c and r.
-the remaining term capital delta sub subopt is of order the norm of sine capital theta of v hat sub r, to the c, v sub r, to the c, sub f, squared.
+the remaining term capital delta sub subopt is of order the norm of sine capital theta of v hat sub r, to the c and v sub r, to the c, sub f, squared.
 it is zero whenever span of v hat sub r, to the c equals span of v sub r, to the c, and only in this case if lambda sub r of c is greater than lambda sub r plus 1 of c.
 to prove proposition 3.1, apply the triangle inequality in l squared of pi sub z; r to the d to the gaussian-reference bound 2.5 of part i appendix a.
 in the score-ratio-matching stability result of 5, theorem 3.3, the divergence at the top-r eigenspace of c prime is bounded by the norm of s minus s prime sub l squared of pi sub z, squared, plus the sum over i greater than r of lambda sub i of c prime.

@@ -116,3 +116,30 @@ def test_math3_plain_differential_and_non_measure_unchanged() -> None:
     assert _eq("∫ f(x) dx") == "the integral of f of x d x"
     assert _eq("f(dx)") == "f of d x"  # no integral: an ordinary application
     assert _eq("µ(dx)") == "mu of d x"
+
+
+def test_math1_argument_list_last_separator_is_and() -> None:
+    # spec §8 Q9(b), user decision 2026-10-21: "f of x and y", "g of x, y and z"
+    assert _eq("f(x)") == "f of x"
+    assert _eq("f(x, y)") == "f of x and y"
+    assert _eq("g(x, y, z)") == "g of x, y and z"
+    assert _eq("Cov(X, Y)") == "the covariance of x and y"
+    assert _eq("max(a, b, c)") == "the maximum of a, b and c"
+    assert _eq("MMD_φ(µ, ν) = 1") == "m m d phi of mu and nu equals 1"
+
+
+def test_math1_argument_and_nested_calls_and_group_comma_before_power() -> None:
+    # each application applies the rule to its own list; a pause closes the inner list
+    assert _eq("f(g(x, y), z)") == "f of g of x and y, and z"
+    assert _eq("f(x, g(y, z))") == "f of x and g of y and z"
+    # §3c Grouping: the comma that closes a group before a power stays a pause
+    assert _eq("E[X]²") == "e of x, squared"
+    assert _eq("E(x, y)²") == "e of x and y, squared"
+    assert _eq("⟨x, y⟩") == "the inner product of x and y"
+
+
+def test_math1_argument_and_not_before_semicolon_or_empty_argument() -> None:
+    # the last separator is the semicolon: commas stay pauses
+    assert _eq("L(X, B, π; Y)") == "l of x, b, pi; y"
+    assert _eq("N(y; f(x), σ)") == "n of y; f of x and sigma"
+    assert _eq("N(, σ)") == "n of, sigma"  # an argument lost to OCR: no "and" from nothing

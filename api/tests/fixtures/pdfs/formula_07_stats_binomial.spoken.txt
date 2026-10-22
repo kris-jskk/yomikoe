@@ -13,7 +13,7 @@ q equals the probability of a failure for any trial p plus q equals 1
 q equals 1 minus p
 the mean is mu equals 1 over p.
 the standard deviation is sigma equals the square root of the fraction 1 minus p over p squared, end fraction equals the square root of 1 over p times 1 over p minus 1.
-x distributed as h of r, b, n means that the discrete random variable x has a hypergeometric probability distribution with r equals the size of the group of interest first group, b equals the size of the second group, and n equals the size of the chosen sample.
+x distributed as h of r, b and n means that the discrete random variable x has a hypergeometric probability distribution with r equals the size of the group of interest first group, b equals the size of the second group, and n equals the size of the chosen sample.
 x equals the number of items from the group of interest that are in the chosen sample, and x may take on the values x equals 0, 1, ..., up to the size of the group of interest.
 the minimum value for x may be larger than zero in some instances.
 n is less than or equal to r plus b

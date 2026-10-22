@@ -1,16 +1,16 @@
 # M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c
-equation 2: a sub t, i distributed as pi sub phi sup sel of dot given q, c sub i, m sub t, a sub t, i in the set skip, update.
+equation 2: a sub t, i distributed as pi sub phi sup sel of dot given q, c sub i and m sub t, a sub t, i in the set skip, update.
 equation 3: c sub t equals the set of c sub i in w sub t such that a sub t, i equals update,
 inspired by speculative decoding's acceptance rule leviathan et al., 2023; chen et al., 2023a, system 2's binary policy pi sub theta sup ver assesses whether selected chunks warrant memory updates.
 for candidate indices i sub t equals the set of i such that c sub i in c sub t, the action-level acceptance probability is
-equation 4: alpha sub t, i equals the minimum of 1 and the fraction pi sub theta sup ver of update given q, c sub i, m sub t over pi sub phi sup sel of update given q, c sub i, m sub t, end fraction.
-independently draw xi sub t, i distributed as u of 0, 1 for each candidate and accept it if xi sub t, i is less than or equal to alpha sub t, i.
-equation 5: m sub t plus 1 distributed as pi sub theta sup mem of dot given q, c sub i star sub t, m sub t,
+equation 4: alpha sub t, i equals the minimum of 1 and the fraction pi sub theta sup ver of update given q, c sub i and m sub t over pi sub phi sup sel of update given q, c sub i and m sub t, end fraction.
+independently draw xi sub t, i distributed as u of 0 and 1 for each candidate and accept it if xi sub t, i is less than or equal to alpha sub t, i.
+equation 5: m sub t plus 1 distributed as pi sub theta sup mem of dot given q, c sub i star sub t and m sub t,
 where i star sub t equals the minimum of the set of i in i sub t such that xi sub t, i is less than or equal to alpha sub t, i.
 otherwise, discard remaining predictions conditioned on m sub t and resume immediately after the committed chunk with m sub t plus 1.
 for each update example q, c, m, let m prime be the memory after incorporating the evidence from c.
 equation 6: q, c, m maps to update, q, c, m prime maps to skip.
 equation 7: l sub stage i of phi equals l sub w c e plus lambda sub pair l sub pair, l sub pair equals e sub p of the maximum of 0 and gamma minus delta s sub phi.
-here, l sub w c e is class-weighted action cross-entropy; p contains matched memory pairs, with delta s sub phi equals s sub phi of q, c, m minus s sub phi of q, c, m prime.
+here, l sub w c e is class-weighted action cross-entropy; p contains matched memory pairs, with delta s sub phi equals s sub phi of q, c and m minus s sub phi of q, c and m prime.
 the score s sub phi is the update-minus-skip logit difference, and gamma is the margin.
 we freeze system 1 at phi sub sft and optimize all system 2 parameters theta by reinforcement learning over

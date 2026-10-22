@@ -1,12 +1,12 @@
 # M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c
-the transformation z equals the fraction x minus mu over sigma, end fraction produces the distribution z distributed as n of 0, 1.
+the transformation z equals the fraction x minus mu over sigma, end fraction produces the distribution z distributed as n of 0 and 1.
 the value x in the given equation comes from a normal distribution with mean mu and standard deviation sigma.
-if x is a normally distributed random variable and x distributed as n of mu, sigma, then the z-score is:
+if x is a normally distributed random variable and x distributed as n of mu and sigma, then the z-score is:
 z equals the fraction x minus mu over sigma, end fraction
 the z-score tells you how many standard deviations the value x is above to the right of or below to the left of the mean, mu.
 values of x that are larger than the mean have positive z-scores, and values of x that are smaller than the mean have negative z-scores.
 if x equals the mean, then x has a z-score of zero.
-suppose x distributed as n of 5, 6.
+suppose x distributed as n of 5 and 6.
 this says that x is a normally distributed random variable with mean mu equals 5 and standard deviation sigma equals 6.
 suppose x equals 17.
 z equals the fraction x minus mu over sigma, end fraction equals the fraction 17 minus 5 over 6, end fraction equals 2
@@ -18,9 +18,9 @@ this means that x equals 1 is 0.67 standard deviations minus 0.67 sigma below or
 notice that: 5 plus minus 0.67 times 6 is approximately equal to one this has the pattern mu plus minus 0.67 sigma equals 1
 summarizing, when z is positive, x is above or to the right of mu and when z is negative, x is to the left of or below mu.
 or, when z is positive, x is greater than mu, and when z is negative, x is less than mu.
-6.1 what is the z-score of x, when x equals 1 and x distributed as n of 12, 3?
+6.1 what is the z-score of x, when x equals 1 and x distributed as n of 12 and 3?
 let x equals the amount of weight lost in pounds by a person in a month.
-x distributed as n of 5, 2.
+x distributed as n of 5 and 2.
 the z-score when x equals 10 pounds is z equals 2.5 verify.
 this z-score tells you that x equals 10 is standard deviations to the right or left of the mean what is the mean?
 a. this z-score tells you that x equals 10 is 2.5 standard deviations to the right of the mean five.
