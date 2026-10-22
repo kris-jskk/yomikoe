@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>YomiKoe · Study narrator</title>
   <meta name="description" content="YomiKoe narrates the PDFs you study from: pick a voice and a speed, follow the highlighted text, and hear equations read as English. Open source and self-hosted.">
+  <link rel="canonical" href="https://yomikoe.app/">
+  <meta property="og:title" content="YomiKoe · Study narrator">
+  <meta property="og:description" content="YomiKoe narrates the PDFs you study from: pick a voice and a speed, follow the highlighted text, and hear equations read as English. Open source and self-hosted.">
+  <meta property="og:url" content="https://yomikoe.app/">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#f6f1e8">
   <meta name="color-scheme" content="light dark">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,8 +49,7 @@
         <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch between light and dark theme">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"/></svg>
         </button>
-        <a class="btn btn-secondary btn-sm" href="https://github.com/kris-jskk/yomikoe">GitHub</a>
-        <a class="btn btn-primary btn-sm" href="https://app.yomikoe.app">Open the reader</a>
+        <a class="btn btn-primary btn-sm" href="https://github.com/kris-jskk/yomikoe">GitHub</a>
       </div>
     </nav>
   </header>
@@ -58,7 +63,8 @@
           <!-- PRD Overview; SYN-2, SYN-3, PLAY-2, MATH-1, TERM-1 -->
           <p class="lede">Drop in a PDF (a paper, a textbook chapter, lecture notes), pick a voice and a speed, and listen with the text highlighted as it plays. Formulas are spoken as a person would read them aloud rather than skipped, and technical vocabulary is pronounced correctly.</p>
           <div class="ctas">
-            <a class="btn btn-primary" href="https://app.yomikoe.app">Open the reader</a>
+            <!-- HOST-4: when app.yomikoe.app is live, make this "Open the reader" -> https://app.yomikoe.app -->
+            <a class="btn btn-primary" href="#start">Run it on your laptop</a>
             <a class="btn btn-secondary" href="https://github.com/kris-jskk/yomikoe">View on GitHub</a>
           </div>
         </div>
