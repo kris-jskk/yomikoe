@@ -31,7 +31,7 @@ v1 ships a working reader for born-digital and scanned PDFs with at least 6 voic
 - Mobile native apps (web app must work on a phone browser, that is enough)
 - Summaries, chat-with-PDF, mind maps
 - Multi-user accounts, sharing, billing
-- Non-PDF formats (EPUB, DOCX, web pages); keep the ingestion interface open for them (revisited 2026-10-17: SRC-1 to SRC-4, M8; numbered M7 until 2026-10-19)
+- Non-PDF formats (EPUB, DOCX, web pages); keep the ingestion interface open for them (revisited 2026-10-17: SRC-1 to SRC-4, M8; numbered M7 until 2026-10-19; web pages read through the browser extension are M10, decided 2026-10-22, `docs/PRD_EXTENSION.md`)
 
 **Success metrics**
 
@@ -43,7 +43,7 @@ v1 ships a working reader for born-digital and scanned PDFs with at least 6 voic
 | Highlight drift after 10 minutes of playback | < 1 word | Manual check on 5 documents |
 | Crash-free playback of a 300-page PDF | 100% | Soak test |
 
-Evals (EVAL-1 to EVAL-9, decided 2026-10-17, EVAL-10 for M5 and EVAL-11 for M6, added 2026-10-19; Technical Design D31–D34, D50) produce the trend line for these metrics and for quality the gates do not measure: every run keeps its per-example scores in a committed record so two commits can be compared. The gate tests remain the floor and the only thing that blocks a merge.
+Evals (EVAL-1 to EVAL-9, decided 2026-10-17, EVAL-10 for M5 and EVAL-11 for M6, added 2026-10-19; EVAL-12 for M10, proposed 2026-10-22; Technical Design D31–D34, D50) produce the trend line for these metrics and for quality the gates do not measure: every run keeps its per-example scores in a committed record so two commits can be compared. The gate tests remain the floor and the only thing that blocks a merge.
 
 ## Users and use cases
 
@@ -169,7 +169,7 @@ Added 2026-10-17 (user direction: read the books and documents the user already 
 
 | ID | Pri | Requirement |
 | --- | --- | --- |
-| SRC-1 | P1 | Import EPUB, DOCX, HTML, Markdown and plain text through the same block schema as PDF (promotes ING-9 from P2 to P1) |
+| SRC-1 | P1 | Import EPUB, DOCX, HTML, Markdown and plain text through the same block schema as PDF (promotes ING-9 from P2 to P1). HTML and plain text land in M10 (EXT-15, posted by the browser extension, `docs/PRD_EXTENSION.md`); EPUB/DOCX/Markdown stay in M8 |
 | SRC-2 | P1 | Import several files at once by drag-drop or folder pick, and on macOS read the local Apple Books library folder for DRM-free books (sideloaded EPUB and PDF only) |
 | SRC-3 | P2 | Cloud sources (iCloud Drive, Google Drive, Dropbox) through their file pickers or APIs; the Files app on iOS through the standard picker |
 | SRC-4 | P2 | Kindle: narrate what Amazon exposes to the user, the notes and highlights export ("My Clippings.txt" and the notebook export), not the books |
@@ -221,6 +221,7 @@ Added 2026-10-17 (Technical Design D31–D34). An eval runs the system over a fi
 | EVAL-9 | Listening: does it sound good to a person? | 10 sentences × 2 voices | 1–5 rubric (naturalness, pronunciation errors counted, pacing) filled by a human; mean per voice, error count | 2 |
 | EVAL-10 | Spoken mathematics: is an equation read as a person would read it aloud? (MATH-1 to MATH-4) | The M5 fixture `*.spoken.txt` files plus `evals/data/math_speech.jsonl`, raw → spoken pairs (added 2026-10-17) | D14-style word-sequence score over the spoken text (lowercased, punctuation stripped); per-class aggregates: display, inline, symbol table, references | 0 |
 | EVAL-11 | Domain notation: is a unit, formula, amount, citation or statistic read as a teacher would read it aloud? (DOM-1 to DOM-26; DOM-27 is the suite itself) | `evals/data/domain_speech.jsonl`, raw → spoken pairs with `domain` and `class` across six domains (added 2026-10-19, D50; `docs/PRD_DOMAINS.md`) | The EVAL-10 scorer; aggregates per domain and per class, plus raw-symbol leaks | 0 |
+| EVAL-12 | Web extraction: does the extension read a web page's article prose in reading order? (EXT-18, M10, proposed 2026-10-22) | 10 saved fixture pages under `api/tests/fixtures/web/` with golden `<stem>.expected.txt` (`docs/PRD_EXTENSION.md`) | D14 word-sequence score of the extracted prose, ≥ 0.95 per page (M10 gate (a)) | to decide in the M10 P1 spec (needs headless Chromium) |
 
 ## Architecture and stack
 
@@ -279,7 +280,7 @@ Two ways to run any of these, both behind the same `TTSBackend` interface: local
 
 ### Domains (D52, 2026-10-21)
 
-Four names, one brand domain. None is wired into the code yet: v1 runs locally via Docker Compose. Hosting and the landing page are M9 Hosting, the final milestone (decided 2026-10-21).
+Four names, one brand domain. None is wired into the code yet: v1 runs locally via Docker Compose. Hosting and the landing page are M9 Hosting (decided 2026-10-21, then as the final milestone; M10 Browser extension was added after it on 2026-10-22).
 
 | Domain | Points at | Repo folder | Status | Notes |
 |---|---|---|---|---|
@@ -325,7 +326,7 @@ Speeds above the backend's native range are handled by the service, not the back
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | /documents | Upload a PDF; 202 {id, status=parsing} (row goes uploaded → parsing before the parse is queued); same bytes again (sha256) → 200 with the existing id and status; non-PDF → 415; over 100 MB → 413 |
+| POST | /documents | Upload a PDF (M10 adds JSON, HTML and plain-text bodies with `source_url`, EXT-15, `docs/PRD_EXTENSION.md`); 202 {id, status=parsing} (row goes uploaded → parsing before the parse is queued); same bytes again (sha256) → 200 with the existing id and status; non-PDF → 415; over 100 MB → 413 |
 | GET | /documents | Library list with progress |
 | GET | /documents/{id} | Metadata (status, fail\_reason, page\_count, sha256), sections, settings, position; unknown id → 404 |
 | GET | /documents/{id}/segments?from=&limit= | Ordered segments for the text view: rows with `order` ≥ from (default 0), limit default 100, clamped to 500; returns total and next\_from (null after the last page); unknown id → 404 |
@@ -349,7 +350,7 @@ v1 runs on one laptop (8 GB RAM, no GPU) and must feel instant; everything else 
 | Offline | Whole stack runs with no network after models are downloaded once |
 | Footprint | Kokoro-82M weights (PyTorch, D15) + voices < 400 MB on disk; API process < 1.5 GB RAM during playback |
 | Licensing | Every model and library in v1 is Apache-2.0, MIT or BSD; nothing non-commercial (rules out XTTS-v2). Confirmed 2026-10-17: the CC-BY-4.0 dev-only data package caniuse-lite (build tooling, not shipped) is allowed |
-| Privacy | PDFs and audio never leave the machine in v1; no telemetry |
+| Privacy | Documents, page text and audio go only to the user's own API (the local machine in v1; the API base URL the user configured for the browser extension, M10); no third party; no telemetry |
 | Portability | Docker Compose on macOS and Linux; Apple Silicon must work (no CUDA-only deps in v1) |
 | Observability | Structured logs per request; timing for parse, synth and cache hit rate exposed at /metrics |
 | Resilience | A failed segment synthesis skips with a log line and keeps playing; a failed parse marks the document failed with a reason the UI shows |
@@ -371,9 +372,13 @@ parse in correct order     at 0.5x-3x on CPU           drift < 1 word/10m  passe
      Gate: board highlight on the         Gate: EPUB/DOCX re-exports within
      word box for >= 95% of 200 words     0.02 of PDF EVAL-1; Apple Books EPUB opens
 
--->  M9 Hosting (final milestone, decided 2026-10-21)
+-->  M9 Hosting (decided 2026-10-21)
      Gate: yomikoe.app, app. and api. subdomains live over HTTPS,
      getyomikoe.com redirects; hosted first audio meets the M2 target
+
+-->  M10 Browser extension (decided 2026-10-22)
+     Gate: EVAL-12 >= 0.95 on 10 web pages; 3-sentence selection
+     round-trips; side-panel e2e: first audio in M2 target, page highlight >= 95%
 ```
 
 M1 gate: 20 fixture PDFs parse in correct prose reading order (D12): the golden comparison covers heading, body, list, caption and footnote segments. The score is word-level (D14): word-sequence edit distance over the ordered prose, ≥ 0.95 per PDF (scanned fixtures at a 0.85 floor, D35) and ≥ 0.97 mean; the sentence-level score is printed as a diagnostic only.
@@ -406,7 +411,7 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
 
 After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export (ING-9 more formats is now M8, SRC-1).
 
-9. M9 Hosting (decided 2026-10-21 as the final milestone; user decision: hosting is a milestone, not future scope). Scope: the four names in the "Domains" table (yomikoe.app landing page as a static site in `site/`, app.yomikoe.app serving `web/`, api.yomikoe.app serving `api/`, getyomikoe.com as a 301 redirect), TLS on every name, the Docker Compose image deployed to a host, backups of the library volume, and the landing page itself. Requirement IDs (`HOST-n`) and the hosting provider are to be specified when the milestone is planned.
+9. M9 Hosting (decided 2026-10-21, then as the final milestone; M10 Browser extension was added after it on 2026-10-22; user decision: hosting is a milestone, not future scope). Scope: the four names in the "Domains" table (yomikoe.app landing page as a static site in `site/`, app.yomikoe.app serving `web/`, api.yomikoe.app serving `api/`, getyomikoe.com as a 301 redirect), TLS on every name, the Docker Compose image deployed to a host, backups of the library volume, and the landing page itself. Requirement IDs (`HOST-n`) and the hosting provider are to be specified when the milestone is planned.
 
    Phase 1 (landing page, started 2026-10-21): the landing page in `site/` is deployed to GitHub Pages by `.github/workflows/site.yml`; the registrar steps are in `docs/HOSTING.md`. The provider is a proposed decision (Technical Design D54), awaiting user confirmation. HOST-4 and later are to specify at phase 2 planning.
 
@@ -421,6 +426,29 @@ After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-
    (b) a fixture PDF uploaded through app.yomikoe.app plays with first audio within the M2 target measured from the browser;
    (c) the M4 300-page soak passes against the hosted API;
    (d) a library volume restored from backup serves the same documents.
+
+10. M10 Browser extension (decided 2026-10-22; user decision: "we also need a milestone to create a chrome plugin to read the page or selected page aloud"). Specified in `docs/PRD_EXTENSION.md`; decisions D55–D59 in the Technical Design, proposed 2026-10-22, awaiting user confirmation. Placed after M9 because the extension needs an API reachable from the browser: the local Docker Compose API today, api.yomikoe.app after M9 phase 2; its order relative to M7 and M8 (both still proposed) is an open question. Scope: a Chrome Manifest V3 extension in `extension/` (TypeScript + Vite) that reads the current page's main content (toolbar action or shortcut, Mozilla Readability in the extension) or the selected text (context menu), plays it in the side panel with the shared player state machine and scheduler from `web/src/player/` (D5, D10), and highlights the spoken sentence in the page; on the API side, `POST /documents` accepts HTML and plain text (the HTML and text part of SRC-1), stores `source_url`, and gets a CORS allow-list for the extension. Phases P1 API HTML/text ingestion, CORS, fixtures and EVAL-12; P2 extension skeleton; P3 shared player and in-page highlight; P4 e2e gate and docs. Chrome Web Store publishing is a user action (EXT-14, P2), not a gate item.
+
+   | ID | Priority | Requirement |
+   |---|---|---|
+   | EXT-1 | P0 | A Chrome MV3 extension in `extension/` that loads unpacked; toolbar action and keyboard shortcut read the active tab |
+   | EXT-2 | P0 | Page extraction with `@mozilla/readability` (Apache-2.0) on a clone of the live document; article HTML, title and URL sent to the API; visible-text fallback |
+   | EXT-3 | P0 | Context-menu "Read selection with YomiKoe" sends the selection as plain text; the document holds exactly the selected sentences |
+   | EXT-4 | P0 | Playback in the side panel with the shared `web/src/player/` state machine and scheduler, per-segment `GET /audio/{segment_id}` into Web Audio (D5, D10); no audio in the service worker |
+   | EXT-5 | P0 | Side-panel controls (play/pause, previous/next, speed, voice) and the sentence list with the current sentence highlighted |
+   | EXT-6 | P0 | In-page highlight of the spoken sentence by DOM range mapping; unmapped segments highlight in the side panel only (D59) |
+   | EXT-7 | P0 | In-page follow scroll that stops when the user scrolls away; respects `prefers-reduced-motion` |
+   | EXT-8 | P0 | One setting, the API base URL, default `http://localhost:8765`; host permission for that origin only |
+   | EXT-15 | P0 | `POST /documents` accepts JSON `{source_url, title, html}` or `{source_url, title, text}` and raw `text/html`/`text/plain` through the same block schema and sha256 dedup |
+   | EXT-16 | P0 | `documents.source_url` and `documents.format` stored (migration 0007), returned, shown in LIB-1 |
+   | EXT-17 | P0 | CORS allow-list `YOMIKOE_CORS_ORIGINS` for `chrome-extension://` origins, exposing `X-Timestamps` and `X-Duration-Ms` |
+   | EXT-18 | P0 | EVAL-12 over 10 saved fixture pages under `api/tests/fixtures/web/` |
+
+   Gate (`docs/PRD_EXTENSION.md`, "Milestones"):
+   (a) EVAL-12: on the 10 fixture web pages (news article, blog post, Wikipedia article, documentation page, academic HTML paper, forum thread, two-column marketing page, page with code blocks, page with MathML or inline maths, page behind a cookie banner) the extracted reading-order prose scores ≥ 0.95 against `<stem>.expected.txt` by the D14 word-sequence score, extraction headless in Chromium;
+   (b) a selection of 3 sentences on any fixture page round-trips to a document of exactly those sentences;
+   (c) a Playwright Chromium e2e with the unpacked extension loaded (persistent context) plays a fixture page from the side panel with first audio within the M2 target and the in-page highlight on the spoken sentence for ≥ 95 % of 100 sampled sentences;
+   (d) the tier-0 evals show no regression after the HTML ingestion path lands (compare cited).
 
 ## Open questions and risks
 
@@ -463,4 +491,5 @@ The two risks that can sink v1 are reading order on real-world PDFs and highligh
 - [ ] M7 (was M6): page rendering for the board: pypdfium2 already renders pages at 300 dpi for OCR (ING-2) and can render the board; image cache size unverified. Added 2026-10-17
 - [ ] M7 (was M6): should the board be rendered in the browser with pdf.js (Apache-2.0) instead, so the server ships only coordinates? Decide in the M7 spec (D38). Added 2026-10-17
 - [ ] M7 (was M6): annotations are anchored to segment id plus offsets (D39), so a re-ingested document (new ids, D7) loses them unless they are re-anchored by text match; whether to re-anchor, and how, is open. Added 2026-10-17
+- [ ] M10 ordering (added 2026-10-22): M10 Browser extension is placed after M9; M7 Classroom view and M8 Sources and formats are still proposed. Does M10 come before or after M7 and M8? M10 lands the HTML and plain-text part of SRC-1, which M8 would build on (`docs/PRD_EXTENSION.md`, open questions). User to decide
 - [ ] Kindle (added 2026-10-19): Fire tablets as a browser target, `.azw3` personal documents and the DRM refusal are specified in `docs/PRD_KINDLE.md` (KDL-1 to KDL-9; Technical Design D41–D44, proposed, not confirmed). Deferred by the user 2026-10-19: future scope, not part of the current implementation
