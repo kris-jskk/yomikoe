@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.ingestion.acronyms import find_definitions
+from yomikoe.ingestion.acronyms import find_definitions
 
 
 @pytest.mark.parametrize(
@@ -36,7 +36,7 @@ def test_ing6_first_definition_wins() -> None:
 def _alembic_cfg(db: Path):
     from alembic.config import Config
 
-    from hearnarro.storage.db import MIGRATIONS_DIR, sync_url
+    from yomikoe.storage.db import MIGRATIONS_DIR, sync_url
 
     cfg = Config()
     cfg.set_main_option("script_location", str(MIGRATIONS_DIR))
@@ -50,7 +50,7 @@ def _columns(db: Path) -> set[str]:
 
 
 def test_ing6_migration_0003_on_empty_db(tmp_path: Path) -> None:
-    from hearnarro.storage.db import db_path, run_migrations
+    from yomikoe.storage.db import db_path, run_migrations
 
     run_migrations(tmp_path)
     assert "acronyms_json" in _columns(db_path(tmp_path))
@@ -59,7 +59,7 @@ def test_ing6_migration_0003_on_empty_db(tmp_path: Path) -> None:
 def test_ing6_migration_0003_on_a_0002_db(tmp_path: Path) -> None:
     from alembic import command
 
-    db = tmp_path / "hearnarro.db"
+    db = tmp_path / "yomikoe.db"
     command.upgrade(_alembic_cfg(db), "0002")
     assert "acronyms_json" not in _columns(db)
     with sqlite3.connect(db) as conn:

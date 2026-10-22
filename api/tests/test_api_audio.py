@@ -20,9 +20,9 @@ from typing import Any
 
 import httpx
 
-from hearnarro.synthesis.encode import WavEncoder
 from tests.conftest import SpyBackend
 from tests.test_api_documents import REPORT_PDF, client_for, upload, wait_settled
+from yomikoe.synthesis.encode import WavEncoder
 
 VOICE = "fake_f2"
 TS_KEYS = {"word", "start_ms", "end_ms", "char_start", "char_end"}
@@ -99,7 +99,7 @@ async def test_syn6_audio_cache_file_and_row_written(tmp_path: Path) -> None:
     path = tmp_path / "audio" / str(doc_id) / str(seg["id"]) / f"{VOICE}_1.50.wav"
     assert path.read_bytes() == resp.content
     assert not list((tmp_path / "audio").rglob("*.tmp"))
-    db = sqlite3.connect(tmp_path / "hearnarro.db")
+    db = sqlite3.connect(tmp_path / "yomikoe.db")
     try:
         rows = db.execute(
             "SELECT voice_id, speed, backend, status, duration_ms, timestamps_json "
@@ -140,7 +140,7 @@ async def test_syn3_syn6_quarter_speeds_two_decimal_cache_files_rows_and_hits(
     assert sorted(p.name for p in folder.iterdir()) == sorted(
         f"{VOICE}_{s}.wav" for s in ("1.25", "2.00", "2.25")
     )
-    db = sqlite3.connect(tmp_path / "hearnarro.db")
+    db = sqlite3.connect(tmp_path / "yomikoe.db")
     try:
         rows = db.execute(
             "SELECT speed, status, path FROM audio_cache WHERE segment_id = ? ORDER BY speed",
@@ -164,7 +164,7 @@ async def test_syn6_one_decimal_row_from_before_0_05_steps_still_hits(tmp_path: 
         folder = tmp_path / "audio" / str(doc_id) / str(seg["id"])
         old = folder / f"{VOICE}_2.0.wav"
         (folder / f"{VOICE}_2.00.wav").rename(old)
-        db = sqlite3.connect(tmp_path / "hearnarro.db")
+        db = sqlite3.connect(tmp_path / "yomikoe.db")
         try:
             db.execute(
                 "UPDATE audio_cache SET path = ? WHERE segment_id = ? AND speed = 2.0",
@@ -220,7 +220,7 @@ async def test_syn1_audio_synthesis_failure_502_and_row_failed(tmp_path: Path) -
         assert body["segment_id"] == sid
         assert isinstance(body["reason"], str) and body["reason"]
         assert (await client.head(f"/audio/{sid}", params=params)).status_code == 404
-    db = sqlite3.connect(tmp_path / "hearnarro.db")
+    db = sqlite3.connect(tmp_path / "yomikoe.db")
     try:
         status = db.execute(
             "SELECT status FROM audio_cache WHERE segment_id=? AND voice_id=? AND speed=? "
@@ -265,7 +265,7 @@ async def test_syn2_voices_six_across_both_genders(tmp_path: Path) -> None:
 async def test_syn1_audio_format_opus_serves_ogg_same_timestamps_d16(
     tmp_path: Path, monkeypatch: Any
 ) -> None:
-    """HEARNARRO_AUDIO_FORMAT=opus: the encoder comes from settings; same X-Timestamps as WAV."""
+    """YOMIKOE_AUDIO_FORMAT=opus: the encoder comes from settings; same X-Timestamps as WAV."""
     import pytest
 
     pytest.importorskip("opuscodec")
@@ -275,8 +275,8 @@ async def test_syn1_audio_format_opus_serves_ogg_same_timestamps_d16(
         wav = await client.get(f"/audio/{seg['id']}", params=params)
         assert wav.status_code == 200 and wav.headers["content-type"].startswith("audio/wav")
 
-    monkeypatch.setenv("HEARNARRO_AUDIO_FORMAT", "opus")
-    monkeypatch.setenv("HEARNARRO_TTS_BACKEND", "fake")
+    monkeypatch.setenv("YOMIKOE_AUDIO_FORMAT", "opus")
+    monkeypatch.setenv("YOMIKOE_TTS_BACKEND", "fake")
     async with client_for(tmp_path / "ogg", tts_backend=SpyBackend(), lookahead=0) as client:
         doc_id = (await upload(client, REPORT_PDF)).json()["id"]
         assert (await wait_settled(client, doc_id))["status"] == "ready"

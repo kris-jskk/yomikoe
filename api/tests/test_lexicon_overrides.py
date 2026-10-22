@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from hearnarro.synthesis import lexicon_overrides as lo
+from yomikoe.synthesis import lexicon_overrides as lo
 
 
 @dataclass

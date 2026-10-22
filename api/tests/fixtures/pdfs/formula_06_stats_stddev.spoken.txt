@@ -1,0 +1,25 @@
+# M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c
+one is two standard deviations less than the mean of five because: 1 equals 5 plus minus 2 times 2.
+the equation value equals mean plus number of stdevs times standard deviation can be expressed for a sample and for a population.
+sample: x equals x bar plus number of stdev times s
+population: x equals mu plus number of stdev times sigma
+the lower case letter s represents the sample standard deviation and the greek letter sigma sigma, lower case represents the population standard deviation.
+the symbol x bar is the sample mean and the greek symbol mu is the population mean.
+if x is a number, then the difference x minus mean is called its deviation.
+if the numbers belong to a population, in symbols a deviation is x minus mu.
+for sample data, in symbols a deviation is x minus x bar.
+the lower case letter s represents the sample standard deviation and the greek letter sigma sigma, lower case represents the population standard deviation.
+if the sample has the same characteristics as the population, then s should be a good estimate of sigma.
+the variance is the average of the squares of the deviations the x minus x bar values for a sample, or the x minus mu values for a population.
+the symbol sigma squared represents the population variance; the population standard deviation sigma is the square root of the population variance.
+the symbol s squared represents the sample variance; the sample standard deviation s is the square root of the sample variance.
+if the numbers come from a census of the entire population and not a sample, when we calculate the average of the squared deviations to find the variance, we divide by n, the number of items in the population.
+if the data are from a sample rather than a population, when we calculate the average of the squared deviations, we divide by n minus 1, one less than the number of items in the sample.
+s equals the square root of the fraction the sum of x minus x bar, squared over n minus 1, end fraction or s equals the square root of the fraction the sum of f of x minus x bar, squared over n minus 1, end fraction
+for the sample standard deviation, the denominator is n minus 1, that is the sample size minus 1.
+sigma equals the square root of the fraction the sum of x minus mu, squared over n, end fraction or sigma equals the square root of the fraction the sum of f of x minus mu, squared over n, end fraction
+for the population standard deviation, the denominator is n, the number of items in the population.
+in these formulas, f represents the frequency with which a value appears.
+for example, if a value appears once, f is one.
+if a value appears three times in the data set or population, f is three.
+the notation for the standard error of the mean is sigma over the square root of n where sigma is the standard deviation of the population and n is the size of the sample.

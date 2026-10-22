@@ -1,5 +1,5 @@
 """KokoroBackend (SYN-2 voices, SYN-3 native speed, SYN-4 backend; D15). Model tests need
-``HEARNARRO_TEST_MODEL=1``; the pure helpers below always run."""
+``YOMIKOE_TEST_MODEL=1``; the pure helpers below always run."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import re
 
 import pytest
 
-from hearnarro.synthesis.kokoro_backend import (
+from yomikoe.synthesis.kokoro_backend import (
     PINNED_REVISION,
     _Timed,
     arpabet_to_kokoro,
@@ -17,11 +17,11 @@ from hearnarro.synthesis.kokoro_backend import (
 )
 
 SENTENCE = "The quick brown fox jumps over the lazy dog, and 3.2 percent of readers noticed."
-OOV_SENTENCE = "Kubernetes orchestrates pods across HearNarro's Zygalski nodes."
+OOV_SENTENCE = "Kubernetes orchestrates pods across YomiKoe's Zygalski nodes."
 
 
 def test_syn4_kokoro_revision_is_pinned_hash() -> None:
-    from hearnarro.settings import DEFAULT_KOKORO_REVISION
+    from yomikoe.settings import DEFAULT_KOKORO_REVISION
 
     assert re.fullmatch(r"[0-9a-f]{40}", PINNED_REVISION)
     assert DEFAULT_KOKORO_REVISION == PINNED_REVISION
@@ -54,7 +54,7 @@ def test_syn1_word_timestamps_every_word_gets_a_span() -> None:
 
 @functools.cache
 def _backend():
-    from hearnarro.synthesis.kokoro_backend import KokoroBackend
+    from yomikoe.synthesis.kokoro_backend import KokoroBackend
 
     return KokoroBackend(revision=PINNED_REVISION)
 
@@ -93,7 +93,7 @@ def test_syn1_kokoro_sentence_timestamps_valid(voice: str) -> None:
 
 @pytest.mark.model
 def test_syn4_kokoro_oov_words_are_spoken_and_timed(caplog: pytest.LogCaptureFixture) -> None:
-    with caplog.at_level(logging.WARNING, logger="hearnarro.synthesis.kokoro_backend"):
+    with caplog.at_level(logging.WARNING, logger="yomikoe.synthesis.kokoro_backend"):
         result = _backend().synthesize(OOV_SENTENCE, "af_heart", 1.0)
     _check_invariants(OOV_SENTENCE, result)
     assert all(t.end_ms > t.start_ms for t in result.timestamps)  # nothing dropped silently
@@ -182,7 +182,7 @@ def test_syn4_kokoro_acronyms_spoken_or_spelled_one_timestamp_per_word() -> None
 
 @pytest.mark.model
 def test_syn4_kokoro_document_definition_spells_ted() -> None:
-    from hearnarro.synthesis.backend import SynthContext
+    from yomikoe.synthesis.backend import SynthContext
 
     text = "The Transferable Erosion Deposit (TED) rose, and TED values fell."
     ctx = SynthContext(acronyms={"TED": "Transferable Erosion Deposit"}, document_id=1)
@@ -206,13 +206,15 @@ UBER_SENTENCE = "I took an Uber to the TED talk."
 
 @pytest.mark.model
 def test_syn4_kokoro_lexicon_override_uber(caplog: pytest.LogCaptureFixture) -> None:
-    from hearnarro.synthesis.backend import SynthContext
-    from hearnarro.synthesis.lexicon_overrides import OVERRIDES
+    from yomikoe.synthesis.backend import SynthContext
+    from yomikoe.synthesis.lexicon_academic import flat
+    from yomikoe.synthesis.lexicon_overrides import OVERRIDES
 
     b = _backend()
     assert all(c in b._vocab for ps in OVERRIDES.values() for c in ps)
+    assert all(c in b._vocab for ps in flat().values() for c in ps)  # TERM-1
     ctx = SynthContext(acronyms={"XYZ": "Some Other Thing"}, document_id=4242)
-    with caplog.at_level(logging.INFO, logger="hearnarro.synthesis.kokoro_backend"):
+    with caplog.at_level(logging.INFO, logger="yomikoe.synthesis.kokoro_backend"):
         by_text = {t.text: t.phonemes for t in b._tokens(UBER_SENTENCE, False, ctx)}
         b._tokens("Two Ubers and Uber's app.", False, ctx)
     assert by_text["Uber"] == "ˈubəɹ"  # the 'u' vowel, not 'j' (fallback said jˈubəɹ)
@@ -241,7 +243,7 @@ def test_syn4_kokoro_caps_heading_read_as_words() -> None:
     result = b.synthesize("ERIC'S NOTE", "af_heart", 1.0)
     _check_invariants("ERIC'S NOTE", result)
     assert [t.word for t in result.timestamps] == ["ERIC'S", "NOTE"]
-    out = Path.home() / "hearnarro-m1" / "audio_samples" / "erics_note_1.0x.wav"
+    out = Path.home() / "yomikoe-m1" / "audio_samples" / "erics_note_1.0x.wav"
     if out.parent.is_dir():
         import wave
 

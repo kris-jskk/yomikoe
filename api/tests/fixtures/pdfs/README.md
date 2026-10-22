@@ -45,3 +45,18 @@ true sentence ends (for example "... in Appendix C." or "... function of x.").
 after which a sentence ends, the two word streams are aligned with the word-level edit script, and
 precision/recall/F1 are computed over boundaries. The M2 measurement prints a table and the mean;
 thresholds are set separately and are not asserted yet.
+
+## Formula fixtures (M5, MATH-1, ING-10, ING-11; PRD milestone 5 gate clause a)
+
+Ten single-page `formula_<nn>_<slug>.pdf` fixtures (class `formula`, `pages: 1`). 01–05 are pages cut
+from the `tables_*` and `academic_02` fixtures with `api/scripts/cut_fixture_page.py SRC.pdf PAGE OUT.pdf`
+(0-based PAGE; the exact commands are in `ATTRIBUTION.md`); 06–09 are open-licence textbook pages, 08
+and 09 with code listings; 10 is image-only (a text page rasterized with the same script's
+`--rasterize DPI`). Each has `name.expected.jsonl` (pipeline draft, then hand-corrected: one row per
+display equation with its linear text, prose split as on the page, code listings typed `code` even
+before the pipeline types them) and `name.spoken.txt`: one line per segment that holds mathematics
+(every equation and every sentence with inline maths), written by hand in the reading convention of
+`_agent/specs/m5-academic-reading.md` §3c, with a display equation's number spoken first ("equation 3:",
+MATH-4); `#` lines are comments. Every manifest entry, including the 20 M1 fixtures, carries a
+`profile` (`prose`, `mixed`, `math`; ING-11) that gate clause (e) compares with `compute_profile`.
+The M1 golden, quality and boundary tests cover the four M1 classes only.

@@ -1,10 +1,10 @@
 """Scoring helpers for the reading-order golden test (D11, ING-4).
 
-The functions live in ``hearnarro.evals.scorers`` (D32) so the eval suites share them; this
+The functions live in ``yomikoe.evals.scorers`` (D32) so the eval suites share them; this
 module re-exports them so the gate tests keep their imports.
 """
 
-from hearnarro.evals.scorers import (
+from yomikoe.evals.scorers import (
     CHAR_MASS_TOLERANCE,
     PROSE_TYPES,
     PUNCTUATION,

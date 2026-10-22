@@ -13,9 +13,9 @@ import time
 
 import pytest
 
-from hearnarro.ingestion.models import Segment
-from hearnarro.synthesis.cache import AudioEntry
 from tests.conftest import SpyBackend, make_service, synth_fixture_segments
+from yomikoe.ingestion.models import Segment
+from yomikoe.synthesis.cache import AudioEntry
 
 VOICE = "fake_f1"
 SPEED = 1.0
@@ -199,7 +199,7 @@ async def test_syn5_failed_segment_raises_marks_failed_and_queue_moves_on() -> N
         await wait_for(lambda: want <= cache.ready_ids())
         assert cache.failures.keys() >= {(bad.id, VOICE, SPEED, "fake")}
 
-        from hearnarro.synthesis.service import SegmentSynthesisFailed
+        from yomikoe.synthesis.service import SegmentSynthesisFailed
 
         service2, _, cache2 = make_service(SpyBackend(fail_texts={"*"}), lookahead=0)
         try:

@@ -9,7 +9,7 @@ import wave
 
 import pytest
 
-from hearnarro.synthesis.encode import AudioEncoder, WavEncoder, default_encoder
+from yomikoe.synthesis.encode import AudioEncoder, WavEncoder, default_encoder
 
 SR = 24_000
 
@@ -56,7 +56,7 @@ def test_syn1_default_encoder_opus_requested_is_ogg_or_wav_fallback() -> None:
 
 def test_syn1_opus_encoder_ogg_container_and_size_d16() -> None:
     pytest.importorskip("opuscodec")
-    from hearnarro.synthesis.encode import OpusEncoder
+    from yomikoe.synthesis.encode import OpusEncoder
 
     enc = OpusEncoder()
     assert (enc.media_type, enc.ext) == ("audio/ogg", "ogg")
@@ -73,6 +73,6 @@ def test_syn1_opus_encoder_ogg_container_and_size_d16() -> None:
 
 def test_syn1_default_encoder_opus_when_installed_d16() -> None:
     pytest.importorskip("opuscodec")
-    from hearnarro.synthesis.encode import OpusEncoder
+    from yomikoe.synthesis.encode import OpusEncoder
 
     assert isinstance(default_encoder("opus"), OpusEncoder)

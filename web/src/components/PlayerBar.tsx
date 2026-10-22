@@ -1,7 +1,11 @@
 // PlayerBar (spec §7, PLAY-1, PLAY-2, PLAY-4): transport, "Back to reading" pill (follow mode),
 // voice, speed, status word and D19 stats readout. M4: skip toggles (PLAY-8).
+// M5 (spec _agent/specs/m5-academic-reading.md §4d): "Skip equation" / "Repeat equation" (PLAY-10),
+// enabled while the current segment is an equation, and the equation-speed select (PLAY-11).
 
 import type { Voice } from '../api/types'
+import { BLOCK_FACTOR_MAX, BLOCK_FACTOR_MIN } from '../player/blockSpeed'
+import type { PlayerState } from '../player/machine'
 import type { SkipState } from '../player/skip'
 import type { Player } from '../player/usePlayer'
 
@@ -30,9 +34,23 @@ export function snapSpeed(v: number): number {
 
 const ms = (x: number) => `${Math.round(x)} ms`
 
+/** PLAY-11 select steps: the full 0.05 grid over [BLOCK_FACTOR_MIN, BLOCK_FACTOR_MAX] (11 values). */
+export const EQUATION_FACTORS: readonly number[] = Array.from(
+  { length: Math.round((BLOCK_FACTOR_MAX - BLOCK_FACTOR_MIN) * 20) + 1 },
+  (_, k) => Math.round((BLOCK_FACTOR_MIN + k * 0.05) * 100) / 100,
+)
+
+/** PLAY-10: true while the current segment's block type is `equation`. */
+export function onEquation(state: PlayerState): boolean {
+  if (state.current === null) return false
+  const i = state.orderedIds.indexOf(state.current.segmentId)
+  return i >= 0 && state.types[i] === 'equation'
+}
+
 export function PlayerBar({ player, voices, onSkipChange }: PlayerBarProps) {
   const { state, dispatch, play, pause, lastClip, following, followHint, resumeFollowing } = player
   const playing = state.status === 'playing'
+  const eq = onEquation(state)
   const fa = state.firstAudio
   const first =
     fa && fa.startedAt !== null ? `${((fa.startedAt - fa.requestedAt) / 1000).toFixed(2)} s` : '–'
@@ -92,6 +110,26 @@ export function PlayerBar({ player, voices, onSkipChange }: PlayerBarProps) {
         >
           ⏭
         </button>
+        <button
+          type="button"
+          id="repeat-equation"
+          aria-label="Repeat equation"
+          title="Repeat equation (r)"
+          disabled={!eq}
+          onClick={() => dispatch({ type: 'REPEAT_EQUATION' })}
+        >
+          ↺∑
+        </button>
+        <button
+          type="button"
+          id="skip-equation"
+          aria-label="Skip equation"
+          title="Skip equation (e)"
+          disabled={!eq}
+          onClick={() => dispatch({ type: 'SKIP_EQUATION' })}
+        >
+          ∑⇥
+        </button>
       </div>
       <select
         id="voice"
@@ -120,6 +158,21 @@ export function PlayerBar({ player, voices, onSkipChange }: PlayerBarProps) {
         />{' '}
         <span id="speed-value">{state.speed.toFixed(2)}x</span>
       </span>
+      <label className="equation-speed">
+        Equations{' '}
+        <select
+          id="equation-speed"
+          aria-label="Equation playback factor"
+          value={state.blockSpeed.equation.toFixed(2)}
+          onChange={(e) => dispatch({ type: 'SET_BLOCK_SPEED', equation: Number(e.target.value) })}
+        >
+          {EQUATION_FACTORS.map((f) => (
+            <option key={f} value={f.toFixed(2)}>
+              {f.toFixed(2)}x
+            </option>
+          ))}
+        </select>
+      </label>
       <span className="skips">
         {SKIP_TOGGLES.map((t) => (
           <label key={t.key}>

@@ -4,10 +4,10 @@ import itertools
 
 import pytest
 
-from hearnarro.ingestion.abbreviations import DEFAULT_ABBREVIATIONS
-from hearnarro.ingestion.models import LogicalBlock
-from hearnarro.ingestion.normalize import normalize
-from hearnarro.ingestion.segment import split_sentences
+from yomikoe.ingestion.abbreviations import DEFAULT_ABBREVIATIONS
+from yomikoe.ingestion.models import LogicalBlock
+from yomikoe.ingestion.normalize import normalize
+from yomikoe.ingestion.segment import split_sentences
 
 TEXT = (
     "Dr. Smith et al. found 3.2% growth in the sample. "
@@ -207,7 +207,7 @@ def test_ing5_per_document_abbreviation_extension() -> None:
 
 def test_ing5_split_inside_a_token_is_kept_split_before_punctuation_is_undone() -> None:
     """pysbd's mid-token splits ("PA" | "(i)") stay (D14 golden); "seq." | ", P" is undone."""
-    from hearnarro.ingestion.segment import _merge
+    from yomikoe.ingestion.segment import _merge
 
     text = "we write PA(i), CH(i) for its parents."
     cut = text.index("(i), CH")

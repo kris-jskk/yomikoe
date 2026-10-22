@@ -58,11 +58,11 @@ def main() -> int:
     port = free_port()
     base = f"http://127.0.0.1:{port}"
     data_dir = tempfile.mkdtemp(prefix="hn-e2e-")
-    env = {**os.environ, "HEARNARRO_TTS_BACKEND": "fake"}
+    env = {**os.environ, "YOMIKOE_TTS_BACKEND": "fake"}
     cmd = [
         str(API / ".venv/bin/python"),
         "-m",
-        "hearnarro",
+        "yomikoe",
         "serve",
         "--data-dir",
         data_dir,

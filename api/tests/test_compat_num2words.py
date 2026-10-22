@@ -8,8 +8,8 @@ import sys
 
 import pytest
 
-from hearnarro.synthesis import compat
-from hearnarro.synthesis.compat.num2words import num2words
+from yomikoe.synthesis import compat
+from yomikoe.synthesis.compat.num2words import num2words
 
 
 @pytest.mark.parametrize(
@@ -46,7 +46,7 @@ def test_syn4_compat_num2words_rejects_other_languages_and_modes() -> None:
 def test_syn4_compat_install_registers_shim_not_lgpl_package() -> None:
     compat.install()
     mod = sys.modules["num2words"]
-    assert mod.__name__ == "hearnarro.synthesis.compat.num2words"
+    assert mod.__name__ == "yomikoe.synthesis.compat.num2words"
     assert mod.num2words(42) == "forty-two"
 
 
@@ -57,7 +57,7 @@ def test_syn4_compat_misaki_en_imports_without_num2words_distribution() -> None:
         "import importlib.metadata as md\n"
         "try:\n    md.distribution('num2words'); raise SystemExit('LGPL num2words installed')\n"
         "except md.PackageNotFoundError: pass\n"
-        "from hearnarro.synthesis import compat; compat.install()\n"
+        "from yomikoe.synthesis import compat; compat.install()\n"
         "from misaki import en\n"
         "print(en.num2words(1984, to='year'))\n"
     )

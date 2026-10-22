@@ -9,7 +9,7 @@ the container. What you are checking is LIB-1 to LIB-4, PLAY-6 to PLAY-8, the st
 
 All `npm` commands run from `web/`, all `python` commands from `api/`, all `curl` commands from the
 repo root. The doc was followed cold on 2026-10-17 against the live Kokoro server and your own data
-directory `~/hearnarro-m1` (19 documents); every output quoted below is in
+directory `~/yomikoe-m1` (19 documents); every output quoted below is in
 `_agent/results/551_m4_testing_cold.txt` under the heading named in brackets, e.g. `[S2]`.
 
 ## 1. Prerequisites
@@ -26,8 +26,8 @@ cd web && source scripts/env.sh && npm run build && cd ..
 # dist/index.html, dist/assets/index-*.css (about 4 kB), index-*.js (about 256 kB, 80 kB gzip)
 
 cd api
-HF_HOME=~/hearnarro-m1/hf HEARNARRO_TTS_BACKEND=kokoro \
-  .venv/bin/python -m hearnarro serve --data-dir ~/hearnarro-m1 --port 8765
+HF_HOME=~/yomikoe-m1/hf YOMIKOE_TTS_BACKEND=kokoro \
+  .venv/bin/python -m yomikoe serve --data-dir ~/yomikoe-m1 --port 8765
 ```
 
 The first start on M4 code applies Alembic migration 0004 (`documents.ocr_skipped_pages`) to your
@@ -35,7 +35,7 @@ database; that is expected and leaves your documents alone. The model loads in 1
 is ready when `Uvicorn running on http://127.0.0.1:8765` appears and `curl -s
 http://127.0.0.1:8765/voices` returns a JSON list (`[S4]`: `af_heart`, `af_bella`, ... ).
 
-The server serves `web/dist` at `/` when that directory exists (`HEARNARRO_WEB_DIST` points it
+The server serves `web/dist` at `/` when that directory exists (`YOMIKOE_WEB_DIST` points it
 elsewhere). If you skip the build, the API still works and `/` returns 404.
 
 ## 3. The API (curl, second terminal, repo root)
@@ -101,7 +101,7 @@ J='Content-Type: application/json'
    curl -s -o /dev/null -w '%{http_code}\n' -I "$B/audio/11?voice=af_heart&speed=1.00"
    curl -s -o /tmp/a.wav -w '%{http_code} %{content_type} %{size_download} B %{time_total} s\n' "$B/audio/11?voice=af_heart&speed=1.00"
    curl -s -o /dev/null -w '%{http_code}\n' -I "$B/audio/11?voice=af_heart&speed=1.00"
-   (cd api && .venv/bin/python -m hearnarro purge-audio --data-dir ~/hearnarro-m1 \
+   (cd api && .venv/bin/python -m yomikoe purge-audio --data-dir ~/yomikoe-m1 \
       --document-id 1 --segment-id 11 --voice af_heart --speed 1.0)
    curl -s -o /dev/null -w '%{http_code}\n' -I "$B/audio/11?voice=af_heart&speed=1.00"
    ```
@@ -130,7 +130,7 @@ J='Content-Type: application/json'
    curl -s -o /dev/null -w '%{http_code}\n' -X DELETE $B/documents/$ID
    curl -s -o /dev/null -w '%{http_code}\n' $B/documents/$ID
    curl -s -o /dev/null -w '%{http_code}\n' -X DELETE $B/documents/$ID
-   ls ~/hearnarro-m1/pdfs/e210836729c0*
+   ls ~/yomikoe-m1/pdfs/e210836729c0*
    ```
    Expected: `204`, `404`, `404`, then `No such file or directory` from `ls` (zsh says `no matches
    found`): the stored PDF is gone; `GET /documents` is
@@ -180,9 +180,9 @@ position you do not mind changing) for the steps that save a position.
    `[W7]`, `[W8]`. Try it on a paper with a References heading to see a whole section dimmed.
 9. **Media Session (PLAY-7, manual).** While playing, open the macOS Now Playing widget (Control
    Centre) or, on a phone opened to `http://<your-mac-ip>:8765/` (only if you start the server with
-   `--host 0.0.0.0`), the lock screen. It should show the document title and "HearNarro", and its
+   `--host 0.0.0.0`), the lock screen. It should show the document title and "YomiKoe", and its
    play, pause, previous and next buttons should act like Space and `←` / `→`. Headless Chromium
-   confirmed the metadata (`title academic_01_seahelm_audio, artist HearNarro, state playing`,
+   confirmed the metadata (`title academic_01_seahelm_audio, artist YomiKoe, state playing`,
    `[W4]`); the widget and lock screen need you.
 10. **Reset document 1** when done, if you like:
     `curl -s -X PATCH -H "$J" -d '{"position":null,"settings":null}' $B/documents/1` `[W11]`.
@@ -203,7 +203,7 @@ already have rules are 08 (`555-0123` → "555 to 0123"), 11 (`15%` → "15 perc
 ## 6. The soak gate
 
 ```bash
-cd api && HEARNARRO_TEST_SOAK=1 .venv/bin/python -m pytest tests/test_soak_300.py -q -s
+cd api && YOMIKOE_TEST_SOAK=1 .venv/bin/python -m pytest tests/test_soak_300.py -q -s
 ```
 
 Expected (gate clause 1): one `SOAK pages=300 segments=6030 parse_wall_s=... rss_self_mb=...

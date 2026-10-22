@@ -8,6 +8,13 @@ export interface WordTimestamp {
   char_end: number
 }
 
+/** MATH-5: one maths range of a segment; `display` for a displayed (boxed) equation. */
+export interface MathRange {
+  start: number
+  end: number
+  display: boolean
+}
+
 export interface Segment {
   id: number
   order: number
@@ -18,6 +25,8 @@ export interface Segment {
   normalized_text: string
   char_start: number
   char_end: number
+  /** MATH-5: maths ranges, offsets into `text` (absent from servers before M5 phase 5). */
+  math?: MathRange[]
 }
 
 export interface Section {
@@ -81,6 +90,26 @@ export interface DocumentSummary {
   progress: number
   settings: DocumentSettings | null
   last_opened_at: string | null
+  /** ING-11 (D40): absent from servers before M5. */
+  profile?: DocumentProfile
+  /** Only on a PATCH that changed the profile: segments re-normalized, cache rows removed. */
+  renormalized?: { changed: number; removed: number }
+}
+
+export type ProfileClass = 'prose' | 'mixed' | 'math'
+
+/** ING-11 document profile: effective class (override wins), computed class and raw shares. */
+export interface DocumentProfile {
+  class: ProfileClass
+  computed_class: ProfileClass
+  override: ProfileClass | null
+  math_share: number
+  display_per_page: number
+  inline_token_share: number
+  code_share: number
+  citation_style: 'numeric' | 'author_year' | 'none'
+  scanned_share: number
+  author_year_citations: 'read' | 'skip'
 }
 
 /** `GET /documents/{id}`: the summary plus sections. */
@@ -93,12 +122,16 @@ export interface DocumentPatch {
   position?: { segment_id: number; offset_ms: number }
   settings?: DocumentSettings
   opened?: boolean
+  /** ING-11: `class: null` clears the override; a change re-normalizes on the server. */
+  profile?: { class?: ProfileClass | null; author_year_citations?: 'read' | 'skip' }
 }
 
 /** `GET` / `PUT /settings`: global defaults (LIB-3). */
 export interface GlobalSettings {
   default_voice_id: string | null
   default_speed: number
+  /** PLAY-11: equation clips play at speed x this factor (0.5-1.0, default 0.8); absent before M5. */
+  equation_speed_factor?: number
 }
 
 /** `POST /documents` response: 202 for a new upload, 200 for an already-known file. */
@@ -115,4 +148,31 @@ export interface SegmentsPage {
   limit: number
   next_from: number | null
   segments: Segment[]
+}
+
+/** TERM-2: one row of `GET /pronunciations`; `document_id` null is a global override. */
+export interface Pronunciation {
+  id: number
+  document_id: number | null
+  /** Stored lower-cased by the server. */
+  word: string
+  respelling: string
+  created_at: string
+}
+
+/** `PUT /pronunciations` body: `document_id` null saves for all documents. */
+export interface PronunciationPut {
+  document_id: number | null
+  word: string
+  respelling: string
+}
+
+/** `PUT /pronunciations` response: the row plus how many segments' cached audio was purged. */
+export interface PronunciationSaved extends Pronunciation {
+  invalidated: number
+}
+
+/** `DELETE /pronunciations/{id}` response. */
+export interface PronunciationDeleted {
+  invalidated: number
 }

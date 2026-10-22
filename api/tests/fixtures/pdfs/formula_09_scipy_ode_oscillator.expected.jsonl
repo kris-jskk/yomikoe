@@ -1,0 +1,17 @@
+{"order": 0, "page": 0, "type": "header", "text": "Scientific Python Lectures, Edition 2024.1"}
+{"order": 1, "page": 0, "type": "body", "text": "Let us integrate a more complex ODE: a damped spring-mass oscillator."}
+{"order": 2, "page": 0, "type": "body", "text": "The position of a mass attached to a spring obeys the 2nd order ODE ¨𝑦 +2𝜁𝜔0 ˙𝑦 +𝜔2 0𝑦 = 0 with natural frequency 𝜔0 = √︀𝑘/𝑚, damping ratio 𝜁 = 𝑐/(2𝑚𝜔0), spring constant 𝑘, mass 𝑚, and damping coefficient 𝑐."}
+{"order": 3, "page": 0, "type": "body", "text": "Before using scipy.integrate.solve_ivp(), the 2nd order ODE needs to be transformed into a system of first-order ODEs."}
+{"order": 4, "page": 0, "type": "body", "text": "Note that"}
+{"order": 5, "page": 0, "type": "equation", "text": "𝑑𝑦 𝑑𝑡 = ˙𝑦 𝑑 ˙𝑦 𝑑𝑡 = ¨𝑦 = −(2𝜁𝜔0 ˙𝑦 + 𝜔2 0𝑦)"}
+{"order": 6, "page": 0, "type": "body", "text": "If we define 𝑧 = [𝑧0, 𝑧1] where 𝑧0 = 𝑦 and 𝑧1 = ˙𝑦, then the first order equation:"}
+{"order": 7, "page": 0, "type": "equation", "text": "𝑑𝑧 𝑑𝑡 = [︂ 𝑑𝑧0 𝑑𝑡 𝑑𝑧1 𝑑𝑡 ]︂ = [︂ 𝑧1 −(2𝜁𝜔0𝑧1 + 𝜔2 0𝑧0) ]︂"}
+{"order": 8, "page": 0, "type": "body", "text": "is equivalent to the original second order equation."}
+{"order": 9, "page": 0, "type": "body", "text": "We set:"}
+{"order": 10, "page": 0, "type": "code", "text": ">>> m = 0.5 # kg\n>>> k = 4 # N/m\n>>> c = 0.4 # N s/m\n>>> zeta = c / (2 * m * np.sqrt(k/m))\n>>> omega = np.sqrt(k / m)"}
+{"order": 11, "page": 0, "type": "body", "text": "and define the function that computes ˙𝑧 = 𝑓(𝑡, 𝑧(𝑡)):"}
+{"order": 12, "page": 0, "type": "code", "text": ">>> def f(t, z, zeta, omega):\n...     return (z[1], -2.0 * zeta * omega * z[1] - omega**2 * z[0])"}
+{"order": 13, "page": 0, "type": "body", "text": "Integration of the system follows:"}
+{"order": 14, "page": 0, "type": "code", "text": ">>> t_span = (0, 10)\n>>> t_eval = np.linspace(*t_span, 100)"}
+{"order": 15, "page": 0, "type": "body", "text": "(continues on next page)"}
+{"order": 16, "page": 0, "type": "footer", "text": "5.7. Numerical integration: scipy.integrate 223"}

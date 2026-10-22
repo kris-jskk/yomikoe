@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from hearnarro.synthesis.acronyms import (
+from yomikoe.synthesis.acronyms import (
     COLLOCATIONS,
     RESPELL,
     SPELLED,
@@ -20,8 +20,8 @@ from hearnarro.synthesis.acronyms import (
     split_suffix,
     suffix_phonemes,
 )
-from hearnarro.synthesis.backend import SynthContext
-from hearnarro.synthesis.kokoro_backend import _Timed, word_timestamps
+from yomikoe.synthesis.backend import SynthContext
+from yomikoe.synthesis.kokoro_backend import _Timed, word_timestamps
 
 LEXICON = {"ted", "nasa", "nist", "the", "end", "it", "us"}
 
@@ -206,3 +206,42 @@ def test_syn4_suffix_phonemes_voicing() -> None:
     assert suffix_phonemes("ˈO") == "z"  # CEO's
     assert suffix_phonemes("ˈɛs") == "ᵻz"  # OSes
     assert suffix_phonemes("ˈeɪʧ") == "ᵻz"
+
+
+@pytest.mark.parametrize(
+    ("word", "spoken"),
+    [
+        ("GUI", True),
+        ("FIFO", True),
+        ("LIFO", True),
+        ("ANOVA", True),
+        ("JSON", True),
+        ("SQL", False),
+    ],
+)
+def test_syn4_term_acronym_overrides(word: str, spoken: bool) -> None:
+    """EVAL-4 term_cs / term_stats acronyms (TERM-1): fixed readings, not the heuristic."""
+    d = decide(word)
+    assert (d.spoken, d.reason) == (spoken, "override")
+
+
+@pytest.mark.parametrize(
+    "pair_id",
+    [
+        "term_cs_06",  # SQL, spelled
+        "term_cs_15",  # GUI = gooey (ACADEMIC cs)
+        "term_cs_17",  # JSON = Jason (ACADEMIC cs, RESPELL)
+        "term_stats_19",  # ANOVA (ACADEMIC stats)
+        "term_cs_04",  # FIFO
+        "term_cs_20",  # LIFO
+        "term_chem_15",  # pH
+    ],
+)
+def test_syn4_term_acronym_pairs_exact(pair_id: str) -> None:
+    from yomikoe.evals.suites import eval4_speech_form as e4
+
+    if e4.unavailable():
+        pytest.skip("misaki unavailable")
+    (pair,) = [p for p in e4.load_pairs() if p["id"] == pair_id]
+    s = e4.score(dict(pair, **{"class": pair["category"]}))
+    assert s["joined"] == 1.0, (s["actual_ph"], s["expected_ph"])

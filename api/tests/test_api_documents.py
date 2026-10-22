@@ -4,7 +4,7 @@ D11 "API contract" row: each endpoint via ``httpx.AsyncClient`` against a temp S
 The app's lifespan (migrations + process pool) is entered explicitly because
 ``httpx.ASGITransport`` does not send lifespan events.
 
-``hearnarro.app`` is imported inside the helpers, not at module level, so that before the
+``yomikoe.app`` is imported inside the helpers, not at module level, so that before the
 feature exists every test fails on its own instead of the module failing to collect.
 """
 
@@ -24,7 +24,7 @@ from typing import Any
 import httpx
 import pytest
 
-from hearnarro.ingestion.pipeline import ingest
+from yomikoe.ingestion.pipeline import ingest
 
 FIXTURES = Path(__file__).parent / "fixtures"
 TEXT_PDF = FIXTURES / "unit" / "text.pdf"
@@ -34,7 +34,7 @@ READY_TIMEOUT_S = 90.0
 
 @asynccontextmanager
 async def client_for(data_dir: Path, **kwargs: Any) -> AsyncIterator[httpx.AsyncClient]:
-    from hearnarro.app import create_app
+    from yomikoe.app import create_app
 
     app = create_app(data_dir, **kwargs)
     async with app.router.lifespan_context(app):
@@ -174,7 +174,7 @@ async def test_ing1_report01_segments_match_ingest_blocks_segments_tables(tmp_pa
         assert doc["status"] == "ready", doc
         assert doc["page_count"] == len(result.pages)
 
-    db = sqlite3.connect(tmp_path / "hearnarro.db")
+    db = sqlite3.connect(tmp_path / "yomikoe.db")
     try:
         n_blocks = db.execute("SELECT count(*) FROM blocks WHERE document_id=?", (doc_id,))
         assert n_blocks.fetchone()[0] == len(result.blocks)
@@ -212,7 +212,7 @@ async def test_ing1_pdf_over_limit_returns_413(tmp_path: Path) -> None:
 async def test_ing1_ingest_raises_sets_failed_documents_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from hearnarro.storage import jobs
+    from yomikoe.storage import jobs
 
     def boom(*args: Any, **kwargs: Any) -> Any:
         raise RuntimeError("synthetic ingest failure")
@@ -286,7 +286,7 @@ async def test_ing1_failed_document_carries_parse_ms_documents_table(tmp_path: P
 def test_ing1_page_progress_writes_every_10_pages_and_last(
     total: int, expected_writes: int
 ) -> None:
-    from hearnarro.storage.jobs import PageProgress
+    from yomikoe.storage.jobs import PageProgress
 
     writes: list[int] = []
     progress = PageProgress(writes.append)
@@ -327,7 +327,7 @@ async def test_ing1_missing_document_returns_404(tmp_path: Path) -> None:
 def test_ing1_choose_title(
     meta: str | None, heading: str | None, filename: str, expected: str
 ) -> None:
-    from hearnarro.storage.jobs import choose_title
+    from yomikoe.storage.jobs import choose_title
 
     assert choose_title(meta, heading, filename) == expected
 

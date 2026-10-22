@@ -1,7 +1,7 @@
-# HearNarro evals code map: runner, run records, compare, scorecard (E0, E1, E2, E3)
+# YomiKoe evals code map: runner, run records, compare, scorecard (E0, E1, E2, E3)
 
 This document explains how the eval layer works end to end and what every file under
-`api/hearnarro/evals/` does. It is written for an engineer who has read `docs/PRD.md`,
+`api/yomikoe/evals/` does. It is written for an engineer who has read `docs/PRD.md`,
 `docs/TECHNICAL_DESIGN.md` (D31–D34) and the design `_agent/specs/evals-design.md` (the spec,
 sections 3.1–3.6). Where the code and the spec differ, this map says what the code does and lists
 the difference under "Spec deviations".
@@ -23,17 +23,17 @@ their thresholds and remain the only merge blockers; evals are the trend line ab
 
 E1 adds the two remaining tier-0 suites and a `direction` per suite:
 
-- **EVAL-3 Clean text** (ING-1..6): every check of `hearnarro.quality.check_pdf` on the 15 text
+- **EVAL-3 Clean text** (ING-1..6): every check of `yomikoe.quality.check_pdf` on the 15 text
   fixtures, count and rate per 1 000 segment words, `total_rate` = sum of rates. Lower is better
   (`DIRECTION = "lower"`); `store.compare` flags a rise of more than 1 per 1 000 words.
 - **EVAL-4 Speech form** (ING-6, ING-7, SYN-4): 302 authored pairs in
-  `api/hearnarro/evals/data/speech_form.jsonl` (14 categories, 20–24 each), written text →
+  `api/yomikoe/evals/data/speech_form.jsonl` (14 categories, 20–24 each), written text →
   what a careful narrator says, authored from the PRD rules and not from the normalizer's output.
   `spoken()` runs the app's own path: `merge_blocks` → `split_sentences` (which calls `normalize`
   and builds the ING-7 cues) → per segment `caps_fold_spans` and `decide` from
-  `hearnarro.synthesis.acronyms`, in the order of `KokoroBackend._tokens`. Spelled acronyms are
+  `yomikoe.synthesis.acronyms`, in the order of `KokoroBackend._tokens`. Spelled acronyms are
   rendered as letters ("P D F"). (E1b) Both `spoken()` and `expected` then go through the
-  backend's text front-end, `hearnarro.synthesis.kokoro_backend.build_g2p` (misaki G2P with the
+  backend's text front-end, `yomikoe.synthesis.kokoro_backend.build_g2p` (misaki G2P with the
   num2words shim, `lexicon_overrides`, `_OOVFallback`; vocab from the pinned `config.json`, no
   weights), the same factory `KokoroBackend._g2p_for` calls. `exact` = phoneme tokens equal,
   `partial` = 1 − phoneme-token edit distance / expected tokens; the word-level comparison is kept
@@ -60,7 +60,7 @@ entirely (no phonemes), so the listener hears nothing for them.
 E2 adds three tier-1 suites (`TIER = 1`; `run all --tier 1` selects them, `--tier 0` never does).
 They need the `tts` extra (Kokoro) and the new `evals` extra (`faster-whisper==1.2.1`, MIT; the
 licence check covers it, `_agent/results/573_e2_licences.txt`). The recogniser is named and pinned
-in one place, `hearnarro.settings.ASR_MODEL_REPO` / `ASR_MODEL_REVISION`
+in one place, `yomikoe.settings.ASR_MODEL_REPO` / `ASR_MODEL_REVISION`
 (`Systran/faster-whisper-base` at `ebe41f70…`, MIT weights); the app never imports it.
 
 - **EVAL-5 Intelligibility** (SYN-1, SYN-4): 50 fixture sentences
@@ -125,7 +125,7 @@ EVAL-1 mean 0.9914, min 0.9710 (15 scored, 5 scanned skipped); EVAL-2 mean F1 0.
 
 ## Code flows
 
-### a. `python -m hearnarro.evals run EVAL-1 EVAL-2 [--tier N] [--out DIR] [--baseline RUN_ID]`
+### a. `python -m yomikoe.evals run EVAL-1 EVAL-2 [--tier N] [--out DIR] [--baseline RUN_ID]`
 
 ```
 CLI (__main__)        runner.run           suites.select / suite modules       store
@@ -139,19 +139,19 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
   |-- store.compare(baseline, record) if --baseline; report.scorecard → stdout   |
 ```
 
-1. **Parse.** `api/hearnarro/evals/__main__.py` → `main` builds the `run` and `compare`
+1. **Parse.** `api/yomikoe/evals/__main__.py` → `main` builds the `run` and `compare`
    subcommands; `--out` defaults to `store.DEFAULT_RUNS_DIR` (repo-root `evals/runs/`).
 2. **Select.** `suites/__init__.py` → `select(ids, tier)`: explicit ids in the order given
    (duplicates dropped, unknown ids raise `KeyError`), or `all` = every registered suite with
    `TIER <= tier`.
 3. **Header.** `runner.py` → `run`: `run_id = <UTC date>_<git rev-parse --short HEAD>`,
    `date` (UTC, ISO), `config` from `_config` (`backend: "fake"`, `speed: 1.0`, `tesseract` from
-   `hearnarro.ingestion.extract.ocr_available()`, `python`, `tier`).
+   `yomikoe.ingestion.extract.ocr_available()`, `python`, `tier`).
 4. **Score.** For each suite: `dataset()` yields `{id, class, skip}`; skipped examples go to
    `skipped` with their reason; the rest go through `score(example)`; `aggregate(examples)` gives
    the suite summary; wall time is stored as `seconds`.
 5. **Parse once.** `suites/_fixtures.py` → `ingested(name)` calls
-   `hearnarro.ingestion.pipeline.ingest(pdf, document_id=0, ocr=True)` and keeps the prose segment
+   `yomikoe.ingestion.pipeline.ingest(pdf, document_id=0, ocr=True)` and keeps the prose segment
    texts (D12, `scorers.prose_only`) and the D14 guard's excluded texts
    (`scorers.excluded_actual_texts`); `functools.cache` makes EVAL-2 reuse EVAL-1's parse.
 6. **Write.** `store.py` → `write_record` writes `<out>/<run_id>.json` (indented JSON) and
@@ -161,7 +161,7 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
    an aggregate table (with a Δ column when compared) and the worst example; then the regressions
    list. The record path is printed last.
 
-### b. `python -m hearnarro.evals compare A B [--out DIR]`
+### b. `python -m yomikoe.evals compare A B [--out DIR]`
 
 1. `__main__.main` → `store.read_record` for each ref: an existing file path, `latest`
    (resolved through `latest.json`), or a run id (`<out>/<run_id>.json`).
@@ -173,7 +173,7 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
      `char_mass_ok`), or the example is missing from `b` ("new failure").
 3. `report.scorecard(b, comparison)` prints B's scorecard with the Δ column and the regressions.
 
-### c. `python -m hearnarro.evals report RUN [--baseline RUN] [--html PATH] [--standalone]` (E3)
+### c. `python -m yomikoe.evals report RUN [--baseline RUN] [--html PATH] [--standalone]` (E3)
 
 ```
  record (+ baseline) ──► store.compare ──► report.html_scorecard ──► PATH (Artifact page contract)
@@ -199,7 +199,7 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
    --baseline 2026-10-17_eadaef6` (`_agent/results/590_e3_report_cmd.txt`): EVAL-1 and EVAL-2
    0 regressions, EVAL-3 to EVAL-7 no baseline.
 
-### d. `python -m hearnarro.evals listening prepare|ingest` (E4, EVAL-9)
+### d. `python -m yomikoe.evals listening prepare|ingest` (E4, EVAL-9)
 
 `listening prepare --out evals/listening/pending_<date>/` renders sentences_50.jsonl[:10] x
 (af_heart, am_michael) through `_voice.render` (kokoro) or `FakeBackend` (fake) into 20 WAVs and a
@@ -209,7 +209,7 @@ validates it and writes `evals/listening/<date>_<listener>.json`; `run EVAL-9` (
 
 ## Modules and files
 
-### `api/hearnarro/evals/`
+### `api/yomikoe/evals/`
 
 | File | Responsibility | Public | Reads / writes | Status |
 | --- | --- | --- | --- | --- |
@@ -223,8 +223,8 @@ validates it and writes `evals/listening/<date>_<listener>.json`; `run EVAL-9` (
 | `suites/_fixtures.py` | Fixture manifest, expected rows, truth sentences, one cached ingest per PDF | `FIXTURES`, `manifest`, `expected_rows`, `truth_sentences`, `ingest_result`, `ingested` | `api/tests/fixtures/pdfs/` (manifest, `*.pdf`, `*.expected.jsonl`, `*.sentences.txt`) | tested (gate) |
 | `suites/eval1_order.py` | EVAL-1: 20 fixtures (scanned skipped without tesseract); score = `word_score`; `char_mass_ok` per example | `ID`, `TITLE`, `TIER`, `dataset`, `score`, `aggregate` (mean, min, by_class) | via `_fixtures` | tested (gate) |
 | `suites/eval2_boundaries.py` | EVAL-2: 15 non-scanned fixtures; precision, recall, F1; score = F1 | `ID`, `TITLE`, `TIER`, `dataset`, `score`, `aggregate` (mean_f1, min_recall) | via `_fixtures` | tested (gate) |
-| `suites/eval3_clean.py` | EVAL-3: 15 text fixtures; per check count and rate per 1 000 words; score = `total_rate`; `DIRECTION = "lower"` | `ID`, `TITLE`, `TIER`, `DIRECTION`, `dataset`, `score`, `aggregate` (mean_rate per check, total_mean_rate) | `hearnarro.quality.check_pdf`; word count from `_fixtures.ingest_result` | tested (gate) |
-| `suites/eval4_speech_form.py` | EVAL-4: the dataset below through the app's text-to-voice path; exact and partial per pair | `ID`, `TITLE`, `TIER`, `DIRECTION`, `DATA`, `load_pairs`, `spoken(text, block)`, `canonical`, `phonemes`, `unavailable`, `dataset`, `score`, `aggregate` (accuracy, partial_mean, by_category, text_accuracy, text_partial_mean) | `data/speech_form.jsonl`; calls `ingestion.merge`, `ingestion.segment`, `ingestion.acronyms`, `synthesis.acronyms`, `synthesis.lexicon_overrides` | tested (gate) |
+| `suites/eval3_clean.py` | EVAL-3: 15 text fixtures; per check count and rate per 1 000 words; score = `total_rate`; `DIRECTION = "lower"` | `ID`, `TITLE`, `TIER`, `DIRECTION`, `dataset`, `score`, `aggregate` (mean_rate per check, total_mean_rate) | `yomikoe.quality.check_pdf`; word count from `_fixtures.ingest_result` | tested (gate) |
+| `suites/eval4_speech_form.py` | EVAL-4: the dataset below through the app's text-to-voice path; exact, partial and joined per pair. Scoring rule (spec m5-academic-reading §8 Q8, 2026-10-20): for every `term_*` category `score` = `joined` (1 - character edit distance over the phoneme string with stress marks and spaces removed / expected length, floored at 0), because the dataset writes terms as hyphenated respellings and a correct one-word pronunciation can never match two or three phoneme tokens; `partial` and `exact` stay in the record for comparison; every other category keeps `score` = `partial`. The `term_*` trend line restarts at the phase-4 record. Dataset rule for `term_*` rows: `expected` is a correct pronunciation written so misaki reads the respelling as intended; where misaki already says the word correctly the respelling matches its phonemes | `ID`, `TITLE`, `TIER`, `DIRECTION`, `DATA`, `load_pairs`, `spoken(text, block)`, `canonical`, `phonemes`, `joined_similarity`, `unavailable`, `dataset`, `score`, `aggregate` (accuracy, partial_mean, by_category, text_accuracy, text_partial_mean) | `data/speech_form.jsonl`; calls `ingestion.merge`, `ingestion.segment`, `ingestion.acronyms`, `synthesis.acronyms`, `synthesis.lexicon_overrides` | tested (gate) |
 | `suites/_asr.py` | E2: the pinned faster-whisper model, loaded once per process (CPU, int8); PCM16 → WAV → 16 kHz via faster-whisper's decoder; word timings | `AsrWord`, `unavailable`, `model`, `transcribe(pcm, sample_rate)` | HF cache (`settings.ASR_MODEL_REPO` @ `ASR_MODEL_REVISION`) | tested (E2 gate) |
 | `suites/_voice.py` | E2: one warmed `KokoroBackend` per process; `render` mirrors `SynthesisService._render` (trim, stretch, timestamp scale and clamp); `roundtrip` caches render + transcription per (text, voice, speed) | `Roundtrip`, `unavailable`, `backend`, `render`, `roundtrip` | Kokoro weights (D15 revision) | tested (E2 gate) |
 | `suites/eval5_intelligibility.py` | EVAL-5: WER per sentence × voice × speed | `ID`, `TITLE`, `TIER`, `DIRECTION`, `METRIC_RULES`, `VOICES`, `SPEEDS`, `SEED`, `DATA`, `select_sentences`, `load_sentences`, `norm_words`, `wer`, `unavailable`, `dataset(limit, speeds, voices)`, `score`, `aggregate` (mean_wer, worst, per_voice, per_speed) | `data/sentences_50.jsonl`; `_voice`, `_asr` | tested (E2 gate) |
@@ -238,22 +238,34 @@ validates it and writes `evals/listening/<date>_<listener>.json`; `run EVAL-9` (
 
 | File | Responsibility | Status |
 | --- | --- | --- |
-| `api/hearnarro/evals/listening.py` (E4) | EVAL-9 session tooling: `prepare(out_dir, backend)` renders sentences_50.jsonl[:10] x (af_heart, am_michael) into 20 WAVs and a blank `sheet.md`; `parse_sheet(path)`; `ingest(sheet, out_dir)` writes `evals/listening/<date>_<listener>.json`; `register(sub)` adds the `listening` subparser (`prepare`, `ingest`) and `run_verb(args)` runs it from `__main__.main` | implemented, tested |
-| `api/hearnarro/evals/suites/eval9_listening.py` (E4) | EVAL-9 Listening, tier 2, direction higher (pron_errors lower via METRIC_RULES): `dataset(sessions_dir=None)`, `score`, `aggregate` over `evals/listening/*.json` (not `pending_*/`); skipped "no listening sessions under evals/listening/" when empty | implemented, tested |
-| `api/hearnarro/evals/suites/eval8_ocr.py` (E4) | EVAL-8 OCR, tier 1, direction lower: CER of OCR'd prose vs expected prose on the 5 scanned fixtures (`mean_cer`, `max_cer`); skipped "OCR unavailable (tesseract)" when `ocr_available()` is false | implemented, tested (skip path); scoring path implemented, unverified: never ran without tesseract |
-| `api/hearnarro/evals/scorers.py` (E4 addition) | `char_error_rate(actual, expected)` | implemented, tested |
-| `api/hearnarro/evals/suites/__init__.py` (E4 change) | registers EVAL-8 and EVAL-9 | implemented, tested |
-| `api/hearnarro/evals/__main__.py` (E4 change) | `listening` registered as a subparser of `main` via `listening.register`; dispatch to `listening.run_verb` | implemented, tested |
-| `api/hearnarro/evals/data/listening_rubric.md` (E4) | listener instructions and column definitions | implemented |
+| `api/yomikoe/evals/listening.py` (E4) | EVAL-9 session tooling: `prepare(out_dir, backend)` renders sentences_50.jsonl[:10] x (af_heart, am_michael) into 20 WAVs and a blank `sheet.md`; `parse_sheet(path)`; `ingest(sheet, out_dir)` writes `evals/listening/<date>_<listener>.json`; `register(sub)` adds the `listening` subparser (`prepare`, `ingest`) and `run_verb(args)` runs it from `__main__.main` | implemented, tested |
+| `api/yomikoe/evals/suites/eval9_listening.py` (E4) | EVAL-9 Listening, tier 2, direction higher (pron_errors lower via METRIC_RULES): `dataset(sessions_dir=None)`, `score`, `aggregate` over `evals/listening/*.json` (not `pending_*/`); skipped "no listening sessions under evals/listening/" when empty | implemented, tested |
+| `api/yomikoe/evals/suites/eval8_ocr.py` (E4) | EVAL-8 OCR, tier 1, direction lower: CER of OCR'd prose vs expected prose on the 5 scanned fixtures (`mean_cer`, `max_cer`); skipped "OCR unavailable (tesseract)" when `ocr_available()` is false | implemented, tested (skip path); scoring path implemented, unverified: never ran without tesseract |
+| `api/yomikoe/evals/scorers.py` (E4 addition) | `char_error_rate(actual, expected)` | implemented, tested |
+| `api/yomikoe/evals/suites/__init__.py` (E4 change) | registers EVAL-8 and EVAL-9 | implemented, tested |
+| `api/yomikoe/evals/__main__.py` (E4 change) | `listening` registered as a subparser of `main` via `listening.register`; dispatch to `listening.run_verb` | implemented, tested |
+| `api/yomikoe/evals/data/listening_rubric.md` (E4) | listener instructions and column definitions | implemented |
 | `api/tests/fixtures/listening/sample_sheet.md` (E4) | filled 4-row fixture sheet (listener "fixture"); never ingested into evals/listening/ | tested |
 | `evals/listening/pending_2026-10-17/sheet.md` (E4) | first real-voice (kokoro) sheet awaiting a listener; WAVs ignored by .gitignore | pending human |
+
+### M5 phase 1 modules (EVAL-10, EVAL-4 MATH/TERM categories; spec `_agent/specs/m5-academic-reading.md` §1b–§1d)
+
+| File | Responsibility | Status |
+| --- | --- | --- |
+| `api/yomikoe/evals/suites/eval10_mathspeak.py` (M5) | EVAL-10 Spoken mathematics, tier 0, direction higher (MATH-1..4). `dataset()`: one example per `math_speech.jsonl` pair plus one per manifest entry of class `formula` (class `fixture`; skipped when its pdf or spoken.txt is missing, or when image-only without an OCR engine). `spoken(raw, block)`: `raw` → stage-1 `Block` with span geometry (`^{..}` superscript span, `_{..}` subscript span, `\n` stacked lines, `$..$` maths-font run in body text) → `merge_blocks` → `split_sentences` → `mathspeak.apply_mathspeak` when that package exists. `math_segments(result)` (delegates to `mathspeak.math_segments` once phase 3 lands; else equation segments plus segments with non-empty `math_spans`), `formula_entries()`, `has_text_layer(name)` (pypdfium2), `spoken_lines(name)`, `fixture_actual(name)`, `fixture_score(name)`; `score` → `score`, `actual`, `expected` (`text_layer` for a fixture); `aggregate` → `mean`, `min`, `by_class` (display, inline, symbol, reference, fixture). Reads `math_speech.jsonl`, `tests/fixtures/pdfs/manifest.json`, `formula_*.pdf`, `formula_*.spoken.txt` | implemented, tier-0 run (`_agent/results/659`) |
+| `api/yomikoe/evals/data/math_speech.jsonl` (M5) | 158 raw → spoken pairs (`id`, `class`, `raw`, `spoken`, `block`): 52 display, 40 inline, 46 symbol, 20 reference; every MATH-3 symbol, the Greek letters, the MATH-3 units and formulas, every MATH-4 form at least twice; spoken side in the spec §3c convention | implemented |
+| `api/yomikoe/evals/data/speech_form.jsonl` (M5 addition) | 280 new EVAL-4 pairs, 20 per category: `math_symbol`, `math_unit`, `math_chem`, `math_reference`, `term_math`, `term_stats`, `term_physics`, `term_chem`, `term_bio`, `term_cs`, `term_latin_greek`, `term_surname`, `term_abbreviation`, `term_citation`; existing 302 pairs unchanged. `term_*` expected sides use respellings where the TERM-1 pronunciation differs from spelling; phase 4 owns corrections | implemented |
+| `api/yomikoe/evals/scorers.py` (M5 addition) | `mathspeak_score(actual, expected) -> float`: `1 - seq_levenshtein(words(actual), words(expected)) / max(1, len(expected words))`, clamped at 0 (EVAL-10, gate b) | implemented, tested (`test_evals_scorers.py`) |
+| `api/yomikoe/evals/suites/__init__.py` (M5 change) | registers EVAL-10 | implemented |
+| `api/tests/test_m5_gate_mathspeak.py` (M5) | M5 gate (a) formula fixtures present (10 entries, files, 5 cut, 1 image-only, ≥ 2 textbook, ≥ 2 with a `code` block), (b) per-fixture score ≥ 0.90 / 0.75 scanned and mean ≥ 0.92, (e) `compute_profile` (imported inside the test) matches the manifest `profile` on ≥ 28 of 30; image-only cases `@pytest.mark.ocr` | red by design at phase 1 (`_agent/results/661`) |
+| `api/tests/test_evals_scorers.py` (M5) | `mathspeak_score`: identical, case/punctuation, empty expected, partial, texts or words | tested |
 
 ### Test helpers and tests
 
 | File | Responsibility | Status |
 | --- | --- | --- |
-| `api/tests/golden_util.py` | Re-exports the reading-order scorers from `hearnarro.evals.scorers` (no logic) | tested (`554`) |
-| `api/tests/boundary_util.py` | Re-exports the boundary scorers (including `_alignment`) from `hearnarro.evals.scorers` | tested (`554`) |
+| `api/tests/golden_util.py` | Re-exports the reading-order scorers from `yomikoe.evals.scorers` (no logic) | tested (`554`) |
+| `api/tests/boundary_util.py` | Re-exports the boundary scorers (including `_alignment`) from `yomikoe.evals.scorers` | tested (`554`) |
 | `api/tests/test_eval_gate.py` | E0 gate: record shape, aggregates, compare zero/one-regression cases; E1: registry direction, `all` under 60 s, EVAL-3 rates, lower-is-better compare, EVAL-4 dataset shape, app path, aggregates; E2 (model-gated): registry tiers, sentence list, WER normalization, EVAL-5/6/7 on 5 sentences, per-metric compare rules; E3: HTML scorecard alone, against the first baseline (`no baseline` tiles), regressions block on a synthetic pair, `--standalone` and CLI | tested (`553`, `562`, `576`, `592`) |
 | `api/tests/test_eval_e4_gate.py` | E4 gate: sheet parse/ingest validation, `listening prepare` (fake backend), EVAL-8 skip path and CER, EVAL-9 skip/aggregate, registry | tested (`593`) |
 
@@ -324,7 +336,7 @@ regressions: [{suite, id, reason, metrics: {field: {baseline, candidate, delta}}
 9. (E1) EVAL-4 at tier 0 uses `decide(..., in_lexicon=False)`: misaki's lexicon (rule 4) is not
    loaded (misaki's English module also fails to import here without `num2words`), so the
    heuristic decides where the backend would consult the lexicon; misaki's number reading is not
-   modelled either. Spec 3.4 places `data/` under `api/hearnarro/evals/`; the brief's
+   modelled either. Spec 3.4 places `data/` under `api/yomikoe/evals/`; the brief's
    `evals/data/` is read as that path.
 10. (E1) The dataset is 302 pairs in 14 categories; table and equation pairs set `block` so they go
     through the ING-7 block path rather than plain normalization.
@@ -349,14 +361,14 @@ regressions: [{suite, id, reason, metrics: {field: {baseline, candidate, delta}}
 
 ## How to run
 
-From `api/`: `.venv/bin/python -m hearnarro.evals run all` (or `run EVAL-1 EVAL-2`), add
-`--baseline <run_id>` to see deltas; `.venv/bin/python -m hearnarro.evals compare <a> <b>`; HTML scorecard:
-`.venv/bin/python -m hearnarro.evals report <run> --baseline <run> --html <path> [--standalone]`. Gate:
+From `api/`: `.venv/bin/python -m yomikoe.evals run all` (or `run EVAL-1 EVAL-2`), add
+`--baseline <run_id>` to see deltas; `.venv/bin/python -m yomikoe.evals compare <a> <b>`; HTML scorecard:
+`.venv/bin/python -m yomikoe.evals report <run> --baseline <run> --html <path> [--standalone]`. Gate:
 `.venv/bin/python -m pytest tests/test_eval_gate.py`.
 
 Tier 1 (needs `pip install -e '.[tts,evals]'`; first run downloads the ~145 MB recogniser):
-`.venv/bin/python -m hearnarro.evals run all --tier 1` (no environment variable needed). E2 gate:
-`HEARNARRO_TEST_MODEL=1 .venv/bin/python -m pytest tests/test_eval_gate.py`.
+`.venv/bin/python -m yomikoe.evals run all --tier 1` (no environment variable needed). E2 gate:
+`YOMIKOE_TEST_MODEL=1 .venv/bin/python -m pytest tests/test_eval_gate.py`.
 
 ## Open items
 

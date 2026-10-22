@@ -1,0 +1,25 @@
+# M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c
+following nagler 2023, a task is a law p over x, y in x times y with covariate law p sub x and conditional p of y given x, and a dataset d sub n equals the set of x sub i, y sub i for i equals 1 to n consisting of n independent and identically distributed iid draws from it.
+a pfn assumes a prior capital pi over pairs p, n of a task and a context size, whose marginal over n is the size distribution capital psi.
+given p, n equals n, the context is d sub n distributed as p to the tensor power n, and the pfn targets the posterior predictive distribution ppd
+equation 1: pi sub capital pi of y given x and d sub n equals the integral of p of y given x d capital pi of p given x and d sub n.
+at deployment, pairs follow a different distribution capital pi prime with size marginal capital psi prime.
+risks average over a task, a context d sub n distributed as p to the tensor power n and an independent query x, y distributed as p.
+we write e sub p of dot is defined as e sub d sub n distributed as p to the tensor power n e sub x, y distributed as p of dot for a fixed pair p, n and e sub capital pi of dot is defined as e sub p, n distributed as capital pi e sub p of dot when the pair is drawn as well, likewise for capital pi prime.
+a pfn with parameters theta in capital theta is a measurable map q sub theta from x, d sub n maps to q sub theta of dot given x and d sub n into the distributions on y.
+deployed on capital pi prime, its risk under the log loss is
+equation 2: r sub capital pi prime of q sub theta is defined as e sub capital pi prime of minus log q sub theta of y given x and d sub n.
+let r sub capital pi prime of pi sub capital pi prime be finite.
+then for every predictor q,
+equation 3: r sub capital pi prime of q minus r sub capital pi prime of pi sub capital pi prime equals e sub capital pi prime of d sub k l of pi sub capital pi prime of dot given x and d sub n parallel q of dot given x and d sub n, is greater than or equal to 0,
+with equality if and only if q equals pi sub capital pi prime almost surely under capital pi prime.
+in particular, pi sub capital pi prime is the unique minimizer of r sub capital pi prime and r sub capital pi prime of pi sub capital pi prime, the bayes risk of capital pi prime, is the lowest risk any predictor can attain on capital pi prime.
+a pfn q sub theta is pretrained on the population objective
+equation 4: l of theta is defined as r sub capital pi of q sub theta.
+with capital pi prime equals capital pi, proposition 1 thus gives the pretraining objective: a pfn is trained to minimize its risk under its own prior, the minimizer over all predictors is pi sub capital pi muller et al., 2021, and the excess risk
+equation 5: a sub capital pi of q sub theta is defined as r sub capital pi of q sub theta minus r sub capital pi of pi sub capital pi equals e sub capital pi of d sub k l of pi sub capital pi parallel q sub theta, is greater than or equal to 0
+in practice, equation 4 is approximated by empirical risk minimization over m datasets d sup j whose task and size p sub j, n sub j are drawn from the prior,
+equation 6: l sub emp of theta is defined as minus 1 over m the sum from j equals 1 to m of log q sub theta of y sub j given x sub j and d sup j,
+optimized with first-order stochastic gradient methods such that, in general, we have no guarantee how close we get to the target pi sub capital pi.
+figure 1 places the amortization error among the two other sources of error of a deployed pfn: the context error, incurred even by pi sub capital pi because a finite context leaves the task uncertain, and the prior error, incurred because real tasks follow capital pi prime is not equal to capital pi.
+measuring a sub capital pi of q equals e sub capital pi of d sub k l of pi sub capital pi parallel q directly requires knowledge of the true ppd, which is intractable for the priors used by current tabular foundation models.

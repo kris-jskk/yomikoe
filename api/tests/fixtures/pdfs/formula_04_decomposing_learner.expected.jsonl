@@ -1,0 +1,21 @@
+{"order": 0, "page": 0, "type": "caption", "text": "Figure 2: Overall architecture of our framework."}
+{"order": 1, "page": 0, "type": "heading", "text": "3.1 Basic Structure and Properties"}
+{"order": 2, "page": 0, "type": "body", "text": "Figure 2 illustrates the overall architecture of our framework, which, according to Equation 1, seeks to model variation in predictability across the feature space."}
+{"order": 3, "page": 0, "type": "body", "text": "In addition to the neural network used for classification or regression (the learner), we employ a separate neural network to learn the reliability score w(x) = p(z = 1 | x)."}
+{"order": 4, "page": 0, "type": "body", "text": "Throughout this work, we use MLPs with a single hidden layer of 64 neurons for both networks, leaving the exploration of more complex architectures for future work."}
+{"order": 5, "page": 0, "type": "body", "text": "We also recognize that different regions of the feature space may benefit from more carefully tuned local models, particularly in terms of feature transformation, the extension will be discussed in Section 3.3."}
+{"order": 6, "page": 0, "type": "body", "text": "For a neural classifier, the conditional distributions of the response, p(y | x, z = 1) and prand(y), are simply class probabilities."}
+{"order": 7, "page": 0, "type": "body", "text": "For a neural regressor, we further model these conditional distributions as Gaussian, i.e.,"}
+{"order": 8, "page": 0, "type": "equation", "text": "y | x, z = 1 ∼ N(y; f(x), σ1²), y | x, z = 0 ∼ N(y; µ0, σ0²), (2)"}
+{"order": 9, "page": 0, "type": "body", "text": "where f, µ0, σ0² and σ1² are unknown functions and parameters."}
+{"order": 10, "page": 0, "type": "body", "text": "In other words, when z = 1, we have E[y | x, z = 1] = f(x), whereas when z = 0, y is independent of x and behaves like white noise."}
+{"order": 11, "page": 0, "type": "body", "text": "Notice that in both cases, we have"}
+{"order": 12, "page": 0, "type": "equation", "text": "p(y, z | x) = p(z | x)p(y | x, z) = p(z = 1 | x)^z [1 − p(z = 1 | x)]^{1−z} p(y | x, z = 1)^z prand(y)^{1−z}, (3)"}
+{"order": 13, "page": 0, "type": "body", "text": "hence, the joint log-density of y and z can be obtained as"}
+{"order": 14, "page": 0, "type": "equation", "text": "log p(y, z | x) = z log p(z = 1 | x) + (1 − z) log[1 − p(z = 1 | x)] [reliability network] + z log p(y | x, z = 1) [learner network] + (1 − z) log prand(y) [random-response component], (4)"}
+{"order": 15, "page": 0, "type": "body", "text": "which is naturally decomposed into three components corresponding to the reliability network, the learner network, and the estimation of the distribution of the unpredictable component, respectively."}
+{"order": 16, "page": 0, "type": "body", "text": "Ideally, according to Equation 4, if the latent variable z is known, the learner network should be trained on instances with z = 1, which should lead to it learn the distribution of the predictable component p(y | x, z = 1)."}
+{"order": 17, "page": 0, "type": "body", "text": "However, since z is not observable, as we will demonstrate in Section 3.2, the empirical learner target used in training is actually the log likelihood of the clean component weighted by the posterior reliability"}
+{"order": 18, "page": 0, "type": "equation", "text": "γ(x, y) := p(z = 1 | x, y) = p(z = 1 | x)p(y | x, z = 1) / (p(z = 1 | x)p(y | x, z = 1) + prand(y)[1 − p(z = 1 | x)]). (5)"}
+{"order": 19, "page": 0, "type": "body", "text": "The good thing is, assuming that training converges to the optimum, this procedure also leads the learner to recover the predictable component of the response, which is precisely the distribution the learner is intended to model."}
+{"order": 20, "page": 0, "type": "body", "text": "See Appendix A for the proofs of the following results."}

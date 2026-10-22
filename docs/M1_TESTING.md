@@ -27,18 +27,18 @@ uv pip install --python .venv/bin/python -e ".[dev]"
 
 ```bash
 cd api
-export HN_DATA=$HOME/hearnarro-m1        # any empty directory; created if missing
-.venv/bin/python -m hearnarro serve --data-dir "$HN_DATA" --port 8765
+export HN_DATA=$HOME/yomikoe-m1        # any empty directory; created if missing
+.venv/bin/python -m yomikoe serve --data-dir "$HN_DATA" --port 8765
 ```
 
 Without `--port` the server listens on 8000; without `--data-dir` it uses
-`$HEARNARRO_DATA_DIR` or `./data`. It runs the database migrations at startup.
+`$YOMIKOE_DATA_DIR` or `./data`. It runs the database migrations at startup.
 
 ## 3. One PDF with curl (terminal 2)
 
 ```bash
 cd api
-export HN_DATA=$HOME/hearnarro-m1        # same directory as terminal 1
+export HN_DATA=$HOME/yomikoe-m1        # same directory as terminal 1
 B=http://127.0.0.1:8765
 ```
 
@@ -65,7 +65,7 @@ the block it came from: `heading`, `body`, `list`, `caption`, `footnote`, `table
 should store exactly what it prints:
 
 ```bash
-.venv/bin/python -m hearnarro dump tests/fixtures/pdfs/report_01_zero_trust.pdf --jsonl > "${TMPDIR:-/tmp}/dump.jsonl"
+.venv/bin/python -m yomikoe dump tests/fixtures/pdfs/report_01_zero_trust.pdf --jsonl > "${TMPDIR:-/tmp}/dump.jsonl"
 curl -s "$B/documents/1/segments?limit=500" > "${TMPDIR:-/tmp}/api.json"
 python3 -c 'import json,os; t=os.environ.get("TMPDIR","/tmp"); d=[(r["type"],r["text"]) for r in map(json.loads,open(t+"/dump.jsonl"))]; a=[(s["type"],s["text"]) for s in json.load(open(t+"/api.json"))["segments"]]; print(len(d),"dump segments,",len(a),"API segments, identical:",d==a)'
 ```
@@ -170,12 +170,12 @@ Run on any PDF (exit code 0 on PASS, 1 on FAIL; `--json` prints the structured r
 
 ```
 cd api
-.venv/bin/hearnarro check path/to/book.pdf          # table
-.venv/bin/hearnarro check path/to/book.pdf --json   # structured
+.venv/bin/yomikoe check path/to/book.pdf          # table
+.venv/bin/yomikoe check path/to/book.pdf --json   # structured
 .venv/bin/python -m pytest tests/test_quality.py tests/test_quality_fixtures.py -q
 ```
 
-Code: `api/hearnarro/quality.py`. Each check reports a count, its threshold, PASS/FAIL and up
+Code: `api/yomikoe/quality.py`. Each check reports a count, its threshold, PASS/FAIL and up
 to five examples. The 15 text fixtures run in `tests/test_quality_fixtures.py`; known
 fixture findings are pinned per fixture in its `ALLOWED` dict, each with a reason, so a
 higher count fails.
@@ -233,13 +233,13 @@ prints `total segments: 0`. The smoke script leaves the class out by default;
 ## 8. Where data lands, and how to reset
 
 ```
-$HN_DATA/hearnarro.db            SQLite (WAL): documents, blocks, sections, segments, ...
+$HN_DATA/yomikoe.db            SQLite (WAL): documents, blocks, sections, segments, ...
 $HN_DATA/pdfs/<sha256>.pdf       each uploaded PDF, named by the hash of its bytes
 ```
 
 ```bash
 ls "$HN_DATA" "$HN_DATA/pdfs"
-sqlite3 "$HN_DATA/hearnarro.db" 'select id, status, page_count, title from documents'
+sqlite3 "$HN_DATA/yomikoe.db" 'select id, status, page_count, title from documents'
 ```
 
 To reset: stop the server (Ctrl-C in terminal 1), then `rm -rf "$HN_DATA"` and start it

@@ -21,13 +21,19 @@ On top of that, evidence works like this:
 
 - Every number, "this passes", "this builds", "the branch is behind" comes from a command you
   ran and saved. Save the output as `_agent/results/NN_slug.<ext>` (`.txt`, `.log`, `.json`,
-  `.md`). `NN` is two digits: run `ls _agent/results/` and take the next free number. There is
+  `.md`). `NN` is the next free number (three digits today, four from 1000): run `ls _agent/results/` and take it. There is
   no reservation script; if two files would collide, take the next number again.
 - A claim you could not back with a run is reported as **unverified**, in those words. Never
   round it up to confirmed.
 - The green run you cite must come from the final code. If you edit anything after a run (a new test,
   a lint fix, a rename), run again and cite the new file; a run from before the last edit is not evidence.
 - Never print, cat, or grep credential, token or key files (`.env`, `*.pem`, `*.key`).
+- Never run `git stash` in any worktree: the stash is shared by every worktree of the repo, and on
+  2026-10-17 two parallel workers stashed in the same second and swapped each other's edits. For a clean
+  "before" measurement, use a second detached worktree at the commit; never delete a worktree you did not create.
+- Scratch files (probe scripts, temporary data) go in the session scratchpad under a name that starts with
+  your TASK slug (`domain-speech-finance_probe.py`), never a generic name: on 2026-10-19 two parallel workers
+  both wrote `probe.py` and one saved the other's strings as its evidence (results 875 had the 855 strings).
 - Python runs through `api/.venv/bin/python` (pip-managed). Never run `uv run`, `uv sync` or `uv pip`:
   a worker did on 2026-10-17 and it re-synced the venv and left `api/uv.lock`; the user chose pip (M4).
 

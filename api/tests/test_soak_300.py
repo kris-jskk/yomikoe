@@ -1,7 +1,7 @@
 """M4 gate clause 1: the 300-page API soak (PRD "300-page soak"; LIB-4, ING-1, SYN-1).
 
 Contract: ``_agent/specs/m4-library-interfaces.md`` sections 0 and 4. Runs only with
-``HEARNARRO_TEST_SOAK=1`` (``@pytest.mark.soak``). A generated 300-page text PDF
+``YOMIKOE_TEST_SOAK=1`` (``@pytest.mark.soak``). A generated 300-page text PDF
 (``tests/soak_util.py``) ingests to ``ready`` in under 300 s with peak RSS under 1.5 GB; every
 segment page returns in order; ``/audio`` serves the first and the last segment with
 ``FakeBackend``; ``DELETE`` removes everything it created.
@@ -22,10 +22,10 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.synthesis.encode import WavEncoder
-from hearnarro.synthesis.fake import FakeBackend
 from tests.soak_util import generate_soak_pdf
 from tests.test_api_documents import client_for, upload
+from yomikoe.synthesis.encode import WavEncoder
+from yomikoe.synthesis.fake import FakeBackend
 
 PAGES = 300
 READY_LIMIT_S = 300.0
@@ -94,7 +94,7 @@ async def test_soak_300_pages_ingest_page_audio_delete(tmp_path: Path) -> None:
         assert not (data_dir / "pdfs" / f"{sha}.pdf").exists()
         assert not (data_dir / "audio" / str(doc_id)).exists()
 
-    db = sqlite3.connect(data_dir / "hearnarro.db")
+    db = sqlite3.connect(data_dir / "yomikoe.db")
     try:
         for table in ("blocks", "segments", "sections"):
             q = f"SELECT count(*) FROM {table} WHERE document_id = ?"

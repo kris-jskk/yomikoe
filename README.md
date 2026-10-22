@@ -1,6 +1,8 @@
-# HearNarro
+# YomiKoe
 
 A Speechify-style reader: drop in a PDF, pick a voice and a speed, and listen with the text highlighted as it plays. Self-hosted, backed by open TTS models, built so the synthesis engine can be swapped without touching the reader.
+
+Domains (D52, plan of 2026-10-21): [yomikoe.app](https://yomikoe.app) is the brand domain and landing page (static site, `site/`, not built yet); app.yomikoe.app will serve the reader (`web/`); api.yomikoe.app the API (`api/`); getyomikoe.com is a defensive .com that 301-redirects to yomikoe.app and is never printed. Until M9 Hosting, the final milestone, everything runs locally via Docker Compose; the table in `docs/PRD.md` ("Domains") is the source of truth.
 
 The product spec lives in [docs/PRD.md](docs/PRD.md) and the technical design in [docs/TECHNICAL_DESIGN.md](docs/TECHNICAL_DESIGN.md). Requirement IDs there (`ING-`, `SYN-`, `PLAY-`, `LIB-`) are canonical and referenced in commits and tests.
 
@@ -8,7 +10,7 @@ The product spec lives in [docs/PRD.md](docs/PRD.md) and the technical design in
 
 ```
 api/            FastAPI service (Python 3.11+)
-  hearnarro/
+  yomikoe/
     ingestion/  PDF -> blocks -> reading order -> sentence segments   (ING-*)
     synthesis/  TTSBackend interface, Kokoro backend, cache, queue   (SYN-*)
     storage/    SQLite models and file paths                          (LIB-*)
@@ -34,7 +36,7 @@ M1 ingests PDFs into ordered sentence segments; there is no audio or UI yet.
 
 ```bash
 cd api
-.venv/bin/python -m hearnarro serve --data-dir ~/hearnarro-m1 --port 8765   # terminal 1
+.venv/bin/python -m yomikoe serve --data-dir ~/yomikoe-m1 --port 8765   # terminal 1
 .venv/bin/python scripts/m1_smoke.py --base-url http://127.0.0.1:8765        # terminal 2
 .venv/bin/python scripts/m1_smoke.py --one path/to/your.pdf                   # any PDF
 ```
@@ -43,7 +45,7 @@ The smoke script uploads the 15 text fixtures, scores them with the gate's word-
 measure, and exits 0 when all pass (mean 0.9914 today). The full hand-testing procedure,
 with the curl sequence and expected numbers, is in [docs/M1_TESTING.md](docs/M1_TESTING.md).
 
-Audio (M2): `.venv/bin/python scripts/m1_smoke.py --audio` fetches audio for the first segments of every document (start the server with `HEARNARRO_TTS_BACKEND=kokoro` and the `tts` extra for real speech); the step-by-step check is [docs/M2_TESTING.md](docs/M2_TESTING.md).
+Audio (M2): `.venv/bin/python scripts/m1_smoke.py --audio` fetches audio for the first segments of every document (start the server with `YOMIKOE_TTS_BACKEND=kokoro` and the `tts` extra for real speech); the step-by-step check is [docs/M2_TESTING.md](docs/M2_TESTING.md).
 
 ## Getting started
 
@@ -54,7 +56,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Models download from the Hugging Face Hub on first run into `$HF_HOME`; set it to a persistent path. Audio is cached as WAV by default; `pip install -e ".[opus]"` and `HEARNARRO_AUDIO_FORMAT=opus` switch to Ogg Opus (no ffmpeg needed).
+Models download from the Hugging Face Hub on first run into `$HF_HOME`; set it to a persistent path. Audio is cached as WAV by default; `pip install -e ".[opus]"` and `YOMIKOE_AUDIO_FORMAT=opus` switch to Ogg Opus (no ffmpeg needed).
 
 ## Benchmark (M2)
 

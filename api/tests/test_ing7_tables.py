@@ -3,13 +3,14 @@
 Spec: _agent/specs/m4-library-interfaces.md §3, rows "Tables" and "Equations". A table block's
 rows are its lines and its cells are the spans of a line (cells sit far apart on the row). The
 cue and row segments stay on blocks typed ``table`` so the D14 excluded-mass guard still sees
-them as excluded; an equation block yields one segment and its symbols are never spoken.
+them as excluded. An equation block yields one segment; since MATH-1 (spec m5 §3b) its text is
+the raw expression with one display MathSpan, and the "Equation N." cue is the reader's fallback.
 """
 
-from hearnarro.ingestion.merge import merge_blocks
-from hearnarro.ingestion.models import Block, LogicalBlock, Segment, Span
-from hearnarro.ingestion.segment import split_sentences
 from tests.conftest import make_block, make_span
+from yomikoe.ingestion.merge import merge_blocks
+from yomikoe.ingestion.models import Block, LogicalBlock, Segment, Span
+from yomikoe.ingestion.segment import split_sentences
 
 CELL_X = (72.0, 232.0, 392.0)
 CELL_W = 90.0
@@ -85,25 +86,36 @@ def test_ing7_tables_are_numbered_through_the_document() -> None:
     assert texts.index("Table 2, 2 rows.") > texts.index(FILLER)
 
 
-def test_ing7_equation_block_is_one_cue_segment() -> None:
+def test_ing7_math1_equation_block_is_one_segment_of_its_expression() -> None:
+    # MATH-1 (spec m5 §3a, §3b): the equation block is still one segment, but its text is the
+    # raw expression the mathspeak reader speaks; the "Equation." cue is the reader's fallback.
     eq = make_block(0, 0, ["∑ᵢ αᵢ xᵢ ≤ β", "λ = ∂f/∂x"], type="equation")
-    assert _texts([eq]) == ["Equation."]
+    logical, segments = _segments([eq])
+    assert [s.text for s in segments] == ["∑ᵢ αᵢ xᵢ ≤ β λ = ∂f/∂x"]
+    assert "Equation" not in logical[0].text
+    assert logical[0].raw_text == logical[0].text  # D14 guard still weighs the expression
+    (span,) = logical[0].math_spans
+    assert (span.start, span.end, span.display, span.label) == (0, len(logical[0].text), True, None)
 
 
-def test_ing7_labelled_equation_says_its_number() -> None:
+def test_ing7_math1_labelled_equation_keeps_its_number_as_label() -> None:
+    # MATH-1, MATH-4: the trailing "(3)" stays in the text and becomes the span's label.
     eq = make_block(0, 0, ["f(x) = ∫ g(t) dt          (3)"], type="equation")
-    assert _texts([eq]) == ["Equation 3."]
+    logical, segments = _segments([eq])
+    assert [s.text for s in segments] == ["f(x) = ∫ g(t) dt (3)"]
+    assert logical[0].math_spans[0].label == "3"
 
 
-def test_ing7_equation_symbols_never_spoken() -> None:
+def test_ing7_math1_equations_between_prose_stay_one_segment_each() -> None:
     blocks = [
         make_block(0, 0, [FILLER], y0=100.0),
         make_block(0, 1, ["x = √(a² + b²)          (12)"], y0=150.0, type="equation"),
         make_block(0, 2, ["∑ λᵢ ≥ 0"], y0=200.0, type="equation"),
         make_block(0, 3, [FILLER], y0=250.0),
     ]
-    _, segments = _segments(blocks)
-    assert [s.text for s in segments] == [FILLER, "Equation 12.", "Equation.", FILLER]
-    for seg in segments:
+    logical, segments = _segments(blocks)
+    assert [s.text for s in segments] == [FILLER, "x = √(a² + b²) (12)", "∑ λᵢ ≥ 0", FILLER]
+    assert [lb.type for lb in logical] == ["body", "equation", "equation", "body"]
+    assert [[sp.label for sp in lb.math_spans] for lb in logical] == [[], ["12"], [None], []]
+    for seg in (segments[0], segments[3]):
         assert not any(c in seg.text for c in EQ_SYMBOLS)
-        assert not any(c in seg.normalized_text for c in EQ_SYMBOLS)

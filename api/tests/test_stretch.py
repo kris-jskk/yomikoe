@@ -1,5 +1,5 @@
 """SYN-3 / D17: the numpy WSOLA stretch keeps length within 2 % and pitch, and
-``scale_timestamps`` keeps order (unit tests for ``hearnarro.synthesis.stretch``)."""
+``scale_timestamps`` keeps order (unit tests for ``yomikoe.synthesis.stretch``)."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ import itertools
 import numpy as np
 import pytest
 
-from hearnarro.synthesis.backend import WordTimestamp
-from hearnarro.synthesis.stretch import scale_timestamps, stretch_pcm
+from yomikoe.synthesis.backend import WordTimestamp
+from yomikoe.synthesis.stretch import scale_timestamps, stretch_pcm
 
 SR = 24_000
 

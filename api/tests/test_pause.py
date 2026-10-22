@@ -8,14 +8,14 @@ import functools
 import numpy as np
 import pytest
 
-from hearnarro.synthesis.trim import (
+from tests.conftest import fifty_fixture_sentences, make_service
+from tests.test_syn1_timestamps import assert_timestamp_invariants
+from yomikoe.synthesis.trim import (
     DEFAULT_LEAD_MS,
     DEFAULT_TAIL_MS,
     FIRST_WORD_GUARD_MS,
     trim_silence,
 )
-from tests.conftest import fifty_fixture_sentences, make_service
-from tests.test_syn1_timestamps import assert_timestamp_invariants
 
 VOICE = "af_heart"
 SENTENCES = fifty_fixture_sentences()[:10]
@@ -24,7 +24,7 @@ TH = 10 ** (-40 / 20)
 
 @functools.cache
 def _backend():
-    from hearnarro.synthesis.kokoro_backend import PINNED_REVISION, KokoroBackend
+    from yomikoe.synthesis.kokoro_backend import PINNED_REVISION, KokoroBackend
 
     return KokoroBackend(revision=PINNED_REVISION)
 

@@ -17,8 +17,6 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.ingestion.extract import ocr_available
-from hearnarro.ingestion.pipeline import ingest
 from tests.golden_util import (
     CHAR_MASS_TOLERANCE,
     char_mass_balanced,
@@ -28,6 +26,8 @@ from tests.golden_util import (
     seq_levenshtein,
     word_score,
 )
+from yomikoe.ingestion.extract import ocr_available
+from yomikoe.ingestion.pipeline import ingest
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 MANIFEST = FIXTURES / "manifest.json"
@@ -39,7 +39,8 @@ MEAN_MIN = 0.97
 if not MANIFEST.exists():
     pytest.skip(f"{MANIFEST} missing: fixture PDFs not added yet", allow_module_level=True)
 
-ENTRIES: list[dict] = json.loads(MANIFEST.read_text())
+# The manifest also lists the M5 `formula` pages (MATH-1, gate a); this gate covers the four M1 classes.
+ENTRIES: list[dict] = [e for e in json.loads(MANIFEST.read_text()) if e["class"] in CLASSES]
 BY_NAME = {e["name"]: e for e in ENTRIES}
 
 

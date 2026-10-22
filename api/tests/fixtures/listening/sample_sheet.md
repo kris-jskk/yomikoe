@@ -1,4 +1,4 @@
-# HearNarro listening sheet (EVAL-9)
+# YomiKoe listening sheet (EVAL-9)
 
 FIXTURE: test data for api/tests/test_eval_e4_gate.py, not a real listening session. Never ingest it into evals/listening/.
 
@@ -7,7 +7,7 @@ FIXTURE: test data for api/tests/test_eval_e4_gate.py, not a real listening sess
 - backend: fixture
 - listener: fixture
 
-Rubric: api/hearnarro/evals/data/listening_rubric.md
+Rubric: api/yomikoe/evals/data/listening_rubric.md
 
 | clip | sentence | naturalness | pacing | pron_errors | notes |
 |---|---|---|---|---|---|

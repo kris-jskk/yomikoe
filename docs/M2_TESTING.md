@@ -39,21 +39,21 @@ Fake backend (silent audio with exact timing, 80 ms per word at 1.0x; no model n
 
 ```bash
 cd api
-export HN_DATA=$HOME/hearnarro-m2        # any empty directory
-HEARNARRO_TTS_BACKEND=fake .venv/bin/python -m hearnarro serve --data-dir "$HN_DATA" --port 8765
+export HN_DATA=$HOME/yomikoe-m2        # any empty directory
+YOMIKOE_TTS_BACKEND=fake .venv/bin/python -m yomikoe serve --data-dir "$HN_DATA" --port 8765
 ```
 
 Kokoro (real speech; stop the fake server first, or use another port and data dir):
 
 ```bash
-HEARNARRO_TTS_BACKEND=kokoro .venv/bin/python -m hearnarro serve --data-dir "$HN_DATA" --port 8765
+YOMIKOE_TTS_BACKEND=kokoro .venv/bin/python -m yomikoe serve --data-dir "$HN_DATA" --port 8765
 ```
 
-The revision defaults to the D15 pin; set `HEARNARRO_KOKORO_REVISION=<hash>` only to test a
+The revision defaults to the D15 pin; set `YOMIKOE_KOKORO_REVISION=<hash>` only to test a
 different one. The model loads before the server accepts requests (about 2 s once cached).
-Other settings: `HEARNARRO_LOOKAHEAD` (segments synthesized ahead, default 5, SYN-5) and
-`HEARNARRO_AUDIO_FORMAT` (`wav` default, `opus` needs the `opus` extra, D16).
-`HEARNARRO_TRIM_LEAD_MS` (default 60) and `HEARNARRO_TRIM_TAIL_MS` (default 150) set the
+Other settings: `YOMIKOE_LOOKAHEAD` (segments synthesized ahead, default 5, SYN-5) and
+`YOMIKOE_AUDIO_FORMAT` (`wav` default, `opus` needs the `opus` extra, D16).
+`YOMIKOE_TRIM_LEAD_MS` (default 60) and `YOMIKOE_TRIM_TAIL_MS` (default 150) set the
 silence kept before and after each clip's sound (SYN-1); together they are the pause between two
 sentences. Cached clips keep the trim they were made with: use a fresh data dir after changing them.
 
@@ -61,7 +61,7 @@ sentences. Cached clips keep the trim they were made with: use a fresh data dir 
 
 ```bash
 cd api
-export HN_DATA=$HOME/hearnarro-m2
+export HN_DATA=$HOME/yomikoe-m2
 B=http://127.0.0.1:8765
 V=af_heart                               # fake_f1 with the fake backend
 curl -s $B/voices | python3 -c 'import json,sys; v=json.load(sys.stdin); print(len(v), "voices:", [(x["id"], x["gender"]) for x in v])'
@@ -114,7 +114,7 @@ curl -s -w ' %{http_code}\n' "$B/audio/999999?voice=$V&speed=1.0"   # 404
 
 ## 4. Ogg Opus instead of WAV (optional, D16)
 
-Install the `opus` extra, restart the server with `HEARNARRO_AUDIO_FORMAT=opus` on a fresh data
+Install the `opus` extra, restart the server with `YOMIKOE_AUDIO_FORMAT=opus` on a fresh data
 dir, and repeat section 3 with `.ogg` file names. In the recorded run (Kokoro): `content-type:
 audio/ogg`, 23919 bytes at 1.0x (8x smaller than the WAV), the same `x-timestamps` and
 `x-duration-ms: 4075`; `afinfo` reports `Oggf`, `1 ch, 48000 Hz, opus` (decoders play Opus at
@@ -170,15 +170,15 @@ real-time factor and how many sentences reached first audio within 2 s. Sentence
 
 ```bash
 .venv/bin/python -m pytest -q                                      # everything, FakeBackend only
-HEARNARRO_TEST_MODEL=1 HEARNARRO_TTS_BACKEND=kokoro .venv/bin/python -m pytest -q tests/test_kokoro_backend.py tests/test_syn_gate.py
+YOMIKOE_TEST_MODEL=1 YOMIKOE_TTS_BACKEND=kokoro .venv/bin/python -m pytest -q tests/test_kokoro_backend.py tests/test_syn_gate.py
 .venv/bin/ruff check . && .venv/bin/ruff format --check .
 ```
 
 The first command needs no model; the tests marked `model` are skipped and the Opus tests skip
 without the `opus` extra. The second loads Kokoro and runs the backend tests and the M2 gate:
 time to first audio at most 2000 ms at 0.5/1.0/2.0/3.0x on the spec's 150-character sentence.
-Set `HEARNARRO_TTS_BACKEND=kokoro`: without it the two Kokoro tests in `test_syn_gate.py` fail on
-"HEARNARRO_KOKORO_REVISION must be set" because the settings fall back to the fake backend.
+Set `YOMIKOE_TTS_BACKEND=kokoro`: without it the two Kokoro tests in `test_syn_gate.py` fail on
+"YOMIKOE_KOKORO_REVISION must be set" because the settings fall back to the fake backend.
 
 ## 9. What good looks like
 
@@ -203,14 +203,14 @@ the full response, not the player's wait.
 ## 10. Known limits
 
 - **Adding a pronunciation.** Add one line to `OVERRIDES` in
-  `api/hearnarro/synthesis/lexicon_overrides.py` (lower-case word -> phonemes in misaki's alphabet,
-  e.g. `"uber": "ˈubəɹ"`), then run `HEARNARRO_TEST_MODEL=1 pytest tests/test_kokoro_backend.py -k override`;
+  `api/yomikoe/synthesis/lexicon_overrides.py` (lower-case word -> phonemes in misaki's alphabet,
+  e.g. `"uber": "ˈubəɹ"`), then run `YOMIKOE_TEST_MODEL=1 pytest tests/test_kokoro_backend.py -k override`;
   re-ingest or clear the document's audio cache to hear it. Acronym readings: `SPOKEN`, `SPELLED`,
-  `COLLOCATIONS`, `RESPELL` in `api/hearnarro/synthesis/acronyms.py`. All-caps headings
+  `COLLOCATIONS`, `RESPELL` in `api/yomikoe/synthesis/acronyms.py`. All-caps headings
   ("ERIC'S NOTE", "BUILDING WEALTH", "FOREWORD") are read as words, not spelled; a lone acronym in
   a normal sentence keeps its decision ("the CEO said" spelled, "a TED talk" spoken), and so do
   `SPELLED` and document-defined acronyms inside a heading. Hear it:
-  `~/hearnarro-m1/audio_samples/erics_note_1.0x.wav`. Cached audio of a heading synthesized before
+  `~/yomikoe-m1/audio_samples/erics_note_1.0x.wav`. Cached audio of a heading synthesized before
   this change keeps the spelled reading until the document's audio cache is cleared.
 
 - **0.5x tail (D19).** At half speed the model generates twice the audio before the first byte,

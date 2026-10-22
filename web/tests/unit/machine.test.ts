@@ -474,3 +474,164 @@ describe('LIB-3 settings while loading (M3 deviation 6)', () => {
     expect(s2.voice).toBe('am_adam')
   })
 })
+
+// PLAY-10/PLAY-11 (spec _agent/specs/m5-academic-reading.md §4d): equation runs 103..105 and 109..110.
+const TYPES = [
+  'heading',
+  'paragraph',
+  'equation',
+  'equation',
+  'equation',
+  'paragraph',
+  'list',
+  'paragraph',
+  'equation',
+  'equation',
+]
+
+function eq(status: PlayerStatus, segmentId: number, over: Partial<PlayerState> = {}): PlayerState {
+  return st(status, { types: TYPES, current: { segmentId, offsetMs: 2300 }, ...over })
+}
+
+describe('PLAY-10 LOAD carries block types', () => {
+  it('PLAY-10 LOAD stores types aligned with orderedIds; blockSpeed defaults to 0.8', () => {
+    expect(initialState.types).toEqual([])
+    expect(initialState.blockSpeed).toEqual({ equation: 0.8 })
+    const s = reduce(initialState, { ...load, types: TYPES })
+    expect(s.types).toEqual(TYPES)
+    expect(s.blockSpeed).toEqual({ equation: 0.8 })
+  })
+
+  it('PLAY-10 LOAD without types stores an empty list', () => {
+    const s = reduce(st('idle', { types: TYPES }), load)
+    expect(s.types).toEqual([])
+  })
+})
+
+describe('PLAY-10 SKIP_EQUATION', () => {
+  it('PLAY-10 SKIP_EQUATION in the middle of a run goes to the first segment after it', () => {
+    const s = reduce(eq('playing', 104), { type: 'SKIP_EQUATION' })
+    expect(s.status).toBe('loading')
+    expect(s.current).toEqual({ segmentId: 106, offsetMs: 0 })
+    expect(s.generation).toBe(6)
+  })
+
+  it('PLAY-10 SKIP_EQUATION from the first equation of a run (paused)', () => {
+    const s = reduce(eq('paused', 103), { type: 'SKIP_EQUATION' })
+    expect(s.status).toBe('loading')
+    expect(s.current).toEqual({ segmentId: 106, offsetMs: 0 })
+  })
+
+  it('PLAY-10 SKIP_EQUATION with a run at the start of the document', () => {
+    const types = ['equation', 'equation', ...TYPES.slice(2)]
+    const s = reduce(eq('playing', 101, { types }), { type: 'SKIP_EQUATION' })
+    expect(s.current).toEqual({ segmentId: 106, offsetMs: 0 })
+    const t = ['equation', 'equation', 'paragraph', ...TYPES.slice(3)]
+    expect(reduce(eq('playing', 101, { types: t }), { type: 'SKIP_EQUATION' }).current).toEqual({
+      segmentId: 103,
+      offsetMs: 0,
+    })
+  })
+
+  it('PLAY-10 SKIP_EQUATION with a run at the end behaves like SKIP past the end', () => {
+    const s = reduce(eq('playing', 109), { type: 'SKIP_EQUATION' })
+    const k = reduce(eq('playing', 110), { type: 'SKIP', by: 1 })
+    expect(s.status).toBe(k.status)
+    expect(s.current).toEqual(k.current)
+    expect(s.current).toEqual({ segmentId: 110, offsetMs: 0 })
+  })
+
+  it('PLAY-10 SKIP_EQUATION honours skippedIds after the run (PLAY-8)', () => {
+    const s = reduce(eq('playing', 104, { skippedIds: [106] }), { type: 'SKIP_EQUATION' })
+    expect(s.current).toEqual({ segmentId: 107, offsetMs: 0 })
+  })
+
+  it('PLAY-10 SKIP_EQUATION with a skipped id inside the run still leaves the run', () => {
+    const s = reduce(eq('playing', 103, { skippedIds: [104] }), { type: 'SKIP_EQUATION' })
+    expect(s.current).toEqual({ segmentId: 106, offsetMs: 0 })
+  })
+
+  it('PLAY-10 SKIP_EQUATION on a non-equation segment is a no-op', () => {
+    const s0 = eq('playing', 102)
+    expect(reduce(s0, { type: 'SKIP_EQUATION' })).toBe(s0)
+  })
+
+  it('PLAY-10 SKIP_EQUATION from idle is a no-op', () => {
+    const s0 = eq('idle', 104)
+    expect(reduce(s0, { type: 'SKIP_EQUATION' })).toBe(s0)
+  })
+})
+
+describe('PLAY-10 REPEAT_EQUATION', () => {
+  it('PLAY-10 REPEAT_EQUATION in the middle of a run goes to its first segment at offset 0', () => {
+    const s = reduce(eq('playing', 105), { type: 'REPEAT_EQUATION' })
+    expect(s.status).toBe('loading')
+    expect(s.current).toEqual({ segmentId: 103, offsetMs: 0 })
+    expect(s.generation).toBe(6)
+  })
+
+  it('PLAY-10 REPEAT_EQUATION on the first equation restarts it', () => {
+    const s = reduce(eq('paused', 103), { type: 'REPEAT_EQUATION' })
+    expect(s.current).toEqual({ segmentId: 103, offsetMs: 0 })
+  })
+
+  it('PLAY-10 REPEAT_EQUATION with a run at the end and at the start', () => {
+    expect(reduce(eq('playing', 110), { type: 'REPEAT_EQUATION' }).current).toEqual({
+      segmentId: 109,
+      offsetMs: 0,
+    })
+    const types = ['equation', 'equation', ...TYPES.slice(2)]
+    expect(reduce(eq('playing', 102, { types }), { type: 'REPEAT_EQUATION' }).current).toEqual({
+      segmentId: 101,
+      offsetMs: 0,
+    })
+  })
+
+  it('PLAY-10 REPEAT_EQUATION with the run start skipped lands on the next unskipped (PLAY-8)', () => {
+    const s = reduce(eq('playing', 105, { skippedIds: [103] }), { type: 'REPEAT_EQUATION' })
+    expect(s.current).toEqual({ segmentId: 104, offsetMs: 0 })
+  })
+
+  it('PLAY-10 REPEAT_EQUATION on a non-equation segment restarts the current segment', () => {
+    const s = reduce(eq('playing', 106), { type: 'REPEAT_EQUATION' })
+    expect(s.status).toBe('loading')
+    expect(s.current).toEqual({ segmentId: 106, offsetMs: 0 })
+  })
+
+  it('PLAY-10 REPEAT_EQUATION from idle is a no-op', () => {
+    const s0 = eq('idle', 104)
+    expect(reduce(s0, { type: 'REPEAT_EQUATION' })).toBe(s0)
+  })
+})
+
+describe('PLAY-11 SET_BLOCK_SPEED', () => {
+  it('PLAY-11 SET_BLOCK_SPEED clamps to [0.5, 1.0] on the 0.05 grid', () => {
+    const s0 = eq('paused', 104)
+    expect(reduce(s0, { type: 'SET_BLOCK_SPEED', equation: 0.3 }).blockSpeed).toEqual({
+      equation: 0.5,
+    })
+    expect(reduce(s0, { type: 'SET_BLOCK_SPEED', equation: 1.2 }).blockSpeed).toEqual({
+      equation: 1.0,
+    })
+    expect(reduce(s0, { type: 'SET_BLOCK_SPEED', equation: 0.83 }).blockSpeed).toEqual({
+      equation: 0.85,
+    })
+    expect(reduce(s0, { type: 'SET_BLOCK_SPEED', equation: 0.7 }).blockSpeed).toEqual({
+      equation: 0.7,
+    })
+  })
+
+  it('PLAY-11 SET_BLOCK_SPEED while playing rebuilds like SET_SPEED', () => {
+    const s = reduce(eq('playing', 104), { type: 'SET_BLOCK_SPEED', equation: 0.6 })
+    expect(s.status).toBe('loading')
+    expect(s.generation).toBe(6)
+    expect(s.current).toEqual({ segmentId: 104, offsetMs: 0 })
+    expect(s.blockSpeed).toEqual({ equation: 0.6 })
+  })
+
+  it('PLAY-11 SET_BLOCK_SPEED from idle keeps the status', () => {
+    const s = reduce(eq('idle', 104), { type: 'SET_BLOCK_SPEED', equation: 0.9 })
+    expect(s.status).toBe('idle')
+    expect(s.blockSpeed).toEqual({ equation: 0.9 })
+  })
+})

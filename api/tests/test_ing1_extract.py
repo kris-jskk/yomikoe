@@ -3,7 +3,7 @@
 from dataclasses import replace
 from pathlib import Path
 
-from hearnarro.ingestion.extract import (
+from yomikoe.ingestion.extract import (
     FIGURE_JOIN,
     NORMAL_DESCENT,
     LayoutChar,
@@ -19,7 +19,7 @@ from hearnarro.ingestion.extract import (
     page_from_layout,
     rule_tables,
 )
-from hearnarro.ingestion.models import BBox
+from yomikoe.ingestion.models import BBox
 
 UNIT = Path(__file__).parent / "fixtures" / "unit"
 
@@ -358,7 +358,7 @@ def _ttf(code_to_name: dict[int, str]) -> bytes:
 
 
 def test_ing2_ligature_glyph_names_map_to_letters() -> None:
-    from hearnarro.ingestion.extract import ligature_text
+    from yomikoe.ingestion.extract import ligature_text
 
     assert ligature_text("f_i") == "fi"
     assert ligature_text("f_f_i") == "ffi"
@@ -370,7 +370,7 @@ def test_ing2_ligature_glyph_names_map_to_letters() -> None:
 
 
 def test_ing2_truetype_code_to_glyph_name_from_cmap_and_post() -> None:
-    from hearnarro.ingestion.extract import truetype_glyph_names
+    from yomikoe.ingestion.extract import truetype_glyph_names
 
     names = truetype_glyph_names(_ttf({33: "f_l", 35: "f_i", 37: "f_f_i"}))
     assert names[33] == "f_l"
@@ -379,7 +379,7 @@ def test_ing2_truetype_code_to_glyph_name_from_cmap_and_post() -> None:
 
 
 def test_ing2_ligature_repair_replaces_only_mapped_punctuation() -> None:
-    from hearnarro.ingestion.extract import repair_ligature
+    from yomikoe.ingestion.extract import repair_ligature
 
     fixes = {("ABCDEF+Fanwood", "!"): "fi", ("ABCDEF+Fanwood", "%"): "ffi"}
     assert repair_ligature("!", "ABCDEF+Fanwood", fixes) == "fi"
@@ -401,7 +401,7 @@ def test_ing1_extract_pages_calls_on_page_after_each_page() -> None:
 
 
 def test_ing1_ingest_passes_on_page_through_and_none_is_unchanged() -> None:
-    from hearnarro.ingestion.pipeline import ingest
+    from yomikoe.ingestion.pipeline import ingest
 
     calls: list[tuple[int, int]] = []
     with_cb = ingest(REPORT_PDF, ocr=False, on_page=lambda d, t: calls.append((d, t)))

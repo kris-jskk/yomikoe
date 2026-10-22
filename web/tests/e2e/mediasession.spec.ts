@@ -9,8 +9,8 @@ import { expect, resetState, test, type Api } from './fixtures'
 
 test.describe.configure({ timeout: 90_000 })
 test.skip(
-  ({ browserName }) => browserName === 'firefox' && !process.env.HEARNARRO_E2E_ALL_ENGINES,
-  'Firefox runs only with HEARNARRO_E2E_ALL_ENGINES=1',
+  ({ browserName }) => browserName === 'firefox' && !process.env.YOMIKOE_E2E_ALL_ENGINES,
+  'Firefox runs only with YOMIKOE_E2E_ALL_ENGINES=1',
 )
 
 test.beforeEach(async ({ page, api }) => {
@@ -39,7 +39,7 @@ async function open(page: Page, api: Api) {
 
 const probe = (page: Page) =>
   page.evaluate(() => {
-    const els = document.querySelectorAll<HTMLAudioElement>('audio[data-hearnarro-keepalive]')
+    const els = document.querySelectorAll<HTMLAudioElement>('audio[data-yomikoe-keepalive]')
     return {
       count: els.length,
       paused: els[0]?.paused ?? null,

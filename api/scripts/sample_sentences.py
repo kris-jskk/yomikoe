@@ -32,18 +32,18 @@ SENTENCES = [
 
 def make_backend(name: str):
     if name == "fake":
-        from hearnarro.synthesis.fake import FakeBackend
+        from yomikoe.synthesis.fake import FakeBackend
 
         return FakeBackend()
-    from hearnarro.settings import DEFAULT_KOKORO_REVISION
-    from hearnarro.synthesis.kokoro_backend import KokoroBackend
+    from yomikoe.settings import DEFAULT_KOKORO_REVISION
+    from yomikoe.synthesis.kokoro_backend import KokoroBackend
 
     return KokoroBackend(revision=DEFAULT_KOKORO_REVISION)
 
 
 def main(argv: list[str] | None = None) -> int:
-    from hearnarro.ingestion.normalize import normalize
-    from hearnarro.synthesis.encode import WavEncoder
+    from yomikoe.ingestion.normalize import normalize
+    from yomikoe.synthesis.encode import WavEncoder
 
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("out_dir")

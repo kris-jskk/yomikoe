@@ -1,7 +1,12 @@
 // LIB-1: library table formatting helpers (spec _agent/specs/m4-library-interfaces.md §2, "Library").
 import { describe, expect, it } from 'vitest'
 
-import { formatLastOpened, formatProgress } from '../../src/components/libraryFormat'
+import {
+  formatLastOpened,
+  formatProfile,
+  formatProgress,
+  formatRenormalized,
+} from '../../src/components/libraryFormat'
 
 describe('LIB-1 formatProgress', () => {
   it('LIB-1 whole percent, rounded down so 100% means finished', () => {
@@ -51,5 +56,17 @@ describe('LIB-1 formatLastOpened', () => {
 
   it('LIB-1 an unparseable timestamp is "never", not "NaN"', () => {
     expect(formatLastOpened('not a date', now)).toBe('never')
+  })
+})
+
+describe('ING-11 profile badge', () => {
+  it('ING-11 shows the effective class with (auto) when not overridden', () => {
+    expect(formatProfile({ class: 'math', override: null })).toBe('math (auto)')
+    expect(formatProfile({ class: 'mixed', override: 'mixed' })).toBe('mixed')
+    expect(formatProfile(undefined)).toBe('prose (auto)')
+  })
+  it('ING-11 re-normalized count text', () => {
+    expect(formatRenormalized(1)).toBe('re-normalized 1 sentence')
+    expect(formatRenormalized(12)).toBe('re-normalized 12 sentences')
   })
 })

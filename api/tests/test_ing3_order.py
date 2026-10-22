@@ -2,9 +2,9 @@
 
 import pytest
 
-from hearnarro.ingestion.models import Block
-from hearnarro.ingestion.order import READ_TYPES, detect_columns, order_document, order_page
 from tests.conftest import make_block, make_page
+from yomikoe.ingestion.models import Block
+from yomikoe.ingestion.order import READ_TYPES, detect_columns, order_document, order_page
 
 
 def col1(index: int, y0: float, type: str = "body", page: int = 0) -> Block:
@@ -24,7 +24,8 @@ def _indices(blocks: list[Block]) -> list[int]:
 
 
 def test_ing4_read_types() -> None:
-    assert READ_TYPES == {"body", "heading", "list", "caption", "equation", "table"}
+    # ING-10: code listings are read (as their cue), so "code" joins the read types.
+    assert READ_TYPES == {"body", "heading", "list", "caption", "equation", "table", "code"}
 
 
 def test_ing4_detect_columns_two_clusters() -> None:
@@ -131,7 +132,7 @@ def _host(index: int, y0: float, text: str = "The bound holds whenever the sum E
 
 
 def test_ing4_attach_inline_moves_out_of_order_fragment_after_host() -> None:
-    from hearnarro.ingestion.order import attach_inline
+    from yomikoe.ingestion.order import attach_inline
 
     host = _host(0, 100)
     nxt = make_block(0, 1, ["next line of prose text here"], x0=72, width=300, y0=113)
@@ -142,7 +143,7 @@ def test_ing4_attach_inline_moves_out_of_order_fragment_after_host() -> None:
 
 
 def test_ing4_attach_inline_fragment_sorted_before_host_follows_it() -> None:
-    from hearnarro.ingestion.order import attach_inline
+    from yomikoe.ingestion.order import attach_inline
 
     frag = make_block(0, 1, ["r ( V"], x0=198, width=30, y0=100, type="equation")
     host = _host(0, 100, "with the copula factor written c(z) := c U")
@@ -151,7 +152,7 @@ def test_ing4_attach_inline_fragment_sorted_before_host_follows_it() -> None:
 
 
 def test_ing4_attach_inline_in_order_chain_is_joined_d12() -> None:
-    from hearnarro.ingestion.order import attach_inline
+    from yomikoe.ingestion.order import attach_inline
 
     host = _host(0, 100)
     frag = make_block(0, 1, ["i x"], x0=202, width=20, y0=100, type="equation")
@@ -160,7 +161,7 @@ def test_ing4_attach_inline_in_order_chain_is_joined_d12() -> None:
 
 
 def test_ing4_attach_inline_ignores_hanging_and_distant_and_equation_hosts() -> None:
-    from hearnarro.ingestion.order import attach_inline
+    from yomikoe.ingestion.order import attach_inline
 
     host = _host(0, 100)
     nxt = make_block(0, 1, ["next line of prose text here"], x0=72, width=300, y0=113)

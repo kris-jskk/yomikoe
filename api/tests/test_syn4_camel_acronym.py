@@ -1,6 +1,6 @@
 """SYN-4: a mixed-case token ending in a run of 2+ capitals ("OpenAI", "GenAI", "xAI") is read as
 its word part followed by the acronym decision for the capital run ("open A I"). The split is a
-pure function; the backend tests need ``HEARNARRO_TEST_MODEL=1``."""
+pure function; the backend tests need ``YOMIKOE_TEST_MODEL=1``."""
 
 from __future__ import annotations
 
@@ -25,14 +25,14 @@ import pytest
     ],
 )
 def test_syn4_split_camel_acronym(token: str, split: tuple[str, str, str] | None) -> None:
-    from hearnarro.synthesis.acronyms import split_camel_acronym
+    from yomikoe.synthesis.acronyms import split_camel_acronym
 
     assert split_camel_acronym(token) == split
 
 
 @functools.cache
 def _backend():
-    from hearnarro.synthesis.kokoro_backend import PINNED_REVISION, KokoroBackend
+    from yomikoe.synthesis.kokoro_backend import PINNED_REVISION, KokoroBackend
 
     return KokoroBackend(revision=PINNED_REVISION)
 
@@ -92,7 +92,7 @@ def test_syn1_camel_acronym_one_timestamp_per_word() -> None:
     [("OPENAI", ("OPEN", "AI")), ("FORMAT", None), ("NVIDIA", None), ("ERIC'S", None)],
 )
 def test_syn4_split_caps_compound(token: str, split: tuple[str, str] | None) -> None:
-    from hearnarro.synthesis.acronyms import split_caps_compound
+    from yomikoe.synthesis.acronyms import split_caps_compound
 
     known = {"open", "format", "eric"}.__contains__
     assert split_caps_compound(token, lambda w: known(w.lower())) == split

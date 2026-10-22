@@ -16,9 +16,9 @@ from pathlib import Path
 
 import pytest
 
-from hearnarro.ingestion.pipeline import ingest
 from tests.boundary_util import align_boundaries, boundaries, prf, sentence_words
 from tests.golden_util import prose_only, words
+from yomikoe.ingestion.pipeline import ingest
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 MANIFEST = FIXTURES / "manifest.json"
@@ -26,7 +26,11 @@ MANIFEST = FIXTURES / "manifest.json"
 if not MANIFEST.exists():
     pytest.skip(f"{MANIFEST} missing: fixture PDFs not added yet", allow_module_level=True)
 
-NAMES = [e["name"] for e in json.loads(MANIFEST.read_text()) if e["class"] != "scanned"]
+NAMES = [
+    e["name"]
+    for e in json.loads(MANIFEST.read_text())
+    if e["class"] in ("academic", "report", "tables")
+]
 
 
 def _truth(name: str) -> list[str]:

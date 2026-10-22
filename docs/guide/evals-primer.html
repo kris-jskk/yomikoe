@@ -1,4 +1,4 @@
-<title>HearNarro Evals Primer</title>
+<title>YomiKoe Evals Primer</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,650&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -154,12 +154,12 @@ dl.gloss dd { color: var(--muted); min-width: 0; }
 
 <main>
 <header>
-  <span class="status">2026-10-17 · E0–E4 done · nine suites in place · first listening session awaiting a listener · OCR suite awaiting tesseract</span>
-  <h1>Evals for HearNarro: measuring how good, not only whether it works</h1>
-  <p class="lede">HearNarro turns a PDF into speech with word-by-word highlighting. Its tests say whether each part works. This page explains a proposed second layer, called evals, that says how well each part works and whether a change made it better or worse.</p>
+  <span class="status">2026-10-17 · E0–E4 done · nine suites in place · EVAL-8 OCR has its first run · first listening session awaiting a listener</span>
+  <h1>Evals for YomiKoe: measuring how good, not only whether it works</h1>
+  <p class="lede">YomiKoe turns a PDF into speech with word-by-word highlighting. Its tests say whether each part works. This page explains a proposed second layer, called evals, that says how well each part works and whether a change made it better or worse.</p>
   <nav class="toc" aria-label="Sections">
     <a href="#what">1 What is an eval?</a>
-    <a href="#why">2 Why HearNarro needs them</a>
+    <a href="#why">2 Why YomiKoe needs them</a>
     <a href="#today">3 What exists today</a>
     <a href="#design">4 The design</a>
     <a href="#scorecard">5 A scorecard, illustrated</a>
@@ -180,12 +180,12 @@ dl.gloss dd { color: var(--muted); min-width: 0; }
       <tr><td>E1 fast suites</td><td>done</td><td>e5fc969, bb4cfeb</td><td>EVAL-3 clean text: 2.6 checklist hits per 1 000 words. EVAL-4 speech form, 302 pairs: 0.62 exact phoneme match, 0.89 partial. The first scorer compared text and scored 0.27; that measured the wrong layer, because the voice front-end expands digits itself, so the scorer now compares phonemes through that same front-end.</td></tr>
       <tr><td>E2 model suites</td><td>done</td><td>52e3940, 1dd5150</td><td>Real voice, 50 sentences, 2 voices, speeds 1×/2×/3×; the full run took 438 s. EVAL-5 intelligibility: word error rate 0.15 at 1×, 0.35 at 2×, 0.50 at 3×. EVAL-6 sync: words land within 150 ms of the highlight 45 % of the time at 1×, 84 % at 2×, 96 % at 3×. EVAL-7 speed: time to first audio median 645 ms, 95th percentile 2163 ms; real-time factor 0.095.</td></tr>
       <tr><td>E3 reporting</td><td>done</td><td>18d5d29, b6f6722</td><td>The <a href="https://claude.ai/artifact/LiLtiJCotJ1Gj4oza2nTi5">first scorecard</a> is generated from the tier-1 record against the first baseline: EVAL-1 and EVAL-2 show zero regressions, EVAL-3 to EVAL-7 show “no baseline” because the first record predates them. The baseline rule now sits in the project instructions: run tier 0 before and after any ingestion or synthesis change and cite the compare output.</td></tr>
-      <tr><td>E4 human and OCR</td><td>done</td><td>9db1d55, b35e58e</td><td>EVAL-9: the runner prepared 20 real-voice clips (10 sentences × 2 voices) and a blank sheet at <code>evals/listening/pending_2026-10-17/sheet.md</code>; once a listener fills it in, the ingest command turns it into a session record. EVAL-8 OCR is built and runs skipped with the reason “tesseract absent”; its scoring path has not yet run on real OCR output.</td></tr>
+      <tr><td>E4 human and OCR</td><td>done</td><td>9db1d55, b35e58e</td><td>EVAL-9: the runner prepared 20 real-voice clips (10 sentences × 2 voices) and a blank sheet at <code>evals/listening/pending_2026-10-17/sheet.md</code>; once a listener fills it in, the ingest command turns it into a session record. EVAL-8 OCR ran for the first time once tesseract was installed (record 2026-10-17_1d6b296, commit 0dc1bd2): character error rate 0.8 % to 7.2 % over the five scanned fixtures, mean 3.9 %. EVAL-1 now scores all 20 fixtures: the scanned class averages 0.929, and the two maths-heavy scans sit at 0.887 and 0.865, above the 0.85 floor the project set for scans (D35) but well under the 0.95 floor for born-digital PDFs.</td></tr>
     </tbody>
   </table></div>
   <p><strong>First findings from EVAL-4.</strong> Clock times are dropped entirely: "The train leaves at 10:30" reaches the listener as "The train leaves at" (all 22 time pairs lose words). Units are read as letters, so "5 km" becomes "five kem". Abbreviations and decimals score low too. None of this was visible to the existing tests, which is the point of the eval. Fixing it belongs to the speech-normalization requirement (ING-6), not to the eval layer.</p>
   <p><strong>First findings from the real voice (E2).</strong> Two things stand out. The speech recogniser hears each word about 200 ms <em>before</em> the backend says it starts at 1×, and the gap halves at 2×, so it lives in the voice's own timeline rather than in playback; the highlighting lags the speech by that much. And the word error rate climbs steeply with speed; part of that is the recogniser struggling with fast audio and with numerals, so treat the 2× and 3× figures as a trend to track, not an absolute. The 95th-percentile time to first audio is above the 2 s target that the gate checks on one sentence only, which matches the deferred decision D19.</p>
-  <p><strong>What is left after the rollout.</strong> Four follow-ups, none of them eval-layer work: a person fills in the pending listening sheet and runs the ingest command; tesseract is installed so the OCR suite can score the five scanned fixtures; the ING-6 normalizer learns clock times and units, with EVAL-4 run before and after; and the 200 ms timing lead in EVAL-6 is traced to its cause in the voice's timeline.</p>
+  <p><strong>What is left after the rollout.</strong> Three follow-ups, none of them eval-layer work: a person fills in the pending listening sheet and runs the ingest command; the ING-6 normalizer learns clock times and units, with EVAL-4 run before and after; and the 200 ms timing lead in EVAL-6 is traced to its cause in the voice's timeline.</p>
 </section>
 
 <section id="what">
@@ -199,7 +199,7 @@ dl.gloss dd { color: var(--muted); min-width: 0; }
   <h3>Three ideas carry everything</h3>
   <div class="tablewrap">
   <table>
-    <thead><tr><th>Idea</th><th>What it means</th><th>HearNarro example</th></tr></thead>
+    <thead><tr><th>Idea</th><th>What it means</th><th>YomiKoe example</th></tr></thead>
     <tbody>
       <tr><td><b>Dataset</b></td><td>A fixed set of inputs, each with a known-good answer. The known-good answer is called the <i>ground truth</i>.</td><td>20 sample PDFs (the project calls them <i>fixtures</i>), each with a hand-corrected file of the expected reading order</td></tr>
       <tr><td><b>Scorer</b></td><td>A rule that compares the system's output with the ground truth and returns a number.</td><td>A word-by-word comparison score from 0 to 1, where 1 means the words came out in exactly the expected order</td></tr>
@@ -307,9 +307,9 @@ dl.gloss dd { color: var(--muted); min-width: 0; }
 
 <section id="why">
   <span class="sec-n">2</span>
-  <h2>Why HearNarro needs them</h2>
+  <h2>Why YomiKoe needs them</h2>
   <p class="q">"Everything passes. Why measure more?"</p>
-  <p>A review of the current code found six gaps. Each one means a change could make HearNarro worse for a listener without any test noticing.</p>
+  <p>A review of the current code found six gaps. Each one means a change could make YomiKoe worse for a listener without any test noticing.</p>
   <div class="cards">
     <div class="card">
       <div class="t">1. Scores exist but are thrown away</div>
@@ -333,7 +333,7 @@ dl.gloss dd { color: var(--muted); min-width: 0; }
     </div>
     <div class="card">
       <div class="t">5. No yardstick for swapping the voice</div>
-      <p>HearNarro is built so the voice model can be replaced. Without an eval there is no way to say a new one is better, faster or easier to understand than Kokoro on the same sentences.</p>
+      <p>YomiKoe is built so the voice model can be replaced. Without an eval there is no way to say a new one is better, faster or easier to understand than Kokoro on the same sentences.</p>
       <div class="ear">a voice change would be chosen by impression, not by evidence.</div>
     </div>
     <div class="card">
@@ -347,11 +347,11 @@ dl.gloss dd { color: var(--muted); min-width: 0; }
 <section id="today">
   <span class="sec-n">3</span>
   <h2>What exists today</h2>
-  <p class="q">"Where does HearNarro already measure quality?"</p>
+  <p class="q">"Where does YomiKoe already measure quality?"</p>
   <p>A PDF passes through a chain of stages before you hear it. Several stages already compute a real score. But every one of those scores is compared with a pass mark and then dropped. The picture below marks each stage.</p>
   <figure>
     <div class="figscroll">
-    <svg viewBox="0 0 1040 300" role="img" aria-label="The HearNarro pipeline from upload to playback. Reading order, sentence boundaries, the quality checklist, synthesis timing and highlight drift compute a score; normalization and real audio only have yes/no checks; upload and OCR have no quality measure. Every computed score ends in pass or fail and is not saved.">
+    <svg viewBox="0 0 1040 300" role="img" aria-label="The YomiKoe pipeline from upload to playback. Reading order, sentence boundaries, the quality checklist, synthesis timing and highlight drift compute a score; normalization and real audio only have yes/no checks; upload and OCR have no quality measure. Every computed score ends in pass or fail and is not saved.">
       <defs>
         <marker id="b-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
       </defs>
@@ -432,7 +432,7 @@ dl.gloss dd { color: var(--muted); min-width: 0; }
       <text x="690" y="271" text-anchor="middle" font-size="11" class="muted">the number itself is not saved anywhere</text>
     </svg>
     </div>
-    <figcaption><b>HearNarro already calculates five kinds of quality score, and keeps none of them.</b> Amber dots mark stages where a real score is computed; every amber line runs into a pass-or-fail check, and the number is then lost. The speech wording and the real voice have only yes/no examples, and upload and OCR have no quality measure at all.</figcaption>
+    <figcaption><b>YomiKoe already calculates five kinds of quality score, and keeps none of them.</b> Amber dots mark stages where a real score is computed; every amber line runs into a pass-or-fail check, and the number is then lost. The speech wording and the real voice have only yes/no examples, and upload and OCR have no quality measure at all.</figcaption>
   </figure>
   <p>Two details from the gaps above show up here. The reading-order score covers classify, order and merge together, because it compares the final word sequence. And the audio checks run on the fake voice, so they measure timing plumbing rather than speech.</p>
 </section>

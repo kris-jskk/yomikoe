@@ -2,7 +2,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const api = process.env.HEARNARRO_API ?? 'http://127.0.0.1:8765'
+const api = process.env.YOMIKOE_API ?? 'http://127.0.0.1:8765'
 
 export default defineConfig({
   plugins: [react()],
@@ -12,6 +12,7 @@ export default defineConfig({
       '/audio': api,
       '/voices': api,
       '/settings': api,
+      '/pronunciations': api,
     },
   },
   test: {

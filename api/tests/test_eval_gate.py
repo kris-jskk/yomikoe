@@ -17,18 +17,19 @@ from typing import Any
 
 import pytest
 
-from hearnarro.ingestion.extract import ocr_available
+from yomikoe.ingestion.extract import ocr_available
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pdfs"
 ENTRIES: list[dict] = json.loads((FIXTURES / "manifest.json").read_text())
 EVAL1_COUNT = sum(1 for e in ENTRIES if e["class"] != "scanned" or ocr_available())
-EVAL2_COUNT = sum(1 for e in ENTRIES if e["class"] != "scanned")
+M1_TEXT = ("academic", "report", "tables")
+EVAL2_COUNT = sum(1 for e in ENTRIES if e["class"] in M1_TEXT)
 EVAL1_CLASSES = {e["class"] for e in ENTRIES if e["class"] != "scanned" or ocr_available()}
 
 
 @pytest.fixture(scope="module")
 def run_result(tmp_path_factory: pytest.TempPathFactory) -> tuple[dict[str, Any], Path]:
-    from hearnarro.evals.runner import run
+    from yomikoe.evals.runner import run
 
     out = tmp_path_factory.mktemp("runs")
     record, path = run(["EVAL-1", "EVAL-2"], out_dir=out, tier=0)
@@ -79,7 +80,7 @@ def test_eval2_examples_and_aggregate(run_result: tuple[dict, Path]) -> None:
 
 
 def test_e0_compare_identical_records_has_zero_deltas(run_result: tuple[dict, Path]) -> None:
-    from hearnarro.evals.store import compare
+    from yomikoe.evals.store import compare
 
     record = run_result[0]
     result = compare(record, copy.deepcopy(record))
@@ -91,7 +92,7 @@ def test_e0_compare_identical_records_has_zero_deltas(run_result: tuple[dict, Pa
 
 
 def test_e0_compare_flags_one_lowered_example(run_result: tuple[dict, Path]) -> None:
-    from hearnarro.evals.store import compare
+    from yomikoe.evals.store import compare
 
     record = run_result[0]
     candidate = copy.deepcopy(record)
@@ -105,7 +106,7 @@ def test_e0_compare_flags_one_lowered_example(run_result: tuple[dict, Path]) -> 
 
 # --- E1: EVAL-3 clean-text rates and EVAL-4 speech form (D31, D32, D33) ---------------------
 
-EVAL3_COUNT = sum(1 for e in ENTRIES if e["class"] != "scanned")
+EVAL3_COUNT = sum(1 for e in ENTRIES if e["class"] in M1_TEXT)
 EVAL4_CATEGORIES = {
     "cardinal",
     "decimal_percent",
@@ -126,14 +127,14 @@ EVAL4_CATEGORIES = {
 
 @pytest.fixture(scope="module")
 def all_run(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
-    from hearnarro.evals.runner import run
+    from yomikoe.evals.runner import run
 
     record, _ = run(["all"], out_dir=tmp_path_factory.mktemp("runs_all"), tier=0)
     return record
 
 
 def test_eval3_eval4_registered_tier0_with_direction() -> None:
-    from hearnarro.evals.suites import SUITES, direction
+    from yomikoe.evals.suites import SUITES, direction
 
     assert SUITES["EVAL-3"].TIER == 0 and SUITES["EVAL-4"].TIER == 0
     assert direction("EVAL-3") == "lower"
@@ -142,7 +143,8 @@ def test_eval3_eval4_registered_tier0_with_direction() -> None:
 
 
 def test_eval_all_tier0_runs_four_suites_under_60s(all_run: dict[str, Any]) -> None:
-    assert set(all_run["suites"]) == {"EVAL-1", "EVAL-2", "EVAL-3", "EVAL-4"}
+    # EVAL-10 (M5 mathspeak) is also tier 0 now.
+    assert set(all_run["suites"]) == {"EVAL-1", "EVAL-2", "EVAL-3", "EVAL-4", "EVAL-10"}
     assert all_run["seconds"] < 60
     assert all_run["suites"]["EVAL-3"]["direction"] == "lower"
 
@@ -169,7 +171,7 @@ def test_eval3_rates_per_1000_words(all_run: dict[str, Any]) -> None:
 
 
 def test_eval3_compare_treats_increase_as_regression(all_run: dict[str, Any]) -> None:
-    from hearnarro.evals.store import compare
+    from yomikoe.evals.store import compare
 
     base = {"run_id": "a", "suites": {"EVAL-3": copy.deepcopy(all_run["suites"]["EVAL-3"])}}
     worse, better = copy.deepcopy(base), copy.deepcopy(base)
@@ -184,7 +186,7 @@ def test_eval3_compare_treats_increase_as_regression(all_run: dict[str, Any]) ->
 
 
 def test_eval4_dataset_shape() -> None:
-    from hearnarro.evals.suites import eval4_speech_form
+    from yomikoe.evals.suites import eval4_speech_form
 
     rows = eval4_speech_form.load_pairs()
     assert len(rows) >= 300
@@ -202,16 +204,23 @@ def test_eval4_dataset_shape() -> None:
 
 def test_eval4_spoken_uses_the_app_path() -> None:
     """Ingestion normalization (ING-6/7) then the backend's acronym decision (SYN-4)."""
-    from hearnarro.evals.suites.eval4_speech_form import spoken
+    from yomikoe.evals.suites.eval4_speech_form import spoken
 
     assert spoken("Read the PDF from NASA.") == "Read the P D F from NASA."
     assert spoken("See shopping.com now.") == "See shopping dot com now."
-    assert spoken("x = √(a² + b²)          (12)", block="equation") == "Equation 12."
+    # MATH-1: the display keeps its text for mathspeak; the "Equation N" cue is now the reader's
+    # fallback, used only when the expression cannot be structured.
+    from yomikoe.ingestion.mathspeak.reader import fallback
+    from yomikoe.ingestion.models import MathSpan
+
+    raw = "x = √(a² + b²)          (12)"
+    assert spoken(raw, block="equation") != "Equation 12."
+    assert fallback(MathSpan(0, len(raw), True, []), raw).startswith("equation 12")
     assert spoken("Name | Role\nAda | Analyst", block="table").startswith("Table 1, 2 rows.")
 
 
 def _eval4_skip_reason() -> str | None:
-    from hearnarro.evals.suites import eval4_speech_form
+    from yomikoe.evals.suites import eval4_speech_form
 
     return eval4_speech_form.unavailable()
 
@@ -222,7 +231,7 @@ def test_eval4_phonemes_through_backend_front_end() -> None:
     reason = _eval4_skip_reason()
     if reason:
         pytest.skip(reason)
-    from hearnarro.evals.suites.eval4_speech_form import phonemes
+    from yomikoe.evals.suites.eval4_speech_form import phonemes
 
     assert phonemes("There were 12 people.") == phonemes("There were twelve people.")
     assert not set("".join(phonemes("Yes, the F B I. Then!"))) & set(",.!")
@@ -230,7 +239,7 @@ def test_eval4_phonemes_through_backend_front_end() -> None:
 
 
 def test_eval4_examples_and_aggregate(all_run: dict[str, Any]) -> None:
-    from hearnarro.evals.suites import eval4_speech_form
+    from yomikoe.evals.suites import eval4_speech_form
 
     suite = all_run["suites"]["EVAL-4"]
     reason = _eval4_skip_reason()
@@ -240,7 +249,7 @@ def test_eval4_examples_and_aggregate(all_run: dict[str, Any]) -> None:
         pytest.skip(reason)
     examples = suite["examples"]
     assert len(examples) == len(eval4_speech_form.load_pairs())
-    from hearnarro.evals.suites.eval4_speech_form import strip_stress
+    from yomikoe.evals.suites.eval4_speech_form import strip_stress
 
     fields = {"id", "class", "exact", "exact_stress", "partial", "score", "actual"}
     fields |= {"actual_ph", "expected_ph"}
@@ -274,7 +283,7 @@ E2_N = 5
 
 @pytest.fixture(scope="module")
 def e2_examples() -> list[dict[str, Any]]:
-    from hearnarro.evals.suites import eval5_intelligibility
+    from yomikoe.evals.suites import eval5_intelligibility
 
     reason = eval5_intelligibility.unavailable()
     if reason:
@@ -284,7 +293,7 @@ def e2_examples() -> list[dict[str, Any]]:
 
 @pytest.mark.model
 def test_eval5_eval6_eval7_registered_tier1() -> None:
-    from hearnarro.evals.suites import SUITES, direction, select
+    from yomikoe.evals.suites import SUITES, direction, select
 
     for sid in ("EVAL-5", "EVAL-6", "EVAL-7"):
         assert SUITES[sid].TIER == 1
@@ -295,8 +304,8 @@ def test_eval5_eval6_eval7_registered_tier1() -> None:
 
 @pytest.mark.model
 def test_eval5_dataset_50_sentences_two_voices() -> None:
-    from hearnarro.evals.suites import eval5_intelligibility as e5
-    from hearnarro.synthesis.kokoro_backend import voice_from_id
+    from yomikoe.evals.suites import eval5_intelligibility as e5
+    from yomikoe.synthesis.kokoro_backend import voice_from_id
 
     sentences = e5.load_sentences()
     assert len(sentences) == 50 == len({s["id"] for s in sentences})
@@ -310,7 +319,7 @@ def test_eval5_dataset_50_sentences_two_voices() -> None:
 
 @pytest.mark.model
 def test_eval5_wer_normalization() -> None:
-    from hearnarro.evals.suites.eval5_intelligibility import norm_words, wer
+    from yomikoe.evals.suites.eval5_intelligibility import norm_words, wer
 
     assert norm_words("Self-driving cars, she said: \"Go!\"") == [
         "self", "driving", "cars", "she", "said", "go"
@@ -321,7 +330,7 @@ def test_eval5_wer_normalization() -> None:
 
 @pytest.mark.model
 def test_eval5_intelligibility_round_trip(e2_examples: list[dict[str, Any]]) -> None:
-    from hearnarro.evals.suites import eval5_intelligibility as e5
+    from yomikoe.evals.suites import eval5_intelligibility as e5
 
     assert len(e2_examples) == E2_N * len(e5.VOICES)
     scores = [e5.score(ex) for ex in e2_examples]
@@ -338,7 +347,7 @@ def test_eval5_intelligibility_round_trip(e2_examples: list[dict[str, Any]]) -> 
 
 @pytest.mark.model
 def test_eval6_sync_word_offsets(e2_examples: list[dict[str, Any]]) -> None:
-    from hearnarro.evals.suites import eval6_sync as e6
+    from yomikoe.evals.suites import eval6_sync as e6
 
     scores = [e6.score(ex) for ex in e2_examples]
     for s in scores:
@@ -360,7 +369,7 @@ def test_eval6_sync_word_offsets(e2_examples: list[dict[str, Any]]) -> None:
 
 @pytest.mark.model
 def test_eval6_compare_rules_per_metric() -> None:
-    from hearnarro.evals.store import compare
+    from yomikoe.evals.store import compare
 
     ex = {"id": "s", "class": "1.0", "score": 100.0, "mean_abs_offset_ms": 100.0}
     ex["share_within_150ms"] = 0.8
@@ -377,7 +386,7 @@ def test_eval6_compare_rules_per_metric() -> None:
 
 @pytest.mark.model
 def test_eval7_speed_from_bench() -> None:
-    from hearnarro.evals.suites import eval7_speed as e7
+    from yomikoe.evals.suites import eval7_speed as e7
 
     full = e7.dataset()
     assert len({ex["sentence"] for ex in full}) == 20
@@ -411,14 +420,14 @@ def _load(path: Path) -> dict[str, Any]:
 
 
 def test_e3_report_html_newest_alone() -> None:
-    from hearnarro.evals import report
+    from yomikoe.evals import report
 
     record = _load(NEWEST)
     html = report.html_scorecard(record)
     assert html.startswith("<title>")
     assert '<meta name="claude:viewport-fit-sides" content="cover">' in html
     assert "<!doctype" not in html.lower() and "<body" not in html
-    assert "HearNarro Eval Scorecard" in html and record["run_id"] in html
+    assert "YomiKoe Eval Scorecard" in html and record["run_id"] in html
     for sid in record["suites"]:
         assert f'id="{sid}"' in html, sid
     for value in NEWEST_HEADLINES:
@@ -426,7 +435,7 @@ def test_e3_report_html_newest_alone() -> None:
 
 
 def test_e3_report_html_against_first_baseline_marks_no_baseline() -> None:
-    from hearnarro.evals import report
+    from yomikoe.evals import report
 
     record, base = _load(NEWEST), _load(FIRST_BASELINE)
     html = report.html_scorecard(record, base)
@@ -441,7 +450,7 @@ def test_e3_report_html_against_first_baseline_marks_no_baseline() -> None:
 
 
 def test_e3_report_html_regressions_block_lists_lowered_example() -> None:
-    from hearnarro.evals import report
+    from yomikoe.evals import report
 
     base = _load(NEWEST)
     cand = copy.deepcopy(base)
@@ -458,8 +467,8 @@ def test_e3_report_html_regressions_block_lists_lowered_example() -> None:
 
 
 def test_e3_report_html_standalone_and_cli(tmp_path: Path) -> None:
-    from hearnarro.evals import report
-    from hearnarro.evals.__main__ import main
+    from yomikoe.evals import report
+    from yomikoe.evals.__main__ import main
 
     record = _load(NEWEST)
     assert report.html_scorecard(record, standalone=True).startswith("<!doctype html>")

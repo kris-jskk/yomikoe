@@ -3,15 +3,15 @@ import { defineConfig, devices } from '@playwright/test'
 
 // The e2e API (FakeBackend, temp data dir) listens on a free port chosen once in the runner
 // process; workers inherit it through the environment. Never 8765 (the user's server, D21).
-if (!process.env.HEARNARRO_E2E_API_PORT) {
-  process.env.HEARNARRO_E2E_API_PORT = execFileSync(process.execPath, [
+if (!process.env.YOMIKOE_E2E_API_PORT) {
+  process.env.YOMIKOE_E2E_API_PORT = execFileSync(process.execPath, [
     '-e',
     "const s=require('net').createServer();s.listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})",
   ])
     .toString()
     .trim()
 }
-export const E2E_API_BASE = `http://127.0.0.1:${process.env.HEARNARRO_E2E_API_PORT}`
+export const E2E_API_BASE = `http://127.0.0.1:${process.env.YOMIKOE_E2E_API_PORT}`
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -25,8 +25,8 @@ export default defineConfig({
     command: 'npm run dev -- --port 5173 --strictPort --host 127.0.0.1',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: false,
-    // vite.config.ts proxies /documents, /audio, /voices to HEARNARRO_API.
-    env: { HEARNARRO_API: E2E_API_BASE },
+    // vite.config.ts proxies /documents, /audio, /voices to YOMIKOE_API.
+    env: { YOMIKOE_API: E2E_API_BASE },
   },
   projects: [
     {

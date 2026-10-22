@@ -1,0 +1,12 @@
+Kokoro model code
+Copyright hexgrad (https://github.com/hexgrad/kokoro), licensed under the Apache License 2.0
+(LICENSE in this directory). Files: model.py, istftnet.py, modules.py, custom_stft.py, copied
+from the kokoro 0.9.4 wheel on 2026-10-16.
+
+Modifications by YomiKoe (formerly HearNarro) (Apache-2.0 section 4(b)):
+- custom_stft.py: removed the unused `from attr import attr` import (drops the attrs dependency).
+- istftnet.py: `from kokoro.custom_stft import CustomSTFT` -> relative import.
+- model.py: loguru logger replaced by `logging.getLogger(__name__)`.
+- every file: a two-line provenance header.
+Model weights (hexgrad/Kokoro-82M, Apache-2.0) are not vendored; they are downloaded at a
+pinned revision by yomikoe.synthesis.kokoro_backend.

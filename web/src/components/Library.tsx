@@ -9,11 +9,17 @@ import {
   getDocuments,
   getSettings,
   getVoices,
+  patchDocument,
   putSettings,
   uploadDocument,
 } from '../api/client'
-import type { DocumentSummary, GlobalSettings, Voice } from '../api/types'
-import { formatLastOpened, formatProgress } from './libraryFormat'
+import type { DocumentSummary, GlobalSettings, ProfileClass, Voice } from '../api/types'
+import {
+  formatLastOpened,
+  formatProfile,
+  formatProgress,
+  formatRenormalized,
+} from './libraryFormat'
 
 /** Upload status poll interval (spec §2). */
 export const POLL_MS = 2_000
@@ -27,10 +33,12 @@ function Row({
   doc,
   now,
   onDelete,
+  onChanged,
 }: {
   doc: DocumentSummary
   now: Date
   onDelete: (id: number) => Promise<void>
+  onChanged: (d: DocumentSummary) => void
 }) {
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -66,6 +74,9 @@ function Row({
       <td data-testid="doc-progress">{formatProgress(doc.progress ?? 0)}</td>
       <td data-testid="doc-last-opened">{formatLastOpened(doc.last_opened_at, now)}</td>
       <td data-testid="doc-status">{status}</td>
+      <td>
+        <ProfileBadge doc={doc} onChanged={onChanged} />
+      </td>
       <td className="actions">
         {confirming ? (
           <>
@@ -84,6 +95,60 @@ function Row({
         {error && <span className="row-error"> {error}</span>}
       </td>
     </tr>
+  )
+}
+
+/** ING-11 badge: the effective class; clicking opens a select that PATCHes the override. */
+function ProfileBadge({
+  doc,
+  onChanged,
+}: {
+  doc: DocumentSummary
+  onChanged: (d: DocumentSummary) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [note, setNote] = useState<string | null>(null)
+  const change = async (e: ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    const cls: ProfileClass | null = value === 'auto' ? null : (value as ProfileClass)
+    setEditing(false)
+    try {
+      const d = await patchDocument(doc.id, { profile: { class: cls } })
+      onChanged(d)
+      setNote(formatRenormalized(d.renormalized?.changed ?? 0))
+    } catch (err) {
+      setNote(errText(err))
+    }
+  }
+  if (editing) {
+    return (
+      <select
+        data-testid="doc-profile-select"
+        defaultValue={doc.profile?.override ?? 'auto'}
+        onChange={(e) => void change(e)}
+        onBlur={() => setEditing(false)}
+        autoFocus
+      >
+        <option value="auto">auto ({doc.profile?.computed_class ?? 'prose'})</option>
+        <option value="prose">prose</option>
+        <option value="mixed">mixed</option>
+        <option value="math">math</option>
+      </select>
+    )
+  }
+  return (
+    <>
+      <button
+        type="button"
+        className="badge"
+        data-testid="doc-profile"
+        disabled={doc.status !== 'ready'}
+        onClick={() => setEditing(true)}
+      >
+        {formatProfile(doc.profile)}
+      </button>
+      {note && <span data-testid="doc-profile-note"> {note}</span>}
+    </>
   )
 }
 
@@ -213,6 +278,10 @@ export function Library() {
     }
   }
 
+  const onChanged = useCallback((d: DocumentSummary) => {
+    setDocs((cur) => (cur ? cur.map((x) => (x.id === d.id ? { ...x, ...d } : x)) : cur))
+  }, [])
+
   const onDelete = useCallback(async (id: number) => {
     await deleteDocument(id)
     setDocs((cur) => (cur ? cur.filter((d) => d.id !== id) : cur))
@@ -242,12 +311,13 @@ export function Library() {
               <th>Progress</th>
               <th>Last opened</th>
               <th>Status</th>
+              <th>Profile</th>
               <th />
             </tr>
           </thead>
           <tbody>
             {docs.map((d) => (
-              <Row key={d.id} doc={d} now={now} onDelete={onDelete} />
+              <Row key={d.id} doc={d} now={now} onDelete={onDelete} onChanged={onChanged} />
             ))}
           </tbody>
         </table>

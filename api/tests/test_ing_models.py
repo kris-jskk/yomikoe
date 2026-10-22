@@ -1,7 +1,7 @@
 import pytest
 
-from hearnarro.ingestion.models import BBox
 from tests.conftest import make_block, make_span
+from yomikoe.ingestion.models import BBox
 
 
 def test_ing3_bbox_dimensions() -> None:

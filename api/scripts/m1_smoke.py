@@ -1,4 +1,4 @@
-"""M1 end-to-end smoke: drive a running ``hearnarro serve`` over HTTP (ING-1, ING-4).
+"""M1 end-to-end smoke: drive a running ``yomikoe serve`` over HTTP (ING-1, ING-4).
 
 Gate mode (default): for each non-scanned fixture in ``tests/fixtures/pdfs/manifest.json``,
 upload the PDF, poll until ``ready``/``failed``, page through every stored segment, and score
@@ -11,7 +11,7 @@ Each row also reports throughput from the API: ``pages``, ``parse_ms`` (measured
 ingestion worker, not the client) and ``pg/s``; a total line sums them over freshly parsed fixtures (HTTP 202). Fixtures the server already held
 (HTTP 200) show status ``cached`` and are left out of the total.
 
-Every document also runs the quality checklist (``hearnarro.quality``) on the segments the
+Every document also runs the quality checklist (``yomikoe.quality``) on the segments the
 API returns (text + block type; title from ``GET /documents/{id}``). The ``checks`` column
 shows ``ok`` or ``N fail``; the failing checks are listed under the table with up to three
 examples. A ``quality:`` line counts documents with failing checks; it is printed but never
@@ -57,13 +57,13 @@ API_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(API_DIR))
 
 # needs the sys.path line above (one definition of the gate scoring)
-from hearnarro.quality import QSeg, QualityReport, run_checks
 from tests.golden_util import (
     char_mass_balanced,
     char_mass_ratio,
     prose_only,
     word_score,
 )
+from yomikoe.quality import QSeg, QualityReport, run_checks
 
 DEFAULT_FIXTURES = API_DIR / "tests" / "fixtures" / "pdfs"
 DEFAULT_USER_DOCS = API_DIR / "tests" / "user_docs"
@@ -430,7 +430,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             client.get("/documents").raise_for_status()
         except httpx.HTTPError as exc:
-            print(f"cannot reach {args.base_url}: {exc}. Is `hearnarro serve` running?")
+            print(f"cannot reach {args.base_url}: {exc}. Is `yomikoe serve` running?")
             return 2
         if args.one:
             return run_one(client, args.one, args.timeout)

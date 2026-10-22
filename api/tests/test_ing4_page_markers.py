@@ -7,11 +7,11 @@ mid-page where the existing band rule does not reach it.
 
 import pytest
 
-from hearnarro.ingestion.classify import classify_pages
-from hearnarro.ingestion.extract import LayoutChar, ligature_text, page_from_layout
-from hearnarro.ingestion.merge import merge_blocks
-from hearnarro.ingestion.models import BBox, Block
 from tests.conftest import make_block, make_page
+from yomikoe.ingestion.classify import classify_pages
+from yomikoe.ingestion.extract import LayoutChar, ligature_text, page_from_layout
+from yomikoe.ingestion.merge import merge_blocks
+from yomikoe.ingestion.models import BBox, Block
 
 FILLER = "This sentence is ordinary body text set in the document's main size."
 

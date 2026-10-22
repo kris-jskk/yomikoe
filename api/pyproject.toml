@@ -1,5 +1,5 @@
 [project]
-name = "hearnarro"
+name = "yomikoe"
 version = "0.1.0"
 description = "Speechify-style PDF reader backed by open TTS models"
 requires-python = ">=3.11"
@@ -29,8 +29,8 @@ dev = [
 ]
 # D15: Kokoro-82M on PyTorch CPU without the GPL/LGPL chain. The `kokoro` package itself is
 # NOT a dependency (it declares misaki[en] -> phonemizer/espeak/num2words); its Apache-2.0 model
-# code is vendored in hearnarro/synthesis/kokoro_model/. misaki is installed WITHOUT extras.
-# The OOV predictor (g2p_en, Apache-2.0) is vendored in hearnarro/synthesis/g2p_oov/ because the
+# code is vendored in yomikoe/synthesis/kokoro_model/. misaki is installed WITHOUT extras.
+# The OOV predictor (g2p_en, Apache-2.0) is vendored in yomikoe/synthesis/g2p_oov/ because the
 # g2p_en distribution depends on `distance` (GPL). inflect backs compat/num2words.py.
 tts = [
     "torch>=2.4",
@@ -40,7 +40,7 @@ tts = [
     "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
     "inflect>=7",
 ]
-# D16: optional Ogg Opus encoder (HEARNARRO_AUDIO_FORMAT=opus). opuscodec is Apache-2.0 and
+# D16: optional Ogg Opus encoder (YOMIKOE_AUDIO_FORMAT=opus). opuscodec is Apache-2.0 and
 # bundles libopus (BSD-3-Clause); WAV stays the default so the base install needs nothing extra.
 opus = [
     "opuscodec==0.1.3",
@@ -55,26 +55,30 @@ ocr = [
     "pillow>=10",
 ]
 
+[project.urls]
+Homepage = "https://yomikoe.app"  # brand domain and landing page (D52)
+App = "https://app.yomikoe.app"  # the reader (D52)
+
 [project.scripts]
-hearnarro = "hearnarro.cli:main"
+yomikoe = "yomikoe.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["hearnarro*"]
+include = ["yomikoe*"]
 
 [tool.setuptools.package-data]
-"hearnarro.synthesis.g2p_oov" = ["checkpoint20.npz", "LICENSE", "NOTICE"]
-"hearnarro.synthesis.kokoro_model" = ["LICENSE", "NOTICE"]
-"hearnarro.synthesis.cmudict" = ["cmudict.dict.gz", "LICENSE", "NOTICE"]
+"yomikoe.synthesis.g2p_oov" = ["checkpoint20.npz", "LICENSE", "NOTICE"]
+"yomikoe.synthesis.kokoro_model" = ["LICENSE", "NOTICE"]
+"yomikoe.synthesis.cmudict" = ["cmudict.dict.gz", "LICENSE", "NOTICE"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 # Vendored third-party code is kept byte-close to upstream.
-extend-exclude = ["hearnarro/synthesis/kokoro_model"]
+extend-exclude = ["yomikoe/synthesis/kokoro_model"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

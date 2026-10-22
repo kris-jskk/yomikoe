@@ -1,4 +1,4 @@
-<title>HearNarro M2 Synthesis Map</title>
+<title>YomiKoe M2 Synthesis Map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -62,7 +62,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
 
 <main>
   <header>
-    <h1>HearNarro M2: turning sentences into sound that stays in sync</h1>
+    <h1>YomiKoe M2: turning sentences into sound that stays in sync</h1>
     <p class="lede">An architectural guide to Milestone 2. M1 produced an ordered list of sentences. M2 makes each one audible on demand, fast enough that pressing play feels instant, at any speed from half to triple, with word timings that still line up with the text on screen. This page explains the mechanism, why each piece exists, and where the work stands.</p>
     <div class="gate">
       <b>The gate that ends M2</b>
@@ -332,12 +332,12 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
         <div class="who"><span class="pill done">done</span><span>1 worker (Opus), commit 08127d1</span></div>
         <div class="what"><b>4. Opus wiring, smoke audio pass, docs, close</b>
           <ul><li>Stretch already landed in phase 2 and is measured at 3.0x in the benchmark. This phase wires the optional Ogg Opus encoder behind a setting, adds an <code>--audio</code> pass to the smoke script (voices, first segments at 1.0x and 2.5x, timestamp invariants over the API, first-audio times) run on both backends, writes <code>docs/M2_TESTING.md</code> for the hands-on test, and brings the PRD and Technical Design in line with D15 to D19, removing the last ffmpeg mentions.</li>
-              <li><b>Result:</b> Opus optional behind <code>HEARNARRO_AUDIO_FORMAT=opus</code>, 24 KB against 196 KB of WAV for a 4-second clip, licence check still clean at 100 packages. Smoke audio pass: 90 requests on the fake backend and 90 on Kokoro, zero failures, every timestamp set valid against the text over the API; Kokoro first audio mean 0.58 s, worst 2.2 s on one cold segment. PRD and Technical Design now carry D15 to D19; the decision log had been missing five rows and has them.</li></ul></div>
+              <li><b>Result:</b> Opus optional behind <code>YOMIKOE_AUDIO_FORMAT=opus</code>, 24 KB against 196 KB of WAV for a 4-second clip, licence check still clean at 100 packages. Smoke audio pass: 90 requests on the fake backend and 90 on Kokoro, zero failures, every timestamp set valid against the text over the API; Kokoro first audio mean 0.58 s, worst 2.2 s on one cold segment. PRD and Technical Design now carry D15 to D19; the decision log had been missing five rows and has them.</li></ul></div>
       </div>
       <div class="phase">
         <div class="who"><span class="pill done">done</span><span>Supervisor</span></div>
         <div class="what"><b>5. Close M2</b>
-          <ul><li>Supervisor's own run: 489 passed, 12 skipped; licence check 100 distributions, 0 violations; lint clean. The server on the user's data directory restarted with the Kokoro backend (model cache copied to <code>~/hearnarro-m1/hf</code>); four sentences from the user's three documents synthesized and handed over as WAV files, first audio 0.2 to 1.2 s from a cold cache. Both guides copied into <code>docs/guide/</code>; branch merged into main and pushed.</li></ul></div>
+          <ul><li>Supervisor's own run: 489 passed, 12 skipped; licence check 100 distributions, 0 violations; lint clean. The server on the user's data directory restarted with the Kokoro backend (model cache copied to <code>~/yomikoe-m1/hf</code>); four sentences from the user's three documents synthesized and handed over as WAV files, first audio 0.2 to 1.2 s from a cold cache. Both guides copied into <code>docs/guide/</code>; branch merged into main and pushed.</li></ul></div>
       </div>
       <div class="phase">
         <div class="who"><span class="pill done">done</span><span>User + 1 worker (Opus), commit e14cd99</span></div>
@@ -390,7 +390,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
       <li><b>No ffmpeg, no espeak, no Homebrew on this machine.</b> The survey decides whether M2 needs any of them; the spec is written so it does not have to.</li>
       <li><b>The real model is tested only on request.</b> One smoke test and the benchmark run Kokoro, both skipped unless asked for; everything else uses the fake backend and runs in seconds.</li>
       <li><b>The code map</b> for this milestone is <code>docs/CODE_MAP_M2.md</code> in the repo: every request flow traced file by file with sequence diagrams, every module with its signatures, reads, writes and status, the data structures, the concurrency model and the licence situation. It names the commit it describes and is updated whenever a module lands. Its first review found five gaps in the spec (cache path needs the document id, media type derived from the file extension, a retry rule for failed rows, the rule that recognizes a seek, lifespan loading on the synthesis thread), all resolved in the spec before implementation.</li>
-      <li><b>The M1 guide stays the reference for ingestion:</b> <a href="https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n">HearNarro M1 Ingest Map</a>.</li>
+      <li><b>The M1 guide stays the reference for ingestion:</b> <a href="https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n">YomiKoe M1 Ingest Map</a>.</li>
     </ul></div>
   </section>
 </main>

@@ -2,16 +2,16 @@
 
 import pytest
 
-from hearnarro.ingestion.classify import (
+from tests.conftest import make_block, make_page, make_span
+from yomikoe.ingestion.classify import (
     PAGE_NUMBER_RE,
     body_median_size,
     classify_pages,
     normalize_key,
     repeated_band_texts,
 )
-from hearnarro.ingestion.models import BBox, Block, Page
-from hearnarro.ingestion.order import READ_TYPES
-from tests.conftest import make_block, make_page, make_span
+from yomikoe.ingestion.models import BBox, Block, Page
+from yomikoe.ingestion.order import READ_TYPES
 
 FILLER = "This sentence is ordinary body text set in the document's main size."
 
@@ -334,7 +334,7 @@ def test_ing3_d12_half_overlap_is_not_figure() -> None:
 
 
 def test_ing3_d12_figure_regions_union_and_area_bounds() -> None:
-    from hearnarro.ingestion.extract import figure_regions
+    from yomikoe.ingestion.extract import figure_regions
 
     w, h = 612.0, 792.0  # page area 484704; 2% = 9694
     # two overlapping rects (union 200 x 100 = 20000, ~4%) form one region
@@ -525,7 +525,7 @@ def test_ing3_single_letter_block_on_cover_page_is_noise() -> None:
 
 
 def test_ing3_vertical_letter_stack_becomes_one_heading_read_first() -> None:
-    from hearnarro.ingestion.order import order_page
+    from yomikoe.ingestion.order import order_page
 
     above = make_block(3, 0, ["A blurb line above the title."], x0=100, y0=60, width=200)
     title = _letters(3, 1, ["THE", "ALMANACK"], y0=160)
@@ -679,7 +679,7 @@ def test_ing3_list_arrow_items_and_wrapped_items() -> None:
 
 @pytest.mark.parametrize("glyph", list("•·▪▫■□●○◦‣►▶➢➤→⇒✓✔✗✘★☆"))
 def test_ing3_every_bullet_glyph_starts_an_item(glyph: str) -> None:
-    from hearnarro.ingestion.models import ITEM_RE
+    from yomikoe.ingestion.models import ITEM_RE
 
     assert ITEM_RE.match(f"{glyph} Item text")
     assert ITEM_RE.match(f"  {glyph} Item text")
@@ -687,7 +687,7 @@ def test_ing3_every_bullet_glyph_starts_an_item(glyph: str) -> None:
 
 @pytest.mark.parametrize("text", ["-based services in the cloud", "*emphasis", "2003was", "A word"])
 def test_ing3_not_an_item_line(text: str) -> None:
-    from hearnarro.ingestion.models import ITEM_RE
+    from yomikoe.ingestion.models import ITEM_RE
 
     assert not ITEM_RE.match(text)
 

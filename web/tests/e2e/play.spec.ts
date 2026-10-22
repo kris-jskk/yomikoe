@@ -3,11 +3,21 @@
  * Asserted on Chromium; WebKit and Firefox are reported, not asserted, in M3.
  */
 import type { Page } from '@playwright/test'
-import { expect, getSegments, test, type Api, type Segment } from './fixtures'
+import { PAUSE_MS, pauseAfterMs } from '../../src/player/pauses'
+import {
+  expect,
+  getSegments,
+  test,
+  wordAt,
+  wordAtTime,
+  wordSec,
+  type Api,
+  type Segment,
+} from './fixtures'
 
-// WebKit/Firefox run only when HEARNARRO_E2E_ALL_ENGINES=1 (reported, not asserted, in M3).
+// WebKit/Firefox run only when YOMIKOE_E2E_ALL_ENGINES=1 (reported, not asserted, in M3).
 test.skip(
-  ({ browserName }) => browserName !== 'chromium' && !process.env.HEARNARRO_E2E_ALL_ENGINES,
+  ({ browserName }) => browserName !== 'chromium' && !process.env.YOMIKOE_E2E_ALL_ENGINES,
   'M3 gate is asserted on Chromium only',
 )
 test.describe.configure({ timeout: 90_000 })
@@ -19,31 +29,18 @@ type Hn = {
 }
 declare global {
   interface Window {
-    __hearnarro?: Hn
+    __yomikoe?: Hn
   }
 }
 
 /**
- * FakeBackend timing rule (api/hearnarro/synthesis/fake.py): every `\S+` word of a segment's
+ * FakeBackend timing rule (api/yomikoe/synthesis/fake.py): every `\S+` word of a segment's
  * normalized_text is round(24000 * 80 ms / speed) frames of silence at 24 kHz, words back to
  * back, clips back to back (an all-silent clip is not trimmed). So elapsed time from the first
  * clip's start maps to (segment order, word index into normalized_text).
+ * SYN-8 (spec Q7): each clip is followed by the pause of its block type (pauses.ts: heading, list,
+ * equation) before the next one starts; `wordAtTime` adds those gaps.
  */
-const SAMPLE_RATE = 24_000
-const wordSec = (speed: number) => Math.round((SAMPLE_RATE * 80) / 1000 / speed) / SAMPLE_RATE
-const wordCount = (s: Segment) => s.normalized_text.match(/\S+/g)?.length ?? 0
-
-/** Global word index (reading order, from order 0) -> (segment, word index); null past end. */
-function wordAt(segs: Segment[], globalWord: number): { seg: Segment; word: number } | null {
-  let left = globalWord
-  for (const seg of segs) {
-    const n = wordCount(seg)
-    if (left < n) return { seg, word: left }
-    left -= n
-  }
-  return null
-}
-
 /** Whitespace tokens of `text` (spec §6 tokenize) and the token holding char offset `c`. */
 function tokenIndexAt(text: string, c: number): number {
   const re = /\S+/g
@@ -63,7 +60,7 @@ async function tokenForWord(api: Api, seg: Segment, word: number, voice: string,
 
 async function active(page: Page) {
   return page.evaluate(() => {
-    const h = window.__hearnarro
+    const h = window.__yomikoe
     const w = document.querySelector<HTMLElement>('.w.active')
     const seg = w?.closest<HTMLElement>('.seg')
     return {
@@ -108,7 +105,7 @@ test('PLAY-1/PLAY-2/PLAY-5: highlighted word matches the FakeBackend clock at 3 
   for (const t of [3, 8, 15]) {
     await page.waitForFunction(
       (t) => {
-        const h = window.__hearnarro
+        const h = window.__yomikoe
         return !!h && h.firstStartAt != null && h.now() - h.firstStartAt >= t
       },
       t,
@@ -118,7 +115,7 @@ test('PLAY-1/PLAY-2/PLAY-5: highlighted word matches the FakeBackend clock at 3 
     probes.push({ t, elapsed: a.elapsed ?? NaN, order: a.order, i: a.i })
   }
   for (const p of probes) {
-    const g = Math.floor(p.elapsed / wordSec(speed))
+    const g = wordAtTime(segs, p.elapsed, wordSec(speed))
     const allowed: string[] = []
     for (const d of [-1, 0, 1]) {
       const at = wordAt(segs, g + d)
@@ -242,17 +239,17 @@ test('PLAY-5: with every clip cached, consecutive entries splice with zero gap',
 }) => {
   // First play populates the server cache (each GET also synthesizes the next five).
   await openAndPlay(page, api)
-  await page.waitForFunction(() => (window.__hearnarro?.entries.length ?? 0) >= 6, undefined, {
+  await page.waitForFunction(() => (window.__yomikoe?.entries.length ?? 0) >= 6, undefined, {
     timeout: 30_000,
   })
   // Second play of the same document: every clip is a cache hit.
   await page.reload()
   await openAndPlay(page, api)
-  const seen = new Map<number, { startAt: number; durationSec: number }>()
+  const seen = new Map<number, { segmentId: number; startAt: number; durationSec: number }>()
   await expect
     .poll(
       async () => {
-        const entries = await page.evaluate(() => window.__hearnarro?.entries ?? [])
+        const entries = await page.evaluate(() => window.__yomikoe?.entries ?? [])
         for (const e of entries) seen.set(e.segmentId, e)
         return seen.size
       },
@@ -260,9 +257,20 @@ test('PLAY-5: with every clip cached, consecutive entries splice with zero gap',
     )
     .toBeGreaterThanOrEqual(6)
   const sorted = [...seen.values()].sort((a, b) => a.startAt - b.startAt)
-  const gaps = sorted
-    .slice(1)
-    .map((e, k) => e.startAt - (sorted[k].startAt + sorted[k].durationSec))
+  // SYN-8 (Q7): the expected gap is the pause after the preceding segment's block type; 0 for body
+  const typeOf = new Map((await getSegments(api)).map((s) => [s.id, s.type]))
+  const gaps = sorted.slice(1).map((e, k) => ({
+    from: typeOf.get(sorted[k].segmentId) ?? '',
+    to: typeOf.get(e.segmentId) ?? '',
+    gap: e.startAt - (sorted[k].startAt + sorted[k].durationSec),
+  }))
   expect(gaps.length).toBeGreaterThanOrEqual(5)
-  for (const g of gaps) expect(Math.abs(g)).toBeLessThan(1e-6)
+  for (const g of gaps) expect(Math.abs(g.gap - pauseAfterMs(g.from) / 1000)).toBeLessThan(1e-6)
+  // the splice guarantee (body -> body, zero gap) and the heading pause are both measured
+  const bodyBody = gaps.filter((g) => g.from === 'body' && g.to === 'body')
+  expect(bodyBody.length, 'a body -> body transition').toBeGreaterThan(0)
+  for (const g of bodyBody) expect(Math.abs(g.gap)).toBeLessThan(1e-6)
+  const headingBody = gaps.filter((g) => g.from === 'heading' && g.to === 'body')
+  expect(headingBody.length, 'a heading -> body transition').toBeGreaterThan(0)
+  for (const g of headingBody) expect(Math.abs(g.gap - PAUSE_MS.heading / 1000)).toBeLessThan(1e-6)
 })
