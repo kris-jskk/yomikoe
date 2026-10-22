@@ -1,0 +1,358 @@
+<title>YomiKoe M9 Hosting Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 920px) of guide sections; figures in their own overflow containers; same tokens as the M1-M5 guides so the set reads as one. */
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --fg: #1d2129; --muted: #5d6470; --line: #d9d6cd;
+  --accent: #8b4a1f; --accent-soft: #f3e8df;
+  --done: #2f7d4f; --done-soft: #e1f0e6; --run: #b36b00; --run-soft: #fbeedb; --next: #6b6f78; --next-soft: #ebebe8;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #15181d; --surface: #1e2229; --fg: #e6e4de; --muted: #a3a8b1; --line: #343941;
+  --accent: #e0a070; --accent-soft: #3a2a1c; --done: #7bc796; --done-soft: #1e3427; --run: #e6a94a; --run-soft: #3b2d14; --next: #9aa0a9; --next-soft: #2a2e35; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; }
+main { max-width: 920px; margin: 0 auto; display: grid; gap: 48px; }
+h1 { font-size: 28px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+h2 .k { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-right: 10px; font-weight: 500; }
+h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 18px 0 8px; }
+p { margin: 0 0 10px; max-width: 70ch; }
+a { color: var(--accent); }
+.lede { font-size: 17px; color: var(--muted); }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--accent-soft); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+.gate { border-left: 3px solid var(--accent); padding: 8px 14px; background: var(--surface); display: grid; gap: 4px; margin-top: 16px; }
+.gate b { font-weight: 600; }
+.stamp { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 14px; font-family: var(--font-mono); }
+.stamp .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--run); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; margin-top: 14px; }
+nav.toc a { text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { text-decoration: underline; outline: none; }
+figure { margin: 18px 0 6px; background: var(--surface); border: 1px solid var(--line); padding: 14px; overflow-x: auto; }
+figure svg { display: block; min-width: 640px; width: 100%; height: auto; font-family: var(--font-body); }
+figure svg .mono { font-family: var(--font-mono); }
+figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 80ch; }
+.why { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.why > div { background: var(--surface); border: 1px solid var(--line); padding: 12px 14px; min-width: 0; }
+.why b { display: block; font-weight: 600; margin-bottom: 4px; }
+.why p { font-size: 14px; color: var(--muted); margin: 0; }
+@media (max-width: 640px) { .why { grid-template-columns: 1fr; } }
+table.rules { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+table.rules th, table.rules td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.rules th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+.ledger { display: grid; border-top: 1px solid var(--line); margin-top: 14px; }
+.phase { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.phase .who { font-size: 13px; color: var(--muted); display: grid; gap: 4px; align-content: start; }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; width: fit-content; }
+.pill.done { background: var(--done-soft); color: var(--done); } .pill.run { background: var(--run-soft); color: var(--run); } .pill.next { background: var(--next-soft); color: var(--next); }
+.phase .what { min-width: 0; display: grid; gap: 6px; }
+.phase .what b { font-weight: 600; }
+.phase .what .why-line { font-size: 14px; color: var(--accent); }
+.phase ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+.phase li { margin: 2px 0; }
+@media (max-width: 520px) { .phase { grid-template-columns: 1fr; gap: 6px; } }
+.note ul, ol.steps { margin: 0; padding-left: 18px; } .note li, ol.steps li { margin: 5px 0; }
+.phases { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 12px; }
+.phases .pill { text-transform: none; letter-spacing: 0.02em; font-size: 12px; font-weight: 500; }
+.phases .pill b { font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; margin-left: 4px; }
+</style>
+<main>
+  <header>
+    <h1>YomiKoe M9: the product gets an address</h1>
+    <p class="lede">Milestone 9 Hosting is the final milestone. It puts YomiKoe on its four names: yomikoe.app for the landing page, app.yomikoe.app for the reader, api.yomikoe.app for the API, and getyomikoe.com as a redirect nobody prints. Phase 1 is the landing page: a static site in <code>site/</code>, deployed to GitHub Pages by a workflow. The code side of phase 1 is built and merged on <code>m9-hosting</code>. The page goes live once the user changes the GitHub Pages settings and adds the DNS records at the registrar.</p>
+    <div class="stamp"><span class="dot"></span> As of 2026-10-21 · version 1 · phase 1 built on m9-hosting (merges 6e0798f, 5b7321e) · Pages settings and DNS: user action, running · CTA follow-up running · not pushed</div>
+    <div class="phases" aria-label="Phase status">
+      <span class="pill done">1a Landing page built <b>done</b></span>
+      <span class="pill done">1b Pages workflow and HOSTING.md <b>done</b></span>
+      <span class="pill run">1c Pages settings, DNS, redirect <b>running</b></span>
+      <span class="pill run">1d CTA follow-up <b>running</b></span>
+      <span class="pill next">2 app. and api. hosting <b>next</b></span>
+      <span class="pill next">3 Backups and gate <b>next</b></span>
+    </div>
+    <nav class="toc">
+      <a href="#ledger">1 Phase ledger</a>
+      <a href="#gate">2 What the milestone must prove</a>
+      <a href="#names">3 Four names, one brand</a>
+      <a href="#deploy">4 Push to live page</a>
+      <a href="#page">5 What the page says</a>
+      <a href="#evidence">6 Evidence</a>
+      <a href="#decisions">7 Decisions</a>
+      <a href="#actions">8 What the user does next</a>
+      <a href="#links">9 Links</a>
+    </nav>
+  </header>
+
+  <section id="ledger">
+    <h2><span class="k">1</span>Phase ledger</h2>
+    <p>Each row says what the phase delivers, why the milestone needs it, and what proves it.</p>
+    <div class="ledger">
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>Phase 1a</span><span>commit a5cc810, merge 6e0798f</span></div>
+        <div class="what">
+          <b>Landing page in <code>site/</code></b>
+          <span class="why-line">Why: yomikoe.app is the one name printed everywhere (D52); it needs a page that says what YomiKoe is and how to run it. HOST-1.</span>
+          <ul>
+            <li><code>index.html</code>, <code>styles.css</code>, <code>favicon.svg</code>, <code>404.html</code>: plain static files, no build step. Every claim on the page carries an HTML comment naming the PRD row it comes from.</li>
+            <li>Checks: tags balance in both pages (<code>1231_site_parse</code>), all 7 in-page anchors resolve (<code>1232_site_anchors</code>), external references are Google Fonts, GitHub and app.yomikoe.app only (<code>1233_site_external</code>).</li>
+            <li>Screenshots at 1440 and 390 px, light and dark (<code>1234</code>–<code>1237</code>); no horizontal overflow at either width (<code>1238_site_overflow</code>); every text/fill pair passes WCAG AA (<code>1239_site_contrast</code>).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill done">done</span><span>Phase 1b</span><span>commit feb4b6a, merge 5b7321e</span></div>
+        <div class="what">
+          <b>GitHub Pages workflow, <code>site/CNAME</code>, <code>docs/HOSTING.md</code>, PRD HOST-1..3, D54 proposed</b>
+          <span class="why-line">Why: the page must reach the internet with HTTPS and without a server to run; Pages does that free for a public repo. HOST-1, HOST-2, D54.</span>
+          <ul>
+            <li><code>.github/workflows/site.yml</code> is valid YAML with one job, triggered by pushes to <code>main</code> under <code>site/**</code> or the workflow, plus a manual run (<code>1246_site_yaml</code>).</li>
+            <li>Action pins checked against their releases pages: newer majors exist; the floating <code>upload-pages-artifact@v3</code> tag is unverified, with <code>@v3.0.1</code> as the fallback (<code>1247_actions_tags</code>).</li>
+            <li>The DNS values in HOSTING.md come from GitHub's custom-domain page, fetched 2026-10-21 (<code>1248_pages_dns</code>); the PRD and Technical Design rows were checked by grep (<code>1249_docs_grep</code>).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill run">running</span><span>Phase 1c</span><span>user action</span></div>
+        <div class="what">
+          <b>GitHub Pages settings, DNS for yomikoe.app, the getyomikoe.com redirect</b>
+          <span class="why-line">Why: these are account settings at GitHub and at the registrar, which code cannot change. HOST-2, HOST-3.</span>
+          <ul><li>Steps in section 8 below and in <code>docs/HOSTING.md</code> sections b, c, d. Nothing is live until they are done and the branch reaches <code>main</code>.</li></ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill run">running</span><span>Phase 1d</span><span>worker out</span></div>
+        <div class="what">
+          <b>Call-to-action follow-up on the landing page</b>
+          <span class="why-line">Why: the page's call-to-action links go to app.yomikoe.app (result 1233), which is not hosted until phase 2; the follow-up revises the calls to action. HOST-1.</span>
+          <ul><li>Running in parallel; no evidence recorded in this version.</li></ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill next">next</span><span>Phase 2</span></div>
+        <div class="what">
+          <b>app.yomikoe.app and api.yomikoe.app hosting</b>
+          <span class="why-line">Why: the reader and the API run only on the user's laptop today (PRD Domains table). HOST-4 and later.</span>
+          <ul><li>The provider is to be decided at phase 2 planning, together with the HOST-4+ requirement rows; the Docker Compose image (D30) is the unit to deploy.</li></ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="who"><span class="pill next">next</span><span>Phase 3</span></div>
+        <div class="what">
+          <b>Library volume backups and the milestone gate</b>
+          <span class="why-line">Why: a hosted library holds users' documents; gate (d) asks that a restored backup serves the same documents.</span>
+          <ul><li>Gate (a)–(d) run against the hosted names; see section 2.</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gate">
+    <h2><span class="k">2</span>What the milestone must prove</h2>
+    <p>From <code>docs/PRD.md</code> item 9. The gate is proposed and is confirmed at planning.</p>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>ID</th><th>Priority</th><th>Requirement</th></tr>
+      <tr><td>HOST-1</td><td>P0</td><td>yomikoe.app serves the landing page in <code>site/</code> as a static site with no build step</td></tr>
+      <tr><td>HOST-2</td><td>P0</td><td>yomikoe.app resolves and serves over HTTPS with a valid certificate (provider: GitHub Pages, D54 proposed)</td></tr>
+      <tr><td>HOST-3</td><td>P1</td><td>getyomikoe.com answers 301 to https://yomikoe.app and is never printed</td></tr>
+    </table></div>
+    <div class="gate">
+      <b>Gate (proposed)</b>
+      <span>(a) each of the four names resolves and serves over HTTPS, with getyomikoe.com answering 301 to yomikoe.app;</span>
+      <span>(b) a fixture PDF uploaded through app.yomikoe.app plays with first audio within the M2 target, measured from the browser;</span>
+      <span>(c) the M4 300-page soak passes against the hosted API;</span>
+      <span>(d) a library volume restored from backup serves the same documents.</span>
+    </div>
+  </section>
+
+  <section id="names">
+    <h2><span class="k">3</span>Four names, one brand</h2>
+    <p>Every request starts with a DNS lookup at the registrar. Each name then goes to its own place. Only yomikoe.app has a host chosen so far.</p>
+    <figure>
+      <svg viewBox="0 0 880 300" role="img" aria-label="A browser asks the registrar DNS for one of four names. yomikoe.app resolves to GitHub Pages, which serves site/. app.yomikoe.app and api.yomikoe.app go to a host not yet chosen, drawn dashed. getyomikoe.com hits a 301 rule at the registrar or Cloudflare that sends the browser to yomikoe.app.">
+        <defs><marker id="n1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="120" width="120" height="60" rx="4"/>
+          <rect x="190" y="110" width="170" height="80" rx="4"/>
+          <rect x="420" y="20" width="200" height="56" rx="4" fill="var(--done-soft)"/>
+          <rect x="660" y="20" width="200" height="56" rx="4"/>
+          <rect x="420" y="112" width="200" height="76" rx="4" stroke-dasharray="5 4"/>
+          <rect x="660" y="112" width="200" height="76" rx="4" stroke-dasharray="5 4"/>
+          <rect x="420" y="224" width="200" height="56" rx="4" fill="var(--accent-soft)"/>
+          <path d="M140 150H188" marker-end="url(#n1)"/>
+          <path d="M360 130C390 130 390 48 418 48" marker-end="url(#n1)"/>
+          <path d="M360 150H418" marker-end="url(#n1)" stroke-dasharray="5 4"/>
+          <path d="M360 170C390 170 390 252 418 252" marker-end="url(#n1)"/>
+          <path d="M620 48H658" marker-end="url(#n1)"/>
+          <path d="M620 150H658" marker-end="url(#n1)" stroke-dasharray="5 4"/>
+          <path d="M620 252C760 252 760 100 760 78" marker-end="url(#n1)"/>
+        </g>
+        <g font-size="11" fill="var(--muted)"><text x="20" y="112">1 visitor</text><text x="190" y="102">2 DNS at the registrar</text><text x="420" y="14">3 where the name points</text><text x="660" y="14">4 what answers</text></g>
+        <g font-size="12" fill="currentColor">
+          <text x="32" y="146">browser</text><text x="32" y="164" font-size="11" fill="var(--muted)">types a name</text>
+          <text x="202" y="134">A / AAAA records</text>
+          <text x="202" y="152" font-size="11" fill="var(--muted)">four A, four AAAA for</text>
+          <text x="202" y="168" font-size="11" fill="var(--muted)">yomikoe.app (1248)</text>
+          <text x="432" y="42" class="mono">yomikoe.app</text><text x="432" y="62" font-size="11">GitHub Pages (D54)</text>
+          <text x="672" y="42" class="mono">site/</text><text x="672" y="62" font-size="11">static landing page, HOST-1</text>
+          <text x="432" y="134" class="mono">app.yomikoe.app</text><text x="432" y="152" class="mono">api.yomikoe.app</text><text x="432" y="174" font-size="11" fill="var(--muted)">host to be decided (phase 2)</text>
+          <text x="672" y="134" class="mono">web/ and api/</text><text x="672" y="152" font-size="11">Docker Compose image (D30)</text><text x="672" y="174" font-size="11" fill="var(--muted)">local only today</text>
+          <text x="432" y="246" class="mono">getyomikoe.com</text><text x="432" y="266" font-size="11">301 rule, registrar or Cloudflare</text>
+          <text x="690" y="230" font-size="11" fill="var(--muted)">301 to https://yomikoe.app</text>
+          <text x="690" y="246" font-size="11" fill="var(--muted)">HOST-3, never printed</text>
+        </g>
+      </svg>
+      <figcaption>The four names share one registrar but point at three kinds of target: a static host for the brand page, a host still to be chosen for the reader and API (dashed), and no host at all for getyomikoe.com, which only answers with a 301 back to yomikoe.app. The DNS change is the only step all four have in common, and it is a user action.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why one printed name</b><p>Printing only yomikoe.app keeps the brand single; app. and api. are subdomains, free in DNS (D52, PRD Domains table).</p></div>
+      <div><b>Why getyomikoe.com is a rule, not a site</b><p>It is a defensive .com. A registrar redirect needs no server and no certificate work on our side (HOST-3, D54).</p></div>
+    </div>
+  </section>
+
+  <section id="deploy">
+    <h2><span class="k">4</span>How a push becomes the live page</h2>
+    <p>Nobody uploads files by hand. A push to <code>main</code> that touches <code>site/</code> runs the workflow, and Pages serves whatever the last run uploaded.</p>
+    <figure>
+      <svg viewBox="0 0 880 210" role="img" aria-label="A push to main touching site/ triggers site.yml. Its job runs checkout, configure-pages, upload-pages-artifact with path site, and deploy-pages. Pages then serves the files from its CDN with a Let's Encrypt certificate at https://yomikoe.app.">
+        <defs><marker id="d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="10" y="40" width="120" height="70" rx="4"/>
+          <rect x="160" y="30" width="540" height="90" rx="4" stroke-dasharray="2 3"/>
+          <rect x="175" y="50" width="120" height="56" rx="4"/>
+          <rect x="310" y="50" width="120" height="56" rx="4"/>
+          <rect x="445" y="50" width="120" height="56" rx="4"/>
+          <rect x="580" y="50" width="108" height="56" rx="4"/>
+          <rect x="730" y="40" width="140" height="70" rx="4" fill="var(--done-soft)"/>
+          <path d="M130 75H173M295 78H308M430 78H443M565 78H578M688 78H728" marker-end="url(#d1)"/>
+        </g>
+        <g font-size="11" fill="var(--muted)"><text x="10" y="32">trigger</text><text x="160" y="22">.github/workflows/site.yml, job deploy (1246)</text><text x="730" y="32">result</text></g>
+        <g font-size="12" fill="currentColor">
+          <text x="20" y="64">push to main</text><text x="20" y="82" font-size="11" class="mono">site/**</text><text x="20" y="98" font-size="11" fill="var(--muted)">or Run workflow</text>
+          <text x="185" y="72" font-size="11" class="mono">checkout@v4</text><text x="185" y="90" font-size="11" fill="var(--muted)">repo files</text>
+          <text x="320" y="72" font-size="11" class="mono">configure-pages</text><text x="320" y="90" font-size="11" fill="var(--muted)">@v5, Pages setup</text>
+          <text x="455" y="72" font-size="11" class="mono">upload-pages-</text><text x="455" y="86" font-size="11" class="mono">artifact@v3</text><text x="455" y="100" font-size="11" fill="var(--muted)">path: site</text>
+          <text x="590" y="72" font-size="11" class="mono">deploy-pages</text><text x="590" y="90" font-size="11" fill="var(--muted)">@v4</text>
+          <text x="740" y="62" font-size="11">Pages CDN</text><text x="740" y="78" font-size="11">Let's Encrypt cert</text><text x="740" y="98" font-size="11" class="mono">https://yomikoe.app</text>
+        </g>
+        <g font-size="11" fill="var(--muted)">
+          <text x="10" y="150">Permissions: contents read, pages write, id-token write. Concurrency group "pages", no cancel-in-progress: one deploy at a time.</text>
+          <text x="10" y="170"><tspan class="mono">site/CNAME</tspan> = yomikoe.app tells Pages the custom domain; the certificate is issued only after DNS resolves (HOSTING.md b.4).</text>
+          <text x="10" y="190">Not live yet: the workflow runs only from main, and the Pages source must first be set to "GitHub Actions" (user action).</text>
+        </g>
+      </svg>
+      <figcaption>The page that is live is the last <code>site/</code> folder uploaded by the workflow: no build step changes it on the way (HOST-1), and HTTPS comes from Pages' own certificate once DNS points at it (HOST-2). The workflow has not run yet; the YAML parses and the action tags were checked against their releases pages (results 1246, 1247).</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why a workflow and not "deploy from branch"</b><p>A branch deploy serves only the repository root or <code>/docs</code>; the page lives in <code>site/</code>, so the workflow uploads exactly that folder and nothing else of the repo becomes a web page (HOST-1, D54).</p></div>
+      <div><b>Why the path filter</b><p>Pushes that change only <code>api/</code> or <code>web/</code> do not redeploy the landing page; a manual run covers the first deploy (HOSTING.md b.2).</p></div>
+    </div>
+  </section>
+
+  <section id="page">
+    <h2><span class="k">5</span>What the landing page says and where it comes from</h2>
+    <p>The page makes product claims, so each section names its source in an HTML comment. A claim without a PRD row would be marketing nobody can check.</p>
+    <figure>
+      <svg viewBox="0 0 880 320" role="img" aria-label="Five sections of site/index.html on the left, each linked to the PRD rows cited in its HTML comments on the right: hero to the PRD Overview and MATH-1; modes to the usage-modes table; pipeline to ING-3, 4, 5, 6, MATH-1 to 3, SYN-1, PLAY-2; features to nine cards and their IDs; quickstart to docs/DOCKER.md.">
+        <defs><marker id="p1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="20" y="30" width="220" height="276" rx="4"/>
+          <rect x="34" y="44" width="192" height="40" rx="3" fill="var(--accent-soft)"/>
+          <rect x="34" y="96" width="192" height="40" rx="3"/>
+          <rect x="34" y="148" width="192" height="40" rx="3"/>
+          <rect x="34" y="200" width="192" height="40" rx="3"/>
+          <rect x="34" y="252" width="192" height="40" rx="3"/>
+          <rect x="330" y="44" width="530" height="40" rx="3"/>
+          <rect x="330" y="96" width="530" height="40" rx="3"/>
+          <rect x="330" y="148" width="530" height="40" rx="3"/>
+          <rect x="330" y="200" width="530" height="40" rx="3"/>
+          <rect x="330" y="252" width="530" height="40" rx="3"/>
+          <path d="M226 64H328M226 116H328M226 168H328M226 220H328M226 272H328" marker-end="url(#p1)"/>
+        </g>
+        <g font-size="11" fill="var(--muted)"><text x="20" y="22">site/index.html, top to bottom</text><text x="330" y="36">source named in the section's HTML comment</text></g>
+        <g font-size="12" fill="currentColor">
+          <text x="46" y="68">hero</text><text x="100" y="68" font-size="11" class="mono" fill="var(--muted)">#top</text>
+          <text x="46" y="120">three modes</text><text x="140" y="120" font-size="11" class="mono" fill="var(--muted)">#who</text>
+          <text x="46" y="172">pipeline</text><text x="120" y="172" font-size="11" class="mono" fill="var(--muted)">#how</text>
+          <text x="46" y="224">features, nine cards</text>
+          <text x="46" y="276">quickstart</text><text x="130" y="276" font-size="11" class="mono" fill="var(--muted)">#start</text>
+          <text x="342" y="62">PRD Overview; MATH-1, PLAY-2 in the reader mock</text>
+          <text x="342" y="77" font-size="11" fill="var(--muted)">mock text from fixture formula_10_stats_zscore_scan (also SYN-2, SYN-3, TERM-1)</text>
+          <text x="342" y="114">PRD "Usage modes" table: student, technical learner, book listener</text>
+          <text x="342" y="129" font-size="11" fill="var(--muted)">presets marked as coming (VIEW-4, M7)</text>
+          <text x="342" y="166" class="mono">ING-3, ING-4, ING-5, ING-6, MATH-1..3, SYN-1, PLAY-2</text>
+          <text x="342" y="181" font-size="11" fill="var(--muted)">PRD "Architecture and stack"</text>
+          <text x="342" y="218" class="mono" font-size="11">ING-4 · MATH-1..3 · TERM-1,2 · PLAY-2 · SYN-2,3</text>
+          <text x="342" y="233" class="mono" font-size="11">PLAY-10,11 · LIB-1..3 · PLAY-6,7 · PLAY-8</text>
+          <text x="342" y="270" class="mono">docs/DOCKER.md</text>
+          <text x="342" y="285" font-size="11" fill="var(--muted)">one command, runs on the visitor's laptop (D30)</text>
+        </g>
+      </svg>
+      <figcaption>Each section of the page is traceable to a PRD row or doc: the nine feature cards map one to one to the requirement IDs in their comments, and the quickstart repeats <code>docs/DOCKER.md</code> rather than inventing steps. Two further sections, "Open, and yours" and the FAQ, cite the PRD Overview, Goals, SYN-4, ING-2, the M9 item and the licensing rule.</figcaption>
+    </figure>
+    <div class="why">
+      <div><b>Why the quickstart is local</b><p>Until phase 2 hosts the reader, the only working way to use YomiKoe is Docker Compose on the visitor's machine (PRD Domains table, D30).</p></div>
+      <div><b>Why no JavaScript beyond the theme toggle</b><p>A static page with no build step is HOST-1; the only script remembers a light/dark choice in the browser.</p></div>
+    </div>
+  </section>
+
+  <section id="evidence">
+    <h2><span class="k">6</span>Evidence</h2>
+    <p>Saved runs under <code>_agent/results/</code> and commits on <code>m9-hosting</code>. Nothing below was run against a live yomikoe.app: the site is not deployed yet.</p>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>Item</th><th>What it shows</th></tr>
+      <tr><td>1231_site_parse</td><td><code>index.html</code> and <code>404.html</code>: 0 tag mismatches, 0 unclosed</td></tr>
+      <tr><td>1232_site_anchors</td><td>7 in-page anchors, 0 unresolved</td></tr>
+      <tr><td>1233_site_external</td><td>every <code>src</code>/<code>href</code>: Google Fonts, GitHub repo, app.yomikoe.app, local files</td></tr>
+      <tr><td>1234–1237</td><td>screenshots at 1440 and 390 px, light and dark</td></tr>
+      <tr><td>1238_site_overflow</td><td>scrollWidth equals viewport width at 1440 and 390, both themes</td></tr>
+      <tr><td>1239_site_contrast</td><td>every text/fill pair, light and dark, passes WCAG AA</td></tr>
+      <tr><td>1240_site_commit</td><td>commit <code>a5cc810</code>: the landing page and its source mapping</td></tr>
+      <tr><td>1246_site_yaml</td><td>workflow parses; one job; triggers and the four action pins</td></tr>
+      <tr><td>1247_actions_tags</td><td>releases pages: newer majors exist; <code>upload-pages-artifact@v3</code> floating tag unverified</td></tr>
+      <tr><td>1248_pages_dns</td><td>GitHub's four A and four AAAA addresses for an apex domain</td></tr>
+      <tr><td>1249_docs_grep</td><td>PRD Domains row, HOST-1..3 and D54 present</td></tr>
+      <tr><td>1250_deploy_commit</td><td>commit <code>feb4b6a</code>: workflow, CNAME, HOSTING.md, PRD, Technical Design, README</td></tr>
+      <tr><td>6e0798f</td><td>merge of the landing page into <code>m9-hosting</code></td></tr>
+      <tr><td>5b7321e</td><td>merge of the workflow and docs into <code>m9-hosting</code></td></tr>
+      <tr><td>CTA follow-up</td><td>running; evidence comes in the next guide version</td></tr>
+    </table></div>
+  </section>
+
+  <section id="decisions">
+    <h2><span class="k">7</span>Decisions</h2>
+    <div class="tablewrap"><table class="rules">
+      <tr><th>ID</th><th>Decision</th><th>Status</th></tr>
+      <tr><td>D52</td><td>Rename to YomiKoe; four names: yomikoe.app brand and landing page, app. reader, api. API, getyomikoe.com a 301 that is never printed; hosting is M9, the final milestone</td><td>Confirmed 2026-10-21 (user)</td></tr>
+      <tr><td>D54</td><td>yomikoe.app is served by GitHub Pages from <code>site/</code> via <code>site.yml</code> (public repo, free, Let's Encrypt HTTPS, no server); app. and api. hosting decided at phase 2; getyomikoe.com is a registrar/Cloudflare 301 rule</td><td>Proposed 2026-10-21, awaiting the user</td></tr>
+    </table></div>
+  </section>
+
+  <section id="actions">
+    <h2><span class="k">8</span>What the user does next</h2>
+    <p>These steps are account settings; no worker can do them. Full detail and verify commands are in <code>docs/HOSTING.md</code>.</p>
+    <ol class="steps">
+      <li><b>Confirm D54</b> (GitHub Pages for the landing page), or name another host.</li>
+      <li><b>HOSTING.md b, GitHub Pages:</b> Settings &gt; Pages &gt; Source "GitHub Actions"; merge the branch to <code>main</code> (or run the workflow by hand once); set the custom domain to <code>yomikoe.app</code>; tick "Enforce HTTPS" once the certificate is issued.</li>
+      <li><b>HOSTING.md c, DNS:</b> at the registrar, add four A and four AAAA records for <code>@</code> (values in HOSTING.md, from result 1248); delete any parking records; check with <code>dig</code> and <code>curl -sI https://yomikoe.app</code>.</li>
+      <li><b>HOSTING.md d, redirect:</b> set getyomikoe.com to a permanent (301) redirect to <code>https://yomikoe.app</code> at the registrar or with a Cloudflare Redirect Rule; check with <code>curl -sI https://getyomikoe.com</code>.</li>
+    </ol>
+  </section>
+
+  <section id="links">
+    <h2><span class="k">9</span>Links</h2>
+    <p>As of 2026-10-21 (version 1): phase 1 code is built and merged on <code>m9-hosting</code> (<code>6e0798f</code>, <code>5b7321e</code>), not pushed. The landing page goes live when the user completes section 8 and the branch reaches <code>main</code>. The CTA follow-up is running. Phases 2 and 3 are next.</p>
+    <div class="note"><ul>
+      <li>Code map: <a href="../CODE_MAP_M9.md">docs/CODE_MAP_M9.md</a>.</li>
+      <li>Hosting steps: <a href="https://github.com/kris-jskk/yomikoe/blob/main/docs/HOSTING.md">docs/HOSTING.md on GitHub</a> (available once the branch is on <code>main</code>).</li>
+      <li>Previous milestone: <a href="m5-academic-map.html">YomiKoe M5 Academic Map</a> (repo copy).</li>
+      <li>Sources: <code>docs/PRD.md</code> (Domains table, Milestones item 9, HOST-1..3); <code>docs/TECHNICAL_DESIGN.md</code> (D52, D54); <code>docs/HOSTING.md</code>; <code>.github/workflows/site.yml</code>; <code>site/</code>.</li>
+    </ul></div>
+  </section>
+</main>
