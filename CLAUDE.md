@@ -84,7 +84,9 @@ M1 "YomiKoe M1 Ingest Map" https://claude.ai/artifact/NV2gGu1QaS7u68bmoGZ45n (cl
 https://claude.ai/artifact/J7wJUWammFqBxc22s121Pr (source `m2-synthesis-map.html` in the session
 scratchpad; copy under `docs/guide/` when the milestone closes), M5 "YomiKoe M5 Academic Map"
 https://claude.ai/artifact/WMNfhRLczt5VtYWf9Pkt9r (source `docs/guide/m5-academic-map.html` in the repo,
-published from there). Each new milestone starts a new guide.
+published from there), M9 "YomiKoe M9 Hosting Map" https://claude.ai/artifact/6NF1qW6v5swKgudxq4ZBoA (source
+`docs/guide/m9-hosting-map.html` in the repo, published from there; landing page preview
+https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq). Each new milestone starts a new guide.
 
 1. **Every pipeline stage gets its own diagram** in the guide: the mechanism (what goes in,
    what rule is applied, what comes out), not a labelled box. A new stage, a replaced

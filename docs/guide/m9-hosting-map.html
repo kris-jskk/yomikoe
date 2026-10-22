@@ -68,12 +68,12 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
   <header>
     <h1>YomiKoe M9: the product gets an address</h1>
     <p class="lede">Milestone 9 Hosting is the final milestone. It puts YomiKoe on its four names: yomikoe.app for the landing page, app.yomikoe.app for the reader, api.yomikoe.app for the API, and getyomikoe.com as a redirect nobody prints. Phase 1 is the landing page: a static site in <code>site/</code>, deployed to GitHub Pages by a workflow. The code side of phase 1 is built and merged on <code>m9-hosting</code>. The page goes live once the user changes the GitHub Pages settings and adds the DNS records at the registrar.</p>
-    <div class="stamp"><span class="dot"></span> As of 2026-10-21 · version 1 · phase 1 built on m9-hosting (merges 6e0798f, 5b7321e) · Pages settings and DNS: user action, running · CTA follow-up running · not pushed</div>
+    <div class="stamp"><span class="dot"></span> As of 2026-10-21 · version 2 · phase 1 built on m9-hosting (merges 6e0798f, 5b7321e, fe2820b, ec9eb07) · Pages settings and DNS: user action, running · CTA follow-up done · preview artifact https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq · not pushed</div>
     <div class="phases" aria-label="Phase status">
       <span class="pill done">1a Landing page built <b>done</b></span>
       <span class="pill done">1b Pages workflow and HOSTING.md <b>done</b></span>
       <span class="pill run">1c Pages settings, DNS, redirect <b>running</b></span>
-      <span class="pill run">1d CTA follow-up <b>running</b></span>
+      <span class="pill done">1d CTA follow-up <b>done</b></span>
       <span class="pill next">2 app. and api. hosting <b>next</b></span>
       <span class="pill next">3 Backups and gate <b>next</b></span>
     </div>
@@ -127,11 +127,11 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
         </div>
       </div>
       <div class="phase">
-        <div class="who"><span class="pill run">running</span><span>Phase 1d</span><span>worker out</span></div>
+        <div class="who"><span class="pill done">done</span><span>Phase 1d</span><span>fe2820b</span></div>
         <div class="what">
           <b>Call-to-action follow-up on the landing page</b>
           <span class="why-line">Why: the page's call-to-action links go to app.yomikoe.app (result 1233), which is not hosted until phase 2; the follow-up revises the calls to action. HOST-1.</span>
-          <ul><li>Running in parallel; no evidence recorded in this version.</li></ul>
+          <ul><li>Hero primary button is now "Run it on your laptop" (#start); the nav keeps one GitHub button; no href to app.yomikoe.app remains (result 1251: href count 0). An HTML comment marks where "Open the reader" returns at HOST-4.</li><li>Head metadata added: canonical, Open Graph title/description/url/type, theme-color.</li><li>Checks re-run on the final file: parse 0 mismatches, 8 anchors resolved, no new external resource (1252); screenshots 1440 and 390 light (1253, 1254); commit fe2820b (1255).</li></ul>
         </div>
       </div>
       <div class="phase">
@@ -321,7 +321,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
       <tr><td>1250_deploy_commit</td><td>commit <code>feb4b6a</code>: workflow, CNAME, HOSTING.md, PRD, Technical Design, README</td></tr>
       <tr><td>6e0798f</td><td>merge of the landing page into <code>m9-hosting</code></td></tr>
       <tr><td>5b7321e</td><td>merge of the workflow and docs into <code>m9-hosting</code></td></tr>
-      <tr><td>CTA follow-up</td><td>running; evidence comes in the next guide version</td></tr>
+      <tr><td>CTA follow-up</td><td>1251_cta_grep, 1252_cta_checks, 1253_cta_1440_light.png, 1254_cta_390_light.png, 1255_cta_commit (fe2820b)</td></tr>
     </table></div>
   </section>
 
@@ -347,7 +347,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
 
   <section id="links">
     <h2><span class="k">9</span>Links</h2>
-    <p>As of 2026-10-21 (version 1): phase 1 code is built and merged on <code>m9-hosting</code> (<code>6e0798f</code>, <code>5b7321e</code>), not pushed. The landing page goes live when the user completes section 8 and the branch reaches <code>main</code>. The CTA follow-up is running. Phases 2 and 3 are next.</p>
+    <p>As of 2026-10-21 (version 1): phase 1 code is built and merged on <code>m9-hosting</code> (<code>6e0798f</code>, <code>5b7321e</code>), not pushed. The landing page goes live when the user completes section 8 and the branch reaches <code>main</code>. The CTA follow-up is done (fe2820b) and the guide is merged (ec9eb07). Phases 2 and 3 are next.</p>
     <div class="note"><ul>
       <li>Code map: <a href="../CODE_MAP_M9.md">docs/CODE_MAP_M9.md</a>.</li>
       <li>Hosting steps: <a href="https://github.com/kris-jskk/yomikoe/blob/main/docs/HOSTING.md">docs/HOSTING.md on GitHub</a> (available once the branch is on <code>main</code>).</li>
