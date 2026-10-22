@@ -68,7 +68,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
   <header>
     <h1>YomiKoe M9: the product gets an address</h1>
     <p class="lede">Milestone 9 Hosting was decided as the final milestone on 2026-10-21; M10 Browser extension was added after it on 2026-10-22. It puts YomiKoe on its four names: yomikoe.app for the landing page, app.yomikoe.app for the reader, api.yomikoe.app for the API, and getyomikoe.com as a redirect nobody prints. Phase 1 is the landing page: a static site in <code>site/</code>, deployed to GitHub Pages by a workflow. The code side of phase 1 is built and merged on <code>m9-hosting</code>. The page goes live once the user changes the GitHub Pages settings and adds the DNS records at the registrar.</p>
-    <div class="stamp"><span class="dot"></span> As of 2026-10-22 · version 4 · LIVE: https://yomikoe.app serves the page over HTTPS (result 1265: index, styles.css, favicon.svg all 200 from GitHub.com; Let's Encrypt certificate CN=yomikoe.app) · merged to main 77e8827 and pushed · Pages settings and apex DNS done by the user · getyomikoe.com redirect still pending (no DNS records yet, result 1265) · preview artifact https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq</div>
+    <div class="stamp"><span class="dot"></span> As of 2026-10-22 · version 5 · D54 confirmed by the user · FAQ names Apache-2.0 (9d9630c, redeployed, result 1266) · LIVE: https://yomikoe.app serves the page over HTTPS (result 1265: index, styles.css, favicon.svg all 200 from GitHub.com; Let's Encrypt certificate CN=yomikoe.app) · merged to main 77e8827 and pushed · Pages settings and apex DNS done by the user · getyomikoe.com redirect still pending (no DNS records yet, result 1265) · preview artifact https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq</div>
     <div class="phases" aria-label="Phase status">
       <span class="pill done">1a Landing page built <b>done</b></span>
       <span class="pill done">1b Pages workflow and HOSTING.md <b>done</b></span>
@@ -110,7 +110,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
       <div class="phase">
         <div class="who"><span class="pill done">done</span><span>Phase 1b</span><span>commit feb4b6a, merge 5b7321e</span></div>
         <div class="what">
-          <b>GitHub Pages workflow, <code>site/CNAME</code>, <code>docs/HOSTING.md</code>, PRD HOST-1..3, D54 proposed</b>
+          <b>GitHub Pages workflow, <code>site/CNAME</code>, <code>docs/HOSTING.md</code>, PRD HOST-1..3, D54 (confirmed 2026-10-22)</b>
           <span class="why-line">Why: the page must reach the internet with HTTPS and without a server to run; Pages does that free for a public repo. HOST-1, HOST-2, D54.</span>
           <ul>
             <li><code>.github/workflows/site.yml</code> is valid YAML with one job, triggered by pushes to <code>main</code> under <code>site/**</code> or the workflow, plus a manual run (<code>1246_site_yaml</code>).</li>
@@ -160,7 +160,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
     <div class="tablewrap"><table class="rules">
       <tr><th>ID</th><th>Priority</th><th>Requirement</th></tr>
       <tr><td>HOST-1</td><td>P0</td><td>yomikoe.app serves the landing page in <code>site/</code> as a static site with no build step</td></tr>
-      <tr><td>HOST-2</td><td>P0</td><td>yomikoe.app resolves and serves over HTTPS with a valid certificate (provider: GitHub Pages, D54 proposed)</td></tr>
+      <tr><td>HOST-2</td><td>P0</td><td>yomikoe.app resolves and serves over HTTPS with a valid certificate (provider: GitHub Pages, D54 confirmed)</td></tr>
       <tr><td>HOST-3</td><td>P1</td><td>getyomikoe.com answers 301 to https://yomikoe.app and is never printed</td></tr>
     </table></div>
     <div class="gate">
@@ -331,7 +331,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
     <div class="tablewrap"><table class="rules">
       <tr><th>ID</th><th>Decision</th><th>Status</th></tr>
       <tr><td>D52</td><td>Rename to YomiKoe; four names: yomikoe.app brand and landing page, app. reader, api. API, getyomikoe.com a 301 that is never printed; hosting is M9, decided as the final milestone on 2026-10-21 (M10 Browser extension was added after it on 2026-10-22)</td><td>Confirmed 2026-10-21 (user)</td></tr>
-      <tr><td>D54</td><td>yomikoe.app is served by GitHub Pages from <code>site/</code> via <code>site.yml</code> (public repo, free, Let's Encrypt HTTPS, no server); app. and api. hosting decided at phase 2; getyomikoe.com is a registrar/Cloudflare 301 rule</td><td>Proposed 2026-10-21, awaiting the user</td></tr>
+      <tr><td>D54</td><td>yomikoe.app is served by GitHub Pages from <code>site/</code> via <code>site.yml</code> (public repo, free, Let's Encrypt HTTPS, no server); app. and api. hosting decided at phase 2; getyomikoe.com is a registrar/Cloudflare 301 rule</td><td>Confirmed 2026-10-22 (user)</td></tr>
     </table></div>
   </section>
 
@@ -339,7 +339,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
     <h2><span class="k">8</span>What the user does next</h2>
     <p>These steps are account settings; no worker can do them. Full detail and verify commands are in <code>docs/HOSTING.md</code>.</p>
     <ol class="steps">
-      <li><b>Confirm D54</b> (GitHub Pages for the landing page), or name another host.</li>
+      <li><b>D54 confirmed</b> 2026-10-22: GitHub Pages hosts the landing page.</li>
       <li><b>HOSTING.md b, GitHub Pages:</b> Settings &gt; Pages &gt; Source "GitHub Actions"; merge the branch to <code>main</code> (or run the workflow by hand once); set the custom domain to <code>yomikoe.app</code>; tick "Enforce HTTPS" once the certificate is issued.</li>
       <li><b>HOSTING.md c, DNS at Cloudflare:</b> DNS &gt; Records for yomikoe.app: delete any A, AAAA or CNAME for <code>@</code>, add four A and four AAAA records for <code>@</code> (values in HOSTING.md, result 1248) with Proxy status DNS only (grey cloud) until the certificate is issued; check with <code>dig</code> and <code>curl -sI https://yomikoe.app</code>. If you later proxy, set SSL/TLS to Full or Full (strict).</li>
       <li><b>HOSTING.md d, redirect at Cloudflare:</b> for getyomikoe.com add proxied A records <code>@</code> and <code>www</code> to <code>192.0.2.1</code>, then Rules &gt; Create rule &gt; Redirect Rule: host is getyomikoe.com or www.getyomikoe.com, static target <code>https://yomikoe.app</code>, 301, query string off; check with <code>curl -sI https://getyomikoe.com</code>.</li>
