@@ -283,7 +283,7 @@ Four names, one brand domain. None is wired into the code yet: v1 runs locally v
 
 | Domain | Points at | Repo folder | Status | Notes |
 |---|---|---|---|---|
-| yomikoe.app | Landing page (static site) | `site/` (to be added) | Not built yet | Primary brand domain; the one printed everywhere. `.app` forces HTTPS. |
+| yomikoe.app | Landing page (static site) | `site/` | Built in `site/` (2026-10-21); DNS and Pages settings pending (docs/HOSTING.md) | Primary brand domain; the one printed everywhere. `.app` forces HTTPS. |
 | app.yomikoe.app | The reader (React app) | `web/` | Exists, runs locally only | Library, player, highlighting. Subdomain, free in DNS. |
 | api.yomikoe.app | FastAPI service | `api/` | Exists, runs locally only | Ingestion, synthesis, audio cache. Subdomain, free in DNS. |
 | getyomikoe.com | 301 redirect to yomikoe.app | none | DNS rule only | Defensive .com; never printed. Set the redirect at the registrar or Cloudflare. |
@@ -406,7 +406,17 @@ Each milestone is one or two coding-agent sessions and ends with its gate passin
 
 After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-10-17), PLAY-9 export (ING-9 more formats is now M8, SRC-1).
 
-9. M9 Hosting (decided 2026-10-21 as the final milestone; user decision: hosting is a milestone, not future scope). Scope: the four names in the "Domains" table (yomikoe.app landing page as a static site in `site/`, app.yomikoe.app serving `web/`, api.yomikoe.app serving `api/`, getyomikoe.com as a 301 redirect), TLS on every name, the Docker Compose image deployed to a host, backups of the library volume, and the landing page itself. Requirement IDs (`HOST-n`) and the hosting provider are to be specified when the milestone is planned. Gate (proposed, to confirm at planning):
+9. M9 Hosting (decided 2026-10-21 as the final milestone; user decision: hosting is a milestone, not future scope). Scope: the four names in the "Domains" table (yomikoe.app landing page as a static site in `site/`, app.yomikoe.app serving `web/`, api.yomikoe.app serving `api/`, getyomikoe.com as a 301 redirect), TLS on every name, the Docker Compose image deployed to a host, backups of the library volume, and the landing page itself. Requirement IDs (`HOST-n`) and the hosting provider are to be specified when the milestone is planned.
+
+   Phase 1 (landing page, started 2026-10-21): the landing page in `site/` is deployed to GitHub Pages by `.github/workflows/site.yml`; the registrar steps are in `docs/HOSTING.md`. The provider is a proposed decision (Technical Design D54), awaiting user confirmation. HOST-4 and later are to specify at phase 2 planning.
+
+   | ID | Priority | Requirement |
+   |---|---|---|
+   | HOST-1 | P0 | yomikoe.app serves the landing page in `site/` as a static site with no build step |
+   | HOST-2 | P0 | yomikoe.app resolves and serves over HTTPS with a valid certificate (provider: GitHub Pages, D54 proposed) |
+   | HOST-3 | P1 | getyomikoe.com answers 301 to https://yomikoe.app and is never printed |
+
+   Gate (proposed, to confirm at planning):
    (a) each of the four names resolves and serves over HTTPS, with getyomikoe.com answering 301 to yomikoe.app;
    (b) a fixture PDF uploaded through app.yomikoe.app plays with first audio within the M2 target measured from the browser;
    (c) the M4 300-page soak passes against the hosted API;
