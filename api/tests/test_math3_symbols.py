@@ -22,3 +22,14 @@ def test_math3_weak_convergence_arrow_has_a_name() -> None:
 
 def test_math3_weak_convergence_arrow_is_spoken() -> None:
     assert _eq("x ⇀ π") == "x converges weakly to pi"
+
+
+def test_math3_less_or_similar_relations_have_names() -> None:
+    # m5-p5i: tables_04 equation (6) dropped "≲"
+    assert symbols.name_of("≲") == "is less than or similar to"
+    assert symbols.name_of("≳") == "is greater than or similar to"
+
+
+def test_math3_less_or_similar_relation_is_spoken() -> None:
+    assert _eq("a ≲ b") == "a is less than or similar to b"
+    assert _eq("a ≳ b") == "a is greater than or similar to b"

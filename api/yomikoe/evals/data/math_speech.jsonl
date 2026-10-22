@@ -159,3 +159,6 @@
 {"id": "display_53", "class": "display", "raw": "∫ φ(x) µ(dx) − ∫ φ(x) ν(dx)", "spoken": "the integral of phi of x with respect to mu minus the integral of phi of x with respect to nu", "block": "equation"}
 {"id": "inline_41", "class": "inline", "raw": "Almost surely, $µ_{T} → π$, or, equivalently, $∫ f dµ_{T} → ∫ f dπ$.", "spoken": "almost surely, mu sub t approaches pi, or, equivalently, the integral of f d mu sub t approaches the integral of f d pi.", "block": "body"}
 {"id": "inline_42", "class": "inline", "raw": "Almost surely, $µ_{t} ⇀ π$.", "spoken": "almost surely, mu sub t converges weakly to pi.", "block": "body"}
+{"id": "display_54", "class": "display", "raw": "sup_{x∈X} MMD_{ϕ}(P^{n}(x, ·), π) ≤ Cθ^{n}", "spoken": "the supremum over x in x of m m d sub phi of p to the n of x and dot, and pi is less than or equal to c theta to the n", "block": "equation"}
+{"id": "display_55", "class": "display", "raw": "MMD_{ϕ}(µ_{T}, π) ≲ ∥ϕ∥_{π}", "spoken": "m m d sub phi of mu sub t and pi is less than or similar to the norm of phi sub pi", "block": "equation"}
+{"id": "display_56", "class": "display", "raw": "∥A∥_{L(H)} = b", "spoken": "the norm of a sub l of h equals b", "block": "equation"}

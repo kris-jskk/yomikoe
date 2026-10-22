@@ -86,8 +86,11 @@ def test_math1_math2_markov_equation_2_end_to_end() -> None:
     from yomikoe.ingestion.pipeline import ingest
 
     result = ingest(FIXTURE)
-    (seg,) = [s for s in result.segments if s.text.startswith("surely,")]
+    # m5-p5i: "surely," now ends the body sentence before the display (results 1225)
+    (seg,) = [s for s in result.segments if "or, equivalently" in s.text]
     spoken = seg.normalized_text
+    assert not seg.text.startswith("surely,"), seg.text
+    assert any(s.text.endswith("almost surely,") for s in result.segments)
     assert "or, equivalently" in spoken, spoken
     assert "o r," not in spoken, spoken
     assert "the fraction surely" not in spoken, spoken
