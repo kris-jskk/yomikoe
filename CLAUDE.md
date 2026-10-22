@@ -91,7 +91,8 @@ scratchpad; copy under `docs/guide/` when the milestone closes), M5 "YomiKoe M5 
 https://claude.ai/artifact/WMNfhRLczt5VtYWf9Pkt9r (source `docs/guide/m5-academic-map.html` in the repo,
 published from there), M9 "YomiKoe M9 Hosting Map" https://claude.ai/artifact/6NF1qW6v5swKgudxq4ZBoA (source
 `docs/guide/m9-hosting-map.html` in the repo, published from there; landing page preview
-https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq). Each new milestone starts a new guide.
+https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq). M10 "YomiKoe M10 Extension Map" is opened when M10 starts
+(spec `docs/PRD_EXTENSION.md`, decided 2026-10-22, after M9). Each new milestone starts a new guide.
 
 1. **Every pipeline stage gets its own diagram** in the guide: the mechanism (what goes in,
    what rule is applied, what comes out), not a labelled box. A new stage, a replaced
