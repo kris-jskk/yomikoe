@@ -1,8 +1,8 @@
 """Write ``yomikoe/evals/data/listening_formula_10.jsonl``: the EVAL-9 formula sentence set (MATH-1..4).
 
 One row per formula fixture: the ``normalized_text`` (what the voice is given) of the first equation-type
-segment with at least ``MIN_WORDS`` spoken words; the fallback (scanned or no such segment) is the first
-body segment carrying maths spans (math_json). Each row records fixture, segment order and the raw page text.
+segment with at least ``MIN_WORDS`` spoken words; the fallback (scanned or no such segment) is the segment with
+the most words among those carrying maths spans (math_json, any type). Each row records fixture, segment order and the raw page text.
 Deterministic. Run from api/: ``python scripts/make_listening_formula.py``.
 """
 
@@ -31,9 +31,9 @@ def pick(result: Any) -> tuple[Any, str]:
     for s in result.segments:
         if by_id[s.block_id].type == "equation" and len(s.normalized_text.split()) >= MIN_WORDS:
             return s, "equation"
-    for s in result.segments:
-        if by_id[s.block_id].type != "equation" and getattr(s, "math_json", None):
-            return s, "fallback_body_math"
+    carrying = [s for s in result.segments if getattr(s, "math_json", None)]
+    if carrying:  # longest wins; max() keeps the first of equal lengths, so it is deterministic
+        return max(carrying, key=lambda s: len(s.normalized_text.split())), "fallback_longest_math"
     raise LookupError("no maths segment")
 
 
