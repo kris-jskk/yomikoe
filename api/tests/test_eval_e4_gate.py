@@ -36,6 +36,24 @@ def test_eval9_prepare_fake_backend_writes_20_clips_and_sheet(tmp_path: Path) ->
     assert all(r["sentence"] for r in rows)
 
 
+def test_eval9_prepare_formula_source_writes_20_clips_and_10_rows(tmp_path: Path) -> None:
+    """MATH-1..4, M5 gate (d): the formula set across both voices, source recorded in the sheet."""
+    from yomikoe.evals.__main__ import main
+    from yomikoe.evals.listening import parse_sheet
+
+    out = tmp_path / "pending_formula"
+    argv = ["listening", "prepare", "--source", "formula", "--out", str(out), "--backend", "fake"]
+    assert main(argv) == 0
+    clips = sorted(out.glob("*.wav"))
+    assert len(clips) == 20
+    assert {c.name.rsplit("__", 1)[0] for c in clips} == {f"formula_{n:02d}" for n in range(1, 11)}
+    header, rows = parse_sheet(out / "sheet.md")
+    assert header["source"] == "formula"
+    assert header["listener"] == ""
+    assert len(rows) == 20 and len({r["clip"].rsplit("__", 1)[0] for r in rows}) == 10
+    assert all(r["sentence"] and r["naturalness"] == "" for r in rows)
+
+
 def test_eval9_ingest_sample_sheet_aggregates(tmp_path: Path) -> None:
     from yomikoe.evals.listening import ingest
     from yomikoe.evals.suites import eval9_listening as e9

@@ -201,7 +201,7 @@ CLI (__main__)        runner.run           suites.select / suite modules       s
 
 ### d. `python -m yomikoe.evals listening prepare|ingest` (E4, EVAL-9)
 
-`listening prepare --out evals/listening/pending_<date>/` renders sentences_50.jsonl[:10] x
+`listening prepare --out evals/listening/pending_<date>/ [--source general|formula]` renders (`general`, default) sentences_50.jsonl[:10], or (`formula`, M5 gate clause d) `data/listening_formula_10.jsonl` (the reader's spoken output for the ten formula fixtures, written by `api/scripts/make_listening_formula.py`; the sheet header records `source` and `ingest` copies it into the session json), x
 (af_heart, am_michael) through `_voice.render` (kokoro) or `FakeBackend` (fake) into 20 WAVs and a
 blank `sheet.md`; a person fills it per `data/listening_rubric.md`; `listening ingest sheet.md`
 validates it and writes `evals/listening/<date>_<listener>.json`; `run EVAL-9` (tier 2) reads every
@@ -238,7 +238,7 @@ validates it and writes `evals/listening/<date>_<listener>.json`; `run EVAL-9` (
 
 | File | Responsibility | Status |
 | --- | --- | --- |
-| `api/yomikoe/evals/listening.py` (E4) | EVAL-9 session tooling: `prepare(out_dir, backend)` renders sentences_50.jsonl[:10] x (af_heart, am_michael) into 20 WAVs and a blank `sheet.md`; `parse_sheet(path)`; `ingest(sheet, out_dir)` writes `evals/listening/<date>_<listener>.json`; `register(sub)` adds the `listening` subparser (`prepare`, `ingest`) and `run_verb(args)` runs it from `__main__.main` | implemented, tested |
+| `api/yomikoe/evals/listening.py` (E4) | EVAL-9 session tooling: `prepare(out_dir, backend, source)` renders sentences_50.jsonl[:10] (`source="general"`) or `data/listening_formula_10.jsonl` (`source="formula"`, built by `api/scripts/make_listening_formula.py`) x (af_heart, am_michael) into 20 WAVs and a blank `sheet.md`; `parse_sheet(path)`; `ingest(sheet, out_dir)` writes `evals/listening/<date>_<listener>.json`; `register(sub)` adds the `listening` subparser (`prepare`, `ingest`) and `run_verb(args)` runs it from `__main__.main` | implemented, tested |
 | `api/yomikoe/evals/suites/eval9_listening.py` (E4) | EVAL-9 Listening, tier 2, direction higher (pron_errors lower via METRIC_RULES): `dataset(sessions_dir=None)`, `score`, `aggregate` over `evals/listening/*.json` (not `pending_*/`); skipped "no listening sessions under evals/listening/" when empty | implemented, tested |
 | `api/yomikoe/evals/suites/eval8_ocr.py` (E4) | EVAL-8 OCR, tier 1, direction lower: CER of OCR'd prose vs expected prose on the 5 scanned fixtures (`mean_cer`, `max_cer`); skipped "OCR unavailable (tesseract)" when `ocr_available()` is false | implemented, tested (skip path); scoring path implemented, unverified: never ran without tesseract |
 | `api/yomikoe/evals/scorers.py` (E4 addition) | `char_error_rate(actual, expected)` | implemented, tested |
