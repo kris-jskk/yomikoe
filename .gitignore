@@ -30,3 +30,14 @@ docker-compose.override.yml
 
 # EVAL-9 pending listening clips (sheet.md is committed, audio is not)
 evals/listening/pending_*/*.wav
+
+# Agent working logs: local only since the repo went public (2026-10-21). They carry
+# absolute paths, the machine name, spend figures and extracted text of user documents.
+# Contract, templates, specs, reports, research and scripts under _agent/ stay tracked.
+_agent/results/
+_agent/briefs/
+_agent/drafts/
+_agent/registry/
+_agent/token-ledger.md
+_agent/supervisor-log.md
+_agent/cost-reviews.md

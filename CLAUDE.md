@@ -60,6 +60,11 @@ do), `brief-template.md`, `report-template.md`, and `supervisor-log.md`.
 7. **Corrections are logged.** When the session tells the user something that later turns
    out wrong, the correction goes in `_agent/supervisor-log.md` with what was assumed, what
    was true, and what would have caught it earlier.
+   **Local-only since 2026-10-21 (repo public):** `_agent/results/`, `briefs/`, `drafts/`, `registry/`,
+   `token-ledger.md`, `supervisor-log.md` and `cost-reviews.md` are gitignored. They carry absolute paths,
+   the machine name, spend and extracted text of user documents. Workers still save evidence there; it
+   is never committed. Contract, templates, `specs/`, `reports/`, `research/` and `scripts/` stay tracked
+   and must hold no absolute paths or user-document text.
 8. **Cost rules from review 1 (2026-10-17; two thirds of all spend was the supervisor re-reading a
    ~900k-token prefix on every tool call).**
    a. **Each milestone starts in a fresh session.** The handoff is on disk: this file, `docs/guide/`,
