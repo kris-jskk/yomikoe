@@ -2,7 +2,7 @@
 
 A Speechify-style reader: drop in a PDF, pick a voice and a speed, and listen with the text highlighted as it plays. Self-hosted, backed by open TTS models, built so the synthesis engine can be swapped without touching the reader.
 
-Domains (D52, plan of 2026-10-21): [yomikoe.app](https://yomikoe.app) is the brand domain and landing page (static site, `site/`, deployed by GitHub Pages; see docs/HOSTING.md); app.yomikoe.app will serve the reader (`web/`); api.yomikoe.app the API (`api/`); getyomikoe.com is a defensive .com that 301-redirects to yomikoe.app and is never printed. Until M9 Hosting, the final milestone, everything runs locally via Docker Compose; the table in `docs/PRD.md` ("Domains") is the source of truth.
+Domains (D52, plan of 2026-10-21): [yomikoe.app](https://yomikoe.app) is the brand domain and landing page (static site, `site/`, deployed by GitHub Pages; see docs/HOSTING.md); app.yomikoe.app will serve the reader (`web/`); api.yomikoe.app the API (`api/`); getyomikoe.com is a defensive .com that 301-redirects to yomikoe.app and is never printed. Until M9 Hosting, everything runs locally via Docker Compose; the table in `docs/PRD.md` ("Domains") is the source of truth.
 
 The product spec lives in [docs/PRD.md](docs/PRD.md) and the technical design in [docs/TECHNICAL_DESIGN.md](docs/TECHNICAL_DESIGN.md). Requirement IDs there (`ING-`, `SYN-`, `PLAY-`, `LIB-`) are canonical and referenced in commits and tests.
 

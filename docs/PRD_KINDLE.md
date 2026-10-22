@@ -106,7 +106,7 @@ Licence position (821, 822): every working KF8 reader found is copyleft (KindleU
 
 ## Data model and API
 
-**Schema (D44).** The `documents` table has `filename` but no column for format or origin (DDL in `docs/TECHNICAL_DESIGN.md` "Storage (D7)"; migrations 0001–0005, checked in 823). `LogicalBlock.source` is a per-block provenance field, not a document source, and is not suitable. Proposed migration 0006 adds two columns:
+**Schema (D44).** The `documents` table has `filename` but no column for format or origin (DDL in `docs/TECHNICAL_DESIGN.md` "Storage (D7)"; migrations 0001–0005, checked in 823). `LogicalBlock.source` is a per-block provenance field, not a document source, and is not suitable. Proposed migration (the next free migration number at build time; 0006 was taken by pronunciations, M10 plans 0007) adds two columns:
 
 | Column | Type | Values | Why |
 | --- | --- | --- | --- |

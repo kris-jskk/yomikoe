@@ -67,7 +67,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
 <main>
   <header>
     <h1>YomiKoe M9: the product gets an address</h1>
-    <p class="lede">Milestone 9 Hosting is the final milestone. It puts YomiKoe on its four names: yomikoe.app for the landing page, app.yomikoe.app for the reader, api.yomikoe.app for the API, and getyomikoe.com as a redirect nobody prints. Phase 1 is the landing page: a static site in <code>site/</code>, deployed to GitHub Pages by a workflow. The code side of phase 1 is built and merged on <code>m9-hosting</code>. The page goes live once the user changes the GitHub Pages settings and adds the DNS records at the registrar.</p>
+    <p class="lede">Milestone 9 Hosting was decided as the final milestone on 2026-10-21; M10 Browser extension was added after it on 2026-10-22. It puts YomiKoe on its four names: yomikoe.app for the landing page, app.yomikoe.app for the reader, api.yomikoe.app for the API, and getyomikoe.com as a redirect nobody prints. Phase 1 is the landing page: a static site in <code>site/</code>, deployed to GitHub Pages by a workflow. The code side of phase 1 is built and merged on <code>m9-hosting</code>. The page goes live once the user changes the GitHub Pages settings and adds the DNS records at the registrar.</p>
     <div class="stamp"><span class="dot"></span> As of 2026-10-22 · version 4 · LIVE: https://yomikoe.app serves the page over HTTPS (result 1265: index, styles.css, favicon.svg all 200 from GitHub.com; Let's Encrypt certificate CN=yomikoe.app) · merged to main 77e8827 and pushed · Pages settings and apex DNS done by the user · getyomikoe.com redirect still pending (no DNS records yet, result 1265) · preview artifact https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq</div>
     <div class="phases" aria-label="Phase status">
       <span class="pill done">1a Landing page built <b>done</b></span>
@@ -330,7 +330,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
     <h2><span class="k">7</span>Decisions</h2>
     <div class="tablewrap"><table class="rules">
       <tr><th>ID</th><th>Decision</th><th>Status</th></tr>
-      <tr><td>D52</td><td>Rename to YomiKoe; four names: yomikoe.app brand and landing page, app. reader, api. API, getyomikoe.com a 301 that is never printed; hosting is M9, the final milestone</td><td>Confirmed 2026-10-21 (user)</td></tr>
+      <tr><td>D52</td><td>Rename to YomiKoe; four names: yomikoe.app brand and landing page, app. reader, api. API, getyomikoe.com a 301 that is never printed; hosting is M9, decided as the final milestone on 2026-10-21 (M10 Browser extension was added after it on 2026-10-22)</td><td>Confirmed 2026-10-21 (user)</td></tr>
       <tr><td>D54</td><td>yomikoe.app is served by GitHub Pages from <code>site/</code> via <code>site.yml</code> (public repo, free, Let's Encrypt HTTPS, no server); app. and api. hosting decided at phase 2; getyomikoe.com is a registrar/Cloudflare 301 rule</td><td>Proposed 2026-10-21, awaiting the user</td></tr>
     </table></div>
   </section>
