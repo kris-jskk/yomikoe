@@ -9,6 +9,11 @@ fraction", large operators read their limits ("the sum from i equals 1 to n of")
 
 ``fallback`` is MATH-1's never-silent reading: "equation N" (or "equation") then every symbol
 left to right by ``symbols.name_of``.
+
+Function application (spec §8 Q9(b), 2026-10-21): the last top-level separator of an argument list
+of two or more is "and" ("f of x and y", "g of x, y and z"); a nested call applies the rule to its
+own list, and an outer "and" that follows a nested multi-argument call takes a pause before it
+("f of g of x and y, and z").
 """
 
 from __future__ import annotations
@@ -100,6 +105,32 @@ def _opens_with_word(group: Node) -> bool:
     return first is not None and first.kind == "word"
 
 
+def _last_separator(inner: Node | None) -> int | None:
+    """Index (among the non-None children of ``inner``) of the last top-level comma, or None.
+
+    None when a semicolon follows it (``L²(X, B(X), π; Y)``: the list's last separator is the
+    semicolon, read as a pause) or when either side of it is empty (``N(, σ)``: an OCR loss)."""
+    items = [c for c in (inner.children if inner else []) if c is not None]
+    seps = [i for i, c in enumerate(items) if c.kind == "op" and c.text in (",", ";")]
+    if not seps or items[seps[-1]].text != ",":
+        return None
+    last = seps[-1]
+    before = seps[-2] if len(seps) > 1 else -1
+    if last - before < 2 or last == len(items) - 1:
+        return None
+    return last
+
+
+def _multi_argument_call(node: Node | None) -> bool:
+    if node is None or node.kind != "apply" or len(node.children) < 2:
+        return False
+    group = node.children[1]
+    return (
+        group is not None
+        and _last_separator(group.children[0] if group.children else None) is not None
+    )
+
+
 def _join(words: list[str]) -> str:
     out: list[str] = []
     for w in words:
@@ -117,7 +148,15 @@ class _Reader:
         self.intervals = intervals
         self.in_integral = False  # an integral sign has been read: µ(dx) is its measure
 
-    def row(self, node: Node | None, *, limit: bool = False, setbuilder: bool = False) -> list[str]:
+    def row(
+        self,
+        node: Node | None,
+        *,
+        limit: bool = False,
+        setbuilder: bool = False,
+        and_at: int | None = None,
+    ) -> list[str]:
+        """``and_at``: the index of an argument list's last separator, read "and" (Q9(b))."""
         items = [c for c in (node.children if node else []) if c is not None]
         words: list[str] = []
         colon_seen = False
@@ -146,6 +185,10 @@ class _Reader:
                 if [n.text for n in items[i + 1 : i + 3] if n.kind == "var"] == ["o", "f"]:
                     prev, i = items[i + 2], i + 3  # "# of x" with "of" lexed as two letters
                     continue
+            elif it.kind == "op" and i == and_at:
+                if _multi_argument_call(prev):
+                    words.append(",")  # "f of g of x and y, and z": the inner list has closed
+                words.append("and")
             elif it.kind == "op":
                 words.append(self.op(it.text, items[i + 1 :], colon_seen, limit, setbuilder))
                 colon_seen = colon_seen or it.text == ":"
@@ -361,9 +404,9 @@ class _Reader:
         inner = group.children[0]
         if self.in_integral and _measure_of_differential(fn, group):
             return ["with respect to", *self.item(fn)]  # ∫ φ(x) µ(dx) (§3c, m5 p5g, MATH-3)
-        args = self.row(inner)
+        args = self._args(inner)
         if fn.kind == "word" and fn.text in _LIMOP_WORDS:
-            return [_LIMOP_WORDS[fn.text], "of", *self._and(inner, args)]
+            return [_LIMOP_WORDS[fn.text], "of", *args]
         if fn.kind == "limop":
             return [*self.item(fn)[:-1], "of", *args]
         word = sy.FUNCTIONS.get(fn.text) if fn.kind == "word" else None
@@ -371,10 +414,9 @@ class _Reader:
             return [word, *args]  # det, tr, Var, Cov: "the variance of x"
         return [*self.item(fn), "of", *args]
 
-    def _and(self, inner: Node | None, args: list[str]) -> list[str]:
-        if inner is not None and sum(1 for c in inner.children if c and c.text == ",") == 1:
-            return ["and" if w == "," else w for w in args]
-        return args
+    def _args(self, inner: Node | None) -> list[str]:
+        """An argument list: its last top-level separator is "and" (spec §8 Q9(b))."""
+        return self.row(inner, and_at=_last_separator(inner))
 
     def group(self, n: Node) -> list[str]:
         inner = n.children[0]
@@ -387,7 +429,7 @@ class _Reader:
                 return ["the set of", *self.row(inner, setbuilder=True)]
             return ["the set", *self.row(inner)]
         if n.text == "⟨⟩":
-            return ["the inner product of", *self._and(inner, self.row(inner))]
+            return ["the inner product of", *self._args(inner)]
         return self.row(inner)
 
 

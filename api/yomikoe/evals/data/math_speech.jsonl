@@ -72,7 +72,7 @@
 {"id": "inline_20", "class": "inline", "raw": "The error is $± 0.5$ units.", "spoken": "the error is plus or minus 0.5 units.", "block": "body"}
 {"id": "inline_21", "class": "inline", "raw": "The sum $∑ x_{i}$ is finite.", "spoken": "the sum the sum of x sub i is finite.", "block": "body"}
 {"id": "inline_22", "class": "inline", "raw": "with $r = √2$ exactly.", "spoken": "with r equals the square root of 2 exactly.", "block": "body"}
-{"id": "inline_23", "class": "inline", "raw": "The kernel $k(x, y)$ is symmetric.", "spoken": "the kernel k of x, y is symmetric.", "block": "body"}
+{"id": "inline_23", "class": "inline", "raw": "The kernel $k(x, y)$ is symmetric.", "spoken": "the kernel k of x and y is symmetric.", "block": "body"}
 {"id": "inline_24", "class": "inline", "raw": "Choose $δ > 0$ small.", "spoken": "choose delta is greater than 0 small.", "block": "body"}
 {"id": "inline_25", "class": "inline", "raw": "The density $p(z)$ integrates to one.", "spoken": "the density p of z integrates to one.", "block": "body"}
 {"id": "inline_26", "class": "inline", "raw": "For every $ε > 0$ there is a bound.", "spoken": "for every epsilon is greater than 0 there is a bound.", "block": "body"}
@@ -158,3 +158,4 @@
 {"id": "reference_20", "class": "reference", "raw": "Corollary The limit exists.", "spoken": "corollary, the limit exists.", "block": "body"}
 {"id": "display_53", "class": "display", "raw": "∫ φ(x) µ(dx) − ∫ φ(x) ν(dx)", "spoken": "the integral of phi of x with respect to mu minus the integral of phi of x with respect to nu", "block": "equation"}
 {"id": "inline_41", "class": "inline", "raw": "Almost surely, $µ_{T} → π$, or, equivalently, $∫ f dµ_{T} → ∫ f dπ$.", "spoken": "almost surely, mu sub t approaches pi, or, equivalently, the integral of f d mu sub t approaches the integral of f d pi.", "block": "body"}
+{"id": "inline_42", "class": "inline", "raw": "Almost surely, $µ_{t} ⇀ π$.", "spoken": "almost surely, mu sub t converges weakly to pi.", "block": "body"}

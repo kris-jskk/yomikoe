@@ -60,6 +60,7 @@
     "→ (between sets, after a colon)": "to",
     "↦": "maps to",
     "⇒": "implies",
+    "⇀ (weak convergence)": "converges weakly to",
     "⟹": "implies",
     "⇔": "if and only if",
     "⟺": "if and only if"
@@ -141,6 +142,7 @@
   },
   "functions": {
     "f(x) (single letter f)": "f of x",
+    "f(x, y), g(x, y, z) (two or more arguments: the last top-level separator is and, unless a semicolon follows it; spec section 8 Q9(b))": "f of x and y; g of x, y and z",
     "(μP)(A) (a parenthesized product of letters with a capital, then a group)": "mu p of a",
     "ofSTDEV, STDEV (a camel or five-plus-capital identifier)": "of stdev, stdev",
     "sin": "sine",
@@ -197,6 +199,7 @@
     {"pattern": "\\ban element of\\b", "use": "in / not in", "why": "set membership is 'in' (ClearSpeak SetMemberSymbol=In)"},
     {"pattern": "\\bmember of\\b", "use": "in", "why": "set membership is 'in'"},
     {"pattern": "\\bbelongs to\\b", "use": "in", "why": "set membership is 'in'"},
+    {"pattern": "\\b[a-z] of -?\\d+(?:\\.\\d+)?, -?\\d+(?:\\.\\d+)?(?![\\d,])", "use": "of a and b", "why": "the last separator of an argument list is 'and' (spec §8 Q9(b)): n of 0 and 1; only the two-number form is unambiguous, since a comma after a symbolic argument is also a power-closing or prose pause"},
     {"pattern": "\\bgoes to\\b", "use": "approaches (limits) / to (between sets)", "why": "arrow wording"},
     {"pattern": "\\btends to (?:infinity|zero|0)\\b", "use": "approaches", "why": "arrow wording"},
     {"pattern": "\\bcomma\\b", "use": "a written comma", "why": "commas are prosody, never spoken"},
