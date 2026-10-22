@@ -77,7 +77,7 @@ def test_math2_prose_tail_above_display_is_not_a_numerator() -> None:
     ]
     spoken = _speak(runs, display=True)
     assert "fraction surely" not in spoken, spoken
-    assert spoken.startswith("equation: surely,"), spoken
+    assert spoken.startswith("surely, mu hat sub t"), spoken
     assert "mu hat sub t" in spoken, spoken
     assert "1 over t" in spoken, spoken  # the real fraction on the main row stays one
 
@@ -92,3 +92,27 @@ def test_math1_math2_markov_equation_2_end_to_end() -> None:
     assert "o r," not in spoken, spoken
     assert "the fraction surely" not in spoken, spoken
     assert "mu hat sub t" in spoken.split("or,")[0], spoken
+
+
+def _eq(raw: str) -> str:
+    from yomikoe.ingestion.mathspeak.markup import markup_segment
+
+    text, (span,) = markup_segment(raw, "equation")
+    spoken, _ = speak_span(span, text)
+    return spoken
+
+
+def test_math3_measure_of_a_differential_is_with_respect_to() -> None:
+    # equation (4) of tables_04_markov_kernel.pdf: ∫ φ(x) µ(dx) − ∫ φ(x) ν(dx)
+    assert _eq("∫ φ(x) µ(dx)") == "the integral of phi of x with respect to mu"
+    assert _eq("∫ g(y) ν(dy)") == "the integral of g of y with respect to nu"
+    assert _eq("∫ f(x) P(dx)") == "the integral of f of x with respect to p"
+    assert _eq("∫ φ(x) µ(dx) − ∫ φ(x) ν(dx)") == (
+        "the integral of phi of x with respect to mu minus the integral of phi of x with respect to nu"
+    )
+
+
+def test_math3_plain_differential_and_non_measure_unchanged() -> None:
+    assert _eq("∫ f(x) dx") == "the integral of f of x d x"
+    assert _eq("f(dx)") == "f of d x"  # no integral: an ordinary application
+    assert _eq("µ(dx)") == "mu of d x"

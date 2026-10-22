@@ -23,7 +23,11 @@ finest geometry used here (spec §3a, Q5). ``parse`` turns a ``MathSpan``'s runs
   read after a comma; a small script pair stacked on nothing (``½`` set in text style after ``=``)
   is a ``frac``; consecutive scripts of one kind are one script (``m_t`` then ``+1`` is ``m_{t+1}``);
 - a run of three or more letters in an upright text font (``Update``, ``marg``, ``Stage``) is one
-  word (``name``); CMEX hat and tilde glyphs, which precede their base, are accents.
+  word (``name``), and so is a two-letter English connective in that font (``or``, ``in``: TeX
+  ``\\text{or}``); in a maths italic font the same letters stay juxtaposed variables (``dx``);
+  CMEX hat and tilde glyphs, which precede their base, are accents;
+- a leading text-font prose run above a display's main row with no run set under it (the tail of
+  the sentence before the display, "surely,") is read on the main row, not as a numerator.
 
 ``parse`` returns ``None`` when it cannot structure the span (an unknown character, unbalanced
 brackets, a script with no base, three or more rows that are not a matrix). ``parse(...,
@@ -110,6 +114,12 @@ _SAME = {
 }  # fmt: skip
 _POWER = re.compile(r"\*\*\s*(\d+(?:\.\d+)?|[A-Za-z])")
 _CAMEL = re.compile(r"([a-z]{2,})([A-Z]{2,}s?)")
+# MATH-1, spec §3c (m5 p5g): two-letter English words a paper sets upright inside maths
+# ("x → π, or, equivalently, ..."); only in a text font, so an italic "dx" stays "d x".
+CONNECTIVES = frozenset(
+    {"or", "if", "as", "is", "to", "of", "by", "at", "so", "we", "be", "do", "no", "an", "on", "in"}
+)
+_PROSE_TAIL = re.compile(r"^\s*[A-Za-z]+(?:[ ,.;:'-]+[A-Za-z]+)*[ ,.;:]*$")
 _MATH_FONTS = ("cmmi", "cmsy", "cmex", "msbm", "msam", "cmbsy", "eufm", "rsfs", "math", "italic")
 
 
@@ -172,6 +182,8 @@ def _lex(text: str, words: bool = False) -> list[_Tok]:
                 out.append(_Tok("word", run.lower()))  # Tr, Var as set in papers
             elif words and _is_name(run):
                 out.append(_Tok("name", run.lower()))
+            elif words and run in CONNECTIVES:
+                out.append(_Tok("name", run))  # "or" set upright: the word, not o times r
             else:
                 out.extend(_Tok("var", c) for c in run)
             i = j
@@ -632,8 +644,9 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
     )
     main_y0 = main.bbox.y0
     tol = 0.4 * base
-    above = any(r.bbox.y0 < main_y0 - tol for r in full)
-    if not above and not has_brace:
+    tails = _prose_tails(runs, full, main_y0, tol)
+    above = any(r.bbox.y0 < main_y0 - tol and not any(r is t for t in tails) for r in full)
+    if not above and not has_brace and not tails:
         return _pieces(runs, base)
     main_mid = _mid(main)
     runs = _limits_after(runs, base)
@@ -689,6 +702,9 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
             flush()  # a script or large operator right of the bar is back on the main row
             chunk.append(r)
             continue
+        if any(r is t for t in tails):
+            chunk.append(r)  # the prose tail before the display: on the main row, as words
+            continue
         if is_full and r.bbox.y0 < main_y0 - tol:
             if mode == "frac" and den:
                 flush()
@@ -718,6 +734,31 @@ def _runs_rows(span: MathSpan) -> list[list[Piece]]:
 
 
 _MAIN_RELATIONS = frozenset("=<>≤≥≈≡")
+
+
+def _prose_tails(runs: list[Any], full: list[Any], main_y0: float, tol: float) -> list[Any]:
+    """The leading runs of a display that are prose above its main row (m5 p5g, MATH-2): a
+    text-font run of words, set above the main row, under which no full-size run of the span
+    is set. A numerator always has its denominator under it; the tail of the sentence before the
+    display ("surely," at the left margin, one line up) has nothing under it."""
+    out: list[Any] = []
+    for r in runs:
+        if not (
+            _upright(r.font)
+            and r.bbox.y0 < main_y0 - tol
+            and _PROSE_TAIL.match(r.text)
+            and any(len(w) >= 3 for w in re.findall(r"[A-Za-z]+", r.text))
+            and not any(
+                o is not r
+                and o.bbox.y0 > r.bbox.y0 + tol
+                and o.bbox.x0 < r.bbox.x1
+                and o.bbox.x1 > r.bbox.x0
+                for o in full
+            )
+        ):
+            break
+        out.append(r)
+    return out
 
 
 def _stack_tok(runs: list[Any], outer: float) -> _Tok:

@@ -1,6 +1,6 @@
 # M5 gate (a): spoken form of every equation segment and inline-maths sentence, convention spec 3c
 that is, pi p equals pi, where, for mu in p of x, we write mu p for the probability measure
-equation 10: mu p of a is defined as the integral of p of x, a mu of d x, a in b of x.
+equation 10: mu p of a is defined as the integral of p of x, a with respect to mu, a in b of x.
 the process x sub t for t greater than or equal to 0 is called stationary if x sub 0 distributed as pi.
 we also use the notation p to the n of x, dot is defined as delta sub x p to the n for n is greater than or equal to 0.
 recall that for a fixed t is greater than 0,
@@ -9,7 +9,7 @@ for a measure mu and a measurable function f from x to r, let mu of f is defined
 let l squared of pi denote the hilbert space of square-integrable functions f from x to r, endowed with the inner product the inner product of f and g sub pi is defined as pi of f g.
 denote the subspace of pi-centered functions by l squared sub 0 of pi is defined as the set of f in l squared of pi such that pi of f equals 0.
 for a separable hilbert space y, we let l squared of x, b of x, pi; y, abbreviated l squared of pi; y, denote the bochner space of strongly b of x-measurable and bochner square-integrable maps f from x to y with
-equation 12: the norm of f sub pi, squared, is defined as the norm of f sub l squared of pi; y, squared, equals the integral of the norm of f of x sub y, squared, pi of d x is less than infinity.
+equation 12: the norm of f sub pi, squared, is defined as the norm of f sub l squared of pi; y, squared, equals the integral of the norm of f of x sub y, squared, with respect to pi is less than infinity.
 denote by l of h sub 1, h sub 2 be the space of bounded linear operators between two separable hilbert spaces h sub 1 and h sub 2, and l of h sub 1 when h sub 1 equals h sub 2.
 for a in l of h sub 1, denote the operator norm by the operator norm of a sub h sub 1 is defined as the norm of a sub h sub 1 to h sub 1.
 let l squared of h sub 1, h sub 2 be the space of hilbert-schmidt operators, and l squared of h sub 1 when h sub 1 equals h sub 2, equipped with the norm the norm of a sub l squared of h sub 1, h sub 2, squared, equals the sum over i of the norm of a e sub i sub h sub 2, squared, where the set of e sub i sub i is any orthonormal basis of h sub 1.

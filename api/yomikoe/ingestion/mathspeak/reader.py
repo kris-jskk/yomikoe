@@ -77,6 +77,23 @@ def _leibniz_part(row: Node | None) -> bool:
     return base is not None and base.kind in ("var", "greek") and not _is_d(base)
 
 
+def _measure_of_differential(fn: Node, group: Node) -> bool:
+    """``fn(group)`` is a measure applied to a differential: a Greek letter or a Latin capital
+    (µ, ν, π, P, Q) applied to "(d" and one variable, as in ``µ(dx)`` (spec §3c, m5 p5g)."""
+    measure = fn.kind == "greek" or (fn.kind == "var" and fn.text.isupper())
+    row = group.children[0] if group.children else None
+    if not (measure and group.text == "()" and row is not None and len(row.children) == 2):
+        return False
+    d, x = row.children
+    return (
+        d is not None
+        and d.kind == "var"
+        and d.text == "d"
+        and x is not None
+        and x.kind in ("var", "greek")
+    )
+
+
 def _opens_with_word(group: Node) -> bool:
     inner = group.children[0] if group.children else None
     first = inner.children[0] if inner is not None and inner.children else None
@@ -98,6 +115,7 @@ def _join(words: list[str]) -> str:
 class _Reader:
     def __init__(self, intervals: bool) -> None:
         self.intervals = intervals
+        self.in_integral = False  # an integral sign has been read: µ(dx) is its measure
 
     def row(self, node: Node | None, *, limit: bool = False, setbuilder: bool = False) -> list[str]:
         items = [c for c in (node.children if node else []) if c is not None]
@@ -132,6 +150,8 @@ class _Reader:
                 words.append(self.op(it.text, items[i + 1 :], colon_seen, limit, setbuilder))
                 colon_seen = colon_seen or it.text == ":"
             else:
+                if it.kind == "int":
+                    self.in_integral = True
                 if (
                     it.kind in ("group", "abs")
                     and prev is not None
@@ -339,6 +359,8 @@ class _Reader:
 
     def apply(self, fn: Node, group: Node) -> list[str]:
         inner = group.children[0]
+        if self.in_integral and _measure_of_differential(fn, group):
+            return ["with respect to", *self.item(fn)]  # ∫ φ(x) µ(dx) (§3c, m5 p5g, MATH-3)
         args = self.row(inner)
         if fn.kind == "word" and fn.text in _LIMOP_WORDS:
             return [_LIMOP_WORDS[fn.text], "of", *self._and(inner, args)]
