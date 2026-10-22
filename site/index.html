@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YomiKoe · Study narrator</title>
+  <meta name="description" content="YomiKoe narrates the PDFs you study from: pick a voice and a speed, follow the highlighted text, and hear equations read as English. Open source and self-hosted.">
+  <link rel="canonical" href="https://yomikoe.app/">
+  <meta property="og:title" content="YomiKoe · Study narrator">
+  <meta property="og:description" content="YomiKoe narrates the PDFs you study from: pick a voice and a speed, follow the highlighted text, and hear equations read as English. Open source and self-hosted.">
+  <meta property="og:url" content="https://yomikoe.app/">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#f6f1e8">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&amp;display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Optional theme override: data-theme on <html>, remembered per browser; default follows the system.
+    (function () {
+      try { var t = localStorage.getItem('yomikoe-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+      document.addEventListener('DOMContentLoaded', function () {
+        var b = document.getElementById('theme-toggle'); if (!b) return;
+        b.addEventListener('click', function () {
+          var root = document.documentElement;
+          var dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+          root.dataset.theme = dark ? 'light' : 'dark';
+          try { localStorage.setItem('yomikoe-theme', root.dataset.theme); } catch (e) {}
+        });
+      });
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="wrap nav" aria-label="Main">
+      <a class="wordmark" href="#top">YomiKoe</a>
+      <ul class="nav-links">
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#who">Who it's for</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#open">Open source</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch between light and dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"/></svg>
+        </button>
+        <a class="btn btn-primary btn-sm" href="https://github.com/kris-jskk/yomikoe">GitHub</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="wrap hero-grid">
+        <div>
+          <span class="pill">Study narrator · open source · self-hosted</span>
+          <h1>Listen to the papers you <em>have to read.</em></h1>
+          <!-- PRD Overview; SYN-2, SYN-3, PLAY-2, MATH-1, TERM-1 -->
+          <p class="lede">Drop in a PDF (a paper, a textbook chapter, lecture notes), pick a voice and a speed, and listen with the text highlighted as it plays. Formulas are spoken as a person would read them aloud rather than skipped, and technical vocabulary is pronounced correctly.</p>
+          <div class="ctas">
+            <!-- HOST-4: when app.yomikoe.app is live, make this "Open the reader" -> https://app.yomikoe.app -->
+            <a class="btn btn-primary" href="#start">Run it on your laptop</a>
+            <a class="btn btn-secondary" href="https://github.com/kris-jskk/yomikoe">View on GitHub</a>
+          </div>
+        </div>
+
+        <!-- Hero visual: text and spoken form from api/tests/fixtures/pdfs/formula_10_stats_zscore_scan.expected.jsonl (orders 4, 6, 7) and .spoken.txt (MATH-1, PLAY-2) -->
+        <figure class="card reader" aria-label="The reader playing a statistics chapter" style="margin:0">
+          <div class="reader-bar" aria-hidden="true">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="file">z-scores.pdf</span>
+            <span style="margin-left:auto" class="chip-sm">p. 1</span>
+          </div>
+          <p class="reader-text">The value <em>x</em> in the given equation comes from a normal distribution with mean μ and standard deviation σ. <span class="sentence">If <em>X</em> is a <mark>normally</mark> distributed random variable and <em>X</em> ~ N(μ, σ), then the z-score is:</span></p>
+          <div class="equation" role="math" aria-label="z equals the fraction x minus mu over sigma">
+            z =<span class="frac"><span>x − μ</span><span>σ</span></span>
+          </div>
+          <p class="spoken"><small>Spoken as</small>“z equals the fraction x minus mu over sigma, end fraction”</p>
+          <div class="player" aria-hidden="true">
+            <span class="play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></span>
+            <span class="track"></span>
+            <span class="chip-sm">Emma</span>
+            <span class="chip-sm">1.5×</span>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <section id="who" aria-labelledby="who-h">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Who it's for</span>
+          <h2 id="who-h">Made for three ways of studying</h2>
+          <!-- PRD Users and use cases, Usage modes; VIEW-4 -->
+          <p class="lede">One engine, three ways of listening. They differ in pacing and in which parts of the page are read; one-switch presets for each are on the way.</p>
+        </div>
+        <div class="grid-3">
+          <article class="mode sage"><!-- PRD usage modes: Student; SYN-8 pauses (D53), MATH-1, PLAY-10, PLAY-11 -->
+            <span class="tag">The main focus</span>
+            <h3>Student</h3>
+            <p>Study from notes, textbooks and papers.</p>
+            <ul>
+              <li>Classroom pacing</li>
+              <li>Spoken maths</li>
+              <li>Slow down or repeat an equation</li>
+            </ul>
+            <p class="preset">Preset <code>classroom</code> <span class="muted">(coming)</span></p>
+          </article>
+          <article class="mode sky"><!-- PRD usage modes: Technical learner; ING-10, SYN-3 -->
+            <span class="tag">Books and papers</span>
+            <h3>Technical learner</h3>
+            <p>Learn from technical books and papers.</p>
+            <ul>
+              <li>Code listings cued, acronyms read well</li>
+              <li>Equations</li>
+              <li>1.5× to 2× listening</li>
+            </ul>
+            <p class="preset">Preset <code>study</code> <span class="muted">(coming)</span></p>
+          </article>
+          <article class="mode blush"><!-- PRD usage modes: Book listener; PLAY-1, LIB-2, PLAY-8 -->
+            <span class="tag">Book in hand</span>
+            <h3>Book listener</h3>
+            <p>Narration while you follow the printed book.</p>
+            <ul>
+              <li>Natural pacing, no extra pauses</li>
+              <li>Chapter navigation and resume</li>
+              <li>Captions and footnotes muted</li>
+            </ul>
+            <p class="preset">Preset <code>listen</code> <span class="muted">(coming)</span></p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" aria-labelledby="how-h">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">How it works</span>
+          <h2 id="how-h">From the page to your ears, one sentence at a time</h2>
+          <!-- PRD Architecture and stack -->
+          <p class="lede">The hard part is the reading, not the voice: the page is taken apart into typed blocks, put back in order, and turned into words a voice can say.</p>
+        </div>
+        <figure class="card pipeline" style="margin:0">
+          <!-- ING-3, ING-4, ING-5, ING-6, MATH-1..3, SYN-1, PLAY-2 -->
+          <svg class="wide" viewBox="0 0 1100 170" role="img" aria-labelledby="pipe-title pipe-desc"><title id="pipe-title">The YomiKoe pipeline</title><desc id="pipe-desc">Six stages from left to right: blocks, reading order, sentences, speech form, synthesis, playback.</desc><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor" opacity="0.55"/></marker></defs><rect class="box" x="0.0" y="10" width="170" height="150" rx="14"/><text class="t-io" x="14.0" y="36">01</text><text class="t-title" x="14.0" y="60">Blocks</text><text class="t-io" x="14.0" y="84">in: PDF pages</text><text class="t-io" x="14.0" y="102">out: typed blocks</text><text class="t-io" x="14.0" y="118">heading, body, equation</text><rect class="id-sage" x="14" y="128" width="47" height="22" rx="11"/><text class="t-id tx-sage" x="24" y="143">ING-3</text><path class="arrow" d="M173.0 85.0 H183.0" marker-end="url(#ah)"/><rect class="box" x="186.0" y="10" width="170" height="150" rx="14"/><text class="t-io" x="200.0" y="36">02</text><text class="t-title" x="200.0" y="60">Reading order</text><text class="t-io" x="200.0" y="84">in: blocks</text><text class="t-io" x="200.0" y="102">out: one linear order</text><text class="t-io" x="200.0" y="118">headers, footers dropped</text><rect class="id-sky" x="200" y="128" width="47" height="22" rx="11"/><text class="t-id tx-sky" x="210" y="143">ING-4</text><path class="arrow" d="M359.0 85.0 H369.0" marker-end="url(#ah)"/><rect class="box" x="372.0" y="10" width="170" height="150" rx="14"/><text class="t-io" x="386.0" y="36">03</text><text class="t-title" x="386.0" y="60">Sentences</text><text class="t-io" x="386.0" y="84">in: ordered text</text><text class="t-io" x="386.0" y="102">out: sentence segments</text><text class="t-io" x="386.0" y="118">with source offsets</text><rect class="id-blush" x="386" y="128" width="47" height="22" rx="11"/><text class="t-id tx-blush" x="396" y="143">ING-5</text><path class="arrow" d="M545.0 85.0 H555.0" marker-end="url(#ah)"/><rect class="box" x="558.0" y="10" width="170" height="150" rx="14"/><text class="t-io" x="572.0" y="36">04</text><text class="t-title" x="572.0" y="60">Speech form</text><text class="t-io" x="572.0" y="84">in: sentences</text><text class="t-io" x="572.0" y="102">out: words to speak</text><text class="t-io" x="572.0" y="118">maths read as English</text><rect class="id-butter" x="572" y="128" width="124" height="22" rx="11"/><text class="t-id tx-butter" x="582" y="143">ING-6 · MATH-1–3</text><path class="arrow" d="M731.0 85.0 H741.0" marker-end="url(#ah)"/><rect class="box" x="744.0" y="10" width="170" height="150" rx="14"/><text class="t-io" x="758.0" y="36">05</text><text class="t-title" x="758.0" y="60">Synthesis</text><text class="t-io" x="758.0" y="84">in: one sentence</text><text class="t-io" x="758.0" y="102">out: audio + word times</text><text class="t-io" x="758.0" y="118">one sentence at a time</text><rect class="id-sage" x="758" y="128" width="47" height="22" rx="11"/><text class="t-id tx-sage" x="768" y="143">SYN-1</text><path class="arrow" d="M917.0 85.0 H927.0" marker-end="url(#ah)"/><rect class="box" x="930.0" y="10" width="170" height="150" rx="14"/><text class="t-io" x="944.0" y="36">06</text><text class="t-title" x="944.0" y="60">Playback</text><text class="t-io" x="944.0" y="84">in: audio + times</text><text class="t-io" x="944.0" y="102">out: word highlight</text><text class="t-io" x="944.0" y="118">scheduled, gapless</text><rect class="id-sky" x="944" y="128" width="54" height="22" rx="11"/><text class="t-id tx-sky" x="954" y="143">PLAY-2</text></svg>
+          <svg class="tall" viewBox="0 0 400 768" role="img" aria-labelledby="pipe-title-t"><title id="pipe-title-t">The YomiKoe pipeline, six stages from top to bottom</title><defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor" opacity="0.55"/></marker></defs><rect class="box" x="2" y="2" width="396" height="104" rx="14"/><text class="t-title" x="18" y="30">01  Blocks</text><text class="t-io" x="18" y="52">in: PDF pages</text><text class="t-io" x="18" y="71">out: typed blocks</text><text class="t-io" x="18" y="89">heading, body, equation</text><rect class="id-sage" x="337.0" y="14" width="47" height="22" rx="11"/><text class="t-id tx-sage" x="347.0" y="29">ING-3</text><path class="arrow" d="M200.0 109 V130" marker-end="url(#ah2)"/><rect class="box" x="2" y="134" width="396" height="104" rx="14"/><text class="t-title" x="18" y="162">02  Reading order</text><text class="t-io" x="18" y="184">in: blocks</text><text class="t-io" x="18" y="203">out: one linear order</text><text class="t-io" x="18" y="221">headers, footers dropped</text><rect class="id-sky" x="337.0" y="146" width="47" height="22" rx="11"/><text class="t-id tx-sky" x="347.0" y="161">ING-4</text><path class="arrow" d="M200.0 241 V262" marker-end="url(#ah2)"/><rect class="box" x="2" y="266" width="396" height="104" rx="14"/><text class="t-title" x="18" y="294">03  Sentences</text><text class="t-io" x="18" y="316">in: ordered text</text><text class="t-io" x="18" y="335">out: sentence segments</text><text class="t-io" x="18" y="353">with source offsets</text><rect class="id-blush" x="337.0" y="278" width="47" height="22" rx="11"/><text class="t-id tx-blush" x="347.0" y="293">ING-5</text><path class="arrow" d="M200.0 373 V394" marker-end="url(#ah2)"/><rect class="box" x="2" y="398" width="396" height="104" rx="14"/><text class="t-title" x="18" y="426">04  Speech form</text><text class="t-io" x="18" y="448">in: sentences</text><text class="t-io" x="18" y="467">out: words to speak</text><text class="t-io" x="18" y="485">maths read as English</text><rect class="id-butter" x="260.0" y="410" width="124" height="22" rx="11"/><text class="t-id tx-butter" x="270.0" y="425">ING-6 · MATH-1–3</text><path class="arrow" d="M200.0 505 V526" marker-end="url(#ah2)"/><rect class="box" x="2" y="530" width="396" height="104" rx="14"/><text class="t-title" x="18" y="558">05  Synthesis</text><text class="t-io" x="18" y="580">in: one sentence</text><text class="t-io" x="18" y="599">out: audio + word times</text><text class="t-io" x="18" y="617">one sentence at a time</text><rect class="id-sage" x="337.0" y="542" width="47" height="22" rx="11"/><text class="t-id tx-sage" x="347.0" y="557">SYN-1</text><path class="arrow" d="M200.0 637 V658" marker-end="url(#ah2)"/><rect class="box" x="2" y="662" width="396" height="104" rx="14"/><text class="t-title" x="18" y="690">06  Playback</text><text class="t-io" x="18" y="712">in: audio + times</text><text class="t-io" x="18" y="731">out: word highlight</text><text class="t-io" x="18" y="749">scheduled, gapless</text><rect class="id-sky" x="330.0" y="674" width="54" height="22" rx="11"/><text class="t-id tx-sky" x="340.0" y="689">PLAY-2</text></svg>
+          <figcaption>Every sentence you hear has passed six stages, and each stage keeps a pointer back to the page, so the word being spoken is the word that lights up. Maths becomes English words before the voice sees it; the voice only ever receives words.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="features" aria-labelledby="features-h">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Features</span>
+          <h2 id="features-h">Built for the pages that other readers mangle</h2>
+          <!-- PRD Overview: layout, footnotes mid-sentence, flat delivery -->
+          <p class="lede">Papers and textbooks have columns, footnotes, symbols and jargon. YomiKoe is built around them.</p>
+        </div>
+        <div class="features">
+          <article class="card feature"><!-- ING-4 -->
+            <div class="icon sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h7M4 9h7M4 13h7M4 17h7M13 5h7M13 9h7M13 13h7M13 17h5"/></svg></div>
+            <h3>Reading order that holds</h3>
+            <p>Two-column pages read in order; headers, footers and page numbers are left out.</p>
+          </article>
+          <article class="card feature"><!-- MATH-1, MATH-2, MATH-3 -->
+            <div class="icon sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19 9 5h1l4 14M6.5 14h6M16 9l4 4m0-4-4 4"/></svg></div>
+            <h3>Spoken maths</h3>
+            <p>Display and inline equations read as English: fractions, powers, roots, sums, integrals, Greek letters.</p>
+          </article>
+          <article class="card feature"><!-- TERM-1, TERM-2 -->
+            <div class="icon blush"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 10h7M4 14h5M15 13l3-3 2 2-3 3-3 1z"/></svg></div>
+            <h3>Terms said right</h3>
+            <p>An academic pronunciation lexicon, plus “pronounce as” on any word you select.</p>
+          </article>
+          <article class="card feature"><!-- PLAY-2 -->
+            <div class="icon butter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="9" width="18" height="6" rx="2"/><path d="M7 5h10M7 19h10"/></svg></div>
+            <h3>Word-level highlight</h3>
+            <p>The current word and sentence are highlighted in step with the audio.</p>
+          </article>
+          <article class="card feature"><!-- SYN-2, SYN-3 -->
+            <div class="icon sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg></div>
+            <h3>Ten voices, 0.5× to 3×</h3>
+            <p>American and British English, female and male; speed from 0.5× to 3× in 0.05 steps.</p>
+          </article>
+          <article class="card feature"><!-- PLAY-10, PLAY-11 -->
+            <div class="icon sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4M10 9v6l5-3z"/></svg></div>
+            <h3>Repeat an equation</h3>
+            <p>Skip or repeat the current equation with one action; equations play at 0.8× by default.</p>
+          </article>
+          <article class="card feature"><!-- LIB-1, LIB-2, LIB-3 -->
+            <div class="icon blush"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4v16H5zM10 4h4v16h-4zM15.5 5l3.5-.9 3.2 15.5-3.5.8z"/></svg></div>
+            <h3>A library that resumes</h3>
+            <p>Your documents, reading position, voice and speed are kept; come back tomorrow and carry on.</p>
+          </article>
+          <article class="card feature"><!-- PLAY-6, PLAY-7 -->
+            <div class="icon butter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h1M10 10h1M14 10h1M18 10h0M8 14h8"/></svg></div>
+            <h3>Keyboard and lock screen</h3>
+            <p>Space, arrows and +/− on the keyboard; lock-screen controls on phone browsers.</p>
+          </article>
+          <article class="card feature"><!-- PLAY-8 -->
+            <div class="icon sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4zM16 9l5 6M21 9l-5 6"/></svg></div>
+            <h3>Mute what you skip</h3>
+            <p>Turn off footnotes, captions or the references section with a toggle.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="open" aria-labelledby="open-h">
+      <div class="wrap open-grid">
+        <div>
+          <span class="eyebrow">Open source</span>
+          <h2 id="open-h">Open, and yours</h2>
+          <!-- PRD Overview: problem and vision -->
+          <p>Commercial readers do this well, but they are subscription-gated, closed, and run on their own voices. YomiKoe is an open reading engine: the hard parts, text extraction and playback, are in the open, and the voice is a pluggable backend.</p>
+          <p class="pull">The voice is a backend you can swap; the reader never changes.</p>
+        </div>
+        <div class="card table-card">
+          <table>
+            <caption class="muted" style="caption-side:bottom;text-align:left;padding:0.9rem 1.1rem;font-size:0.85rem">A qualitative comparison, not a benchmark.</caption>
+            <thead>
+              <tr><th scope="col"><span class="visually-hidden">Topic</span></th><th scope="col" class="us">YomiKoe</th><th scope="col">Subscription readers</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Cost</th><td class="us">Free and open source<!-- PRD Overview --></td><td class="them">A subscription</td></tr>
+              <tr><th scope="row">Where it runs</th><td class="us">On your own machine, CPU only, via Docker Compose<!-- PRD Goals; docs/DOCKER.md --></td><td class="them">On the vendor's service</td></tr>
+              <tr><th scope="row">Voices</th><td class="us">Open models behind a swappable backend; Kokoro first<!-- SYN-4 --></td><td class="them">Their own, closed voices</td></tr>
+              <tr><th scope="row">Your documents</th><td class="us">Stay on your machine, in a local library<!-- PRD Storage: SQLite + local filesystem; NOTE section --></td><td class="them">Held by the service</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="start" aria-labelledby="start-h">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Getting started</span>
+          <h2 id="start-h">Run it on your laptop</h2>
+          <!-- docs/DOCKER.md -->
+          <p class="lede">One image, one service. You need a container runtime with Docker Compose v2.</p>
+        </div>
+        <ol class="steps">
+          <li><span><strong>Clone</strong> the repository.</span></li>
+          <li><span><strong>Build and start</strong> with Docker Compose. The first run downloads the Kokoro-82M voice model, which takes a minute or two; later starts run offline.</span></li>
+          <li><span><strong>Open</strong> <code>http://localhost:8765/</code> and drop in a PDF.</span></li>
+        </ol>
+<pre><code><span class="c"># 1. clone</span>
+git clone https://github.com/kris-jskk/yomikoe.git
+cd yomikoe
+
+<span class="c"># 2. build and start (Ctrl-C stops it)</span>
+docker compose up --build
+
+<span class="c"># 3. open http://localhost:8765/ in your browser</span></code></pre>
+      </div>
+    </section>
+
+    <section id="faq" aria-labelledby="faq-h">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Questions</span>
+          <h2 id="faq-h">Good to know</h2>
+        </div>
+        <div class="faq">
+          <details><!-- PRD Goals: laptop with no GPU; Stack: Kokoro-82M on PyTorch CPU; SYN-7 -->
+            <summary>Do I need a GPU?</summary>
+            <p>No. YomiKoe is built to run locally on a laptop with no GPU: the first voice backend, Kokoro-82M, runs on the CPU. A GPU voice is planned as an optional second backend.</p>
+          </details>
+          <details><!-- ING-2 -->
+            <summary>Which PDFs does it read?</summary>
+            <p>Born-digital and scanned PDFs. YomiKoe checks each page for a text layer and runs OCR only on the pages that have none.</p>
+          </details>
+          <details><!-- PRD Milestones item 9, M9 Hosting; Domains (D52) -->
+            <summary>Is there a hosted version?</summary>
+            <p>Coming. A hosted reader at app.yomikoe.app is part of the final milestone. Until then you run YomiKoe yourself with Docker Compose.</p>
+          </details>
+          <details><!-- CLAUDE.md licensing rule; no licence file in the repository -->
+            <summary>What is the licence?</summary>
+            <p>YomiKoe is open source, built on a permissive stack: every dependency and model is under Apache-2.0, MIT or BSD terms, with no copyleft code shipped. For the project's own licence, see the repository.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-row">
+      <a class="wordmark" href="#top">YomiKoe</a>
+      <p class="etym" style="margin:0">yomikoe: yomi (reading) + koe (voice)</p>
+      <ul class="footer-links">
+        <li><a href="https://github.com/kris-jskk/yomikoe">GitHub</a></li>
+        <li><a href="https://github.com/kris-jskk/yomikoe/blob/main/docs/PRD.md">Docs</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>
