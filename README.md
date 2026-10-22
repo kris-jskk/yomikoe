@@ -73,4 +73,4 @@ Models download from the Hugging Face Hub on first run into `$HF_HOME`; set it t
 
 ## Licence
 
-Apache-2.0 (see [LICENSE](LICENSE)). Copyright 2026 the YomiKoe authors. Every dependency and model shipped in v1 is under Apache-2.0, MIT or BSD terms; `api/scripts/check_licences.py` enforces this in the test suite, and vendored components carry their own NOTICE files.
+Apache-2.0 (see [LICENSE](LICENSE)). Copyright 2026 Sowmya Jonnalagadda. Every dependency and model shipped in v1 is under Apache-2.0, MIT or BSD terms; `api/scripts/check_licences.py` enforces this in the test suite, and vendored components carry their own NOTICE files.
