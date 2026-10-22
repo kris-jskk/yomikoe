@@ -31,7 +31,7 @@ def test_eval10_dataset_scores_overall_and_per_class() -> None:
         out = _run(pair)[1]
         by.setdefault(pair["class"], []).append(mathspeak_score([out], [pair["spoken"]]))
     values = [v for vs in by.values() for v in vs]
-    assert len(values) == 158
+    assert len(values) == 160  # +2 rows 2026-10-21 (inline_41 connective, display_53 measure)
     assert sum(values) / len(values) >= OVERALL_MIN
     for cls in ("display", "inline", "symbol", "reference"):
         assert sum(by[cls]) / len(by[cls]) >= CLASS_MIN, cls

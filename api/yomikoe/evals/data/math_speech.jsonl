@@ -156,3 +156,5 @@
 {"id": "reference_18", "class": "reference", "raw": "Proof Suppose the claim fails.", "spoken": "proof, suppose the claim fails.", "block": "body"}
 {"id": "reference_19", "class": "reference", "raw": "Corollary 2 The bound is tight.", "spoken": "corollary 2, the bound is tight.", "block": "body"}
 {"id": "reference_20", "class": "reference", "raw": "Corollary The limit exists.", "spoken": "corollary, the limit exists.", "block": "body"}
+{"id": "display_53", "class": "display", "raw": "∫ φ(x) µ(dx) − ∫ φ(x) ν(dx)", "spoken": "the integral of phi of x with respect to mu minus the integral of phi of x with respect to nu", "block": "equation"}
+{"id": "inline_41", "class": "inline", "raw": "Almost surely, $µ_{T} → π$, or, equivalently, $∫ f dµ_{T} → ∫ f dπ$.", "spoken": "almost surely, mu sub t approaches pi, or, equivalently, the integral of f d mu sub t approaches the integral of f d pi.", "block": "body"}

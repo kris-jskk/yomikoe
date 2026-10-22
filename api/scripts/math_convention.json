@@ -120,7 +120,7 @@
     "\\sum_{i}": "the sum over i of",
     "\\prod_{i=1}^{n}": "the product from i equals 1 to n of",
     "\\int_a^b f dx": "the integral from a to b of f d x",
-    "\\int f": "the integral of f",
+    "\\int f": "the integral of f", "\\int f(x) \\mu(dx)": "the integral of f of x with respect to mu",
     "\\lim_{x \\to a}": "the limit as x approaches a of",
     "\\max_{i}": "the maximum over i of",
     "\\min(a, b)": "the minimum of a and b",
