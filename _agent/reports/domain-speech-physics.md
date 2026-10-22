@@ -24,7 +24,7 @@ FILES WRITTEN     _agent/research/domain-speech/physics.md
                   _agent/results/856_physics_pairs_check.txt
                   _agent/results/857_physics_note_sections.txt
                   _agent/reports/domain-speech-physics.md
-                  (scratch, outside the repo: /private/tmp/claude-502/-Users-user-Documents-Projects-hearnarro/438f4f28-70de-4560-832e-df73c0c83289/scratchpad/probe.py)
+                  (scratch, outside the repo: <scratchpad>/scratchpad/probe.py)
 FILES READ BEYOND THE BRIEF     none (check_math_convention.py grepped for its CLI only)
 
 UNVERIFIED  NIST SP 811 "kilohm"/"megohm" prefix-vowel elision (prior knowledge, not fetched)

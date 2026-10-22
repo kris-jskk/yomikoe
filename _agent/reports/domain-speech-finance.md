@@ -30,7 +30,7 @@ FILES WRITTEN     _agent/research/domain-speech/finance.md
                   _agent/results/866_finance_misaki_g2p.txt
                   _agent/results/867_finance_pairs_check.txt
                   _agent/reports/domain-speech-finance.md
-FILES READ BEYOND THE BRIEF     api/hearnarro/synthesis/compat/ (located via grep only, to import the num2words shim for 866)
+FILES READ BEYOND THE BRIEF     api/yomikoe/synthesis/compat/ (located via grep only, to import the num2words shim for 866)
 
 UNVERIFIED  All §4 respellings except FTSE and REIT (sourced) are proposed, not checked against a dictionary.
             How the Kokoro voice actually sounds for these strings (866 is phonemes, no audio).

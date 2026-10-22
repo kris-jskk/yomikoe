@@ -410,7 +410,7 @@ reading, proposed exception to "r sub 0"); `dN/dS` "d n over d s".
 {"id": "biology_45", "class": "popgen", "raw": "Fst = 0.12, Ne = 500 and R0 = 2.5", "spoken": "f sub s t equals 0.12, n sub e equals 500 and r nought equals 2.5", "block": "paragraph"}
 ```
 
-## 6. Where it hooks in HearNarro (proposal)
+## 6. Where it hooks in YomiKoe (proposal)
 
 - `gene`: SYN-4 acronym table (biology `SPELLED`/`SPOKEN` overrides: TP53 spelled, KRAS, SOX, BRCA spoken) plus
   an ING-6 rule for genotype suffixes (`-/-`, `+/-`, `fl/fl`) and WT/KO expansion.

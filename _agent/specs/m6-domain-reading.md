@@ -38,7 +38,7 @@ flagged, not fixed); restoring scripts beyond what font runs or unambiguous tabl
 
 **Gate** (PRD "Milestones", gate test specified there):
 
-- (a) `test_dom27_domain_speech_floor`: EVAL-11 over `api/hearnarro/evals/data/domain_speech.jsonl`
+- (a) `test_dom27_domain_speech_floor`: EVAL-11 over `api/yomikoe/evals/data/domain_speech.jsonl`
   scores a mean ≥ 0.95 per domain (all six at close) and ≥ 0.90 per `domain/class` with ≥ 3 pairs,
   with zero raw-symbol leaks in the actual text.
 - (b) `test_dom_probe_strings`: the 90 probe strings of results 850, 855, 860, 865, 870, 875 reach
@@ -58,7 +58,7 @@ phase 6; per-phase progress is read from EVAL-11 records (`by_domain`, `by_class
 Staging copy: `_agent/research/domain-speech/domain_speech.jsonl`, 278 rows, keys `id`, `domain`,
 `class`, `raw`, `spoken`, `block`; domains chemistry 44, physics 57, biology 45, finance 40,
 history 45, cs_stats 47; blocks paragraph 235, equation 35, table 6, code 2; 15 rows with upper case in
-`spoken`; 74 `domain/class` pairs (956). Target: `api/hearnarro/evals/data/domain_speech.jsonl` (the
+`spoken`; 74 `domain/class` pairs (956). Target: `api/yomikoe/evals/data/domain_speech.jsonl` (the
 PRD's `evals/data/` means this directory, as M5 decided for `math_speech.jsonl`).
 
 Hygiene steps, in order, each listed in the worker's report with the ids it touched:
@@ -102,8 +102,8 @@ pairs each) and, for DOM-26, by the `segments` key.
 
 ### 1c. EVAL-11 suite
 
-`api/hearnarro/evals/suites/eval11_domain_speech.py`, registered in `SUITES` in
-`api/hearnarro/evals/suites/__init__.py`, mirroring `eval10_mathspeak.py`:
+`api/yomikoe/evals/suites/eval11_domain_speech.py`, registered in `SUITES` in
+`api/yomikoe/evals/suites/__init__.py`, mirroring `eval10_mathspeak.py`:
 
 - `ID = "EVAL-11"`, `TITLE = "Domain speech"`, `TIER = 0`, `DIRECTION = "higher"`,
   `DATA = .../data/domain_speech.jsonl`, `DOMAINS = ("chemistry", "physics", "biology", "finance",
@@ -114,7 +114,7 @@ pairs each) and, for DOM-26, by the `segments` key.
   `merge_blocks` → `split_sentences(..., profile=p)` → `apply_mathspeak(segments, logical, [], p)`),
   with `p = PROSE_DEFAULT.with_fields(fields)` (§2a). A `table` block uses `markup_blocks` with block
   `table`; if the helper cannot build a table block the worker stops and reports (no new helper).
-- `score(example)`: `mathspeak_score([actual], [expected])` from `hearnarro.evals.scorers` (reused,
+- `score(example)`: `mathspeak_score([actual], [expected])` from `yomikoe.evals.scorers` (reused,
   not copied), plus `id`, `domain`, `class`, `dom`, `actual`, `expected`, `leaks` (sorted raw symbols
   from `domains.tables.leak_chars()` found in `actual`, §3d) and, when the pair has `segments`,
   `segments_ok`.
@@ -152,7 +152,7 @@ the EVAL-11 baseline (today's 3 of 90 probe lines correct, PRD table).
 
 ## 2. Profile fields and reading settings (phase 0 for DOM-22; phase 5 for DOM-23)
 
-### 2a. Model (`api/hearnarro/ingestion/profile.py`, extended)
+### 2a. Model (`api/yomikoe/ingestion/profile.py`, extended)
 
 ```python
 Field = Literal["chemistry", "physics", "biology", "clinical", "finance",
@@ -183,7 +183,7 @@ passes no profile, gets the "all" rules only. `to_json` writes the new keys; `fr
 
 ### 2b. Field detection (DOM-22, D45)
 
-`api/hearnarro/ingestion/domains/detect.py`: `detect_fields(blocks: list[LogicalBlock]) ->
+`api/yomikoe/ingestion/domains/detect.py`: `detect_fields(blocks: list[LogicalBlock]) ->
 tuple[frozenset[Field], tuple[tuple[Field, float], ...]]`, called by `compute_profile`. One compiled
 token pattern set per field, loaded from the `detect` section of that field's table (§3d): chemistry
 (formula tokens with a digit or charge, reaction arrows, `(aq)`, `mol`), physics (unit expressions with
@@ -210,7 +210,7 @@ alternative, a column at the next free revision). Alembic revision claims on thi
 | next free | Kindle D44 format (`docs/PRD_KINDLE.md`, deferred) |
 | next free, only if Q6 chooses a column | M6 reading settings |
 
-API (`api/hearnarro/routes/documents.py`): `ProfileIn` gains `fields: list[Field] | None` (absent =
+API (`api/yomikoe/routes/documents.py`): `ProfileIn` gains `fields: list[Field] | None` (absent =
 untouched, `null` = clear the override, an unknown value = 422) and, in phase 5, `reading:
 ReadingIn | None` (each key optional). A change to the effective fields or to any reading setting calls
 `renormalize_document` through the existing `_apply_profile` path (409 while parsing, as today). The
@@ -233,7 +233,7 @@ to the same document menu.
 
 ## 3. Domain-reading package and conventions (phases 1–6; DOM-1..21, D46–D49)
 
-### 3a. Package `api/hearnarro/ingestion/domains/`
+### 3a. Package `api/yomikoe/ingestion/domains/`
 
 | File | Public names | Responsibility | Phase |
 | --- | --- | --- | --- |
@@ -355,7 +355,7 @@ Every rule above has one test in `test_dom1_units.py` named after it.
 
 ### 3d. Convention tables (D48)
 
-Directory `api/hearnarro/ingestion/domains/tables/`. Every file has the shape of
+Directory `api/yomikoe/ingestion/domains/tables/`. Every file has the shape of
 `api/scripts/math_convention.json`: `_comment` (what it is, which spec section, "edit only together
 with this spec"), `version`, named sections mapping a token to its wording, prose `*_rule` strings,
 and `banned` (`[{pattern, use, why}]`). An entry is either a wording string, or an object
@@ -381,7 +381,7 @@ field (D48): biology reads `elements.json` for ions, statistics rows are shared 
 through their `fields` list.
 
 Checker: `api/scripts/check_domain_convention.py`, the shape of `check_math_convention.py`. It
-imports `hearnarro.ingestion.domains.tables` (run as `api/.venv/bin/python
+imports `yomikoe.ingestion.domains.tables` (run as `api/.venv/bin/python
 api/scripts/check_domain_convention.py`), loads every table plus `math_convention.json`, and checks
 every `spoken` of `domain_speech.jsonl`, every `spoken` of `api/tests/fixtures/domain_probes.jsonl`
 and every `say` in the tables: banned wordings of every table (and of `math_convention.json`, which
@@ -445,8 +445,8 @@ where the PRD row names a field.
 
 About 240 respellings from each note's §4 (eponyms, Latin, symbol names, spoken acronyms), in the
 TERM-1 academic lexicon that M5 phase 4 creates. That module does not exist on this branch today
-(956: no `ACADEMIC`, `lexicon_academic` or `EXPANSIONS` in `api/hearnarro`); §8 Q8. EVAL-4 gains six
-categories in `api/hearnarro/evals/data/speech_form.jsonl`: `chemistry`, `physics`,
+(956: no `ACADEMIC`, `lexicon_academic` or `EXPANSIONS` in `api/yomikoe`); §8 Q8. EVAL-4 gains six
+categories in `api/yomikoe/evals/data/speech_form.jsonl`: `chemistry`, `physics`,
 `biology_medicine`, `finance_economics`, `humanities_law`, `computing_statistics` (PRD names), at least
 20 pairs each in the existing pair shape, expected sides as respellings where the pronunciation differs
 from spelling. Phonemes are checked against the Kokoro vocab by the existing backend test pattern; one
@@ -489,7 +489,7 @@ Test names carry the DOM id (`test_dom1_square_before_length`, CLAUDE.md).
 
 ### 5a. DOM row map
 
-| DOM | Phase | Module (under `api/hearnarro/ingestion/` unless stated) | Tests | EVAL-11 class(es) |
+| DOM | Phase | Module (under `api/yomikoe/ingestion/` unless stated) | Tests | EVAL-11 class(es) |
 | --- | --- | --- | --- | --- |
 | DOM-1 | 1 | `domains/units.py`, `tables/units.json`, `mathspeak/symbols.py` (`rewrite_units`) | `test_dom1_units.py` | chemistry/units, physics/units, physics/temperature, biology/lab_unit |
 | DOM-2 | 1 | `domains/units.py` (`ambiguous`) | `test_dom2_unit_variable.py` | physics/unit_vs_variable, negative |
@@ -557,10 +557,10 @@ wording to the supervisor, who forwards it to p5a.
 
 ## 7. Phases and evidence
 
-Tier-0 eval rule (CLAUDE.md, D31–D34): every brief that touches `api/hearnarro/ingestion/`,
-`api/hearnarro/synthesis/` or the lexicon and acronym tables lists under EVIDENCE
-`api/.venv/bin/python -m hearnarro.evals run all --tier 0` **before** the first edit and **after** the
-last, plus `python -m hearnarro.evals compare <before> <after>`, saved under `_agent/results/` and cited
+Tier-0 eval rule (CLAUDE.md, D31–D34): every brief that touches `api/yomikoe/ingestion/`,
+`api/yomikoe/synthesis/` or the lexicon and acronym tables lists under EVIDENCE
+`api/.venv/bin/python -m yomikoe.evals run all --tier 0` **before** the first edit and **after** the
+last, plus `python -m yomikoe.evals compare <before> <after>`, saved under `_agent/results/` and cited
 in the commit message. Every D33 regression in the compare is explained in the report. Expected
 movement is named in the brief so it is not mistaken for a regression (per phase below). Commands run
 from `api/` with `PATH=/opt/homebrew/bin:$PATH` (tesseract, M5 §8 Q3). Python only through

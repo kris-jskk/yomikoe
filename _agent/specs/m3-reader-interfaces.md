@@ -3,7 +3,7 @@
 Written 2026-10-17 at the start of M3, before any worker runs. Source of truth for mechanisms:
 `docs/TECHNICAL_DESIGN.md` "Audio delivery and playback (D5)", "Highlight sync (D8)", "Frontend
 architecture (D10)", "Testing strategy (D11)" (row "Playback (browser)"); requirements PLAY-1..PLAY-5
-in `docs/PRD.md`. Server contract: `docs/CODE_MAP_M2.md` (audio) and `api/hearnarro/routes/documents.py`
+in `docs/PRD.md`. Server contract: `docs/CODE_MAP_M2.md` (audio) and `api/yomikoe/routes/documents.py`
 (documents, segments). Branch `m3-reader`. App root `web/`. Tests are written against this file before
 the code exists. Decisions proposed here are numbered D20..D24 and go into the design decision log and
 the PRD when the user confirms them (worker task in phase 3).
@@ -43,7 +43,7 @@ client therefore does not need a "flush" call for PLAY-4; it only has to stop re
 voice/speed and request the new one.
 
 **D21 (proposed): dev access without CORS.** The API stays CORS-free. `vite.config.ts` proxies
-`/documents`, `/audio`, `/voices` to `http://127.0.0.1:8765` (overridable with `HEARNARRO_API`).
+`/documents`, `/audio`, `/voices` to `http://127.0.0.1:8765` (overridable with `YOMIKOE_API`).
 Production serving of `web/dist` by FastAPI is an M4 item.
 
 ## 2. Toolchain (phase 0)
@@ -224,7 +224,7 @@ first mapped timestamp if the clip is known, else 0}`; a click elsewhere in `.se
 
 **Instrumentation (D19 measurement):** `firstAudio.startedAt - requestedAt` is shown in the PlayerBar stats
 readout ("first audio 0.83 s") together with the last clip's `fetchMs`, `decodeMs` and `mediaType`, and is
-logged with `console.info('hearnarro:first-audio', {ms, speed, voice, segmentId, textLength})`. Phase 3
+logged with `console.info('yomikoe:first-audio', {ms, speed, voice, segmentId, textLength})`. Phase 3
 collects these numbers against Kokoro at 0.5x, 1.0x, 2.0x on the user's documents and the supervisor
 decides whether clause chunking (D19) is needed in M3 or deferred.
 
@@ -266,16 +266,16 @@ offsets round-trip, `mapTimestampsToTokens` on FakeBackend-shaped timestamps (ev
 spans) and on a timestamp spanning two tokens, `locate` with three entries and a gap, `findActiveWord`
 boundaries (before first, between words, after last).
 
-**E2E (Playwright).** `fixtures.ts` starts the API (`python -m hearnarro serve --data-dir <tmp> --port <free>`
-with `HEARNARRO_TTS_BACKEND=fake`), uploads `api/tests/fixtures/pdfs/<one fixture with ≥ 30 prose segments,
+**E2E (Playwright).** `fixtures.ts` starts the API (`python -m yomikoe serve --data-dir <tmp> --port <free>`
+with `YOMIKOE_TTS_BACKEND=fake`), uploads `api/tests/fixtures/pdfs/<one fixture with ≥ 30 prose segments,
 named in the brief>`, polls `GET /documents/{id}` until ready, starts Vite (`webServer` in
-`playwright.config.ts` with `HEARNARRO_API` pointing at the temp API). Chromium launches with
+`playwright.config.ts` with `YOMIKOE_API` pointing at the temp API). Chromium launches with
 `--autoplay-policy=no-user-gesture-required`. Test steps in `play.spec.ts` (requirement IDs in test names):
 
 1. PLAY-1/PLAY-5: open `#/doc/{id}`, click Play, state becomes `playing`; at t = 3 s, 8 s, 15 s read the
    active `.w` (`data-i`) and its segment `data-order`, and compare with the expected position computed
    from the FakeBackend rule (80 ms / speed per word, words back to back, segments back to back, t0 read
-   from the page's `window.__hearnarro.firstStartAt`, exposed by the hook in dev/test builds only): the
+   from the page's `window.__yomikoe.firstStartAt`, exposed by the hook in dev/test builds only): the
    expected word index must match within ±1 word at each probe.
 2. PLAY-3: click the first token of segment order 12; within 500 ms the active segment is order 12 and
    the request log shows `GET /audio/{id of order 12}`.
@@ -284,7 +284,7 @@ named in the brief>`, polls `GET /documents/{id}` until ready, starts Vite (`web
    carries `speed=2.00` (the lookahead was re-requested at the new speed).
 4. PLAY-1: ⏭ sentence advances `data-order` by 1; ⏭ section jumps to a section's `first_segment_id`.
 5. PLAY-5: with every clip already cached (second play of the same document), the gap between consecutive
-   entries' `startAt + duration` and the next `startAt` is 0 (read from `window.__hearnarro.entries`), for
+   entries' `startAt + duration` and the next `startAt` is 0 (read from `window.__yomikoe.entries`), for
    at least 5 boundaries.
 
 `decode.spec.ts`: for each browser project, `fetch` `tests/e2e/fixtures/{tone.wav, tone.ogg}` (Ogg Opus

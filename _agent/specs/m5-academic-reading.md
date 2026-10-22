@@ -86,12 +86,12 @@ is a comment. Lines are written by hand from the page; the pipeline output is ne
 
 ### 1b. Datasets
 
-- `api/hearnarro/evals/data/math_speech.jsonl` (same directory as `speech_form.jsonl`; the PRD's
+- `api/yomikoe/evals/data/math_speech.jsonl` (same directory as `speech_form.jsonl`; the PRD's
   `evals/data/` means this directory, Q2): one pair per line, `{"id", "class", "raw", "spoken",
   "block"}`; `class` in `display`, `inline`, `symbol`, `reference` (the EVAL-10 aggregates, PRD EVAL-10);
   `block` is `equation` or `body` (how the raw text is presented to the pipeline). At least 150 pairs,
   every MATH-3 symbol at least once, every MATH-4 reference form at least twice.
-- `api/hearnarro/evals/data/speech_form.jsonl` gains categories (gate clause c): `math_symbol`,
+- `api/yomikoe/evals/data/speech_form.jsonl` gains categories (gate clause c): `math_symbol`,
   `math_unit`, `math_chem`, `math_reference` (MATH-3, MATH-4) and `term_math`, `term_stats`,
   `term_physics`, `term_chem`, `term_bio`, `term_cs`, `term_latin_greek`, `term_surname`,
   `term_abbreviation`, `term_citation` (TERM-1, TERM-3, TERM-4); 20 pairs each, in the existing pair
@@ -100,13 +100,13 @@ is a comment. Lines are written by hand from the page; the pipeline output is ne
 
 ### 1c. EVAL-10 suite
 
-`api/hearnarro/evals/suites/eval10_mathspeak.py`, registered in `SUITES` in
-`api/hearnarro/evals/suites/__init__.py` (module contract there: `ID = "EVAL-10"`, `TITLE`, `TIER = 0`,
+`api/yomikoe/evals/suites/eval10_mathspeak.py`, registered in `SUITES` in
+`api/yomikoe/evals/suites/__init__.py` (module contract there: `ID = "EVAL-10"`, `TITLE`, `TIER = 0`,
 `dataset()`, `score(example)`, `aggregate(scores)`):
 
 - Examples: one per `math_speech.jsonl` pair, plus one per formula fixture (`class` = `fixture`).
 - `score`: `1 - seq_levenshtein(actual, expected) / max(1, len(expected))` over
-  `scorers.norm`-normalised word lists (`api/hearnarro/evals/scorers.py`), clamped at 0; the same
+  `scorers.norm`-normalised word lists (`api/yomikoe/evals/scorers.py`), clamped at 0; the same
   function the gate test uses, defined once as `mathspeak_score(actual: list[str], expected: list[str])
   -> float` in `scorers.py`.
 - Actual text of a fixture: the `normalized_text` of the segments selected by `math_segments(result)`
@@ -132,15 +132,15 @@ their OCR text when an engine is present and are otherwise skipped, the threshol
 2 mismatches among the documents classified". Q3 in §7: the supervisor decides whether the gate may
 close with these skips or tesseract must be installed first.
 
-Red means: the test file imports `hearnarro.ingestion.profile.compute_profile` and
-`hearnarro.evals.scorers.mathspeak_score`, both absent at phase 1, so it fails at collection until the
+Red means: the test file imports `yomikoe.ingestion.profile.compute_profile` and
+`yomikoe.evals.scorers.mathspeak_score`, both absent at phase 1, so it fails at collection until the
 phase 2 and 3 code lands. Save that failing run as the red evidence.
 
 ## 2. Document profile (phase 2; ING-11, D40)
 
 ### 2a. Module
 
-`api/hearnarro/ingestion/profile.py` (new):
+`api/yomikoe/ingestion/profile.py` (new):
 
 ```python
 ProfileClass = Literal["prose", "mixed", "math"]
@@ -178,7 +178,7 @@ lands it, inline mass is 0 and the class rests on display equations (the worker 
 
 ### 2b. Where it hooks (settles the ordering question)
 
-The profile pass runs **before** mathspeak, in `ingest()` (`api/hearnarro/ingestion/pipeline.py`):
+The profile pass runs **before** mathspeak, in `ingest()` (`api/yomikoe/ingestion/pipeline.py`):
 
 ```
 pages = classify_pages(pages)
@@ -214,26 +214,26 @@ run one fixture under each class.
 
 ### 2c. Storage and API
 
-- Migration `api/hearnarro/storage/migrations/versions/0005_profile_math.py` (revision `"0005"`,
+- Migration `api/yomikoe/storage/migrations/versions/0005_profile_math.py` (revision `"0005"`,
   `down_revision = "0004"`, the `ALTER TABLE ... ADD COLUMN` pattern of `0004_ocr_skipped_pages.py`):
   `documents.profile_json TEXT` (NULL for documents ingested before 0005, read as `PROSE_DEFAULT`) and
   `segments.math_json TEXT` (phase 3 writes it; NULL means no maths). One migration owns both columns
   so phases 2 and 3 never write two migration files at once; the phase 2 worker writes it.
-- `api/hearnarro/storage/jobs.py` `_write_result`: writes `profile_json` next to `acronyms_json`.
-- `api/hearnarro/storage/repo.py`: `get_document_profile(conn, document_id) -> DocumentProfile`;
+- `api/yomikoe/storage/jobs.py` `_write_result`: writes `profile_json` next to `acronyms_json`.
+- `api/yomikoe/storage/repo.py`: `get_document_profile(conn, document_id) -> DocumentProfile`;
   `set_profile_override(conn, document_id, cls: ProfileClass | None, author_year: str | None) -> None`.
-- `api/hearnarro/routes/documents.py` `_document_summary`: adds `profile` = `{class, computed_class,
+- `api/yomikoe/routes/documents.py` `_document_summary`: adds `profile` = `{class, computed_class,
   override, math_share, code_share, citation_style, scanned_share, author_year_citations}` (LIB-1).
 - `PATCH /documents/{document_id}` body gains optional `profile: {class: "prose"|"mixed"|"math"|null,
   author_year_citations: "read"|"skip"}` (`null` class clears the override). When either value changes
   the route runs the re-normalize below and returns the summary plus `renormalized: {changed, removed}`.
   422 for an unknown class; 409 while `status == 'parsing'` (same rule as DELETE).
 - Re-normalize path (no re-ingest, D40): `renormalize_document(conn, document_id, data_dir)` in
-  `api/hearnarro/cli.py` reads the profile and each segment's `math_json`, and calls
+  `api/yomikoe/cli.py` reads the profile and each segment's `math_json`, and calls
   `normalize(text, heading=..., profile=..., math_spans=...)` then `speak_segment(...)` (§3a) — the
   same two calls ingestion makes, so stored and re-normalized output agree. It already deletes the
   changed segments' `audio_cache` rows. The route calls it in a worker thread
-  (`asyncio.to_thread`) on a sync connection; `hearnarro renormalize` keeps its flags.
+  (`asyncio.to_thread`) on a sync connection; `yomikoe renormalize` keeps its flags.
 
 ### 2d. Web
 
@@ -255,7 +255,7 @@ numerator and a denominator are separate spans or lines with their own bboxes. I
 finer unit (a fraction rule with no text, per-glyph baselines inside one span), the worker reports it
 and stops for a decision; widening stage 1 changes `extract.py` and the goldens (Q5).
 
-Additions to `api/hearnarro/ingestion/models.py`:
+Additions to `api/yomikoe/ingestion/models.py`:
 
 ```python
 @dataclass
@@ -278,7 +278,7 @@ inline `MathSpan` over the characters it added; a math-font run inside a body li
 `classify.py`) records an inline `MathSpan` too. Invariant, tested: `block.text[s.start:s.end]` equals
 the joined text of `s.runs` up to the whitespace merge_lines changes.
 
-### 3b. Package `api/hearnarro/ingestion/mathspeak/`
+### 3b. Package `api/yomikoe/ingestion/mathspeak/`
 
 | File | Public names | Responsibility |
 | --- | --- | --- |
@@ -495,7 +495,7 @@ Additions (append-only, one dated line each; task m5-p3g-reader-2):
 
 ### 4a. Phase 4: academic lexicon (TERM-1)
 
-`api/hearnarro/synthesis/lexicon_academic.py` (new; data, written by the project, no licence import):
+`api/yomikoe/synthesis/lexicon_academic.py` (new; data, written by the project, no licence import):
 `ACADEMIC: dict[str, dict[str, str]]` keyed by domain (`math`, `stats`, `physics`, `chem`, `bio`, `cs`,
 `latin_greek`, `surname`) mapping a lower-case word to misaki US phonemes, the format of
 `lexicon_overrides.OVERRIDES`; `flat() -> dict[str, str]`. Precedence in `KokoroBackend` (where
@@ -511,10 +511,10 @@ where a tier is wrong, with the EVAL-4 `term_*` pair as the evidence (same rule 
   `pronunciations(id INTEGER PK, document_id INTEGER NULL REFERENCES documents(id) ON DELETE CASCADE,
   word TEXT NOT NULL, respelling TEXT NOT NULL, created_at TEXT, UNIQUE(document_id, word))`;
   `document_id` NULL is the global lexicon. `word` is stored lower case.
-- `api/hearnarro/storage/repo.py`: `list_pronunciations(conn, document_id: int | None)`,
+- `api/yomikoe/storage/repo.py`: `list_pronunciations(conn, document_id: int | None)`,
   `put_pronunciation(conn, document_id, word, respelling)`, `delete_pronunciation(conn, id)`,
   `pronunciations_for(conn, document_id) -> dict[str, str]` (global merged under per-document).
-- Routes, new file `api/hearnarro/routes/pronunciations.py`, registered in `app.py` before the static
+- Routes, new file `api/yomikoe/routes/pronunciations.py`, registered in `app.py` before the static
   mount: `GET /pronunciations?document_id=N` (omit for global), `PUT /pronunciations` body
   `{document_id: int|null, word, respelling}` → the row plus `invalidated: int`, `DELETE
   /pronunciations/{id}` → `{invalidated: int}`. 422 for an empty word or a respelling with no letter.
@@ -546,7 +546,7 @@ In `normalize.py` (stage 5, same single-pass `_PATTERN` and `emit` mechanism as 
   (`surname` domain). The toggle is a document setting (PATCH `profile.author_year_citations`, §2c) and
   re-normalizes; it is not a player-side skip, because a citation is inside a sentence and the player
   skips whole segments (Q6).
-- TERM-4: `api/hearnarro/ingestion/expansions.py` (new, data): `EXPANSIONS: dict[str, str]` for i.e.,
+- TERM-4: `api/yomikoe/ingestion/expansions.py` (new, data): `EXPANSIONS: dict[str, str]` for i.e.,
   e.g., cf., w.r.t., resp., s.t., iff, w.l.o.g., viz., et seq., ibid., op. cit. ("that is", "for
   example", "compare", "with respect to", "respectively", "such that", "if and only if", "without loss
   of generality", "namely", "and following", "in the same place", "in the work cited"). "Configurable"
@@ -587,14 +587,14 @@ baseline with no new failures.
 
 ### 4e. Phase 5: pauses (SYN-8 pause part)
 
-`api/hearnarro/synthesis/pauses.py` (new): `PAUSE_MS: dict[str, int] = {"heading": 600, "list": 250,
+`api/yomikoe/synthesis/pauses.py` (new): `PAUSE_MS: dict[str, int] = {"heading": 600, "list": 250,
 "equation": 400}` (tunable; others 0) and `pad_tail(pcm: bytes, sample_rate: int, ms: int) -> bytes`.
 `SynthesisService._synthesize_and_store` appends the pause after `trim_silence` and after any WSOLA
 stretch (so it is real time, not stretched); word timestamps are unchanged (trailing silence only).
 The service needs the segment's block type: `get_segment_row` / `ServiceRepo.get_segment` return it
 (join `blocks` as `renormalize_document` does). Theorem-style openers pause inside the sentence through
 the comma of §3b. Cached clips made before this change have no pause; the phase 5 worker runs
-`hearnarro purge-audio` on its own test documents only, and the cost to existing libraries is a
+`yomikoe purge-audio` on its own test documents only, and the cost to existing libraries is a
 re-synthesis of heading, list and equation segments, stated in the report (Q7 asks whether the pause
 should instead be a client-side scheduling gap, which needs no cache change).
 
@@ -630,7 +630,7 @@ should instead be a client-side scheduling gap, which needs no cache change).
 | Phase | Worker | Owns |
 | --- | --- | --- |
 | 1 | fixtures | `api/tests/fixtures/pdfs/formula_*`, `manifest.json`, `ATTRIBUTION.md`, `README.md` (fixture class line), `api/scripts/cut_fixture_page.py` |
-| 1 | eval + gate | `api/hearnarro/evals/data/math_speech.jsonl`, `speech_form.jsonl` (new categories), `evals/suites/eval10_mathspeak.py`, `evals/suites/__init__.py`, `evals/scorers.py` (`mathspeak_score`), `api/tests/test_m5_gate_mathspeak.py`, `api/tests/test_eval10_suite.py` |
+| 1 | eval + gate | `api/yomikoe/evals/data/math_speech.jsonl`, `speech_form.jsonl` (new categories), `evals/suites/eval10_mathspeak.py`, `evals/suites/__init__.py`, `evals/scorers.py` (`mathspeak_score`), `api/tests/test_m5_gate_mathspeak.py`, `api/tests/test_eval10_suite.py` |
 | 2 | profile (one worker; it touches the pipeline) | `ingestion/profile.py`, `ingestion/pipeline.py`, `ingestion/segment.py`, `ingestion/normalize.py` (profile and `math_spans` parameters, bracket rule only), `storage/migrations/versions/0005_profile_math.py`, `storage/jobs.py`, `storage/repo.py`, `routes/documents.py`, `cli.py`, `test_ing11_profile*.py`, `test_syn1_renormalize_cli.py` |
 | 2 | web badge (parallel) | `web/src/api/types.ts`, `web/src/components/Library.tsx`, `components/libraryFormat.ts`, `web/tests/unit/library.test.ts`, `web/tests/e2e/profile.spec.ts` |
 | 3 | mathspeak | `ingestion/mathspeak/**`, `ingestion/models.py`, `ingestion/merge.py`, `ingestion/segment.py` (`code` like `equation`), `ingestion/pipeline.py` (the `apply_mathspeak` call only), `storage/jobs.py` (`math_json` write only), `cli.py` (`speak_segment` call only), `test_math*.py`, `test_ing7_tables.py` |
@@ -650,10 +650,10 @@ the later phase starts from the earlier phase's commit.
 
 ## 7. Phases and evidence
 
-Tier-0 eval rule (CLAUDE.md, D31–D34): every brief that touches `api/hearnarro/ingestion/`,
-`api/hearnarro/synthesis/` or the lexicon and acronym tables lists, under EVIDENCE,
-`api/.venv/bin/python -m hearnarro.evals run all --tier 0` **before** the first edit and **after** the
-last, plus `python -m hearnarro.evals compare <before> <after>`, each saved under `_agent/results/` and
+Tier-0 eval rule (CLAUDE.md, D31–D34): every brief that touches `api/yomikoe/ingestion/`,
+`api/yomikoe/synthesis/` or the lexicon and acronym tables lists, under EVIDENCE,
+`api/.venv/bin/python -m yomikoe.evals run all --tier 0` **before** the first edit and **after** the
+last, plus `python -m yomikoe.evals compare <before> <after>`, each saved under `_agent/results/` and
 cited in the commit message. Every regression in the compare (D33: a per-example drop over 0.01,
 10 % on a timing, 1 on a count, or a new failure) is explained in the report. Expected movement is
 named in the brief so it is not mistaken for a regression: phase 3 moves EVAL-4 `equation_cue` and
@@ -680,7 +680,7 @@ not reported closed until its gate clause runs are saved and the guide says so (
 
 - Q1: the `profile` field of gate (e) goes in `manifest.json` (spec choice) rather than a sidecar
   file; confirm, since the PRD says "expected file".
-- Q2: `math_speech.jsonl` lives at `api/hearnarro/evals/data/` with the other datasets; the PRD writes
+- Q2: `math_speech.jsonl` lives at `api/yomikoe/evals/data/` with the other datasets; the PRD writes
   `evals/data/`.
 - Q3: tesseract is absent, so the scanned formula page in (b) and the six image-only documents in (e)
   are skipped; may the gate close with the skips, or is installing tesseract a phase 1 prerequisite?
@@ -695,7 +695,7 @@ not reported closed until its gate clause runs are saved and the guide says so (
 ## 8. Open points: supervisor decisions (2026-10-17)
 
 - Q1 `profile` lives in `manifest.json` per fixture. Decided.
-- Q2 Datasets live in `api/hearnarro/evals/data/`; the PRD's `evals/data/` wording is synced in phase 6. Decided.
+- Q2 Datasets live in `api/yomikoe/evals/data/`; the PRD's `evals/data/` wording is synced in phase 6. Decided.
 - Q3 Tesseract 5.5.3 IS installed at `/opt/homebrew/bin` (M4 close). Every worker runs commands with
   `PATH=/opt/homebrew/bin:$PATH`; the scanned cases are never skipped at close, and the `@pytest.mark.ocr`
   skip in §1d applies only on a machine without the binary. The spec's "not installed" sentence is wrong.

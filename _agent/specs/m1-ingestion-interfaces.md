@@ -2,7 +2,7 @@
 
 Tests are written against this file before the code exists; the implementation must match it
 exactly. Algorithms come from `docs/TECHNICAL_DESIGN.md`, "Ingestion pipeline" and "Segment
-model"; requirement IDs from `docs/PRD.md`. Package root: `api/hearnarro/ingestion/`.
+model"; requirement IDs from `docs/PRD.md`. Package root: `api/yomikoe/ingestion/`.
 Run everything with `api/.venv/bin/python` (Python 3.11, deps installed). Use `import pymupdf`,
 not `fitz`.
 
@@ -178,7 +178,7 @@ def ingest(pdf_path: str | Path, *, document_id: int = 0, ocr: bool = True) -> I
 
 ## cli.py  (M1 "CLI that dumps a PDF's segments to stdout")
 
-`hearnarro dump <pdf> [--jsonl]`: plain mode prints `order<TAB>type<TAB>text` per segment; `--jsonl`
+`yomikoe dump <pdf> [--jsonl]`: plain mode prints `order<TAB>type<TAB>text` per segment; `--jsonl`
 prints one JSON object per segment: `{"order", "page", "type", "text"}` (page/type from the segment's
 LogicalBlock). `--jsonl` output IS the `name.expected.jsonl` format.
 

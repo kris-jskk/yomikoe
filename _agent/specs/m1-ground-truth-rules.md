@@ -9,7 +9,7 @@ Format: one JSON object per line, keys `order` (0..N-1, renumbered after editing
 
 ## Start from the parser's draft
 
-`cd api && .venv/bin/python -m hearnarro dump tests/fixtures/pdfs/<stem>.pdf --jsonl --no-ocr`
+`cd api && .venv/bin/python -m yomikoe dump tests/fixtures/pdfs/<stem>.pdf --jsonl --no-ocr`
 is the draft. Keep its sentence boundaries and its extracted text verbatim wherever the order is
 right; the test measures order, not extraction quality. Do not retype table cells or fix ligature
 glitches. Change only what the rules below require.

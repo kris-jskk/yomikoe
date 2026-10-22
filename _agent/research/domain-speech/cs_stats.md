@@ -552,7 +552,7 @@ Note on `cs_stats_44`: §3c gives "x to the minus 1"; a teacher usually says "x 
 matrix (open question 2). Note on `cs_stats_45`: "pseudo inverse" without a hyphen because the checker
 treats `-` as a raw minus.
 
-## 6. Where it hooks in HearNarro (proposal)
+## 6. Where it hooks in YomiKoe (proposal)
 
 | Class | Hook |
 | --- | --- |

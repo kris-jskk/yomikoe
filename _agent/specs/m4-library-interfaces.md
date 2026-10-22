@@ -18,7 +18,7 @@ Out of scope: PLAY-9 export, the PDF page view (M5), virtualised rendering unles
 (D29), iOS background playback (open question stays open; the muted `<audio>` workaround is not built).
 
 **Gate** (PRD: "300-page soak passes; Docker up"):
-1. API soak (`api/tests/test_soak_300.py`, `@pytest.mark.soak`, on with `HEARNARRO_TEST_SOAK=1`): a
+1. API soak (`api/tests/test_soak_300.py`, `@pytest.mark.soak`, on with `YOMIKOE_TEST_SOAK=1`): a
    generated 300-page text PDF ingests to `ready` in under 300 s wall time on this laptop with peak RSS
    under 1.5 GB; every segment page returns in order; `/audio` serves the first and the last segment with
    `FakeBackend`; `DELETE` removes everything it created.
@@ -33,7 +33,7 @@ Out of scope: PLAY-9 export, the PDF page view (M5), virtualised rendering unles
 ## 1. Server contract (phase 1)
 
 Existing routes are unchanged in meaning: `POST /documents`, `GET /documents`, `GET /documents/{id}`,
-`GET /documents/{id}/segments`, `GET /audio/{segment_id}`, `GET /voices` (`api/hearnarro/routes/`).
+`GET /documents/{id}/segments`, `GET /audio/{segment_id}`, `GET /voices` (`api/yomikoe/routes/`).
 The `documents` table already has `voice_id`, `speed`, `position_segment_id`, `position_offset_ms`,
 `last_opened_at`; the `settings` table exists (`docs/TECHNICAL_DESIGN.md` "Storage"). No migration is
 needed for LIB-1..4 unless a worker finds a missing column; then Alembic `0004_*`.
@@ -45,9 +45,9 @@ needed for LIB-1..4 unless a worker finds a missing column; then Alembic `0004_*
 | `PATCH /documents/{id}` | JSON body, every key optional: `position: {segment_id, offset_ms}`, `settings: {voice_id, speed}` (either may be null to clear), `opened: true` sets `last_opened_at = now`. Returns the summary. 404 unknown document; 422 if `segment_id` is not one of the document's segments. Must accept `fetch(..., {keepalive: true})` from `pagehide` (D26) | LIB-2, LIB-3 |
 | `DELETE /documents/{id}` | 204; deletes rows (cascade), `pdfs/{sha256}.pdf`, `audio/{id}/`; 404 unknown; 409 while `status == 'parsing'` | LIB-4 |
 | `GET /settings`, `PUT /settings` | `{default_voice_id: str|null, default_speed: float}`; `default_speed` 1.25 when unset (user decision, M3 spec §6); PUT validates speed in [0.5, 3.0] | LIB-3 |
-| Static web (D21) | `app.py` mounts `web/dist` (path from `HEARNARRO_WEB_DIST`, default `<repo>/web/dist` if it exists) at `/` with `html=True` AFTER the routers; `/documents`, `/audio`, `/voices`, `/settings` keep winning. No SPA fallback is needed: the client uses hash routes (`web/src/App.tsx`). When the directory is absent, `/` returns 404 and the API still serves | D21 |
-| `hearnarro purge-audio --document-id N [--segment-id S] [--voice V] [--speed X]` | CLI (`api/hearnarro/cli.py`) deletes matching `audio_cache` rows and files; prints the count. For A/B measurements on the same segments (cost review 2, action 4) | D19 |
-| ING-8 sections | Ingestion writes `sections` rows from heading blocks: `title` = block text, `level` = 1 for every heading in v1 (classify has no heading rank), `first_segment_id` = first segment of that block; segments carry `section_id`. `hearnarro renormalize` does not rebuild sections; a document ingested before this change keeps `sections` empty and the client keeps deriving them (D25) | ING-8 |
+| Static web (D21) | `app.py` mounts `web/dist` (path from `YOMIKOE_WEB_DIST`, default `<repo>/web/dist` if it exists) at `/` with `html=True` AFTER the routers; `/documents`, `/audio`, `/voices`, `/settings` keep winning. No SPA fallback is needed: the client uses hash routes (`web/src/App.tsx`). When the directory is absent, `/` returns 404 and the API still serves | D21 |
+| `yomikoe purge-audio --document-id N [--segment-id S] [--voice V] [--speed X]` | CLI (`api/yomikoe/cli.py`) deletes matching `audio_cache` rows and files; prints the count. For A/B measurements on the same segments (cost review 2, action 4) | D19 |
+| ING-8 sections | Ingestion writes `sections` rows from heading blocks: `title` = block text, `level` = 1 for every heading in v1 (classify has no heading rank), `first_segment_id` = first segment of that block; segments carry `section_id`. `yomikoe renormalize` does not rebuild sections; a document ingested before this change keeps `sections` empty and the client keeps deriving them (D25) | ING-8 |
 
 **D26 (proposed):** position saves go through the same `PATCH` as settings, sent with
 `fetch(..., {keepalive: true})` on `pagehide`; `navigator.sendBeacon` is not used (it cannot send PATCH
@@ -67,7 +67,7 @@ pure), `player/mediaSession.ts` (handlers, pure wrapper), `player/skip.ts` (skip
 | Position restore | On load, if `position.segment_id` is set, the reader scrolls to it and the first Play starts at that segment at `offset_ms` (clamped to the clip). `opened: true` is sent once per open | LIB-2 |
 | Settings | On open: document `settings` if set, else `GET /settings` defaults. A voice or speed change in the reader `PATCH`es `settings` for that document (debounced 500 ms). The library's default controls never change an opened document's own settings | LIB-3 |
 | Keyboard | One `keydown` listener on `document`: Space play/pause, `←`/`→` skip sentence, `Shift+←`/`Shift+→` skip section, `+`/`=` speed +0.25, `-` speed −0.25, clamped to [0.5, 3.0]. Ignored when the event target is an input, select, textarea or contenteditable | PLAY-6 |
-| Media Session | `navigator.mediaSession` (feature-detected): metadata title = document title, artist "HearNarro"; handlers play, pause, previoustrack, nexttrack map to the same dispatches as the keys; `playbackState` mirrors the machine. Lock-screen behaviour on a phone is a manual check | PLAY-7 |
+| Media Session | `navigator.mediaSession` (feature-detected): metadata title = document title, artist "YomiKoe"; handlers play, pause, previoustrack, nexttrack map to the same dispatches as the keys; `playbackState` mirrors the machine. Lock-screen behaviour on a phone is a manual check | PLAY-7 |
 | Skip toggles | Three toggles in `PlayerBar`: footnotes (segments whose block `type` is `footnote`), captions (`caption`), references (every segment from a heading whose text matches `/^(references|bibliography|works cited)\b/i` up to the next heading). Skipped segments are not scheduled, are rendered dimmed, and are jumped over by skip and seek. State lives in the machine (`skip: {footnotes, captions, references}`) and is persisted per document in `localStorage` (per-viewer convenience, wrapped in try/catch) | PLAY-8 |
 
 The machine (`player/machine.ts`, D10) gains events `SET_SKIP`, `RESTORE_POSITION`, `TICK_SAVE`; the
@@ -110,12 +110,12 @@ fake backend in M4.
   no new dependency); otherwise the M3 "load everything" stays.
 - **Docker (D30, proposed):** with D21 the API serves the built app, so Compose runs one service, `api`,
   built from `api/Dockerfile` (python:3.11-slim, `pip install .[tts]`, Kokoro revision pinned from config,
-  `HF_HOME` on the `hf_home` volume, `HEARNARRO_DATA_DIR=/data` on a bind mount, port 8765). A multi-stage
+  `HF_HOME` on the `hf_home` volume, `YOMIKOE_DATA_DIR=/data` on a bind mount, port 8765). A multi-stage
   build runs `npm ci && npm run build` in a `node:24` stage and copies `web/dist` into the image. The `web`
   service in the current `docker-compose.yml` is removed. The compose file and Dockerfiles are
   lint-checked here (`docker compose config` is not available; a worker validates YAML and shell syntax)
   and built by the user.
-- **D19 A/B (optional, user's call):** `hearnarro purge-audio` then `web/scripts/measure_first_audio.mjs`
+- **D19 A/B (optional, user's call):** `yomikoe purge-audio` then `web/scripts/measure_first_audio.mjs`
   on the same segments with and without clause chunking of the first sentence at speeds under 1.0.
 
 ## 5. Tests (write red first)
@@ -135,9 +135,9 @@ fake backend in M4.
 
 | Owner | Files |
 | --- | --- |
-| server-lib worker | `api/hearnarro/routes/documents.py`, `routes/settings.py` (new), `storage/repo.py`, `app.py`, `cli.py`, `ingestion/pipeline.py` (sections only), tests listed for phase 1 |
+| server-lib worker | `api/yomikoe/routes/documents.py`, `routes/settings.py` (new), `storage/repo.py`, `app.py`, `cli.py`, `ingestion/pipeline.py` (sections only), tests listed for phase 1 |
 | client worker(s) | `web/src/**`, `web/tests/**` split by file in the briefs |
-| ingestion worker | `api/hearnarro/ingestion/*`, `synthesis/compat/*`, golden fixtures, phase 3 tests |
+| ingestion worker | `api/yomikoe/ingestion/*`, `synthesis/compat/*`, golden fixtures, phase 3 tests |
 | soak/packaging worker | `api/tests/soak_util.py`, `test_soak_300.py`, `api/Dockerfile`, `docker-compose.yml`, `web/tests/e2e/soak.spec.ts` |
 | supervisor | this file, `CLAUDE.md`, `_agent/*.md`, `docs/PRD.md`, `docs/TECHNICAL_DESIGN.md` (sync task may edit on instruction) |
 

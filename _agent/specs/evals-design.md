@@ -1,4 +1,4 @@
-# HearNarro evals: what they are, why this project needs them, and the design
+# YomiKoe evals: what they are, why this project needs them, and the design
 
 Status: design accepted by the user 2026-10-17 (EVAL-n family, D31–D34, Whisper as a dev-only ASR dependency, run records committed under `evals/runs/`). Implementation starts at E0. Facts about the current
 code come from `_agent/results/531_eval_recon.md` (read-only recon, cited there by file:line).
@@ -17,13 +17,13 @@ it produces numbers and a diff. A *gate* is an eval with a threshold bolted on.
 
 Three ideas carry everything:
 
-| Idea | Meaning | HearNarro example |
+| Idea | Meaning | YomiKoe example |
 |---|---|---|
 | Dataset | fixed inputs with known-good answers (ground truth) | 20 fixture PDFs + hand-corrected `expected.jsonl` |
 | Scorer | a function from (system output, ground truth) to a number | word-sequence edit-distance score, 0..1 |
 | Record | the scores, saved with commit id, date and config | today: printed to the terminal and lost |
 
-## 2. Why HearNarro needs evals (the gaps the recon found)
+## 2. Why YomiKoe needs evals (the gaps the recon found)
 
 1. **Scores exist but are thrown away.** Reading order (word score per PDF), sentence
    boundaries (precision/recall/F1 per fixture), the 11-check quality checklist, time-stretch
@@ -54,7 +54,7 @@ Three ideas carry everything:
 ### 3.1 Principle (D31): an eval is a scored test with the threshold removed and the per-example score kept
 
 The existing scorers (`api/tests/golden_util.py`, `api/tests/boundary_util.py`,
-`api/hearnarro/quality.py`, `api/scripts/bench.py`) are reused as-is. The eval layer adds
+`api/yomikoe/quality.py`, `api/scripts/bench.py`) are reused as-is. The eval layer adds
 three things only: a **runner** that calls them over the datasets and keeps every score, a
 **store** of run records, and a **compare/report** step. Gate tests keep their thresholds and
 stay the CI floor; evals are the trend line above the floor.
@@ -99,11 +99,11 @@ in the same store so it sits next to the machine scores.
 
 ### 3.4 Layout (D32)
 
-The package lives inside `hearnarro` so it imports like the rest of the app (the venv is an
-editable install of `api/`); run as `python -m hearnarro.evals`.
+The package lives inside `yomikoe` so it imports like the rest of the app (the venv is an
+editable install of `api/`); run as `python -m yomikoe.evals`.
 
 ```
-api/hearnarro/evals/
+api/yomikoe/evals/
   __init__.py
   __main__.py        CLI: run <suite...|all> [--tier 0|1] [--baseline <run-id>]; compare <a> <b>
   runner.py          run <suite|all> [--tier 0|1] [--baseline <run-id>] → writes a run record
@@ -134,7 +134,7 @@ regression" in a PR description once the suites have a baseline.
 
 ### 3.6 Where evals run
 
-- Developer: `api/.venv/bin/python -m hearnarro.evals run all --tier 0` before and after a parser or
+- Developer: `api/.venv/bin/python -m yomikoe.evals run all --tier 0` before and after a parser or
   normalizer change; `--tier 1` when touching synthesis or swapping a backend.
 - Milestone close: full tier 0 + 1 run recorded and linked from the milestone guide.
 - Backend swap (the TTSBackend promise): EVAL-5/6/7 run once per backend with identical
@@ -152,7 +152,7 @@ fixtures and committed sentence lists, never a user's uploads.
 |---|---|---|
 | E0 Runner + store | `api/evals/runner.py`, `store.py`, EVAL-1 and EVAL-2 wrapped | one run record written; `compare` of two identical runs shows zero deltas |
 | E1 Fast suites | EVAL-3, EVAL-4 with its ~300-pair dataset | tier 0 completes under 60 s; per-category accuracy printed |
-| E2 Model suites | EVAL-5, EVAL-6, EVAL-7 under `HEARNARRO_TEST_MODEL=1`; ASR dependency through the licence check | one tier-1 record on this machine; WER and sync offset reported per speed |
+| E2 Model suites | EVAL-5, EVAL-6, EVAL-7 under `YOMIKOE_TEST_MODEL=1`; ASR dependency through the licence check | one tier-1 record on this machine; WER and sync offset reported per speed |
 | E3 Reporting | markdown + HTML scorecard; baseline rule in CLAUDE.md | scorecard linked from a milestone guide |
 | E4 Human + OCR | EVAL-9 rubric and ingestion; EVAL-8 once tesseract is present | one listening session recorded |
 

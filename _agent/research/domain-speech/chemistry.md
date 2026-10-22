@@ -1,4 +1,4 @@
-# Chemistry notation read aloud: a teacher's reading convention for HearNarro
+# Chemistry notation read aloud: a teacher's reading convention for YomiKoe
 
 Task domain-speech-chemistry, 2026-10-19. Research note for the supervisor; it proposes, it does not decide.
 It follows the shape of spec §3c (`_agent/specs/m5-academic-reading.md`, lines 305-475): lower case, one
@@ -451,7 +451,7 @@ NMR data are kept as prosody in `spoken` (EVAL-10 strips punctuation); chemistry
 parentheses only as a pause marker. `10−10` reads §3c "10 to the minus 10" (a flattened power; today's
 normalizer says "10 minus 10", probe line 09).
 
-## 6. Where it hooks in HearNarro (proposal)
+## 6. Where it hooks in YomiKoe (proposal)
 
 | Class | Hook |
 | --- | --- |

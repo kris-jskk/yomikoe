@@ -496,7 +496,7 @@ prose pairs do the same, "Earth", "Celsius"). An attributive unit before a noun 
 singular in English ("a 10 kilohm resistor") but plural under §3c read literally; no pair uses that form
 until open question 1 is settled.
 
-## 6. Where it hooks in HearNarro (proposal)
+## 6. Where it hooks in YomiKoe (proposal)
 
 | Class | Hook |
 | --- | --- |

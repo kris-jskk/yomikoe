@@ -28,7 +28,7 @@ FILES WRITTEN     docs/PRD_KINDLE.md
                   _agent/results/823_ingestion_interface.txt
                   _agent/results/824_numbering.txt
                   _agent/reports/2026-10-19-kindle-prd.md
-FILES READ BEYOND THE BRIEF     api/hearnarro/ingestion/pipeline.py, api/hearnarro/ingestion/models.py, api/hearnarro/routes/documents.py, api/hearnarro/storage/jobs.py (lines 210–225), api/hearnarro/storage/migrations/versions/ (listing and grep), api/pyproject.toml (grep), api/scripts/check_licences.py (grep). CODE_MAP_M1 and CODE_MAP_M5 were grepped, not read in full.
+FILES READ BEYOND THE BRIEF     api/yomikoe/ingestion/pipeline.py, api/yomikoe/ingestion/models.py, api/yomikoe/routes/documents.py, api/yomikoe/storage/jobs.py (lines 210–225), api/yomikoe/storage/migrations/versions/ (listing and grep), api/pyproject.toml (grep), api/scripts/check_licences.py (grep). CODE_MAP_M1 and CODE_MAP_M5 were grepped, not read in full.
 
 UNVERIFIED  - All device facts (Fire Silk runs the app, the e-ink browser and audio limits): supervisor brief, labelled so in the PRD
             - Amazon serving personal documents as unencrypted .azw3 or the original PDF: supervisor brief

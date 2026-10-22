@@ -451,7 +451,7 @@ that belong to maths ("is less than", "over") where the text meant "derived from
 {"id": "history_45", "class": "linguistics", "raw": "Latin *kʷ > p", "spoken": "latin star k w becomes p", "block": "paragraph"}
 ```
 
-## 6. Where it hooks in HearNarro (proposal)
+## 6. Where it hooks in YomiKoe (proposal)
 
 | Class | Hook |
 | --- | --- |

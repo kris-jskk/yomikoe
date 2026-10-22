@@ -26,7 +26,7 @@ FILES WRITTEN     _agent/research/domain-speech/chemistry.md
                   _agent/results/850_chemistry_probe_today.txt
                   _agent/results/851_chemistry_decimal_probe.txt
                   _agent/results/852_chemistry_pairs_check.txt
-                  (scratch probe script, outside the repo: /private/tmp/claude-502/-Users-user-Documents-Projects-hearnarro/438f4f28-70de-4560-832e-df73c0c83289/scratchpad/chemprobe.py)
+                  (scratch probe script, outside the repo: <scratchpad>/scratchpad/chemprobe.py)
 FILES READ BEYOND THE BRIEF     none (PRD ING-11 row read too, since the brief's section 3 names ING-11)
 
 UNVERIFIED  The respellings in note §4 have not been checked against Kokoro (no EVAL-4 run).

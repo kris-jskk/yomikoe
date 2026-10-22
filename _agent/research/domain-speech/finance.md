@@ -366,7 +366,7 @@ Respellings are proposed unless a source in §7 backs them (FTSE, REIT).
 {"id": "finance_40", "class": "date", "raw": "For the FY ending March 2025.", "spoken": "for the fiscal year ending march 2025.", "block": "paragraph"}
 ```
 
-## 6. Where it hooks in HearNarro (proposal)
+## 6. Where it hooks in YomiKoe (proposal)
 
 - `currency`: prose normalizer ING-6 (new money rule before the backend; misaki already reads `$5` and
   `$4.20`, 866, so only magnitude suffixes, ISO codes, non-dollar symbols and parentheses are new).

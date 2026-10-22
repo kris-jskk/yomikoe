@@ -3,7 +3,7 @@
 Source of truth for algorithms: `docs/TECHNICAL_DESIGN.md` "Synthesis service", "Audio delivery and
 playback (D5)", "Storage (D7)" (audio_cache DDL), "Concurrency and process model (D9)"; requirements
 SYN-1..SYN-6 in `docs/PRD.md`. Gate (PRD M2): first audio in 2 s at 0.5x–3x on CPU. Package root
-`api/hearnarro/synthesis/`. Tests are written against this file before the code exists.
+`api/yomikoe/synthesis/`. Tests are written against this file before the code exists.
 
 ## backend.py (exists; unchanged)
 `TTSBackend` Protocol (`name`, `voices()`, `speed_range()`, `synthesize(text, voice_id, speed) -> SynthResult`),
@@ -77,13 +77,13 @@ Speed validation lives in the API: 0.5 ≤ speed ≤ 3.0 and speed*10 integral �
 - `GET /documents/{id}` and the list gain nothing new in M2.
 
 ## config
-`settings.py`: HEARNARRO_TTS_BACKEND (fake|kokoro, default kokoro when available else fake with a warning),
-HEARNARRO_KOKORO_REVISION (pinned hash, required when kokoro), HEARNARRO_LOOKAHEAD (5), HEARNARRO_DATA_DIR.
+`settings.py`: YOMIKOE_TTS_BACKEND (fake|kokoro, default kokoro when available else fake with a warning),
+YOMIKOE_KOKORO_REVISION (pinned hash, required when kokoro), YOMIKOE_LOOKAHEAD (5), YOMIKOE_DATA_DIR.
 
 ## kokoro_backend.py — the only module that names a model
 Package and phonemizer chosen by the M2 survey (licence: Apache/MIT/BSD end to end, model Apache-2.0,
 revision pinned). `KokoroBackend(revision=...)`. One smoke test `@pytest.mark.model`, skipped unless
-`HEARNARRO_TEST_MODEL=1`: synthesize one sentence, assert audio > 0.3 s and timestamps non-empty.
+`YOMIKOE_TEST_MODEL=1`: synthesize one sentence, assert audio > 0.3 s and timestamps non-empty.
 
 ## scripts/bench.py (PRD M2)
 Time-to-first-audio and real-time factor for the configured backend over 20 sentences from the fixtures
@@ -118,7 +118,7 @@ Time-to-first-audio and real-time factor for the configured backend over 20 sent
 `misaki[en]`, `phonemizer`, `phonemizer-fork`, `espeakng-loader`, `espeak-ng` or `num2words`.
 The backend builds its own pipeline over `KModel` + `misaki.en.G2P` so `kokoro.pipeline` (which
 imports `misaki.espeak`, hence phonemizer) is never imported. `misaki.en` imports `num2words`
-(LGPL) at module top level: the backend registers `hearnarro.synthesis.compat.num2words` (our
+(LGPL) at module top level: the backend registers `yomikoe.synthesis.compat.num2words` (our
 own, MIT-compatible, number-to-words via `inflect`) in `sys.modules` before importing misaki;
 this is documented as a shim in the code map. Out-of-vocabulary words: misaki drops them silently
 (result 274), so the backend adds a fallback G2P: `g2p_en` (Apache-2.0) ARPAbet → IPA mapped
@@ -129,7 +129,7 @@ Measured speed input: 0.5/1.0/2.0 → 11.55/5.75/3.33 s of audio for the same se
 
 **D16 — Container.** M2 ships `WavEncoder` as default (stdlib, decodes everywhere). `OpusEncoder`
 via `opuscodec` (Apache-2.0; Ogg Opus, QEXT off, ≈ 7x smaller) is available behind
-`HEARNARRO_AUDIO_FORMAT=opus`. Browser decode of Ogg Opus (Safari before 18.4 reportedly fails) is
+`YOMIKOE_AUDIO_FORMAT=opus`. Browser decode of Ogg Opus (Safari before 18.4 reportedly fails) is
 verified in M3 with the real player; a WebM muxer is written only if Safari needs it. D7 in the
 Technical Design is amended accordingly; no ffmpeg anywhere.
 
