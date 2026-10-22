@@ -100,10 +100,46 @@ class DbSegmentRepo:
         async with self.db.connect() as conn:
             return await db_repo.get_document_acronyms(conn, document_id)
 
+    async def segment_math(self, segment_id: int) -> tuple[str, list[dict]] | None:
+        """SYN-4: (block type, MATH-5 ranges) of one segment."""
+        async with self.db.connect() as conn:
+            return await db_repo.get_segment_math(conn, segment_id)
+
     async def document_lexicon(self, document_id: int) -> dict[str, str]:
         """TERM-2: the user's overrides, global merged under the document's."""
         async with self.db.connect() as conn:
             return await db_repo.pronunciations_for(conn, document_id)
+
+
+def normalized_math_spans(
+    seg: Segment, block_type: str | None, ranges: list[dict]
+) -> tuple[tuple[int, int], ...]:
+    """SYN-4 (MATH-1..4): the offsets of ``seg.normalized_text`` that are mathematics, as
+    ``SynthContext.math_spans``. An equation segment is maths throughout; otherwise the maximal
+    runs of normalized offsets whose ``char_map`` source lies inside a ``math_json`` range
+    (``ranges``: ``[{start, end}]`` into ``seg.text``). A space mathspeak inserted at a range's
+    edge maps outside it and so is not part of the run."""
+    n = len(seg.normalized_text)
+    if not n:
+        return ()
+    if block_type == "equation":
+        return ((0, n),)
+    if not ranges:
+        return ()
+    cmap = seg.char_map
+    out: list[tuple[int, int]] = []
+    start: int | None = None
+    for i in range(n):
+        c = cmap[i] if i < len(cmap) else -1
+        inside = any(r["start"] <= c < r["end"] for r in ranges)
+        if inside and start is None:
+            start = i
+        elif not inside and start is not None:
+            out.append((start, i))
+            start = None
+    if start is not None:
+        out.append((start, n))
+    return tuple(out)
 
 
 def to_text_offsets(ts: list[WordTimestamp], seg: Segment) -> list[WordTimestamp]:
@@ -367,6 +403,11 @@ class SynthesisService:
         loop = asyncio.get_running_loop()
         try:
             context = await self._context(seg.document_id)
+            spans = await self._math_spans(seg)
+            if spans:  # per segment; the cached document context is not mutated
+                context = dataclasses.replace(
+                    context or SynthContext(document_id=seg.document_id), math_spans=spans
+                )
             rendered = await loop.run_in_executor(
                 self._executor, self._render, seg, voice_id, speed, context
             )
@@ -415,6 +456,16 @@ class SynthesisService:
                 else None
             )
         return self._contexts[document_id]
+
+    async def _math_spans(self, seg: Segment) -> tuple[tuple[int, int], ...]:
+        """The segment's maths offsets in ``normalized_text`` (SYN-4); () when the repo has no
+        ``segment_math`` (test doubles) or the segment carries no maths."""
+        lookup = getattr(self.repo, "segment_math", None)
+        found = await lookup(seg.id) if lookup is not None else None
+        if found is None:
+            return ()
+        block_type, ranges = found
+        return normalized_math_spans(seg, block_type, ranges)
 
     def invalidate_context(self, document_id: int | None) -> None:
         """Forget the cached context of ``document_id``, or of every document when None (a

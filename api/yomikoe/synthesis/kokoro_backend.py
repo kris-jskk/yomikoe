@@ -26,6 +26,10 @@ into the gold lexicon before them (so an override wins a shared word). A documen
 respellings are read by this G2P once per context (``respelling_phonemes``) and applied with the
 overrides, ahead of them.
 
+Maths letters (SYN-4, MATH-1..4): inside ``SynthContext.math_spans`` (per segment, set by the
+synthesis service) a standalone "a"/"A" token is the variable and gets the letter's phonemes
+(``voice_math_letters``, /eɪ/) before the overrides; outside them misaki's article stays.
+
 All-caps context (SYN-4): before G2P the segment goes through
 ``yomikoe.synthesis.acronyms.fold_caps``; in a heading or emphasized run ("ERIC'S NOTE") the
 caps words are case-folded ("Eric's Note") so misaki reads them as words instead of spelling
@@ -75,7 +79,7 @@ import copy
 import logging
 import re
 import threading
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -347,6 +351,28 @@ def respelling_phonemes(g2p: Any, lexicon: Mapping[str, str]) -> dict[str, str]:
     return out
 
 
+_LETTER_A = "ˈA"  # misaki's letter name for "a": /eɪ/ (US and GB)
+
+
+def voice_math_letters(text: str, tokens: list[Any], spans: Sequence[tuple[int, int]]) -> int:
+    """SYN-4, MATH-1..4: every standalone "a"/"A" token of ``text`` lying inside one of
+    ``spans`` (``SynthContext.math_spans``) is the variable, voiced as the letter (/eɪ/) instead
+    of misaki's article (/ə/). Tokens are located in ``text`` in order, as ``_tokens`` restores
+    them; punctuation is a separate misaki token, so "a," matches. Returns the count changed."""
+    if not spans:
+        return 0
+    n = pos = 0
+    for t in tokens:
+        i = text.find(t.text, pos) if t.text else -1
+        if i < 0:
+            continue
+        pos = i + len(t.text)
+        if t.text in ("a", "A") and any(a <= i and pos <= b for a, b in spans):
+            t.phonemes = _LETTER_A
+            n += 1
+    return n
+
+
 def build_g2p(british: bool, vocab: set[str], predictor: Any | None = None) -> Any:
     """The misaki G2P front-end the backend uses: num2words shim installed before misaki is
     imported, ``lexicon_overrides`` in the gold lexicon, ``_OOVFallback`` for OOV words.
@@ -502,6 +528,8 @@ class KokoroBackend:
             t.text = text[i:pos]
             if any(a < pos and i < b for a, b in spans):
                 folded.add(id(t))
+        if context and context.math_spans:  # the variable "a" in maths (SYN-4, MATH-1..4)
+            voice_math_letters(text, tokens, context.math_spans)
         doc = context.document_id if context else None
         for entry in lexicon_overrides.apply(tokens, respelled):
             if (doc, entry) not in self._overrides_logged:

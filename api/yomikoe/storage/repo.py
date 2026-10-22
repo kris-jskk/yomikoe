@@ -154,6 +154,20 @@ def decode_math_ranges(math_json: str | None) -> list[dict[str, Any]]:
     ]
 
 
+async def get_segment_math(
+    conn: aiosqlite.Connection, segment_id: int
+) -> tuple[str, list[dict[str, Any]]] | None:
+    """SYN-4 (MATH-1..4): one segment's block type and its MATH-5 ranges
+    (``decode_math_ranges``), for the synthesis service's ``SynthContext.math_spans``."""
+    row = await _one(
+        conn,
+        "SELECT b.type, s.math_json FROM segments s JOIN blocks b ON b.id = s.block_id "
+        "WHERE s.id = ?",
+        (segment_id,),
+    )
+    return (row["type"], decode_math_ranges(row["math_json"])) if row is not None else None
+
+
 SEGMENT_COLUMNS = (
     'id, document_id, block_id, "order", section_id, text, normalized_text, '
     "char_start, char_end, char_map"

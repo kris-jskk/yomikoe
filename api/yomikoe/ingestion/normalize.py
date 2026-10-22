@@ -292,6 +292,31 @@ def _maths_position(s: str, i: int, tags: list[tuple[int, int]]) -> bool:
     return True  # "⋅" is always a dot operator
 
 
+# A dash glued to the front of a number in a maths-bearing segment (ING-6, MATH-1; M5 listening
+# sheet 2026-10-22, "(—0.670)"): em dash, en dash, minus sign or hyphen.
+_UNARY_DASHES = "—–−-"
+
+
+def _unary_minus(s: str, cmap: list[int]) -> tuple[str, list[int]]:
+    """In a segment that carries maths, a dash immediately followed by a digit and preceded by
+    "(", "[" or a space reads "minus " ("(—0.670)" -> "(minus 0.670)"). A dash after a space
+    whose previous non-space character is a digit ("3 -5") and a dash between two digits
+    ("2010—2015", the range rule) are left alone. Every char of "minus " maps to the dash."""
+    out: list[str] = []
+    omap: list[int] = []
+    for i, ch in enumerate(s):
+        if ch in _UNARY_DASHES and i > 0 and i + 1 < len(s) and s[i + 1].isdigit():
+            prev = s[i - 1]
+            before = s[:i].rstrip(" \t")
+            if prev in "([" or (prev in " \t" and not before[-1:].isdigit()):
+                out.extend("minus ")
+                omap.extend([cmap[i]] * 6)
+                continue
+        out.append(ch)
+        omap.append(cmap[i])
+    return "".join(out), omap
+
+
 def _speak_symbols(s: str, cmap: list[int]) -> tuple[str, list[int]]:
     """MATH-1 fallback over the pass-one output: symbols and Greek letters become their names.
 
@@ -371,6 +396,7 @@ def normalize(
     heading: bool = False,
     profile: DocumentProfile = PROSE_DEFAULT,
     math_spans: Sequence[tuple[int, int]] = (),
+    maths: bool = False,
 ) -> tuple[str, list[int]]:
     """Return (normalized_text, char_map) with len(char_map) == len(normalized_text).
 
@@ -443,6 +469,10 @@ def normalize(
     mathspeak``) never feeds its spoken maths back into this function: it calls ``normalize`` only
     on the prose between maths spans and splices the spoken maths in afterwards, so this pass
     names stray symbols in prose and never rewrites a word mathspeak produced.
+
+    ``maths`` is True when the segment carries maths (an equation block, or prose between the
+    maths ranges of a body segment, as ``mathspeak`` calls this): a dash glued to the front of
+    a number then reads "minus" (``_unary_minus``; ING-6, MATH-1).
     """
     out: list[str] = []
     cmap: list[int] = []
@@ -664,4 +694,7 @@ def normalize(
     for i in range(pos, len(text)):
         out.append(text[i])
         cmap.append(i)
-    return _speak_symbols("".join(out), cmap)
+    joined = "".join(out)
+    if maths:  # the segment carries maths: an equation block or a body segment with a range
+        joined, cmap = _unary_minus(joined, cmap)
+    return _speak_symbols(joined, cmap)

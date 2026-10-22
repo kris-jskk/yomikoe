@@ -120,7 +120,7 @@ def _speak(
 
     def plain(a: int, b: int) -> None:
         if a < b:
-            norm, m = normalize(text[a:b], profile=norm_profile)
+            norm, m = normalize(text[a:b], profile=norm_profile, maths=bool(math_spans))
             out.append(norm)
             cmap.extend(a + i for i in m)
 

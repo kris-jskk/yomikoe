@@ -580,3 +580,5 @@
 {"id": "term_citation_18", "category": "term_citation", "text": "Smith et al. (2019) proved it.", "expected": "Smith et al twenty nineteen proved it."}
 {"id": "term_citation_19", "category": "term_citation", "text": "The baseline is weak [7].", "expected": "The baseline is weak."}
 {"id": "term_citation_20", "category": "term_citation", "text": "This holds in general (Zhang et al., 2020).", "expected": "This holds in general Jahng et al twenty twenty."}
+{"id": "math_symbol_21", "category": "math_symbol", "text": "y = (—0.670)", "expected": "y equals minus 0.670", "block": "equation", "note": "M5 listening sheet 2026-10-22 formula_10: an OCR em dash glued to a number in maths reads minus (ING-6, MATH-1)"}
+{"id": "math_symbol_22", "category": "math_symbol", "text": "x = –5", "expected": "x equals minus 5", "block": "equation", "note": "M5 listening sheet 2026-10-22: an en dash before a number in maths reads minus (ING-6, MATH-1)"}
