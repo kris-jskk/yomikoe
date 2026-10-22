@@ -34,11 +34,18 @@ class SynthContext:
     """Document context for pronunciation (SYN-4): acronym definitions found at ingestion
     (``{"TED": "Transferable Erosion Deposit"}``, ING-6) and the user's pronunciation
     overrides (TERM-2): ``lexicon`` maps a lower-case word to a respelling, the global table
-    merged under the document's. ``document_id`` is for logging."""
+    merged under the document's. ``document_id`` is for logging.
+
+    ``math_spans`` is per segment (SYN-4, MATH-1..4): ``(start, end)`` offsets into the text
+    passed to ``synthesize`` that are mathematics (the whole of an equation segment; in a body
+    segment the normalized offsets whose ``char_map`` source lies in a ``math_json`` range). A
+    backend voices a single-letter variable there as the letter ("a" is /eɪ/, not the article).
+    The audio cache key (D6) does not change: a segment's spans are fixed by its stored row."""
 
     acronyms: dict[str, str] = field(default_factory=dict)
     document_id: int | None = None
     lexicon: dict[str, str] = field(default_factory=dict)
+    math_spans: tuple[tuple[int, int], ...] = ()
 
 
 @dataclass

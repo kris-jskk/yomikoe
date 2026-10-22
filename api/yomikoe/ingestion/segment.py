@@ -239,7 +239,12 @@ def split_sentences(
         sent = text[start:end]
         if sent != sent.strip() or not sent:
             raise ValueError(f"block {block.id}: sentence offsets do not round-trip: {sent!r}")
-        normalized, char_map = normalize(sent, heading=block.type == "heading", profile=profile)
+        normalized, char_map = normalize(
+            sent,
+            heading=block.type == "heading",
+            profile=profile,
+            maths=block.type == "equation",  # ING-6: a dash before a number reads "minus"
+        )
         segments.append(
             Segment(
                 id=id_start + i,
