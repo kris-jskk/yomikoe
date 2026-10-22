@@ -68,7 +68,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
   <header>
     <h1>YomiKoe M9: the product gets an address</h1>
     <p class="lede">Milestone 9 Hosting is the final milestone. It puts YomiKoe on its four names: yomikoe.app for the landing page, app.yomikoe.app for the reader, api.yomikoe.app for the API, and getyomikoe.com as a redirect nobody prints. Phase 1 is the landing page: a static site in <code>site/</code>, deployed to GitHub Pages by a workflow. The code side of phase 1 is built and merged on <code>m9-hosting</code>. The page goes live once the user changes the GitHub Pages settings and adds the DNS records at the registrar.</p>
-    <div class="stamp"><span class="dot"></span> As of 2026-10-21 · version 2 · phase 1 built on m9-hosting (merges 6e0798f, 5b7321e, fe2820b, ec9eb07) · Pages settings and DNS: user action, running · CTA follow-up done · preview artifact https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq · not pushed</div>
+    <div class="stamp"><span class="dot"></span> As of 2026-10-21 · version 3 · Cloudflare steps verified · phase 1 built on m9-hosting (merges 6e0798f, 5b7321e, fe2820b, ec9eb07) · Pages settings and DNS: user action, running · CTA follow-up done · preview artifact https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq · not pushed</div>
     <div class="phases" aria-label="Phase status">
       <span class="pill done">1a Landing page built <b>done</b></span>
       <span class="pill done">1b Pages workflow and HOSTING.md <b>done</b></span>
@@ -340,8 +340,8 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
     <ol class="steps">
       <li><b>Confirm D54</b> (GitHub Pages for the landing page), or name another host.</li>
       <li><b>HOSTING.md b, GitHub Pages:</b> Settings &gt; Pages &gt; Source "GitHub Actions"; merge the branch to <code>main</code> (or run the workflow by hand once); set the custom domain to <code>yomikoe.app</code>; tick "Enforce HTTPS" once the certificate is issued.</li>
-      <li><b>HOSTING.md c, DNS:</b> at the registrar, add four A and four AAAA records for <code>@</code> (values in HOSTING.md, from result 1248); delete any parking records; check with <code>dig</code> and <code>curl -sI https://yomikoe.app</code>.</li>
-      <li><b>HOSTING.md d, redirect:</b> set getyomikoe.com to a permanent (301) redirect to <code>https://yomikoe.app</code> at the registrar or with a Cloudflare Redirect Rule; check with <code>curl -sI https://getyomikoe.com</code>.</li>
+      <li><b>HOSTING.md c, DNS at Cloudflare:</b> DNS &gt; Records for yomikoe.app: delete any A, AAAA or CNAME for <code>@</code>, add four A and four AAAA records for <code>@</code> (values in HOSTING.md, result 1248) with Proxy status DNS only (grey cloud) until the certificate is issued; check with <code>dig</code> and <code>curl -sI https://yomikoe.app</code>. If you later proxy, set SSL/TLS to Full or Full (strict).</li>
+      <li><b>HOSTING.md d, redirect at Cloudflare:</b> for getyomikoe.com add proxied A records <code>@</code> and <code>www</code> to <code>192.0.2.1</code>, then Rules &gt; Create rule &gt; Redirect Rule: host is getyomikoe.com or www.getyomikoe.com, static target <code>https://yomikoe.app</code>, 301, query string off; check with <code>curl -sI https://getyomikoe.com</code>.</li>
     </ol>
   </section>
 
