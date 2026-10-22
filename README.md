@@ -70,3 +70,7 @@ Models download from the Hugging Face Hub on first run into `$HF_HOME`; set it t
 - [docs/guide/](docs/guide/): milestone guides
 - [docs/CODE_MAP_M1.md](docs/CODE_MAP_M1.md): M1 code map (flows, stage rules, golden and quality gates, modules, data structures)
 - [docs/CODE_MAP_M2.md](docs/CODE_MAP_M2.md): M2 code map (flows, modules, data structures, concurrency, licences)
+
+## Licence
+
+Apache-2.0 (see [LICENSE](LICENSE)). Copyright 2026 the YomiKoe authors. Every dependency and model shipped in v1 is under Apache-2.0, MIT or BSD terms; `api/scripts/check_licences.py` enforces this in the test suite, and vendored components carry their own NOTICE files.
