@@ -68,11 +68,12 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
   <header>
     <h1>YomiKoe M9: the product gets an address</h1>
     <p class="lede">Milestone 9 Hosting is the final milestone. It puts YomiKoe on its four names: yomikoe.app for the landing page, app.yomikoe.app for the reader, api.yomikoe.app for the API, and getyomikoe.com as a redirect nobody prints. Phase 1 is the landing page: a static site in <code>site/</code>, deployed to GitHub Pages by a workflow. The code side of phase 1 is built and merged on <code>m9-hosting</code>. The page goes live once the user changes the GitHub Pages settings and adds the DNS records at the registrar.</p>
-    <div class="stamp"><span class="dot"></span> As of 2026-10-21 · version 3 · Cloudflare steps verified · phase 1 built on m9-hosting (merges 6e0798f, 5b7321e, fe2820b, ec9eb07) · Pages settings and DNS: user action, running · CTA follow-up done · preview artifact https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq · not pushed</div>
+    <div class="stamp"><span class="dot"></span> As of 2026-10-22 · version 4 · LIVE: https://yomikoe.app serves the page over HTTPS (result 1265: index, styles.css, favicon.svg all 200 from GitHub.com; Let's Encrypt certificate CN=yomikoe.app) · merged to main 77e8827 and pushed · Pages settings and apex DNS done by the user · getyomikoe.com redirect still pending (no DNS records yet, result 1265) · preview artifact https://claude.ai/artifact/6kuWSEYniRTmXDh9udA7vq</div>
     <div class="phases" aria-label="Phase status">
       <span class="pill done">1a Landing page built <b>done</b></span>
       <span class="pill done">1b Pages workflow and HOSTING.md <b>done</b></span>
-      <span class="pill run">1c Pages settings, DNS, redirect <b>running</b></span>
+      <span class="pill done">1c Pages settings and DNS <b>done</b> (live)</span>
+      <span class="pill run">1e getyomikoe.com redirect <b>running</b></span>
       <span class="pill done">1d CTA follow-up <b>done</b></span>
       <span class="pill next">2 app. and api. hosting <b>next</b></span>
       <span class="pill next">3 Backups and gate <b>next</b></span>
@@ -119,7 +120,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
         </div>
       </div>
       <div class="phase">
-        <div class="who"><span class="pill run">running</span><span>Phase 1c</span><span>user action</span></div>
+        <div class="who"><span class="pill done">done</span><span>Phase 1c</span><span>user action, live 2026-10-22 (result 1265); only the getyomikoe.com redirect remains</span></div>
         <div class="what">
           <b>GitHub Pages settings, DNS for yomikoe.app, the getyomikoe.com redirect</b>
           <span class="why-line">Why: these are account settings at GitHub and at the registrar, which code cannot change. HOST-2, HOST-3.</span>
@@ -347,7 +348,7 @@ table.rules td:first-child { font-family: var(--font-mono); white-space: nowrap;
 
   <section id="links">
     <h2><span class="k">9</span>Links</h2>
-    <p>As of 2026-10-21 (version 1): phase 1 code is built and merged on <code>m9-hosting</code> (<code>6e0798f</code>, <code>5b7321e</code>), not pushed. The landing page goes live when the user completes section 8 and the branch reaches <code>main</code>. The CTA follow-up is done (fe2820b) and the guide is merged (ec9eb07). Phases 2 and 3 are next.</p>
+    <p>As of 2026-10-22 (version 4): https://yomikoe.app is live. <code>m9-hosting</code> merged to <code>main</code> at <code>77e8827</code> and pushed; the site workflow deployed <code>site/</code>; the user set the Pages custom domain and the eight apex records on Cloudflare; GitHub issued the certificate. Result 1265 records index, styles.css and favicon.svg answering 200 from GitHub.com. HOST-1 and HOST-2 are met; HOST-3 (getyomikoe.com 301) is still the user's action: the domain has no DNS records yet. Phases 2 and 3 are next.</p>
     <div class="note"><ul>
       <li>Code map: <a href="../CODE_MAP_M9.md">docs/CODE_MAP_M9.md</a>.</li>
       <li>Hosting steps: <a href="https://github.com/kris-jskk/yomikoe/blob/main/docs/HOSTING.md">docs/HOSTING.md on GitHub</a> (available once the branch is on <code>main</code>).</li>

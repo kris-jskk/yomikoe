@@ -283,7 +283,7 @@ Four names, one brand domain. None is wired into the code yet: v1 runs locally v
 
 | Domain | Points at | Repo folder | Status | Notes |
 |---|---|---|---|---|
-| yomikoe.app | Landing page (static site) | `site/` | Built in `site/` (2026-10-21); DNS and Pages settings pending (docs/HOSTING.md) | Primary brand domain; the one printed everywhere. `.app` forces HTTPS. |
+| yomikoe.app | Landing page (static site) | `site/` | Live 2026-10-22 over HTTPS (GitHub Pages, D54; result 1265); getyomikoe.com redirect pending | Primary brand domain; the one printed everywhere. `.app` forces HTTPS. |
 | app.yomikoe.app | The reader (React app) | `web/` | Exists, runs locally only | Library, player, highlighting. Subdomain, free in DNS. |
 | api.yomikoe.app | FastAPI service | `api/` | Exists, runs locally only | Ingestion, synthesis, audio cache. Subdomain, free in DNS. |
 | getyomikoe.com | 301 redirect to yomikoe.app | none | DNS rule only | Defensive .com; never printed. Set the redirect at the registrar or Cloudflare. |
