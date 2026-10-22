@@ -36,6 +36,8 @@
     "≥": "is greater than or equal to",
     "≪": "is much less than",
     "≫": "is much greater than",
+    "≲": "is less than or similar to",
+    "≳": "is greater than or similar to",
     "≈": "is approximately equal to",
     "≃": "is approximately equal to",
     "≡": "is equivalent to",

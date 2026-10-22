@@ -91,6 +91,7 @@ class _Tok:
     inner2: list[_Tok] = field(default_factory=list)  # a frac token's denominator
     size: float = 0.0  # a script token's run size and centre, for a script of a script
     mid: float = 0.0
+    x1: float = 0.0  # a script token's right edge (m5-p5i: one script set in several runs)
     rows: list[list[list[_Tok]]] = field(default_factory=list)  # a stack token's rows of cells
 
 
@@ -599,10 +600,28 @@ def _pieces(runs: list[Any], base: float, rows: bool = True) -> list[list[Piece]
                     last.inner.extend(toks)  # one nested script set in several runs
                 else:
                     prev.inner.append(_Tok("script", text, kind, toks))
+                prev.x1 = max(prev.x1, float(r.bbox.x1))
                 continue
             kind = "sup" if r.superscript or _mid(r) < last_mid else "sub"
             words = _upright(r.font)
-            out[-1].append(_Tok("script", text, kind, _lex(text, words), [], r.size, _mid(r)))
+            if (
+                isinstance(prev, _Tok)
+                and prev.kind == "script"
+                and prev.script == kind
+                and prev.x1 > 0
+                and abs(r.size - prev.size) <= 0.05 * r.size
+                and abs(_mid(r) - prev.mid) <= 0.3 * r.size
+                and -0.3 * r.size <= r.bbox.x0 - prev.x1 <= 0.3 * r.size
+            ):
+                # the next run of the same script ("L2(H)" set as L, 2, "(", H, ")"): one script,
+                # not a chain of empty "sub"s (tables_04 equation (8), m5-p5i)
+                prev.text += text
+                prev.inner.extend(_lex(text, words))
+                prev.x1 = float(r.bbox.x1)
+                continue
+            out[-1].append(
+                _Tok("script", text, kind, _lex(text, words), [], r.size, _mid(r), float(r.bbox.x1))
+            )
             continue
         if not out or (rows and r.bbox.y0 > row_y0 + 0.5 * r.size):
             out.append([])

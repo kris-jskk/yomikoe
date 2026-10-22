@@ -92,6 +92,13 @@ TEXTBOX_COVER = 0.9
 # under MATH_LINE_PROSE of its glyphs is "math"; a block never mixes math and prose lines.
 MATH_FONT_MARKERS = ("Math", "CMSY", "CMMI", "CMEX", "CMBSY", "MSBM", "MSAM", "RSFS", "EUFM")
 MATH_LINE_PROSE: float | None = 0.3
+# A display's large operator set alone on its line in an upright text font ("sup" with its
+# condition stacked below, m5-p5i, tables_04 equation (5)) is a maths line for that rule, so it
+# does not join the prose line above it.
+_LIMOP_LINE = frozenset({"sup", "inf", "lim", "max", "min", "limsup", "liminf", "argmax", "argmin"})
+# An accent glyph whose box lies more than ACCENT_LINE_GAP sizes off the current line does not
+# continue it (a display's hat after the prose word above it, tables_04 equation (2), m5-p5i).
+ACCENT_LINE_GAP: float | None = 0.5
 SCRIPT_RATIO = 0.8  # a glyph this much smaller than its line's dominant size is a script
 SUPERSCRIPT_SIZE_RATIO = 0.75  # a char this much smaller than the line's dominant size ...
 SUPERSCRIPT_RAISE = 0.2  # ... whose bottom sits this many dominant sizes higher is raised
@@ -369,6 +376,12 @@ def _continues_line(prev: LayoutChar, line_v: tuple[float, float], c: LayoutChar
     v0, v1 = _vspan(c)
     overlap = min(v1, line_v[1]) - max(v0, line_v[0])
     accent = _is_accent(c) or _is_accent(prev)
+    if (
+        ACCENT_LINE_GAP is not None
+        and _is_accent(c)
+        and overlap < -ACCENT_LINE_GAP * max(c.size, prev.size, 1.0)
+    ):
+        return False
     if not accent and overlap < LINE_OVERLAP * min(v1 - v0, line_v[1] - line_v[0]):
         return False  # an accent sits above its letter; only the horizontal test applies
     size = max(c.size, prev.size, 1.0)
@@ -506,11 +519,13 @@ def group_blocks(lines: Sequence[list[LayoutChar]]) -> list[list[list[LayoutChar
         box, size, upright = _line_metrics(line)
         join = False
         if cur_box is not None and upright == cur_upright:
-            if (
+            if upright and _limop_line(blocks[-1][0]) and _limop_part(blocks[-1], line):
+                join = True
+            elif (
                 MATH_LINE_PROSE is not None
                 and prev_box is not None
                 and min(box.y1, prev_box.y1) <= max(box.y0, prev_box.y0)  # a new text row
-                and is_math_line(line) != is_math_line(prev_line)
+                and _maths_row(line) != _maths_row(prev_line)
             ) or (
                 upright
                 and PARA_BASELINE is not None
@@ -578,6 +593,41 @@ def is_math_line(line: Sequence[LayoutChar]) -> bool:
         if c.text.isalpha() and not is_math_font(c.font) and c.size >= SCRIPT_RATIO * dominant
     )
     return prose < MATH_LINE_PROSE * len(glyphs)
+
+
+def _maths_row(line: Sequence[LayoutChar]) -> bool:
+    """A display-maths line for the block rule: ``is_math_line``, or a large operator's name
+    alone on its line (_LIMOP_LINE)."""
+    return is_math_line(line) or _limop_line(line)
+
+
+def _limop_part(block: list[list[LayoutChar]], line: list[LayoutChar]) -> bool:
+    """A display that opens with a lone large operator (``_limop_line``) keeps, as one block,
+    the condition stacked under it (a smaller maths line touching it from below) and the
+    operand that follows on its row (a maths line overlapping the operator's line and starting
+    within one size of the block's right edge). tables_04 equation (5), m5-p5i."""
+    op_box, op_size, _ = _line_metrics(block[0])
+    box, size, _ = _line_metrics(line)
+    cur = _union([_line_metrics(ln)[0] for ln in block])
+    maths = any(c.bbox is not None and is_math_font(c.font) for c in line)
+    if not maths:
+        return False
+    if len(block) == 1:
+        return (
+            size < op_size
+            and -0.5 * op_size <= box.y0 - op_box.y1 <= BLOCK_GAP * op_size
+            and min(box.x1, op_box.x1) > max(box.x0, op_box.x0)
+        )
+    return (
+        len(block) == 2
+        and min(box.y1, op_box.y1) - max(box.y0, op_box.y0) > 0.5 * op_size
+        and -0.5 * op_size <= box.x0 - cur.x1 <= op_size
+    )
+
+
+def _limop_line(line: Sequence[LayoutChar]) -> bool:
+    """A large operator's name alone on its line (_LIMOP_LINE)."""
+    return _text(line).replace(" ", "") in _LIMOP_LINE
 
 
 def is_math_font(font: str) -> bool:
