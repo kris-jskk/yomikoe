@@ -413,12 +413,12 @@ After v1: SYN-7 second backend, SYN-8 pitch (its pause part moved into M5, 2026-
 
 9. M9 Hosting (decided 2026-10-21, then as the final milestone; M10 Browser extension was added after it on 2026-10-22; user decision: hosting is a milestone, not future scope). Scope: the four names in the "Domains" table (yomikoe.app landing page as a static site in `site/`, app.yomikoe.app serving `web/`, api.yomikoe.app serving `api/`, getyomikoe.com as a 301 redirect), TLS on every name, the Docker Compose image deployed to a host, backups of the library volume, and the landing page itself. Requirement IDs (`HOST-n`) and the hosting provider are to be specified when the milestone is planned.
 
-   Phase 1 (landing page, started 2026-10-21): the landing page in `site/` is deployed to GitHub Pages by `.github/workflows/site.yml`; the registrar steps are in `docs/HOSTING.md`. The provider is a proposed decision (Technical Design D54), awaiting user confirmation. HOST-4 and later are to specify at phase 2 planning.
+   Phase 1 (landing page, started 2026-10-21): the landing page in `site/` is deployed to GitHub Pages by `.github/workflows/site.yml`; the registrar steps are in `docs/HOSTING.md`. The provider is Technical Design D54, confirmed by the user 2026-10-22. HOST-4 and later are to specify at phase 2 planning.
 
    | ID | Priority | Requirement |
    |---|---|---|
    | HOST-1 | P0 | yomikoe.app serves the landing page in `site/` as a static site with no build step |
-   | HOST-2 | P0 | yomikoe.app resolves and serves over HTTPS with a valid certificate (provider: GitHub Pages, D54 proposed) |
+   | HOST-2 | P0 | yomikoe.app resolves and serves over HTTPS with a valid certificate (provider: GitHub Pages, D54 confirmed) |
    | HOST-3 | P1 | getyomikoe.com answers 301 to https://yomikoe.app and is never printed |
 
    Gate (proposed, to confirm at planning):
